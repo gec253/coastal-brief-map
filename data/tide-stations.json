@@ -1,0 +1,1362 @@
+{
+  "source": "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations.json?type=tidepredictions",
+  "fetchedAt": "2026-11-11T11:18:38+00:00",
+  "filter": "North Carolina tide-prediction stations, plus nearby VA (Virginia Beach / Sandbridge / Rudee) and SC (Little River through Garden City) border stations. Blank-state stations in NC waters are included as NC.",
+  "stations": [
+    {
+      "id": "8639168",
+      "name": "Virginia Beach",
+      "state": "VA",
+      "lat": 36.8433,
+      "lng": -75.9717,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8651370"
+    },
+    {
+      "id": "8639207",
+      "name": "Rudee Inlet, interior channel",
+      "state": "VA",
+      "lat": 36.8317,
+      "lng": -75.9733,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8639208",
+      "name": "Rudee Inlet entrance",
+      "state": "VA",
+      "lat": 36.8317,
+      "lng": -75.9683,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8651370"
+    },
+    {
+      "id": "8639219",
+      "name": "Lake Rudee, south end",
+      "state": "VA",
+      "lat": 36.825,
+      "lng": -75.9817,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8651370"
+    },
+    {
+      "id": "8639214",
+      "name": "Rudee Heights, Lake Wesley",
+      "state": "VA",
+      "lat": 36.825,
+      "lng": -75.975,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8651370"
+    },
+    {
+      "id": "8639428",
+      "name": "Sandbridge",
+      "state": "VA",
+      "lat": 36.6917,
+      "lng": -75.92,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8651370"
+    },
+    {
+      "id": "8651370",
+      "name": "DUCK PIER",
+      "state": "NC",
+      "lat": 36.1833,
+      "lng": -75.746696,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8651605",
+      "name": "Kitty Hawk (ocean)",
+      "state": "NC",
+      "lat": 36.1017,
+      "lng": -75.71,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8651370"
+    },
+    {
+      "id": "8652226",
+      "name": "Jennettes Pier, Nags Head (ocean)",
+      "state": "NC",
+      "lat": 35.91,
+      "lng": -75.591694,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8651370"
+    },
+    {
+      "id": "8652247",
+      "name": "Manns Harbor, Croatan Sound",
+      "state": "NC",
+      "lat": 35.9033,
+      "lng": -75.77,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8652437",
+      "name": "Oyster Creek, Croatan Sound",
+      "state": "NC",
+      "lat": 35.845,
+      "lng": -75.655,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8652547",
+      "name": "Roanoke Marshes Light, Croatan Sound",
+      "state": "NC",
+      "lat": 35.8117,
+      "lng": -75.7,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8652591",
+      "name": "Roanoke Sound Channel",
+      "state": "NC",
+      "lat": 35.7983,
+      "lng": -75.5833,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8652587"
+    },
+    {
+      "id": "8652587",
+      "name": "OREGON INLET MARINA",
+      "state": "NC",
+      "lat": 35.795694,
+      "lng": -75.548194,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8652648",
+      "name": "Old House Channel",
+      "state": "NC",
+      "lat": 35.776699,
+      "lng": -75.584999,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8652657",
+      "name": "Oregon Inlet Channel",
+      "state": "NC",
+      "lat": 35.7733,
+      "lng": -75.5583,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8652587"
+    },
+    {
+      "id": "8652659",
+      "name": "Oregon Inlet Bridge",
+      "state": "NC",
+      "lat": 35.7733,
+      "lng": -75.5383,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8652587"
+    },
+    {
+      "id": "8652678",
+      "name": "Oregon Inlet (USCG Station)",
+      "state": "NC",
+      "lat": 35.7683,
+      "lng": -75.5267,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8652737",
+      "name": "Davis Slough",
+      "state": "NC",
+      "lat": 35.7483,
+      "lng": -75.5533,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8652587"
+    },
+    {
+      "id": "8653215",
+      "name": "Rodanthe, Pamlico Sound",
+      "state": "NC",
+      "lat": 35.595001,
+      "lng": -75.471703,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8653244",
+      "name": "Pungo River, Route 45, NC",
+      "state": "NC",
+      "lat": 35.585201,
+      "lng": -76.485603,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8653471",
+      "name": "Engelhard",
+      "state": "NC",
+      "lat": 35.509399,
+      "lng": -75.988899,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8653951",
+      "name": "Peter's Ditch",
+      "state": "NC",
+      "lat": 35.350139,
+      "lng": -75.512028,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "TEC2789",
+      "name": "Cape Hatteras",
+      "state": "NC",
+      "lat": 35.233333,
+      "lng": -75.516667,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8654400"
+    },
+    {
+      "id": "8654400",
+      "name": "CAPE HATTERAS FISHING PIER",
+      "state": "NC",
+      "lat": 35.2233,
+      "lng": -75.635,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8654467",
+      "name": "Hatteras (ocean)",
+      "state": "NC",
+      "lat": 35.208599,
+      "lng": -75.704201,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "TEC2791",
+      "name": "Hatteras Inlet",
+      "state": "NC",
+      "lat": 35.2,
+      "lng": -75.733333,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8654400"
+    },
+    {
+      "id": "8654769",
+      "name": "Ocracoke, Pamlico Sound",
+      "state": "NC",
+      "lat": 35.115501,
+      "lng": -75.9869,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "TEC2793",
+      "name": "Ocracoke Inlet",
+      "state": "NC",
+      "lat": 35.066667,
+      "lng": -76.016667,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8654400"
+    },
+    {
+      "id": "8655133",
+      "name": "Oriental, Neuse River",
+      "state": "NC",
+      "lat": 35.024601,
+      "lng": -76.691803,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8655151",
+      "name": "Cedar Island",
+      "state": "NC",
+      "lat": 35.018902,
+      "lng": -76.314301,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8655875",
+      "name": "Sea Level",
+      "state": "NC",
+      "lat": 34.875,
+      "lng": -76.3433,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8656084",
+      "name": "Core Creek Bridge",
+      "state": "NC",
+      "lat": 34.825001,
+      "lng": -76.690002,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8656201",
+      "name": "Davis, Core Sound",
+      "state": "NC",
+      "lat": 34.796799,
+      "lng": -76.455498,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8656225",
+      "name": "North River Bridge",
+      "state": "NC",
+      "lat": 34.7917,
+      "lng": -76.6083,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8654400"
+    },
+    {
+      "id": "8656306",
+      "name": "Newport River (Yacht Club)",
+      "state": "NC",
+      "lat": 34.7683,
+      "lng": -76.6717,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8654400"
+    },
+    {
+      "id": "8656451",
+      "name": "Gallant Channel",
+      "state": "NC",
+      "lat": 34.7283,
+      "lng": -76.6683,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8654400"
+    },
+    {
+      "id": "8656467",
+      "name": "SpoonersCreek",
+      "state": "NC",
+      "lat": 34.725,
+      "lng": -76.8033,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8656502",
+      "name": "Morehead City Harbor",
+      "state": "NC",
+      "lat": 34.720001,
+      "lng": -76.7108,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8656499",
+      "name": "Atlantic Beach Bridge",
+      "state": "NC",
+      "lat": 34.7183,
+      "lng": -76.7367,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8654400"
+    },
+    {
+      "id": "8656496",
+      "name": "Morehead City",
+      "state": "NC",
+      "lat": 34.7183,
+      "lng": -76.695,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8654400"
+    },
+    {
+      "id": "8656483",
+      "name": "Beaufort, Duke Marine Lab",
+      "state": "NC",
+      "lat": 34.717331,
+      "lng": -76.670658,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "TEC2831",
+      "name": "N.C. State Fisheries",
+      "state": "NC",
+      "lat": 34.716667,
+      "lng": -76.75,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8654400"
+    },
+    {
+      "id": "8656503",
+      "name": "Harkers Island Bridge",
+      "state": "NC",
+      "lat": 34.715,
+      "lng": -76.5783,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8654400"
+    },
+    {
+      "id": "8656518",
+      "name": "Beaufort, Taylor Creek",
+      "state": "NC",
+      "lat": 34.7117,
+      "lng": -76.645,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8654400"
+    },
+    {
+      "id": "8656539",
+      "name": "Lenoxville Point",
+      "state": "NC",
+      "lat": 34.7083,
+      "lng": -76.62,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8654400"
+    },
+    {
+      "id": "8656554",
+      "name": "Channel Marker Lt. 59",
+      "state": "NC",
+      "lat": 34.7033,
+      "lng": -76.62,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8654400"
+    },
+    {
+      "id": "8656566",
+      "name": "Coral Bay, Atlantic Beach",
+      "state": "NC",
+      "lat": 34.7,
+      "lng": -76.7683,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8654400"
+    },
+    {
+      "id": "8656571",
+      "name": "Fort Macon, USCG Station",
+      "state": "NC",
+      "lat": 34.6983,
+      "lng": -76.6817,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8654400"
+    },
+    {
+      "id": "8656569",
+      "name": "Beaufort Inlet Channel Range",
+      "state": "NC",
+      "lat": 34.6983,
+      "lng": -76.665,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8654400"
+    },
+    {
+      "id": "8656590",
+      "name": "Atlantic Beach",
+      "state": "NC",
+      "lat": 34.6933,
+      "lng": -76.7117,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8656613",
+      "name": "Swansboro, East Corbett Ave. Bridge",
+      "state": "NC",
+      "lat": 34.6866,
+      "lng": -77.118103,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "TEC2801",
+      "name": "Shell Point, Harkers Island",
+      "state": "NC",
+      "lat": 34.683333,
+      "lng": -76.533333,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8654400"
+    },
+    {
+      "id": "TEC2837",
+      "name": "Bogue Inlet",
+      "state": "NC",
+      "lat": 34.650002,
+      "lng": -77.099998,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8654400"
+    },
+    {
+      "id": "8656841",
+      "name": "Cape Lookout Bight",
+      "state": "NC",
+      "lat": 34.6133,
+      "lng": -76.5383,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8656937",
+      "name": "Cape Lookout (ocean)",
+      "state": "NC",
+      "lat": 34.6083,
+      "lng": -76.5283,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8654400"
+    },
+    {
+      "id": "8657002",
+      "name": "Sneads Ferry, New River",
+      "state": "NC",
+      "lat": 34.576302,
+      "lng": -77.395401,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8657167",
+      "name": "New River Inlet",
+      "state": "NC",
+      "lat": 34.5333,
+      "lng": -77.3417,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8654400"
+    },
+    {
+      "id": "8657419",
+      "name": "Ocean City Beach (fishing pier)",
+      "state": "NC",
+      "lat": 34.4517,
+      "lng": -77.495,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8654400"
+    },
+    {
+      "id": "TEC2863",
+      "name": "Castle Hayne, Northeast River",
+      "state": "NC",
+      "lat": 34.35,
+      "lng": -77.933333,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8658120"
+    },
+    {
+      "id": "8657813",
+      "name": "Hampstead",
+      "state": "NC",
+      "lat": 34.339401,
+      "lng": -77.706001,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8658120",
+      "name": "Wilmington",
+      "state": "NC",
+      "lat": 34.2267,
+      "lng": -77.9533,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8658145",
+      "name": "Shinn Point, ICWW",
+      "state": "NC",
+      "lat": 34.217899,
+      "lng": -77.812302,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8658163",
+      "name": "Wrightsville Beach",
+      "state": "NC",
+      "lat": 34.213306,
+      "lng": -77.786694,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8658501",
+      "name": "Orton Point",
+      "state": "NC",
+      "lat": 34.0567,
+      "lng": -77.94,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8658120"
+    },
+    {
+      "id": "8658559",
+      "name": "Wilmington Beach",
+      "state": "NC",
+      "lat": 34.0317,
+      "lng": -77.8933,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8654400"
+    },
+    {
+      "id": "8658579",
+      "name": "Sunny Point Army Base, Wharf no.3",
+      "state": "NC",
+      "lat": 34.0233,
+      "lng": -77.9467,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8658622",
+      "name": "Reaves Point",
+      "state": "NC",
+      "lat": 34.0033,
+      "lng": -77.955,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8658120"
+    },
+    {
+      "id": "8658654",
+      "name": "Sunny Point Army Base, Wharf no.1",
+      "state": "NC",
+      "lat": 33.99,
+      "lng": -77.9567,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8658120"
+    },
+    {
+      "id": "8658715",
+      "name": "Federal Point",
+      "state": "NC",
+      "lat": 33.9617,
+      "lng": -77.94,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8658120"
+    },
+    {
+      "id": "8658741",
+      "name": "Zekes Island",
+      "state": "NC",
+      "lat": 33.95,
+      "lng": -77.9517,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8659414",
+      "name": "Varnamtown, Lockwoods Folly River",
+      "state": "NC",
+      "lat": 33.933102,
+      "lng": -78.218903,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8659665",
+      "name": "Bowen Point, Shallotte Inlet",
+      "state": "NC",
+      "lat": 33.915001,
+      "lng": -78.373299,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8659084",
+      "name": "Southport",
+      "state": "NC",
+      "lat": 33.915,
+      "lng": -78.0183,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8659182",
+      "name": "Oak Island, Yaupon Beach",
+      "state": "NC",
+      "lat": 33.9017,
+      "lng": -78.0817,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8659086",
+      "name": "Fort Caswell",
+      "state": "NC",
+      "lat": 33.8967,
+      "lng": -78.0167,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8658120"
+    },
+    {
+      "id": "8659899",
+      "name": "Sunset Beach Bridge",
+      "state": "NC",
+      "lat": 33.881667,
+      "lng": -78.51,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8661070"
+    },
+    {
+      "id": "8658901",
+      "name": "Bald Head",
+      "state": "NC",
+      "lat": 33.88,
+      "lng": -78.0017,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8658120"
+    },
+    {
+      "id": "8660121",
+      "name": "Little River (town)",
+      "state": "SC",
+      "lat": 33.87,
+      "lng": -78.6083,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8665530"
+    },
+    {
+      "id": "8660098",
+      "name": "Little River Neck, north end",
+      "state": "SC",
+      "lat": 33.87,
+      "lng": -78.5733,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8661070"
+    },
+    {
+      "id": "8659897",
+      "name": "Sunset Beach Pier",
+      "state": "NC",
+      "lat": 33.865,
+      "lng": -78.5067,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8660147",
+      "name": "Dunn Sound, north end",
+      "state": "SC",
+      "lat": 33.86,
+      "lng": -78.58,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8661070"
+    },
+    {
+      "id": "8660148",
+      "name": "Dunn Sound, Little River Inlet",
+      "state": "SC",
+      "lat": 33.8583,
+      "lng": -78.57,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8661070"
+    },
+    {
+      "id": "8660166",
+      "name": "Nixon Crossroads",
+      "state": "SC",
+      "lat": 33.855,
+      "lng": -78.6483,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8665530"
+    },
+    {
+      "id": "8660195",
+      "name": "Dunn Sound, west end",
+      "state": "SC",
+      "lat": 33.8517,
+      "lng": -78.5883,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8661070"
+    },
+    {
+      "id": "TEC2847",
+      "name": "Cape Fear",
+      "state": "NC",
+      "lat": 33.85,
+      "lng": -77.966667,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8654400"
+    },
+    {
+      "id": "8660266",
+      "name": "Hog Inlet Pier",
+      "state": "SC",
+      "lat": 33.8367,
+      "lng": -78.6067,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8661070"
+    },
+    {
+      "id": "8660275",
+      "name": "Conway, RR. bridge",
+      "state": "SC",
+      "lat": 33.835,
+      "lng": -79.0417,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8665530"
+    },
+    {
+      "id": "8660265",
+      "name": "Cherry Grove (inside)",
+      "state": "SC",
+      "lat": 33.835,
+      "lng": -78.6333,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8661070"
+    },
+    {
+      "id": "8660315",
+      "name": "Grahamville",
+      "state": "SC",
+      "lat": 33.83,
+      "lng": -78.9533,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8665530"
+    },
+    {
+      "id": "8660401",
+      "name": "Myrtle Beach Airport",
+      "state": "SC",
+      "lat": 33.82,
+      "lng": -78.7183,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8665530"
+    },
+    {
+      "id": "8660642",
+      "name": "North Myrtle Beach, ICWW",
+      "state": "SC",
+      "lat": 33.766701,
+      "lng": -78.815002,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8665530"
+    },
+    {
+      "id": "8660754",
+      "name": "Carolina Forest, ICWW",
+      "state": "SC",
+      "lat": 33.734901,
+      "lng": -78.882698,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8660854",
+      "name": "Myrtle Beach, Combination Bridge",
+      "state": "SC",
+      "lat": 33.7133,
+      "lng": -78.9217,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8665530"
+    },
+    {
+      "id": "8660983",
+      "name": "Socastee Bridge",
+      "state": "SC",
+      "lat": 33.6867,
+      "lng": -79.005,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8665530"
+    },
+    {
+      "id": "8661070",
+      "name": "Springmaid Pier, Myrtle beach",
+      "state": "SC",
+      "lat": 33.654999,
+      "lng": -78.918297,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8661419",
+      "name": "Garden City Bridge, Main Creek",
+      "state": "SC",
+      "lat": 33.5783,
+      "lng": -79.0033,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8661437",
+      "name": "Garden City Pier (ocean)",
+      "state": "SC",
+      "lat": 33.575,
+      "lng": -78.9967,
+      "type": "R",
+      "subordinate": false,
+      "referenceId": null
+    },
+    {
+      "id": "8661529",
+      "name": "Captain Alex's Marina, Parsonage Creek",
+      "state": "SC",
+      "lat": 33.5517,
+      "lng": -79.0367,
+      "type": "S",
+      "subordinate": true,
+      "referenceId": "8661070"
+    }
+  ],
+  "aliases": [
+    {
+      "names": [
+        "oregon inlet",
+        "oregon inlet marina"
+      ],
+      "stationId": "8652587"
+    },
+    {
+      "names": [
+        "oregon inlet bridge"
+      ],
+      "stationId": "8652659"
+    },
+    {
+      "names": [
+        "oregon inlet uscg",
+        "oregon inlet coast guard",
+        "oregon inlet station"
+      ],
+      "stationId": "8652678"
+    },
+    {
+      "names": [
+        "duck",
+        "duck pier",
+        "duck nc"
+      ],
+      "stationId": "8651370"
+    },
+    {
+      "names": [
+        "corolla",
+        "corolla nc"
+      ],
+      "stationId": "8651370"
+    },
+    {
+      "names": [
+        "kitty hawk",
+        "kitty hawk nc"
+      ],
+      "stationId": "8651605"
+    },
+    {
+      "names": [
+        "nags head",
+        "nags head nc",
+        "jennettes pier",
+        "jennette's pier",
+        "jennette pier"
+      ],
+      "stationId": "8652226"
+    },
+    {
+      "names": [
+        "manns harbor",
+        "manns harbor nc"
+      ],
+      "stationId": "8652247"
+    },
+    {
+      "names": [
+        "manteo",
+        "manteo nc",
+        "roanoke island"
+      ],
+      "stationId": "8652437"
+    },
+    {
+      "names": [
+        "wanchese"
+      ],
+      "stationId": "8652591"
+    },
+    {
+      "names": [
+        "rodanthe",
+        "waves",
+        "salvo"
+      ],
+      "stationId": "8653215"
+    },
+    {
+      "names": [
+        "avon"
+      ],
+      "stationId": "8653951"
+    },
+    {
+      "names": [
+        "cape hatteras",
+        "hatteras",
+        "hatteras village",
+        "buxton",
+        "frisco"
+      ],
+      "stationId": "8654400"
+    },
+    {
+      "names": [
+        "hatteras inlet"
+      ],
+      "stationId": "TEC2791"
+    },
+    {
+      "names": [
+        "ocracoke",
+        "ocracoke village",
+        "ocracoke nc"
+      ],
+      "stationId": "8654769"
+    },
+    {
+      "names": [
+        "ocracoke inlet"
+      ],
+      "stationId": "TEC2793"
+    },
+    {
+      "names": [
+        "engelhard"
+      ],
+      "stationId": "8653471"
+    },
+    {
+      "names": [
+        "oriental",
+        "oriental nc"
+      ],
+      "stationId": "8655133"
+    },
+    {
+      "names": [
+        "cedar island"
+      ],
+      "stationId": "8655151"
+    },
+    {
+      "names": [
+        "sea level",
+        "atlantic nc"
+      ],
+      "stationId": "8655875"
+    },
+    {
+      "names": [
+        "davis",
+        "davis nc",
+        "core sound"
+      ],
+      "stationId": "8656201"
+    },
+    {
+      "names": [
+        "harkers island",
+        "shell point"
+      ],
+      "stationId": "8656503"
+    },
+    {
+      "names": [
+        "beaufort",
+        "beaufort nc",
+        "duke marine lab"
+      ],
+      "stationId": "8656483"
+    },
+    {
+      "names": [
+        "morehead city",
+        "morehead",
+        "morehead city nc",
+        "morehead city harbor"
+      ],
+      "stationId": "8656502"
+    },
+    {
+      "names": [
+        "atlantic beach",
+        "atlantic beach nc",
+        "fort macon"
+      ],
+      "stationId": "8656590"
+    },
+    {
+      "names": [
+        "newport",
+        "newport nc",
+        "newport river"
+      ],
+      "stationId": "8656306"
+    },
+    {
+      "names": [
+        "swansboro",
+        "swansboro nc",
+        "cape carteret",
+        "cedar point"
+      ],
+      "stationId": "8656613"
+    },
+    {
+      "names": [
+        "emerald isle",
+        "bogue inlet",
+        "bogue banks west"
+      ],
+      "stationId": "TEC2837"
+    },
+    {
+      "names": [
+        "cape lookout",
+        "cape lookout bight"
+      ],
+      "stationId": "8656841"
+    },
+    {
+      "names": [
+        "sneads ferry",
+        "sneads ferry nc",
+        "new river"
+      ],
+      "stationId": "8657002"
+    },
+    {
+      "names": [
+        "new river inlet"
+      ],
+      "stationId": "8657167"
+    },
+    {
+      "names": [
+        "surf city",
+        "topsail",
+        "topsail beach",
+        "topsail island",
+        "north topsail",
+        "ocean city beach"
+      ],
+      "stationId": "8657419"
+    },
+    {
+      "names": [
+        "hampstead"
+      ],
+      "stationId": "8657813"
+    },
+    {
+      "names": [
+        "wilmington",
+        "wilmington nc"
+      ],
+      "stationId": "8658120"
+    },
+    {
+      "names": [
+        "wrightsville",
+        "wrightsville beach",
+        "wrightsville beach nc"
+      ],
+      "stationId": "8658163"
+    },
+    {
+      "names": [
+        "carolina beach",
+        "kure beach",
+        "wilmington beach"
+      ],
+      "stationId": "8658559"
+    },
+    {
+      "names": [
+        "southport",
+        "southport nc"
+      ],
+      "stationId": "8659084"
+    },
+    {
+      "names": [
+        "oak island",
+        "yaupon beach",
+        "caswell beach",
+        "fort caswell"
+      ],
+      "stationId": "8659182"
+    },
+    {
+      "names": [
+        "bald head",
+        "bald head island"
+      ],
+      "stationId": "8658901"
+    },
+    {
+      "names": [
+        "holden beach",
+        "lockwoods folly",
+        "varnamtown"
+      ],
+      "stationId": "8659414"
+    },
+    {
+      "names": [
+        "shallotte",
+        "ocean isle",
+        "ocean isle beach"
+      ],
+      "stationId": "8659665"
+    },
+    {
+      "names": [
+        "sunset beach",
+        "sunset beach nc"
+      ],
+      "stationId": "8659897"
+    },
+    {
+      "names": [
+        "calabash",
+        "little river",
+        "little river sc",
+        "little river neck"
+      ],
+      "stationId": "8660121"
+    },
+    {
+      "names": [
+        "cherry grove",
+        "north myrtle",
+        "north myrtle beach",
+        "hog inlet"
+      ],
+      "stationId": "8660265"
+    },
+    {
+      "names": [
+        "myrtle beach",
+        "springmaid",
+        "springmaid pier"
+      ],
+      "stationId": "8661070"
+    },
+    {
+      "names": [
+        "garden city",
+        "garden city beach"
+      ],
+      "stationId": "8661437"
+    },
+    {
+      "names": [
+        "sandbridge",
+        "sandbridge va"
+      ],
+      "stationId": "8639428"
+    },
+    {
+      "names": [
+        "virginia beach",
+        "rudee inlet"
+      ],
+      "stationId": "8639168"
+    }
+  ]
+}
