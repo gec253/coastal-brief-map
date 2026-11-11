@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: coastal-brief-map
+    runtime: python
+    plan: free
+    buildCommand: ""
+    startCommand: python server.py
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12"
