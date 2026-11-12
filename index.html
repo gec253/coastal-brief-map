@@ -131,26 +131,6 @@
       <div class="forecast-strip" id="forecast-strip"></div>
     </section>
 
-    <section class="panel about">
-      <h2>About this map test</h2>
-      <p>
-        The public Coastal Brief site will use a Leaflet map built only from NOAA and OpenStreetMap data,
-        plus an optional weather radar layer from WeatherAPI.com (NOAA MRMS tiles for the United States).
-        Windy was dropped because its free embed terms do not allow commercial or ad-supported sites.
-      </p>
-      <ul>
-        <li>The map stays below this text on a phone so it does not load until you scroll to it.</li>
-        <li>Map layers are small chips along the side of the map. Wind and waves are color washes over a street-style map or a NOAA nautical chart. Water temperature and radar each take over the map (they replace the base, and only one of those two can be on at a time). Radar still loads only when you open that chip. Chips for depth contours, chlorophyll, salinity, dissolved oxygen, and AIS heat zones are visible but dimmed until a free, verified data source is wired; they make no requests.</li>
-        <li>Radar tiles load only when you open the Radar layer, loop the last six scans, and reuse cached frames in the browser. Forecast frames (the next-hour nowcast) are labeled as forecast.</li>
-        <li>Condition cards are live buoy and tide readings (converted to knots and °F). Use Tide search above for high and low times at a place you plan to go. The colored map washes are <strong>forecasts or satellite estimates</strong>, not the same as the buoy numbers.</li>
-        <li>This is a layout and endpoint test, not the finished website. It is not weather, surf, or fishing advice.</li>
-      </ul>
-      <p class="fine">
-        Why the map is down here: on a phone about 390 pixels wide and 844 tall, this block is meant to push the map below the first screen.
-        The map scripts and tiles load only when the map section enters view.
-      </p>
-    </section>
-
     <section class="panel" id="map-section" aria-labelledby="map-h">
       <h2 id="map-h">Marine map — NOAA layers</h2>
       <div class="map-shell is-loading" id="map-shell">
