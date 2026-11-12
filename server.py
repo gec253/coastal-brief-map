@@ -615,6 +615,119 @@ _RADAR_MEM = {
 }
 
 
+
+# In-memory + best-effort on-disk counter for actual upstream radar.json calls.
+# Render's free disk is wiped on restart, so counts reset then. Process start
+# time is included in /api/radar/usage so a reader can tell.
+RADAR_USAGE_PATH = ROOT / "data" / "radar-usage.json"
+USAGE_LOCK = threading.Lock()
+PROCESS_STARTED = now_utc()
+_USAGE_LOADED = False
+_RADAR_USAGE = {
+    "date_et": "",
+    "upstream_calls_today": 0,
+    "cache_hits_today": 0,
+    "errors_today": 0,
+}
+
+
+def _et_now() -> datetime:
+    from zoneinfo import ZoneInfo
+    return datetime.now(ZoneInfo("America/New_York"))
+
+
+def _date_et() -> str:
+    return _et_now().date().isoformat()
+
+
+def _usage_reset(date_et: str) -> None:
+    _RADAR_USAGE["date_et"] = date_et
+    _RADAR_USAGE["upstream_calls_today"] = 0
+    _RADAR_USAGE["cache_hits_today"] = 0
+    _RADAR_USAGE["errors_today"] = 0
+
+
+def _usage_load() -> None:
+    """Load today's counts from disk if the file is still there."""
+    global _USAGE_LOADED
+    _USAGE_LOADED = True
+    try:
+        data = json.loads(RADAR_USAGE_PATH.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return
+    if not isinstance(data, dict):
+        return
+    today = _date_et()
+    if data.get("date_et") != today:
+        return
+    try:
+        _RADAR_USAGE["date_et"] = today
+        _RADAR_USAGE["upstream_calls_today"] = int(data.get("upstream_calls_today") or 0)
+        _RADAR_USAGE["cache_hits_today"] = int(data.get("cache_hits_today") or 0)
+        _RADAR_USAGE["errors_today"] = int(data.get("errors_today") or 0)
+    except (TypeError, ValueError):
+        _usage_reset(today)
+
+
+def _usage_save() -> None:
+    """Best-effort persist. Ignore disk errors; memory still has the counts."""
+    payload = {
+        "date_et": _RADAR_USAGE["date_et"],
+        "upstream_calls_today": _RADAR_USAGE["upstream_calls_today"],
+        "cache_hits_today": _RADAR_USAGE["cache_hits_today"],
+        "errors_today": _RADAR_USAGE["errors_today"],
+    }
+    try:
+        RADAR_USAGE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        tmp = RADAR_USAGE_PATH.with_name("radar-usage.json.tmp")
+        tmp.write_text(json.dumps(payload), encoding="utf-8")
+        tmp.replace(RADAR_USAGE_PATH)
+    except OSError:
+        pass
+
+
+def _usage_ensure_today() -> None:
+    global _USAGE_LOADED
+    if not _USAGE_LOADED:
+        _usage_load()
+        _USAGE_LOADED = True
+    today = _date_et()
+    if _RADAR_USAGE["date_et"] != today:
+        _usage_reset(today)
+
+
+def record_radar_cache_hit() -> None:
+    with USAGE_LOCK:
+        _usage_ensure_today()
+        _RADAR_USAGE["cache_hits_today"] += 1
+        _usage_save()
+
+
+def record_radar_upstream(*, error: bool) -> None:
+    with USAGE_LOCK:
+        _usage_ensure_today()
+        _RADAR_USAGE["upstream_calls_today"] += 1
+        if error:
+            _RADAR_USAGE["errors_today"] += 1
+        _usage_save()
+
+
+def radar_usage_payload() -> dict:
+    with USAGE_LOCK:
+        _usage_ensure_today()
+        started = PROCESS_STARTED.astimezone(_et_now().tzinfo).replace(microsecond=0)
+        payload = {
+            "date_et": _RADAR_USAGE["date_et"],
+            "upstream_calls_today": _RADAR_USAGE["upstream_calls_today"],
+            "cache_hits_today": _RADAR_USAGE["cache_hits_today"],
+            "errors_today": _RADAR_USAGE["errors_today"],
+            "since_restart": started.isoformat(),
+            "key_configured": bool(weatherapi_key()),
+        }
+        _usage_save()
+        return payload
+
+
 def weatherapi_key() -> str | None:
     """Read WEATHERAPI_KEY. Also accept a curl/URL paste that contains key=."""
     raw = (os.environ.get("WEATHERAPI_KEY") or "").strip()
@@ -742,47 +855,53 @@ def _refresh_radar_mem(force: bool = False) -> dict:
         signed_ok = bool(mem.get("tile_url")) and now < (float(mem.get("tile_url_expires_epoch") or 0) - 120)
         fresh = mem.get("client") and (now - float(mem.get("fetched_at") or 0) < RADAR_JSON_TTL) and signed_ok
         if fresh and not force:
+            record_radar_cache_hit()
             return mem["client"]
         url = WEATHERAPI_ORIGIN + "/v1/radar.json?key=" + key + "&q=" + RADAR_Q
         status, ctype, body = fetch_url_quiet(url, tries=3)
-        if status != 200:
-            sys.stderr.write("radar.json upstream HTTP %s\n" % status)
-            if mem.get("client") and signed_ok:
-                return mem["client"]
-            msg = "Radar is unavailable right now."
+        upstream_error = True
+        try:
+            if status != 200:
+                sys.stderr.write("radar.json upstream HTTP %s\n" % status)
+                if mem.get("client") and signed_ok:
+                    return mem["client"]
+                msg = "Radar is unavailable right now."
+                try:
+                    err = json.loads(body.decode("utf-8")).get("error") or {}
+                    code = err.get("code")
+                    if code == 2009:
+                        msg = "Radar coming soon"
+                        return {"ok": False, "available": False, "reason": "coming_soon", "message": msg}
+                except (UnicodeDecodeError, json.JSONDecodeError, AttributeError):
+                    pass
+                return {"ok": False, "available": False, "reason": "upstream", "message": msg}
             try:
-                err = json.loads(body.decode("utf-8")).get("error") or {}
-                code = err.get("code")
+                data = json.loads(body.decode("utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                return {"ok": False, "available": False, "reason": "upstream", "message": "Radar is unavailable right now."}
+            if data.get("error"):
+                code = (data.get("error") or {}).get("code")
                 if code == 2009:
-                    msg = "Radar coming soon"
-                    return {"ok": False, "available": False, "reason": "coming_soon", "message": msg}
-            except (UnicodeDecodeError, json.JSONDecodeError, AttributeError):
-                pass
-            return {"ok": False, "available": False, "reason": "upstream", "message": msg}
-        try:
-            data = json.loads(body.decode("utf-8"))
-        except (UnicodeDecodeError, json.JSONDecodeError):
-            return {"ok": False, "available": False, "reason": "upstream", "message": "Radar is unavailable right now."}
-        if data.get("error"):
-            code = (data.get("error") or {}).get("code")
-            if code == 2009:
-                return {"ok": False, "available": False, "reason": "coming_soon", "message": "Radar coming soon"}
-            return {"ok": False, "available": False, "reason": "upstream", "message": "Radar is unavailable right now."}
-        radar = data.get("radar") or {}
-        tile_url = radar.get("tile_url") or ""
-        if not tile_url.startswith("https://api.weatherapi.com/v1/radar/tile/"):
-            return {"ok": False, "available": False, "reason": "upstream", "message": "Radar is unavailable right now."}
-        try:
-            expires = int(radar.get("tile_url_expires_epoch") or 0)
-        except (TypeError, ValueError):
-            expires = 0
-        client = _client_radar_payload(data, tile_url)
-        mem["fetched_at"] = now
-        mem["tile_url"] = tile_url
-        mem["tile_url_expires_epoch"] = expires if expires else now + 2 * 60 * 60
-        mem["client"] = client
-        mem["error"] = None
-        return client
+                    return {"ok": False, "available": False, "reason": "coming_soon", "message": "Radar coming soon"}
+                return {"ok": False, "available": False, "reason": "upstream", "message": "Radar is unavailable right now."}
+            radar = data.get("radar") or {}
+            tile_url = radar.get("tile_url") or ""
+            if not tile_url.startswith("https://api.weatherapi.com/v1/radar/tile/"):
+                return {"ok": False, "available": False, "reason": "upstream", "message": "Radar is unavailable right now."}
+            try:
+                expires = int(radar.get("tile_url_expires_epoch") or 0)
+            except (TypeError, ValueError):
+                expires = 0
+            client = _client_radar_payload(data, tile_url)
+            mem["fetched_at"] = now
+            mem["tile_url"] = tile_url
+            mem["tile_url_expires_epoch"] = expires if expires else now + 2 * 60 * 60
+            mem["client"] = client
+            mem["error"] = None
+            upstream_error = False
+            return client
+        finally:
+            record_radar_upstream(error=upstream_error)
 
 
 def handle_radar_meta() -> tuple[int, dict]:
@@ -866,6 +985,8 @@ class Handler(SimpleHTTPRequestHandler):
         if parsed.path == "/api/geocode":
             status, payload = handle_geocode(parsed.query)
             return self._send_json(payload, cache_s=300, status=status)
+        if parsed.path == "/api/radar/usage":
+            return self._send_json(radar_usage_payload(), cache_s=0)
         if parsed.path == "/api/radar":
             status, payload = handle_radar_meta()
             return self._send_json(payload, cache_s=60, status=status)
@@ -959,6 +1080,7 @@ class Handler(SimpleHTTPRequestHandler):
 
 def main():
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    _usage_load()
     ap = argparse.ArgumentParser()
     ap.add_argument("--host", default=os.environ.get("HOST", "0.0.0.0"))
     ap.add_argument("--port", type=int, default=int(os.environ.get("PORT", "8765")))

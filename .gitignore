@@ -14,3 +14,5 @@ desktop-*.png
 playwright-results.json
 TEST-LOG.md
 tide-test-results.json
+data/radar-usage.json
+data/radar-usage.json.tmp
