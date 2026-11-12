@@ -1,0 +1,89 @@
+{
+  "note": "Add real catch photos later by replacing src and writing a short, accurate alt for each image. Do not use stock photos of people or invented catch shots. Captions are not shown on the wall.",
+  "photos": [
+    {
+      "id": "slot-01",
+      "src": "/data/catch-wall/slot-01.jpg",
+      "alt": "Placeholder tile reserved for a future catch photo",
+      "width": 800,
+      "height": 800
+    },
+    {
+      "id": "slot-02",
+      "src": "/data/catch-wall/slot-02.jpg",
+      "alt": "Placeholder tile reserved for a future catch photo",
+      "width": 800,
+      "height": 1100
+    },
+    {
+      "id": "slot-03",
+      "src": "/data/catch-wall/slot-03.jpg",
+      "alt": "Placeholder tile reserved for a future catch photo",
+      "width": 1100,
+      "height": 700
+    },
+    {
+      "id": "slot-04",
+      "src": "/data/catch-wall/slot-04.jpg",
+      "alt": "Placeholder tile reserved for a future catch photo",
+      "width": 800,
+      "height": 1000
+    },
+    {
+      "id": "slot-05",
+      "src": "/data/catch-wall/slot-05.jpg",
+      "alt": "Placeholder tile reserved for a future catch photo",
+      "width": 900,
+      "height": 900
+    },
+    {
+      "id": "slot-06",
+      "src": "/data/catch-wall/slot-06.jpg",
+      "alt": "Placeholder tile reserved for a future catch photo",
+      "width": 700,
+      "height": 1050
+    },
+    {
+      "id": "slot-07",
+      "src": "/data/catch-wall/slot-07.jpg",
+      "alt": "Placeholder tile reserved for a future catch photo",
+      "width": 1200,
+      "height": 800
+    },
+    {
+      "id": "slot-08",
+      "src": "/data/catch-wall/slot-08.jpg",
+      "alt": "Placeholder tile reserved for a future catch photo",
+      "width": 800,
+      "height": 900
+    },
+    {
+      "id": "slot-09",
+      "src": "/data/catch-wall/slot-09.jpg",
+      "alt": "Placeholder tile reserved for a future catch photo",
+      "width": 850,
+      "height": 1200
+    },
+    {
+      "id": "slot-10",
+      "src": "/data/catch-wall/slot-10.jpg",
+      "alt": "Placeholder tile reserved for a future catch photo",
+      "width": 1000,
+      "height": 750
+    },
+    {
+      "id": "slot-11",
+      "src": "/data/catch-wall/slot-11.jpg",
+      "alt": "Placeholder tile reserved for a future catch photo",
+      "width": 800,
+      "height": 800
+    },
+    {
+      "id": "slot-12",
+      "src": "/data/catch-wall/slot-12.jpg",
+      "alt": "Placeholder tile reserved for a future catch photo",
+      "width": 900,
+      "height": 1150
+    }
+  ]
+}

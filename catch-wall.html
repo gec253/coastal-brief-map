@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Catch wall — Coastal Brief</title>
+  <meta name="description" content="A photo wall for North Carolina catches. Placeholder tiles for now; photos can be added later.">
+  <link rel="stylesheet" href="/styles.css">
+  <meta name="theme-color" content="#0B2A3D">
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("coastalBrief.theme");
+        if (t !== "light" && t !== "dark") {
+          t = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body class="catch-page">
+  <nav class="skip-links" aria-label="Skip links">
+    <a class="skip" href="#catch-wall">Skip to photos</a>
+  </nav>
+  <header class="site">
+    <div class="wrap header-row">
+      <div class="brand">
+        <h1><a class="site-title" href="/">Coastal Brief</a></h1>
+        <p class="tagline">North Carolina fishing, surfing, and boating conditions — public page prototype</p>
+        <nav class="site-nav" aria-label="Site">
+          <a href="/">Conditions</a>
+          <a href="/catch-wall" aria-current="page">Catch wall</a>
+        </nav>
+      </div>
+      <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <p class="catch-lead">A wall for catch photos from the North Carolina coast. These tiles are neutral placeholders until real photos are added. There are no captions, and there is no species filter yet.</p>
+    <div class="catch-wall" id="catch-wall"></div>
+    <p class="fine" id="catch-status" role="status"></p>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">
+      <p>Coastal Brief is not weather, surf, or fishing advice. Always check official NWS marine forecasts and advisories before going out.</p>
+      <p>Market and stock data are not shown on this public page.</p>
+    </div>
+  </footer>
+  <script src="/catch-wall.js" defer></script>
+</body>
+</html>

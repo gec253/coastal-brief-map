@@ -849,6 +849,8 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
+        if parsed.path in ("/catch-wall", "/catch-wall/"):
+            return self._send_file(ROOT / "catch-wall.html", "text/html; charset=utf-8")
         if parsed.path == "/api/health":
             return self._send_json({"ok": True})
         if parsed.path == "/api/snapshot":

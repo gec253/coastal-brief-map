@@ -4,7 +4,7 @@
   const SST_FALLBACK_TIME = "2026-11-08T12:00:00Z";
   const CENTER = [34.7, -76.7];
   const ZOOM = 8;
-  const WASH_OPACITY = { light: { wind: 0.72, waves: 0.85, sst: 0.85 }, chart: { wind: 0.55, waves: 0.58, sst: 0.6 } };
+  const WASH_OPACITY = { light: { wind: 0.72, waves: 0.85, sst: 0.85 }, chart: { wind: 0.55, waves: 0.58, sst: 0.6 }, fullscreen: { wind: 0.72, waves: 0.85, sst: 0.95 } };
 
   const $ = (id) => document.getElementById(id);
   let map = null;
@@ -577,7 +577,8 @@
   }
 
   function applyWashOpacity() {
-    const op = WASH_OPACITY[baseKind];
+    const mode = isFullscreen() ? "fullscreen" : baseKind;
+    const op = WASH_OPACITY[mode] || WASH_OPACITY.light;
     if (layers.wind) layers.wind.setOpacity(op.wind);
     if (layers.waves) layers.waves.setOpacity(op.waves);
     if (layers.sst) layers.sst.setOpacity(op.sst);
@@ -702,15 +703,72 @@
     $("map-placeholder").style.display = "none";
     $("map-shell").classList.remove("is-loading");
     $("map-status").textContent =
-      "Map loaded. Starting view is fixed at 34.7°N, 76.7°W (zoom 7 on a phone, 8 on desktop). One marine layer at a time. Choose Light map or Nautical chart as the base. Tiles come through a local NOAA proxy because the wind, wave, and SST services do not send CORS headers.";
+      "Map loaded. Starting view is fixed at 34.7°N, 76.7°W (zoom 7 on a phone, 8 on desktop). Use the chips on the side of the map to switch layers. Wind and waves sit on the street map or nautical chart. Water temperature and radar each take over the map. Tiles come through a local NOAA proxy because the wind, wave, and SST services do not send CORS headers.";
     setTimeout(() => map.invalidateSize(), 80);
+  }
+
+  function isFullscreen() {
+    return activeMarine === "sst" || activeMarine === "radar";
+  }
+
+  function syncChips() {
+    const fullscreen = isFullscreen();
+    document.querySelectorAll(".map-chip[data-chip]").forEach(function (btn) {
+      if (btn.classList.contains("is-soon") || btn.getAttribute("aria-disabled") === "true") {
+        btn.setAttribute("aria-pressed", "false");
+        return;
+      }
+      const chip = btn.getAttribute("data-chip");
+      let on = false;
+      if (chip === "chart") on = !fullscreen && baseKind === "chart";
+      else if (chip === "wind" || chip === "waves" || chip === "sst" || chip === "radar") on = activeMarine === chip;
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    const shell = $("map-shell");
+    if (shell) shell.classList.toggle("is-fullscreen-layer", fullscreen);
+  }
+
+  function showChipNote(text) {
+    const el = $("chip-note");
+    if (!el) return;
+    el.textContent = text;
+    el.hidden = false;
+    if (showChipNote._timer) clearTimeout(showChipNote._timer);
+    showChipNote._timer = setTimeout(function () { el.hidden = true; }, 2600);
+  }
+
+  const SOON_LABELS = {
+    depth: "Depth contours",
+    chlorophyll: "Chlorophyll",
+    salinity: "Salinity",
+    oxygen: "Dissolved oxygen",
+    ais: "AIS heat zones",
+  };
+
+  function handleChip(chip) {
+    if (SOON_LABELS[chip]) {
+      showChipNote(SOON_LABELS[chip] + " coming soon");
+      return;
+    }
+    if (chip === "chart") {
+      if (isFullscreen()) {
+        // Leave the takeover layer and show the nautical chart as the base.
+        activeMarine = "wind";
+        setMarine("wind");
+        setBase("chart");
+        return;
+      }
+      setBase(baseKind === "chart" ? "light" : "chart");
+      return;
+    }
+    if (chip === "wind" || chip === "waves" || chip === "sst" || chip === "radar") {
+      setMarine(chip);
+    }
   }
 
   function setMarine(kind) {
     activeMarine = kind;
-    document.querySelectorAll(".switcher button[data-layer]").forEach((btn) => {
-      btn.setAttribute("aria-pressed", btn.getAttribute("data-layer") === kind ? "true" : "false");
-    });
+    syncChips();
     if (kind !== "sst") showSstLoading(false);
     if (kind !== "radar") setRadarVisible(false);
     if (!map) {
@@ -720,6 +778,7 @@
     ["wind", "waves", "waveLabels", "sst"].forEach((k) => {
       if (layers[k] && map.hasLayer(layers[k])) map.removeLayer(layers[k]);
     });
+    applyBaseVisibility();
     if (kind === "radar") {
       setLegend("radar");
       ensureRadar().then(function () {
@@ -737,19 +796,10 @@
   }
 
   function setBase(kind) {
-    baseKind = kind;
-    document.querySelectorAll(".switcher button[data-base]").forEach((btn) => {
-      btn.setAttribute("aria-pressed", btn.getAttribute("data-base") === kind ? "true" : "false");
-    });
+    baseKind = kind === "chart" ? "chart" : "light";
+    syncChips();
     if (!map) return;
-    if (kind === "chart") {
-      if (layers.light && map.hasLayer(layers.light)) map.removeLayer(layers.light);
-      if (layers.darkBasemap && map.hasLayer(layers.darkBasemap)) map.removeLayer(layers.darkBasemap);
-      if (layers.chart && !map.hasLayer(layers.chart)) layers.chart.addTo(map);
-    } else {
-      if (layers.chart && map.hasLayer(layers.chart)) map.removeLayer(layers.chart);
-      applyBasemapForTheme();
-    }
+    applyBaseVisibility();
     applyWashOpacity();
   }
 
@@ -757,17 +807,30 @@
     return isDark() && layers.darkBasemap ? layers.darkBasemap : layers.light;
   }
 
+  function applyBaseVisibility() {
+    if (!map) return;
+    const fullscreen = isFullscreen();
+    const showChart = !fullscreen && baseKind === "chart";
+    const showStreet = !fullscreen && baseKind !== "chart";
+    const showDarkUnderlay = fullscreen;
+    if (layers.chart) {
+      if (showChart && !map.hasLayer(layers.chart)) layers.chart.addTo(map);
+      if (!showChart && map.hasLayer(layers.chart)) map.removeLayer(layers.chart);
+    }
+    if (layers.light) {
+      if (showStreet && streetBasemap() === layers.light && !map.hasLayer(layers.light)) layers.light.addTo(map);
+      if ((!showStreet || streetBasemap() !== layers.light) && map.hasLayer(layers.light)) map.removeLayer(layers.light);
+    }
+    if (layers.darkBasemap) {
+      const wantDark = showDarkUnderlay || (showStreet && streetBasemap() === layers.darkBasemap);
+      if (wantDark && !map.hasLayer(layers.darkBasemap)) layers.darkBasemap.addTo(map);
+      if (!wantDark && map.hasLayer(layers.darkBasemap)) map.removeLayer(layers.darkBasemap);
+    }
+  }
+
   function applyBasemapForTheme() {
-    if (!map || baseKind === "chart") return;
-    const want = streetBasemap();
-    [layers.light, layers.darkBasemap].forEach(function (ly) {
-      if (!ly) return;
-      if (ly === want) {
-        if (!map.hasLayer(ly)) ly.addTo(map);
-      } else if (map.hasLayer(ly)) {
-        map.removeLayer(ly);
-      }
-    });
+    if (!map) return;
+    applyBaseVisibility();
   }
 
   function stopRadarTimer() {
@@ -1015,9 +1078,8 @@
         .then(() => loadScript("vendor/leaflet/leaflet.js"))
         .then(() => {
           initMap();
+          setBase(baseKind);
           setMarine(activeMarine);
-          const pressed = document.querySelector(".switcher button[data-base][aria-pressed='true']");
-          setBase(pressed ? pressed.getAttribute("data-base") : "light");
         })
         .catch((err) => {
           $("map-placeholder").textContent = "Could not load the map library.";
@@ -1041,11 +1103,8 @@
     io.observe(section);
   }
 
-  document.querySelectorAll(".switcher button[data-layer]").forEach((btn) => {
-    btn.addEventListener("click", () => setMarine(btn.getAttribute("data-layer")));
-  });
-  document.querySelectorAll(".switcher button[data-base]").forEach((btn) => {
-    btn.addEventListener("click", () => setBase(btn.getAttribute("data-base")));
+  document.querySelectorAll(".map-chip[data-chip]").forEach((btn) => {
+    btn.addEventListener("click", () => handleChip(btn.getAttribute("data-chip")));
   });
   $("map-cover").addEventListener("click", activateMap);
   $("map-cover").addEventListener("keydown", (e) => {

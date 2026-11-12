@@ -41,8 +41,12 @@
   <header class="site">
     <div class="wrap header-row">
       <div class="brand">
-        <h1>Coastal Brief</h1>
+        <h1><a class="site-title" href="/">Coastal Brief</a></h1>
         <p class="tagline">North Carolina fishing, surfing, and boating conditions — public page prototype</p>
+        <nav class="site-nav" aria-label="Site">
+          <a href="/" aria-current="page">Conditions</a>
+          <a href="/catch-wall">Catch wall</a>
+        </nav>
       </div>
       <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
     </div>
@@ -136,7 +140,7 @@
       </p>
       <ul>
         <li>The map stays below this text on a phone so it does not load until you scroll to it.</li>
-        <li>Wind, waves, sea-surface temperature, and radar are switched one at a time so the colors stay readable. The map underneath is a choice: a light street-style map, or a NOAA nautical chart. In dark mode the street-style map uses a free dark canvas from Esri. The colored washes sit on top of whichever base you pick.</li>
+        <li>Map layers are small chips along the side of the map. Wind and waves are color washes over a street-style map or a NOAA nautical chart. Water temperature and radar each take over the map (they replace the base, and only one of those two can be on at a time). Radar still loads only when you open that chip. Chips for depth contours, chlorophyll, salinity, dissolved oxygen, and AIS heat zones are visible but dimmed until a free, verified data source is wired; they make no requests.</li>
         <li>Radar tiles load only when you open the Radar layer, loop the last six scans, and reuse cached frames in the browser. Forecast frames (the next-hour nowcast) are labeled as forecast.</li>
         <li>Condition cards are live buoy and tide readings (converted to knots and °F). Use Tide search above for high and low times at a place you plan to go. The colored map washes are <strong>forecasts or satellite estimates</strong>, not the same as the buoy numbers.</li>
         <li>This is a layout and endpoint test, not the finished website. It is not weather, surf, or fishing advice.</li>
@@ -149,29 +153,30 @@
 
     <section class="panel" id="map-section" aria-labelledby="map-h">
       <h2 id="map-h">Marine map — NOAA layers</h2>
-      <div class="map-toolbar">
-        <div class="switcher" role="radiogroup" aria-label="Marine layer">
-          <button type="button" data-layer="wind" aria-pressed="true">Wind</button>
-          <button type="button" data-layer="waves">Waves</button>
-          <button type="button" data-layer="sst">Water temp</button>
-          <button type="button" data-layer="radar">Radar</button>
-        </div>
-        <div class="switcher base-switcher" role="radiogroup" aria-label="Base map">
-          <button type="button" data-base="light" id="base-light" aria-pressed="true">Light map</button>
-          <button type="button" data-base="chart" id="base-chart" aria-pressed="false">Nautical chart</button>
-        </div>
-      </div>
-      <div class="radar-controls" id="radar-controls" hidden>
-        <div class="radar-clock" id="radar-clock" role="status">Radar not started</div>
-        <label class="radar-forecast">
-          <input type="checkbox" id="radar-forecast">
-          Include forecast (next hour)
-        </label>
-        <button type="button" id="radar-play" aria-pressed="true">Pause</button>
-      </div>
       <div class="map-shell is-loading" id="map-shell">
         <div class="map-placeholder skeleton" id="map-placeholder">Scroll to load the map…</div>
         <div id="map" role="region" aria-label="Leaflet map of central coastal North Carolina"></div>
+        <div class="map-chips" role="toolbar" aria-label="Map layers">
+          <button type="button" class="map-chip" data-chip="sst" aria-pressed="false">Water temp</button>
+          <button type="button" class="map-chip" data-chip="radar" aria-pressed="false">Radar</button>
+          <button type="button" class="map-chip" data-chip="wind" aria-pressed="true">Wind</button>
+          <button type="button" class="map-chip" data-chip="waves" aria-pressed="false">Waves</button>
+          <button type="button" class="map-chip" data-chip="chart" aria-pressed="false" aria-label="Nautical chart">Chart</button>
+          <button type="button" class="map-chip is-soon" data-chip="depth" aria-disabled="true" aria-label="Depth contours, coming soon">Depth contours</button>
+          <button type="button" class="map-chip is-soon" data-chip="chlorophyll" aria-disabled="true" aria-label="Chlorophyll, coming soon">Chloro&shy;phyll</button>
+          <button type="button" class="map-chip is-soon" data-chip="salinity" aria-disabled="true" aria-label="Salinity, coming soon">Salinity</button>
+          <button type="button" class="map-chip is-soon" data-chip="oxygen" aria-disabled="true" aria-label="Dissolved oxygen, coming soon">Dissolved oxygen</button>
+          <button type="button" class="map-chip is-soon" data-chip="ais" aria-disabled="true" aria-label="AIS heat zones, coming soon">AIS heat</button>
+        </div>
+        <div class="radar-controls" id="radar-controls" hidden>
+          <div class="radar-clock" id="radar-clock" role="status">Radar not started</div>
+          <label class="radar-forecast">
+            <input type="checkbox" id="radar-forecast">
+            Include forecast (next hour)
+          </label>
+          <button type="button" id="radar-play" aria-pressed="true">Pause</button>
+        </div>
+        <div class="chip-note" id="chip-note" role="status" hidden></div>
         <div class="map-cover" id="map-cover" role="button" tabindex="0">
           <div class="cover-card">
             <strong>Tap to use map</strong>
