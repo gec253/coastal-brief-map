@@ -3,16 +3,50 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Coastal Brief — NOAA map test (central coastal NC)</title>
-  <meta name="description" content="Prototype conditions page for Coastal Brief. Map uses NOAA wind, wave, and sea-surface temperature layers. Not live production.">
+  <title>Coastal Brief — North Carolina fishing, surfing, and boating conditions</title>
+  <meta name="description" content="North Carolina fishing, surfing, and boating conditions. Wind, waves, water temperature, tides, and radar for the coast, with NOAA data.">
   <link rel="stylesheet" href="styles.css">
+  <meta name="theme-color" content="#0B2A3D">
+  <meta property="og:title" content="Coastal Brief — North Carolina coastal conditions">
+  <meta property="og:description" content="Fishing, surfing, and boating conditions for the North Carolina coast: wind, waves, water temperature, tides, and radar.">
+  <meta property="og:url" content="https://thecoastalbrief.com/">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://thecoastalbrief.com/branding/og-preview.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Coastal Brief wordmark over a breaking teal wave on a navy background, with the line North Carolina fishing, surfing, and boating conditions.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Coastal Brief — North Carolina coastal conditions">
+  <meta name="twitter:description" content="Fishing, surfing, and boating conditions for the North Carolina coast: wind, waves, water temperature, tides, and radar.">
+  <meta name="twitter:image" content="https://thecoastalbrief.com/branding/og-preview.png">
+  <meta name="twitter:image:alt" content="Coastal Brief wordmark over a breaking teal wave on a navy background, with the line North Carolina fishing, surfing, and boating conditions.">
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("coastalBrief.theme");
+        if (t !== "light" && t !== "dark") {
+          t = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
-  <a class="skip" href="#tide-search">Skip to tide search</a>
+  <nav class="skip-links" aria-label="Skip links">
+    <a class="skip" href="#conditions">Skip to conditions</a>
+    <a class="skip" href="#tide-search">Skip to tide search</a>
+    <a class="skip" href="#map-section">Skip to map</a>
+  </nav>
   <header class="site">
+    <div class="wrap header-row">
+      <div class="brand">
+        <h1>Coastal Brief</h1>
+        <p class="tagline">North Carolina fishing, surfing, and boating conditions — public page prototype</p>
+      </div>
+      <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
+    </div>
     <div class="wrap">
-      <h1>Coastal Brief</h1>
-      <p class="tagline">North Carolina fishing, surfing, and boating conditions — public page prototype</p>
       <div class="meta-row">
         <span class="badge" id="freshness-badge">Last updated —</span>
         <span class="loc">Fixed view: central coastal NC (34.7°N, 76.7°W). Location is not requested from your browser.</span>
@@ -21,35 +55,45 @@
   </header>
 
   <main class="wrap">
-    <section class="panel glance" aria-labelledby="glance-h">
+    <section class="panel glance" id="conditions" aria-labelledby="glance-h">
       <h2 id="glance-h">Conditions at a glance</h2>
-      <p class="fine">Readings below are from NOAA buoy 41025 (Diamond Shoals) and the NWS Morehead City forecast, fetched for this test. Units are converted to knots, feet, °F, and inches of mercury. Source units are noted under each value.</p>
+      <p class="fine">Readings below are from NOAA buoy 41025 (Diamond Shoals) and the NWS Morehead City forecast, fetched for this test. Units are converted to knots, feet, °F, and inches of mercury. Source units are noted under each value. Next tide is a live NOAA prediction for Beaufort.</p>
       <div class="glance-grid">
-        <div class="cell">
+        <article class="cell gauge gauge-waves is-loading" id="card-waves">
           <div class="k">Waves</div>
+          <div class="gauge-art" id="g-waves"></div>
           <div class="v" id="v-waves">—</div>
           <div class="s" id="s-waves"></div>
-        </div>
-        <div class="cell">
+          <div class="meta" id="m-waves"></div>
+        </article>
+        <article class="cell gauge gauge-wind is-loading" id="card-wind">
           <div class="k">Wind</div>
+          <div class="gauge-art" id="g-wind"></div>
           <div class="v" id="v-wind">—</div>
           <div class="s" id="s-wind"></div>
-        </div>
-        <div class="cell">
+          <div class="meta" id="m-wind"></div>
+        </article>
+        <article class="cell gauge gauge-wtmp is-loading" id="card-wtmp">
           <div class="k">Water</div>
+          <div class="gauge-art" id="g-wtmp"></div>
           <div class="v" id="v-wtmp">—</div>
           <div class="s" id="s-wtmp"></div>
-        </div>
-        <div class="cell">
+          <div class="meta" id="m-wtmp"></div>
+        </article>
+        <article class="cell gauge gauge-pres is-loading" id="card-pres">
           <div class="k">Pressure</div>
+          <div class="gauge-art" id="g-pres"></div>
           <div class="v" id="v-pres">—</div>
           <div class="s" id="s-pres"></div>
-        </div>
-        <div class="cell">
+          <div class="meta" id="m-pres"></div>
+        </article>
+        <article class="cell gauge gauge-tide is-loading" id="card-tide">
           <div class="k">Next tide</div>
+          <div class="gauge-art" id="g-tide"></div>
           <div class="v" id="v-tide">—</div>
           <div class="s" id="s-tide"></div>
-        </div>
+          <div class="meta" id="m-tide"></div>
+        </article>
       </div>
       <div class="surf-line">
         <span class="surf-tag">Surf</span>
@@ -86,12 +130,14 @@
     <section class="panel about">
       <h2>About this map test</h2>
       <p>
-        The public Coastal Brief site will use a Leaflet map built only from NOAA and OpenStreetMap data.
+        The public Coastal Brief site will use a Leaflet map built only from NOAA and OpenStreetMap data,
+        plus an optional weather radar layer from WeatherAPI.com (NOAA MRMS tiles for the United States).
         Windy was dropped because its free embed terms do not allow commercial or ad-supported sites.
       </p>
       <ul>
         <li>The map stays below this text on a phone so it does not load until you scroll to it.</li>
-        <li>Wind, waves, and sea-surface temperature are switched one at a time so the colors stay readable. The map underneath is a choice: a light street-style map, or a NOAA nautical chart. The colored washes sit on top of whichever base you pick.</li>
+        <li>Wind, waves, sea-surface temperature, and radar are switched one at a time so the colors stay readable. The map underneath is a choice: a light street-style map, or a NOAA nautical chart. In dark mode the street-style map uses a free dark canvas from Esri. The colored washes sit on top of whichever base you pick.</li>
+        <li>Radar tiles load only when you open the Radar layer, loop the last six scans, and reuse cached frames in the browser. Forecast frames (the next-hour nowcast) are labeled as forecast.</li>
         <li>Condition cards are live buoy and tide readings (converted to knots and °F). Use Tide search above for high and low times at a place you plan to go. The colored map washes are <strong>forecasts or satellite estimates</strong>, not the same as the buoy numbers.</li>
         <li>This is a layout and endpoint test, not the finished website. It is not weather, surf, or fishing advice.</li>
       </ul>
@@ -108,14 +154,23 @@
           <button type="button" data-layer="wind" aria-pressed="true">Wind</button>
           <button type="button" data-layer="waves">Waves</button>
           <button type="button" data-layer="sst">Water temp</button>
+          <button type="button" data-layer="radar">Radar</button>
         </div>
         <div class="switcher base-switcher" role="radiogroup" aria-label="Base map">
           <button type="button" data-base="light" id="base-light" aria-pressed="true">Light map</button>
           <button type="button" data-base="chart" id="base-chart" aria-pressed="false">Nautical chart</button>
         </div>
       </div>
-      <div class="map-shell" id="map-shell">
-        <div class="map-placeholder" id="map-placeholder">Scroll to load the map…</div>
+      <div class="radar-controls" id="radar-controls" hidden>
+        <div class="radar-clock" id="radar-clock" role="status">Radar not started</div>
+        <label class="radar-forecast">
+          <input type="checkbox" id="radar-forecast">
+          Include forecast (next hour)
+        </label>
+        <button type="button" id="radar-play" aria-pressed="true">Pause</button>
+      </div>
+      <div class="map-shell is-loading" id="map-shell">
+        <div class="map-placeholder skeleton" id="map-placeholder">Scroll to load the map…</div>
         <div id="map" role="region" aria-label="Leaflet map of central coastal North Carolina"></div>
         <div class="map-cover" id="map-cover" role="button" tabindex="0">
           <div class="cover-card">
@@ -125,6 +180,7 @@
         </div>
         <button type="button" class="map-release" id="map-release">Done with map</button>
         <div class="sst-loading" id="sst-loading" hidden>Loading water temps…</div>
+        <div class="radar-note" id="radar-note" hidden>Radar coming soon</div>
       </div>
       <div class="legend-row">
         <div class="legend" id="legend-box"></div>
@@ -141,11 +197,18 @@
         Data credits: NOAA National Data Buoy Center; National Weather Service (api.weather.gov and the National Digital Forecast Database);
         NOAA CO-OPS tide predictions; NOAA CoastWatch / JPL MUR sea-surface temperature via ERDDAP;
         NOAA Office of Coast Survey ENC Chart Display Service; map base tiles © Esri; NOAA Office of Coast Survey ENC Chart Display Service (WMTS).
+        Weather radar tiles are provided by WeatherAPI.com using NOAA/NSSL MRMS for the United States. Radar provider credits also appear on the map when that layer is open.
       </p>
-      <p>Coastal Brief is not weather, surf, or fishing advice. Always check official NWS marine forecasts and advisories before going out.</p>
+      <p>Coastal Brief is not weather, surf, or fishing advice. Radar and other conditions data are for general information only and can be incomplete or late. Always check official NWS marine forecasts and advisories before going out. Do not rely on this site as the only source for safety decisions.</p>
       <p>Market and stock data are not shown on this public page.</p>
     </div>
   </footer>
+
+  <div class="mini-bar" id="mini-bar" role="status" aria-label="Current wind, water temperature, and next tide">
+    <span>Wind <strong id="mini-wind">—</strong></span>
+    <span>Water <strong id="mini-wtmp">—</strong></span>
+    <span>Tide <strong id="mini-tide">—</strong></span>
+  </div>
 
   <!-- Leaflet JS/CSS are injected by app.js only after the map section enters view. -->
   <script src="app.js" defer></script>

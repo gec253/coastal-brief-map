@@ -1,0 +1,16 @@
+cache/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+*.pem
+secrets*
+.playwright-results.json
+phone-*.png
+desktop-*.png
+playwright-results.json
+TEST-LOG.md
+tide-test-results.json

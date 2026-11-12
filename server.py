@@ -14,6 +14,7 @@ import hashlib
 import json
 import os
 import posixpath
+import re
 import sys
 import threading
 import time
@@ -59,6 +60,8 @@ TTL = {
     "tides": 15 * 60,
     "tides_pred": 6 * 60 * 60,
     "geocode": 7 * 24 * 60 * 60,
+    "radar_json": 3 * 60,
+    "radar_tile": 2 * 60 * 60,
     "default": 10 * 60,
 }
 
@@ -597,6 +600,240 @@ def handle_geocode(query: str) -> tuple[int, dict]:
     return 200, {"ok": True, "query": q, "matches": matches, "provider": "Nominatim (OpenStreetMap)"}
 
 
+
+# WeatherAPI Radar (Pro+). Key stays on the server. Never log it.
+WEATHERAPI_ORIGIN = "https://api.weatherapi.com"
+RADAR_Q = "34.72,-76.65"  # fixed central coastal NC
+RADAR_JSON_TTL = 3 * 60
+RADAR_LOCK = threading.Lock()
+_RADAR_MEM = {
+    "fetched_at": 0.0,
+    "tile_url": None,
+    "tile_url_expires_epoch": 0,
+    "client": None,
+    "error": None,
+}
+
+
+def weatherapi_key() -> str | None:
+    """Read WEATHERAPI_KEY. Also accept a curl/URL paste that contains key=."""
+    raw = (os.environ.get("WEATHERAPI_KEY") or "").strip()
+    if not raw:
+        return None
+    m = re.search(r"(?:[?&]key=)([^&\"'\s]+)", raw, re.I)
+    if m:
+        key = m.group(1).strip()
+        return key or None
+    raw = raw.strip('"').strip("'")
+    if "://" in raw or " " in raw:
+        return None
+    if len(raw) >= 16:
+        return raw
+    return None
+
+
+def _redact_weather(s: str) -> str:
+    key = weatherapi_key()
+    if key:
+        s = s.replace(key, "[REDACTED_KEY]")
+    s = re.sub(r"([?&]k=)[^&]+", r"\1[REDACTED]", s)
+    s = re.sub(r"([?&]s=)[^&]+", r"\1[REDACTED]", s)
+    return s
+
+
+def fetch_url_quiet(url: str, tries: int = 3) -> tuple[int, str, bytes]:
+    """GET that never puts the request URL (which may hold a key) into error text."""
+    headers = {"User-Agent": UA, "Accept": "*/*"}
+    last_status, last_ctype, last_body = 502, "text/plain; charset=utf-8", b"upstream error"
+    for attempt in range(tries):
+        try:
+            req = Request(url, headers=headers)
+            with urlopen(req, timeout=45) as resp:
+                body = resp.read()
+                status = getattr(resp, "status", 200)
+                ctype = resp.headers.get("Content-Type", "application/octet-stream")
+                return status, ctype, body
+        except HTTPError as e:
+            last_body = e.read() or b""
+            last_status = e.code
+            last_ctype = e.headers.get("Content-Type", "text/plain") if e.headers else "text/plain"
+            if last_status in (502, 503, 504) and attempt < tries - 1:
+                time.sleep(0.8 * (2 ** attempt))
+                continue
+            return last_status, last_ctype, last_body
+        except (URLError, TimeoutError, OSError):
+            last_status, last_ctype, last_body = 502, "text/plain; charset=utf-8", b"upstream error"
+            if attempt < tries - 1:
+                time.sleep(0.8 * (2 ** attempt))
+                continue
+            return last_status, last_ctype, last_body
+    return last_status, last_ctype, last_body
+
+
+def _client_radar_payload(data: dict, tile_url: str) -> dict:
+    radar = data.get("radar") or {}
+    frames = []
+    for fr in radar.get("frames") or []:
+        if not isinstance(fr, dict):
+            continue
+        time_code = str(fr.get("time") or "")
+        if not re.fullmatch(r"\d{12}", time_code):
+            continue
+        typ = fr.get("type") if fr.get("type") in ("observed", "nowcast") else "observed"
+        rec = {"time": time_code, "type": typ}
+        try:
+            rec["time_epoch"] = int(fr.get("time_epoch"))
+        except (TypeError, ValueError):
+            pass
+        frames.append(rec)
+    sources = []
+    for src in radar.get("sources") or []:
+        if not isinstance(src, dict):
+            continue
+        sources.append({
+            "id": src.get("id"),
+            "name": src.get("name"),
+            "nowcast_minutes": src.get("nowcast_minutes"),
+            "bounds": src.get("bounds"),
+        })
+    legend = []
+    for row in radar.get("legend") or []:
+        if isinstance(row, dict) and "color" in row:
+            legend.append({"from_mm_h": row.get("from_mm_h"), "color": row.get("color")})
+    try:
+        min_zoom = int(radar.get("min_zoom", 0))
+        max_zoom = int(radar.get("max_zoom", 11))
+        tile_size = int(radar.get("tile_size", 256))
+    except (TypeError, ValueError):
+        min_zoom, max_zoom, tile_size = 0, 11, 256
+    return {
+        "ok": True,
+        "available": bool(radar.get("available")),
+        "covered": bool(radar.get("covered")),
+        "tile_url": "/api/radar/tile/{z}/{x}/{y}.png?t={time}",
+        "min_zoom": min_zoom,
+        "max_zoom": max_zoom,
+        "tile_size": tile_size,
+        "frames": frames,
+        "legend": legend,
+        "attribution": radar.get("attribution") or "Radar: NOAA/NSSL MRMS and WeatherAPI.com.",
+        "sources": sources,
+        "disclaimer": (
+            "Radar is for general information only and can be incomplete or late. "
+            "It is not a substitute for official National Weather Service marine forecasts and advisories. "
+            "Do not rely on it as the only source for safety decisions."
+        ),
+    }
+
+
+def _refresh_radar_mem(force: bool = False) -> dict:
+    """Fetch radar.json if needed. Stores the signed tile template in memory only."""
+    key = weatherapi_key()
+    if not key:
+        return {
+            "ok": False,
+            "available": False,
+            "reason": "coming_soon",
+            "message": "Radar coming soon",
+        }
+    now = time.time()
+    with RADAR_LOCK:
+        mem = _RADAR_MEM
+        signed_ok = bool(mem.get("tile_url")) and now < (float(mem.get("tile_url_expires_epoch") or 0) - 120)
+        fresh = mem.get("client") and (now - float(mem.get("fetched_at") or 0) < RADAR_JSON_TTL) and signed_ok
+        if fresh and not force:
+            return mem["client"]
+        url = WEATHERAPI_ORIGIN + "/v1/radar.json?key=" + key + "&q=" + RADAR_Q
+        status, ctype, body = fetch_url_quiet(url, tries=3)
+        if status != 200:
+            sys.stderr.write("radar.json upstream HTTP %s\n" % status)
+            if mem.get("client") and signed_ok:
+                return mem["client"]
+            msg = "Radar is unavailable right now."
+            try:
+                err = json.loads(body.decode("utf-8")).get("error") or {}
+                code = err.get("code")
+                if code == 2009:
+                    msg = "Radar coming soon"
+                    return {"ok": False, "available": False, "reason": "coming_soon", "message": msg}
+            except (UnicodeDecodeError, json.JSONDecodeError, AttributeError):
+                pass
+            return {"ok": False, "available": False, "reason": "upstream", "message": msg}
+        try:
+            data = json.loads(body.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return {"ok": False, "available": False, "reason": "upstream", "message": "Radar is unavailable right now."}
+        if data.get("error"):
+            code = (data.get("error") or {}).get("code")
+            if code == 2009:
+                return {"ok": False, "available": False, "reason": "coming_soon", "message": "Radar coming soon"}
+            return {"ok": False, "available": False, "reason": "upstream", "message": "Radar is unavailable right now."}
+        radar = data.get("radar") or {}
+        tile_url = radar.get("tile_url") or ""
+        if not tile_url.startswith("https://api.weatherapi.com/v1/radar/tile/"):
+            return {"ok": False, "available": False, "reason": "upstream", "message": "Radar is unavailable right now."}
+        try:
+            expires = int(radar.get("tile_url_expires_epoch") or 0)
+        except (TypeError, ValueError):
+            expires = 0
+        client = _client_radar_payload(data, tile_url)
+        mem["fetched_at"] = now
+        mem["tile_url"] = tile_url
+        mem["tile_url_expires_epoch"] = expires if expires else now + 2 * 60 * 60
+        mem["client"] = client
+        mem["error"] = None
+        return client
+
+
+def handle_radar_meta() -> tuple[int, dict]:
+    payload = _refresh_radar_mem(force=False)
+    status = 200 if payload.get("ok") or payload.get("reason") == "coming_soon" else 502
+    return status, payload
+
+
+def _valid_radar_tile(z: str, x: str, y: str, t: str) -> bool:
+    if not re.fullmatch(r"\d{12}", t or ""):
+        return False
+    try:
+        zi, xi, yi = int(z), int(x), int(y)
+    except ValueError:
+        return False
+    if zi < 0 or zi > 12:
+        return False
+    max_t = 2 ** zi
+    if xi < 0 or yi < 0 or xi >= max_t or yi >= max_t:
+        return False
+    return True
+
+
+def fetch_radar_tile(z: str, x: str, y: str, t: str) -> tuple[int, str, bytes]:
+    if not weatherapi_key():
+        return 503, "application/json; charset=utf-8", json.dumps({
+            "ok": False, "reason": "coming_soon", "message": "Radar coming soon"
+        }).encode("utf-8")
+    if not _valid_radar_tile(z, x, y, t):
+        return 400, "text/plain; charset=utf-8", b"invalid tile"
+    # Cache by z/x/y/time only — never by the signed upstream URL.
+    cache_key_url = "radar-cache://tile/%s/%s/%s/%s" % (z, x, y, t)
+    cached = cache_get(cache_key_url)
+    if cached:
+        return cached
+    meta = _refresh_radar_mem(force=False)
+    if not meta.get("ok"):
+        status = 503 if meta.get("reason") == "coming_soon" else 502
+        return status, "application/json; charset=utf-8", json.dumps(meta).encode("utf-8")
+    with RADAR_LOCK:
+        template = _RADAR_MEM.get("tile_url") or ""
+    if not template or "{z}" not in template or "{time}" not in template:
+        return 502, "text/plain; charset=utf-8", b"radar tile template missing"
+    url = template.replace("{z}", z).replace("{x}", x).replace("{y}", y).replace("{time}", t)
+    status, ctype, body = fetch_url_quiet(url, tries=3)
+    if status == 200 and body:
+        with CACHE_LOCK:
+            cache_put(cache_key_url, "radar_tile", status, ctype or "image/png", body)
+    return status, ctype or "image/png", body
+
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(ROOT), **kwargs)
@@ -627,6 +864,11 @@ class Handler(SimpleHTTPRequestHandler):
         if parsed.path == "/api/geocode":
             status, payload = handle_geocode(parsed.query)
             return self._send_json(payload, cache_s=300, status=status)
+        if parsed.path == "/api/radar":
+            status, payload = handle_radar_meta()
+            return self._send_json(payload, cache_s=60, status=status)
+        if parsed.path.startswith("/api/radar/tile/"):
+            return self._radar_tile(parsed)
         if parsed.path.startswith("/proxy/"):
             return self._proxy(parsed)
         return super().do_GET()
@@ -652,6 +894,29 @@ class Handler(SimpleHTTPRequestHandler):
             self._cache_header_sent = True
         self.end_headers()
         self.wfile.write(data)
+
+
+    def _radar_tile(self, parsed):
+        # /api/radar/tile/{z}/{x}/{y}.png?t=yyyyMMddHHmm
+        m = re.fullmatch(r"/api/radar/tile/(\d+)/(\d+)/(\d+)(?:\.png)?", parsed.path)
+        if not m:
+            self.send_error(404, "invalid radar tile path")
+            return
+        qs = parse_qs(parsed.query or "")
+        t = (qs.get("t") or [""])[0].strip()
+        status, ctype, body = fetch_radar_tile(m.group(1), m.group(2), m.group(3), t)
+        self.send_response(status)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(body)))
+        ttl = TTL.get("radar_tile", 600) if status == 200 else 0
+        if ttl:
+            self.send_header("Cache-Control", "public, max-age=%s" % ttl)
+            self._cache_header_sent = True
+        else:
+            self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        if body:
+            self.wfile.write(body)
 
     def _proxy(self, parsed):
         parts = parsed.path.split("/", 3)  # ['', 'proxy', '<key>', '<rest>']

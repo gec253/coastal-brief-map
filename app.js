@@ -15,6 +15,263 @@
   let sstUsingFallback = false;
   let sstLoadTimer = null;
 
+  const THEME_STORE = "coastalBrief.theme";
+  const DEFAULT_TIDE_STATION_ID = "8656483";
+  const DEFAULT_TIDE_STATION_NAME = "Beaufort, Duke Marine Lab, NC";
+  const RADAR_MAX = 6;
+  const RADAR_FRAME_MS = 750;
+  const RADAR_HOLD_MS = 1200;
+  const RADAR_REFRESH_MS = 5 * 60 * 1000;
+  const radar = {
+    requested: false,
+    loading: false,
+    ready: false,
+    unavailable: false,
+    message: "",
+    meta: null,
+    layers: [],
+    index: 0,
+    timer: null,
+    playing: true,
+    includeForecast: false,
+    lastFetch: 0,
+    inView: true,
+  };
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c];
+    });
+  }
+  function prefersReducedMotion() {
+    return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+  function currentTheme() {
+    return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+  }
+  function isDark() {
+    return currentTheme() === "dark";
+  }
+  function syncThemeToggle() {
+    const btn = $("theme-toggle");
+    if (!btn) return;
+    const dark = isDark();
+    btn.setAttribute("aria-pressed", dark ? "true" : "false");
+    btn.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode");
+    btn.textContent = dark ? "Light mode" : "Dark mode";
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", "#0B2A3D");
+  }
+  function setTheme(theme, persist) {
+    const t = theme === "dark" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", t);
+    if (persist) {
+      try { localStorage.setItem(THEME_STORE, t); } catch (e) {}
+    }
+    syncThemeToggle();
+    if (map) applyBasemapForTheme();
+  }
+  function initTheme() {
+    syncThemeToggle();
+    const btn = $("theme-toggle");
+    if (btn) {
+      btn.addEventListener("click", function () {
+        setTheme(isDark() ? "light" : "dark", true);
+      });
+    }
+    try {
+      if (!localStorage.getItem(THEME_STORE) && window.matchMedia) {
+        const mq = window.matchMedia("(prefers-color-scheme: dark)");
+        const onChange = function (e) {
+          if (!localStorage.getItem(THEME_STORE)) setTheme(e.matches ? "dark" : "light", false);
+        };
+        if (mq.addEventListener) mq.addEventListener("change", onChange);
+        else if (mq.addListener) mq.addListener(onChange);
+      }
+    } catch (e) {}
+  }
+  function markJustPosted(el) {
+    if (!el) return;
+    el.classList.remove("just-posted");
+    void el.offsetWidth;
+    el.classList.add("just-posted");
+    setTimeout(function () { el.classList.remove("just-posted"); }, 4000);
+  }
+  function updateMiniBar(parts) {
+    if (parts.wind != null) $("mini-wind").textContent = parts.wind;
+    if (parts.wtmp != null) $("mini-wtmp").textContent = parts.wtmp;
+    if (parts.tide != null) $("mini-tide").textContent = parts.tide;
+  }
+  function polar(cx, cy, r, deg) {
+    const rad = ((deg - 90) * Math.PI) / 180;
+    return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)];
+  }
+  function windCompassSvg(dirDeg, label, speedKt, gustKt) {
+    const deg = isFinite(Number(dirDeg)) ? Number(dirDeg) : 0;
+    const aria = "Wind compass, " + label + " " + speedKt + " knots, gust " + gustKt + " knots, wind from " + Math.round(deg) + " degrees";
+    const tip = polar(38, 38, 24, deg);
+    const left = polar(38, 38, 8, deg + 140);
+    const right = polar(38, 38, 8, deg - 140);
+    return (
+      '<svg viewBox="0 0 76 76" role="img" aria-label="' + escapeHtml(aria) + '">' +
+      '<circle cx="38" cy="38" r="34" fill="none" stroke="#5BA8A0" stroke-width="2"/>' +
+      '<text x="38" y="14" text-anchor="middle" font-size="8" fill="currentColor">N</text>' +
+      '<text x="38" y="70" text-anchor="middle" font-size="8" fill="currentColor">S</text>' +
+      '<text x="10" y="41" text-anchor="middle" font-size="8" fill="currentColor">W</text>' +
+      '<text x="66" y="41" text-anchor="middle" font-size="8" fill="currentColor">E</text>' +
+      '<polygon points="' + tip[0].toFixed(1) + "," + tip[1].toFixed(1) + " " +
+        left[0].toFixed(1) + "," + left[1].toFixed(1) + " " +
+        right[0].toFixed(1) + "," + right[1].toFixed(1) + '" fill="#5BA8A0" stroke="currentColor" stroke-width="1"/>' +
+      '<circle cx="38" cy="38" r="3.2" fill="currentColor"/>' +
+      "</svg>"
+    );
+  }
+  function thermoSvg(f) {
+    const t = isFinite(Number(f)) ? Number(f) : 50;
+    const pct = Math.max(0, Math.min(1, (t - 32) / (90 - 32)));
+    const bot = 52;
+    const top = 14;
+    const fillY = bot - (bot - top) * pct;
+    const h = bot - fillY + 8;
+    const aria = "Water temperature thermometer, " + t + " degrees Fahrenheit";
+    return (
+      '<svg viewBox="0 0 76 76" role="img" aria-label="' + escapeHtml(aria) + '">' +
+      '<rect x="33" y="10" width="10" height="44" rx="5" fill="none" stroke="#5BA8A0" stroke-width="2"/>' +
+      '<circle cx="38" cy="60" r="10" fill="#5BA8A0"/>' +
+      '<rect x="35" y="' + fillY.toFixed(1) + '" width="6" height="' + h.toFixed(1) + '" fill="currentColor"/>' +
+      "</svg>"
+    );
+  }
+  function pressureSvg(inHg, trend) {
+    const v = isFinite(Number(inHg)) ? Number(inHg) : 30;
+    const pct = Math.max(0, Math.min(1, (v - 28.8) / (31.2 - 28.8)));
+    const angle = -120 + 240 * pct;
+    const tip = polar(38, 42, 26, angle);
+    const a0 = polar(38, 42, 28, -120);
+    const a1 = polar(38, 42, 28, 120);
+    const arrow = trend === "falling" ? " falling" : trend === "rising" ? " rising" : " steady";
+    const aria = "Pressure dial, " + v.toFixed(2) + " inches of mercury," + arrow;
+    return (
+      '<svg viewBox="0 0 76 76" role="img" aria-label="' + escapeHtml(aria) + '">' +
+      '<path d="M ' + a0[0].toFixed(1) + " " + a0[1].toFixed(1) + " A 28 28 0 1 1 " + a1[0].toFixed(1) + " " + a1[1].toFixed(1) + '" fill="none" stroke="#5BA8A0" stroke-width="3" stroke-linecap="round"/>' +
+      '<line x1="38" y1="42" x2="' + tip[0].toFixed(1) + '" y2="' + tip[1].toFixed(1) + '" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>' +
+      '<circle cx="38" cy="42" r="3.2" fill="#5BA8A0"/>' +
+      '<text x="16" y="70" font-size="7" fill="currentColor">29</text>' +
+      '<text x="52" y="70" font-size="7" text-anchor="end" fill="currentColor">31</text>' +
+      "</svg>"
+    );
+  }
+  function swellSvg(heightFt, periodS) {
+    const h = isFinite(Number(heightFt)) ? Number(heightFt) : 2;
+    const p = isFinite(Number(periodS)) ? Number(periodS) : 8;
+    const amp = Math.max(6, Math.min(18, h * 3.5));
+    const y = 40;
+    function wavePath(offset) {
+      let d = "M " + (-20 + offset) + " " + y;
+      for (let x = -20; x <= 96; x += 4) {
+        const yy = y + Math.sin((x + offset) / 10) * amp;
+        d += " L " + x + " " + yy.toFixed(1);
+      }
+      return d;
+    }
+    const motion = prefersReducedMotion() ? "" : " swell-wave";
+    const aria = "Animated swell, " + h.toFixed(1) + " feet at " + p + " seconds";
+    return (
+      '<svg viewBox="0 0 76 76" role="img" aria-label="' + escapeHtml(aria) + '">' +
+      '<g class="' + motion.trim() + '">' +
+      '<path d="' + wavePath(0) + '" fill="none" stroke="#5BA8A0" stroke-width="2.5" stroke-linecap="round"/>' +
+      '<path d="' + wavePath(10) + '" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.55" stroke-linecap="round"/>' +
+      "</g></svg>"
+    );
+  }
+  function tideIconSvg(type, label) {
+    const high = type === "H";
+    const aria = "Next tide, " + (label || (high ? "high" : "low"));
+    const pts = high ? "38,14 58,50 18,50" : "18,26 58,26 38,62";
+    return (
+      '<svg viewBox="0 0 76 76" role="img" aria-label="' + escapeHtml(aria) + '">' +
+      '<polygon points="' + pts + '" fill="#5BA8A0" stroke="currentColor" stroke-width="1"/>' +
+      "</svg>"
+    );
+  }
+  function formatNextTide(type, timeET, heightFt) {
+    const clock = String(timeET || "").replace(" ET", "").replace(" PM", "p").replace(" AM", "a");
+    return (type === "H" ? "Hi " : "Lo ") + clock;
+  }
+  function etYmd(date, addDays) {
+    const map = {};
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(date).forEach(function (part) {
+      if (part.type !== "literal") map[part.type] = part.value;
+    });
+    const utc = new Date(Date.UTC(Number(map.year), Number(map.month) - 1, Number(map.day) + (addDays || 0)));
+    return String(utc.getUTCFullYear()) + String(utc.getUTCMonth() + 1).padStart(2, "0") + String(utc.getUTCDate()).padStart(2, "0");
+  }
+  function loadLiveNextTide() {
+    const begin = etYmd(new Date(), 0);
+    const end = etYmd(new Date(), 1);
+    const url = "/api/tides?station=" + encodeURIComponent(DEFAULT_TIDE_STATION_ID) + "&begin=" + begin + "&end=" + end + "&curve=" + begin;
+    return fetch(url)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        const card = $("card-tide");
+        if (card) card.classList.remove("is-loading");
+        if (!data || !data.ok) {
+          $("v-tide").textContent = "—";
+          $("s-tide").textContent = (data && data.error) || "Could not load the next tide.";
+          $("m-tide").textContent = DEFAULT_TIDE_STATION_NAME;
+          $("g-tide").innerHTML = tideIconSvg("H", "unavailable");
+          updateMiniBar({ tide: "—" });
+          return;
+        }
+        const now = new Date();
+        const preds = data.predictions || [];
+        let next = null;
+        for (let i = 0; i < preds.length; i++) {
+          const d = parseTideTime(preds[i].t);
+          if (d && d > now) { next = preds[i]; break; }
+        }
+        if (!next) {
+          $("v-tide").textContent = "—";
+          $("s-tide").textContent = "No upcoming tide in the next day.";
+          $("m-tide").textContent = (data.station && data.station.name) || DEFAULT_TIDE_STATION_NAME;
+          updateMiniBar({ tide: "—" });
+          return;
+        }
+        const clock = formatTideClock(next.t) + " ET";
+        const typ = next.type === "H" ? "H" : "L";
+        const height = Number(next.v);
+        const label = formatNextTide(typ, clock, height);
+        $("v-tide").textContent = label;
+        $("s-tide").textContent = (isFinite(height) ? height.toFixed(1) + " ft · " : "") + "live NOAA prediction";
+        $("m-tide").textContent = ((data.station && data.station.name) || DEFAULT_TIDE_STATION_NAME) + " · " + clock;
+        $("g-tide").innerHTML = tideIconSvg(typ, (typ === "H" ? "high " : "low ") + clock);
+        updateMiniBar({ tide: label });
+        markJustPosted($("card-tide"));
+        const tag = document.createElement("span");
+        tag.className = "just-posted badge";
+        tag.style.marginLeft = "6px";
+        tag.textContent = "Just posted";
+        if (!$("m-tide").querySelector(".just-posted")) {
+          $("m-tide").appendChild(document.createTextNode(" "));
+          $("m-tide").appendChild(tag);
+          setTimeout(function () { if (tag.parentNode) tag.parentNode.removeChild(tag); }, 4000);
+        }
+      })
+      .catch(function () {
+        const card = $("card-tide");
+        if (card) card.classList.remove("is-loading");
+        $("v-tide").textContent = "—";
+        $("s-tide").textContent = "Could not load the next tide.";
+        $("m-tide").textContent = DEFAULT_TIDE_STATION_NAME;
+        updateMiniBar({ tide: "—" });
+      });
+  }
+
   function loadSnapshot() {
     return fetch("/api/snapshot")
       .then((r) => r.json())
@@ -38,10 +295,6 @@
     $("v-pres").textContent = b.pressure.inHg.toFixed(2) + " " + (b.pressure.trend === "falling" ? "↓" : b.pressure.trend === "rising" ? "↑" : "→");
     $("s-pres").textContent = b.pressure.trend + " · " + b.pressure.timeET + " · from " + b.pressure.hPa + " hPa";
 
-    const tide = data.tides.nextTide;
-    $("v-tide").textContent = (tide.type === "H" ? "Hi " : "Lo ") + tide.timeET.replace(" ET", "").replace(" PM", "p").replace(" AM", "a");
-    $("s-tide").textContent = tide.heightFt.toFixed(1) + " ft · " + data.tides.stationName + " · prediction";
-
     $("v-surf").textContent =
       b.surf.swellPeriodS + " s · " + b.surf.swellDir + " · " + b.surf.swellHeightFt.toFixed(1) + " ft";
     $("s-surf").textContent =
@@ -51,6 +304,24 @@
 
     $("freshness-badge").textContent = "Last updated " + b.surf.timeET;
     $("freshness-badge").classList.remove("amber");
+
+    $("g-waves").innerHTML = swellSvg(b.waves.heightFt, b.waves.periodS);
+    $("g-wind").innerHTML = windCompassSvg(b.wind.dirDeg, b.wind.dirLabel, b.wind.speedKt, b.wind.gustKt);
+    $("g-wtmp").innerHTML = thermoSvg(b.waterTemp.fahrenheit);
+    $("g-pres").innerHTML = pressureSvg(b.pressure.inHg, b.pressure.trend);
+    $("m-waves").textContent = b.name + " · " + b.waves.timeET;
+    $("m-wind").textContent = b.name + " · " + b.wind.timeET;
+    $("m-wtmp").textContent = b.name + " · " + b.waterTemp.timeET;
+    $("m-pres").textContent = b.name + " · " + b.pressure.timeET;
+    ["card-waves", "card-wind", "card-wtmp", "card-pres"].forEach(function (id) {
+      const el = $(id);
+      if (el) el.classList.remove("is-loading");
+    });
+    updateMiniBar({
+      wind: b.wind.dirLabel + " " + b.wind.speedKt + " kt",
+      wtmp: b.waterTemp.fahrenheit + "°F",
+    });
+    loadLiveNextTide();
 
     const fc = data.forecast;
     $("fc-meta").textContent =
@@ -124,8 +395,38 @@
     );
   }
 
+  function radarLegendHtml() {
+    if (radar.unavailable || !radar.meta) {
+      return "<strong>Radar</strong> — " + escapeHtml(radar.message || "Radar coming soon") + " The rest of the map still works.";
+    }
+    const meta = radar.meta;
+    let bar = "";
+    let ticks = "";
+    const legend = meta.legend || [];
+    const safe = legend.filter(function (row) {
+      return row && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(String(row.color || ""));
+    });
+    if (safe.length) {
+      const stops = safe.map(function (row, i) {
+        const pct = safe.length === 1 ? 0 : (i / (safe.length - 1)) * 100;
+        return row.color + " " + pct + "%";
+      }).join(",");
+      bar = '<div class="bar radar-bar" style="background:linear-gradient(90deg,' + stops + ')" aria-hidden="true"></div>';
+      const first = safe[0].from_mm_h;
+      const mid = safe[Math.floor(safe.length / 2)].from_mm_h;
+      const last = safe[safe.length - 1].from_mm_h;
+      ticks = tickRow([[0, String(first) + " mm/h"], [50, String(mid)], [100, String(last)]]);
+    }
+    return (
+      "<strong>Weather radar</strong> — NOAA MRMS via WeatherAPI.com. Observed scans are about every 5 minutes; this map loops the last six frames and reuses cached tiles. Frames labeled forecast are a one-hour nowcast, not a completed scan. " +
+      escapeHtml(meta.disclaimer || "") + " " +
+      escapeHtml(meta.attribution || "") +
+      bar + ticks
+    );
+  }
+
   function setLegend(kind) {
-    $("legend-box").innerHTML = legendHtml(kind);
+    $("legend-box").innerHTML = kind === "radar" ? radarLegendHtml() : legendHtml(kind);
   }
 
   function loadScript(src) {
@@ -299,10 +600,17 @@
     map.getPane("basemap").style.zIndex = 200;
     map.createPane("wash");
     map.getPane("wash").style.zIndex = 350;
+    map.createPane("radar");
+    map.getPane("radar").style.zIndex = 355;
     map.createPane("labels");
     map.getPane("labels").style.zIndex = 360;
 
     layers.light = L.tileLayer("https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
+      attribution: 'Tiles © <a href="https://www.esri.com/">Esri</a>',
+      maxZoom: 16,
+      pane: "basemap",
+    });
+    layers.darkBasemap = L.tileLayer("https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
       attribution: 'Tiles © <a href="https://www.esri.com/">Esri</a>',
       maxZoom: 16,
       pane: "basemap",
@@ -365,7 +673,7 @@
       if (layers[k]) withRetry(layers[k], 3);
     });
 
-    layers.light.addTo(map);
+    streetBasemap().addTo(map);
     layers.wind.addTo(map);
     setLegend("wind");
 
@@ -392,6 +700,7 @@
     );
 
     $("map-placeholder").style.display = "none";
+    $("map-shell").classList.remove("is-loading");
     $("map-status").textContent =
       "Map loaded. Starting view is fixed at 34.7°N, 76.7°W (zoom 7 on a phone, 8 on desktop). One marine layer at a time. Choose Light map or Nautical chart as the base. Tiles come through a local NOAA proxy because the wind, wave, and SST services do not send CORS headers.";
     setTimeout(() => map.invalidateSize(), 80);
@@ -403,10 +712,24 @@
       btn.setAttribute("aria-pressed", btn.getAttribute("data-layer") === kind ? "true" : "false");
     });
     if (kind !== "sst") showSstLoading(false);
-    if (!map) return;
+    if (kind !== "radar") setRadarVisible(false);
+    if (!map) {
+      if (kind === "radar") radar.requested = true;
+      return;
+    }
     ["wind", "waves", "waveLabels", "sst"].forEach((k) => {
       if (layers[k] && map.hasLayer(layers[k])) map.removeLayer(layers[k]);
     });
+    if (kind === "radar") {
+      setLegend("radar");
+      ensureRadar().then(function () {
+        if (activeMarine === "radar") {
+          setLegend("radar");
+          setRadarVisible(true);
+        }
+      });
+      return;
+    }
     if (layers[kind]) layers[kind].addTo(map);
     if (kind === "waves" && layers.waveLabels) layers.waveLabels.addTo(map);
     applyWashOpacity();
@@ -420,13 +743,255 @@
     });
     if (!map) return;
     if (kind === "chart") {
-      if (map.hasLayer(layers.light)) map.removeLayer(layers.light);
+      if (layers.light && map.hasLayer(layers.light)) map.removeLayer(layers.light);
+      if (layers.darkBasemap && map.hasLayer(layers.darkBasemap)) map.removeLayer(layers.darkBasemap);
       if (layers.chart && !map.hasLayer(layers.chart)) layers.chart.addTo(map);
     } else {
       if (layers.chart && map.hasLayer(layers.chart)) map.removeLayer(layers.chart);
-      if (layers.light && !map.hasLayer(layers.light)) layers.light.addTo(map);
+      applyBasemapForTheme();
     }
     applyWashOpacity();
+  }
+
+  function streetBasemap() {
+    return isDark() && layers.darkBasemap ? layers.darkBasemap : layers.light;
+  }
+
+  function applyBasemapForTheme() {
+    if (!map || baseKind === "chart") return;
+    const want = streetBasemap();
+    [layers.light, layers.darkBasemap].forEach(function (ly) {
+      if (!ly) return;
+      if (ly === want) {
+        if (!map.hasLayer(ly)) ly.addTo(map);
+      } else if (map.hasLayer(ly)) {
+        map.removeLayer(ly);
+      }
+    });
+  }
+
+  function stopRadarTimer() {
+    if (radar.timer) {
+      clearTimeout(radar.timer);
+      radar.timer = null;
+    }
+  }
+  function radarShouldPlay() {
+    return radar.playing && radar.ready && activeMarine === "radar" && radar.inView && !document.hidden;
+  }
+  function formatRadarClock(frame) {
+    if (!frame) return "";
+    let d = null;
+    if (frame.time_epoch) d = new Date(Number(frame.time_epoch) * 1000);
+    if ((!d || isNaN(d)) && frame.time && String(frame.time).length === 12) {
+      const t = String(frame.time);
+      d = new Date(Date.UTC(+t.slice(0, 4), +t.slice(4, 6) - 1, +t.slice(6, 8), +t.slice(8, 10), +t.slice(10, 12)));
+    }
+    if (!d || isNaN(d)) return String(frame.time || "");
+    const label = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York",
+      hour: "numeric",
+      minute: "2-digit",
+      month: "short",
+      day: "numeric",
+      timeZoneName: "short",
+    }).format(d);
+    if (frame.type === "nowcast") return "Forecast · " + label;
+    return label;
+  }
+  function pickRadarFrames(meta, includeForecast) {
+    const frames = (meta && meta.frames) || [];
+    const observed = frames.filter(function (f) { return f.type !== "nowcast"; });
+    const nowcast = frames.filter(function (f) { return f.type === "nowcast"; });
+    if (includeForecast && nowcast.length) {
+      const keepObs = Math.max(1, RADAR_MAX - Math.min(2, nowcast.length));
+      const obs = observed.slice(-keepObs);
+      const nc = nowcast.slice(0, RADAR_MAX - obs.length);
+      return obs.concat(nc);
+    }
+    return observed.slice(-RADAR_MAX);
+  }
+  function showRadarFrame(i, instant) {
+    if (!radar.layers.length) return;
+    radar.index = ((i % radar.layers.length) + radar.layers.length) % radar.layers.length;
+    radar.layers.forEach(function (item, idx) {
+      const el = item.layer && item.layer.getContainer && item.layer.getContainer();
+      const on = idx === radar.index;
+      if (!el) {
+        if (item.layer && item.layer.setOpacity) item.layer.setOpacity(on ? 0.8 : 0);
+        return;
+      }
+      el.style.transition = instant || prefersReducedMotion() ? "none" : "opacity 0.45s ease";
+      el.classList.toggle("is-on", on);
+      el.classList.toggle("is-off", !on);
+      el.classList.toggle("is-forecast", item.type === "nowcast");
+    });
+    const fr = radar.layers[radar.index];
+    const clock = $("radar-clock");
+    if (clock && fr) clock.textContent = formatRadarClock(fr);
+  }
+  function tickRadar() {
+    stopRadarTimer();
+    if (!radarShouldPlay() || radar.layers.length < 2) return;
+    const isLast = radar.index === radar.layers.length - 1;
+    radar.timer = setTimeout(function () {
+      showRadarFrame(radar.index + 1, false);
+      tickRadar();
+    }, isLast ? RADAR_HOLD_MS : RADAR_FRAME_MS);
+  }
+  function pauseRadar() { stopRadarTimer(); }
+  function resumeRadar() {
+    if (radarShouldPlay()) tickRadar();
+  }
+  function makeRadarLayer(frame, meta) {
+    const url = (meta.tile_url || "/api/radar/tile/{z}/{x}/{y}.png?t={time}").replace("{time}", frame.time);
+    const layer = L.tileLayer(url, {
+      opacity: 1,
+      maxNativeZoom: meta.max_zoom || 11,
+      maxZoom: 16,
+      minZoom: meta.min_zoom || 0,
+      pane: "radar",
+      className: "leaflet-radar-frame is-off" + (frame.type === "nowcast" ? " is-forecast" : ""),
+      attribution: "Radar: NOAA/NSSL MRMS; WeatherAPI.com",
+    });
+    withRetry(layer, 3);
+    return layer;
+  }
+  function syncRadarLayers(frames, meta) {
+    if (!map) return;
+    const have = {};
+    radar.layers.forEach(function (item) { have[item.time] = item; });
+    const next = [];
+    frames.forEach(function (f) {
+      if (have[f.time]) {
+        next.push(have[f.time]);
+        delete have[f.time];
+      } else {
+        const layer = makeRadarLayer(f, meta);
+        if (activeMarine === "radar") layer.addTo(map);
+        next.push({ time: f.time, type: f.type, time_epoch: f.time_epoch, layer: layer });
+      }
+    });
+    Object.keys(have).forEach(function (t) {
+      const item = have[t];
+      if (item.layer && map.hasLayer(item.layer)) map.removeLayer(item.layer);
+    });
+    radar.layers = next;
+  }
+  function setRadarVisible(on) {
+    const note = $("radar-note");
+    const controls = $("radar-controls");
+    if (controls) controls.hidden = !(on && radar.ready && !radar.unavailable);
+    if (note) {
+      if (on && radar.unavailable) {
+        note.hidden = false;
+        note.textContent = radar.message || "Radar coming soon";
+      } else {
+        note.hidden = true;
+      }
+    }
+    if (!map) return;
+    radar.layers.forEach(function (item) {
+      if (!item.layer) return;
+      if (on && !radar.unavailable) {
+        if (!map.hasLayer(item.layer)) item.layer.addTo(map);
+      } else if (map.hasLayer(item.layer)) {
+        map.removeLayer(item.layer);
+      }
+    });
+    if (on && radar.ready && !radar.unavailable) {
+      showRadarFrame(radar.index, true);
+      resumeRadar();
+    } else {
+      pauseRadar();
+    }
+  }
+  function loadRadar(force) {
+    if (!radar.requested) return Promise.resolve();
+    if (radar.loading) return Promise.resolve();
+    const now = Date.now();
+    if (!force && radar.meta && now - radar.lastFetch < RADAR_REFRESH_MS) return Promise.resolve();
+    radar.loading = true;
+    return fetch("/api/radar")
+      .then(function (r) { return r.json().then(function (j) { return j; }); })
+      .then(function (j) {
+        radar.loading = false;
+        radar.lastFetch = Date.now();
+        j = j || {};
+        if (!j.ok) {
+          radar.unavailable = true;
+          radar.ready = false;
+          radar.message = j.message || "Radar coming soon";
+          if (activeMarine === "radar") {
+            setLegend("radar");
+            setRadarVisible(true);
+          }
+          return;
+        }
+        radar.unavailable = false;
+        radar.message = "";
+        radar.meta = j;
+        radar.ready = true;
+        const frames = pickRadarFrames(j, radar.includeForecast);
+        syncRadarLayers(frames, j);
+        if (activeMarine === "radar") {
+          setLegend("radar");
+          setRadarVisible(true);
+        }
+      })
+      .catch(function () {
+        radar.loading = false;
+        radar.unavailable = true;
+        radar.ready = false;
+        radar.message = "Radar is unavailable right now.";
+        if (activeMarine === "radar") {
+          setLegend("radar");
+          setRadarVisible(true);
+        }
+      });
+  }
+  function ensureRadar() {
+    radar.requested = true;
+    return loadRadar(false);
+  }
+  function initRadarControls() {
+    const forecast = $("radar-forecast");
+    const play = $("radar-play");
+    if (forecast) {
+      forecast.addEventListener("change", function () {
+        radar.includeForecast = !!forecast.checked;
+        if (radar.meta) {
+          syncRadarLayers(pickRadarFrames(radar.meta, radar.includeForecast), radar.meta);
+          showRadarFrame(0, true);
+          resumeRadar();
+        }
+      });
+    }
+    if (play) {
+      play.addEventListener("click", function () {
+        radar.playing = !radar.playing;
+        play.setAttribute("aria-pressed", radar.playing ? "true" : "false");
+        play.textContent = radar.playing ? "Pause" : "Play";
+        if (radar.playing) resumeRadar();
+        else pauseRadar();
+      });
+    }
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) pauseRadar();
+      else resumeRadar();
+    });
+    const section = $("map-section");
+    if (section && "IntersectionObserver" in window) {
+      const io = new IntersectionObserver(function (entries) {
+        radar.inView = entries.some(function (e) { return e.isIntersecting; });
+        if (radar.inView) resumeRadar();
+        else pauseRadar();
+      }, { threshold: 0.05 });
+      io.observe(section);
+    }
+    setInterval(function () {
+      if (radar.requested) loadRadar(false);
+    }, 60 * 1000);
   }
 
   function activateMap() {
@@ -1049,6 +1614,8 @@
       });
   }
 
+  initTheme();
+  initRadarControls();
   initTides();
 
   loadSnapshot()

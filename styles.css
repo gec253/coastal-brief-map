@@ -449,3 +449,271 @@ footer.site a { color: #1a4a5c; }
   .tide-panel { padding: 10px 12px; }
   .tide-curve { height: 72px; }
 }
+
+/* Tabular figures on numeric readouts */
+.cell .v,
+.cell .s,
+.cell .meta,
+.day .dt,
+.day .dw,
+.surf-main,
+.badge,
+.mini-bar,
+.radar-clock,
+.tide-events,
+.tide-day .ev,
+.legend,
+#freshness-badge {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Skip links: hidden until focused */
+.skip-links { position: relative; }
+.skip {
+  position: absolute;
+  left: -999px;
+  top: 0;
+  z-index: 10000;
+}
+.skip:focus {
+  left: 8px;
+  top: 8px;
+  background: #fff;
+  color: var(--navy);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-weight: 700;
+  outline: 3px solid var(--teal);
+}
+
+.header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 0;
+}
+.header-row .brand { min-width: 0; flex: 1; }
+.theme-toggle {
+  appearance: none;
+  flex: 0 0 auto;
+  margin-top: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: transparent;
+  color: #fff;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.theme-toggle:hover, .theme-toggle:focus {
+  background: rgba(91, 168, 160, 0.25);
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+}
+
+/* Gauge cards */
+.gauge { text-align: center; min-width: 0; padding: 8px 4px 10px; }
+.gauge-art {
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 4px 0 2px;
+}
+.gauge-art svg { width: 76px; height: 76px; display: block; }
+.cell .meta {
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin-top: 2px;
+  line-height: 1.25;
+}
+.gauge.is-loading .v,
+.gauge.is-loading .s,
+.gauge.is-loading .meta { color: transparent; }
+.gauge.is-loading .gauge-art,
+.skeleton,
+.gauge.is-loading .v {
+  background: linear-gradient(90deg, #efe6d4 0%, #f7f1e4 40%, #efe6d4 80%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+  border-radius: 6px;
+}
+.gauge.is-loading .v { min-height: 1.2em; }
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Just-posted pulse */
+.just-posted {
+  animation: pulse-tag 1.2s ease-out 3;
+}
+@keyframes pulse-tag {
+  0% { box-shadow: 0 0 0 0 rgba(91, 168, 160, 0.7); }
+  70% { box-shadow: 0 0 0 8px rgba(91, 168, 160, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(91, 168, 160, 0); }
+}
+
+/* Swell animation (honors reduced motion below) */
+.swell-wave {
+  animation: swell-shift 2.8s ease-in-out infinite;
+}
+@keyframes swell-shift {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-18px); }
+}
+
+.radar-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: center;
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+}
+.radar-controls[hidden] { display: none; }
+.radar-clock { font-weight: 700; font-variant-numeric: tabular-nums; }
+.radar-forecast { display: flex; align-items: center; gap: 6px; }
+#radar-play {
+  appearance: none;
+  border: 1px solid var(--navy);
+  background: #fff;
+  color: var(--navy);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.radar-note {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 503;
+  background: rgba(11, 42, 61, 0.9);
+  color: #fff;
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-weight: 700;
+  text-align: center;
+  max-width: 240px;
+}
+.radar-note[hidden] { display: none; }
+.radar-bar {
+  height: 14px;
+  border-radius: 4px;
+  margin: 6px 0 2px;
+  border: 1px solid var(--line);
+}
+
+/* Leaflet radar frames: CSS cross-fade */
+.leaflet-radar-frame {
+  transition: opacity 0.45s ease;
+}
+.leaflet-radar-frame.is-off { opacity: 0 !important; }
+.leaflet-radar-frame.is-on { opacity: 0.8 !important; }
+.leaflet-radar-frame.is-forecast.is-on { opacity: 0.7 !important; }
+
+/* Sticky mobile mini-bar */
+.mini-bar { display: none; }
+
+@media (max-width: 700px) {
+  .glance-grid { grid-template-columns: 1fr 1fr; }
+  .gauge-tide { grid-column: 1 / -1; }
+  .gauge-art { height: 68px; }
+  .gauge-art svg { width: 68px; height: 68px; }
+  .mini-bar {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 900;
+    background: var(--navy);
+    color: #fff;
+    justify-content: space-around;
+    gap: 4px;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
+    font-size: 0.78rem;
+    box-shadow: 0 -2px 10px rgba(11, 42, 61, 0.25);
+  }
+  .mini-bar span { text-align: center; min-width: 0; }
+  .mini-bar strong { display: block; font-size: 0.92rem; font-variant-numeric: tabular-nums; }
+  body { padding-bottom: 58px; }
+}
+
+/* Dark mode — same navy/teal brand, darker surfaces, sand-colored type */
+[data-theme="dark"] {
+  --sand: #10232f;
+  --white: #0e1c26;
+  --ink: #F3E6D0;
+  --muted: #b7c4cc;
+  --line: #2c4a5c;
+  --card: #143044;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  color-scheme: dark;
+}
+[data-theme="dark"] body { background: var(--sand); color: var(--ink); }
+[data-theme="dark"] .panel,
+[data-theme="dark"] .ops,
+[data-theme="dark"] .tide-suggest,
+[data-theme="dark"] .tide-suggest button,
+[data-theme="dark"] .tide-nearby,
+[data-theme="dark"] .tide-row input,
+[data-theme="dark"] .tide-plan input {
+  background: var(--card);
+  color: var(--ink);
+}
+[data-theme="dark"] .day { background: #0f2430; }
+[data-theme="dark"] .switcher button {
+  background: #143044;
+  color: var(--ink);
+  border-color: var(--teal);
+}
+[data-theme="dark"] .switcher button[aria-pressed="true"] {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #0B2A3D;
+}
+[data-theme="dark"] .base-switcher button[aria-pressed="true"] {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #F3E6D0;
+}
+[data-theme="dark"] #radar-play {
+  background: #143044;
+  color: var(--ink);
+  border-color: var(--teal);
+}
+[data-theme="dark"] .tide-curve { background: #0f2430; }
+[data-theme="dark"] .map-shell { background: #1a2a33; }
+[data-theme="dark"] .map-placeholder { background: #1a2a33; color: var(--muted); }
+[data-theme="dark"] .gauge.is-loading .gauge-art,
+[data-theme="dark"] .skeleton,
+[data-theme="dark"] .gauge.is-loading .v {
+  background: linear-gradient(90deg, #143044 0%, #1c3d52 40%, #143044 80%);
+  background-size: 200% 100%;
+}
+[data-theme="dark"] .skip:focus {
+  background: #143044;
+  color: #F3E6D0;
+}
+[data-theme="dark"] footer.site a { color: var(--teal); }
+[data-theme="dark"] .tide-source a { color: var(--teal); }
+[data-theme="dark"] .tide-day.is-focus { background: #1a3d45; }
+
+@media (prefers-reduced-motion: reduce) {
+  .just-posted,
+  .swell-wave,
+  .skeleton,
+  .gauge.is-loading .gauge-art,
+  .gauge.is-loading .v,
+  .leaflet-radar-frame {
+    animation: none !important;
+    transition: none !important;
+  }
+}

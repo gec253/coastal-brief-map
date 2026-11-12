@@ -96,6 +96,25 @@ Please send:
 3. A few phone pictures of the live page: Wind, Waves, Water temp, and one with **Nautical chart** turned on.
 4. If anything failed: a screenshot of the failed screen, or the exact error text. Do not try to “fix” GitHub or Render settings by guessing.
 
+
+## Weather radar (optional)
+
+The Radar layer uses WeatherAPI.com’s Radar API (NOAA MRMS tiles for the United States). It is available on their **Pro+** plan and up, listed at **$25 per month** on https://www.weatherapi.com/pricing (checked Thursday, November 12, 2026).
+
+To make radar appear on the live site:
+
+1. In the Render Dashboard, open the **Coastal Brief Map Server** service.
+2. Open the **Environment** tab.
+3. Add an environment variable named `WEATHERAPI_KEY`.
+4. Paste **only the API key** (not a curl command or a full URL).
+5. Save. Render will restart the service.
+
+The key stays on the server. The browser never sees it. Tiles are requested through this site’s own `/api/radar` path.
+
+If `WEATHERAPI_KEY` is missing, or the key is not on a Pro+ (or higher) plan, the Radar button shows a “Radar coming soon” note. Wind, waves, water temperature, the nautical chart, and tide search still work.
+
+WeatherAPI’s terms allow commercial use on paid plans. Their radar docs ask you to show the `attribution` string they return (this site does that on the map). Radar is general information only and is not a substitute for official NWS marine forecasts.
+
 ## What you do not need to do yet
 
 - Do not apply for Google AdSense for this step. The site already has its own ads-on/off file (`data/ads.json`). The program updates that file from official NWS alerts. AdSense is a later conversation.
