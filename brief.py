@@ -36,12 +36,12 @@ def flag_on() -> bool:
     return (os.environ.get("MORNING_BRIEF_ENABLED") or "").strip() in ("1", "true", "on")
 
 
-def enabled_regions() -> list[str]:
+def enabled_regions(include_fresh: bool | None = None) -> list[str]:
     cfg = conditions.load_regions()
     out = [r["id"] for r in cfg.get("regions") or [] if conditions._servable(r)]
-    try:  # freshwater regions only when their own preview flag is on
+    try:  # freshwater regions only when their own flag is on (or for a preview browser)
         import freshwater
-        if freshwater.flag_on():
+        if freshwater.flag_on() if include_fresh is None else include_fresh:
             out += [rid for rid, r in freshwater.regions().items() if r.get("previewReady")]
     except Exception:
         pass
@@ -281,8 +281,27 @@ def _stored(rid: str):
         return None
 
 
-def get(rid: str, now: datetime | None = None) -> tuple[int, dict]:
-    if rid not in enabled_regions():
+def wake(include_fresh: bool = False) -> dict:
+    """Build today's brief for every region that lacks one, in the background. Returns no brief content."""
+    now = datetime.now(timezone.utc)
+    want = _issue_date(now)
+    e = _et(now)
+    on_time = PREP <= (e.hour, e.minute) <= (PUBLISH_BY[0], PUBLISH_BY[1] + 15)
+    todo = [rid for rid in enabled_regions(include_fresh) if not ((_stored(rid) or {}).get("issueDate") == want)]
+
+    def run():
+        for rid in todo:
+            try:
+                build(rid, "scheduled" if on_time else "on-request")
+            except Exception:
+                pass
+    if todo:
+        threading.Thread(target=run, name="brief-wake", daemon=True).start()
+    return {"ok": True, "issueDate": want, "building": len(todo)}
+
+
+def get(rid: str, now: datetime | None = None, include_fresh: bool | None = None) -> tuple[int, dict]:
+    if rid not in enabled_regions(include_fresh):
         return 404, {"ok": False, "error": "No brief for this region."}
     now = now or datetime.now(timezone.utc)
     want = _issue_date(now)
@@ -329,7 +348,7 @@ def start_scheduler():
 # ------------------------------------------------------------------ page
 def page(b: dict) -> str:
     esc = html.escape
-    reason = {"scheduled": "Prepared on schedule at 5:15 AM ET.", "on-request": "Built on request because the 5:15 AM scheduled build did not run (the server was asleep or restarting).",
+    reason = {"scheduled": "Prepared on schedule (5:15 AM ET build, woken by the daily 5:16 AM check).", "on-request": "Built on request because the 5:15 AM scheduled build did not run (the server was asleep or restarting).",
               "rebuilt": "Rebuilt on request after a server restart.", "manual": "Built manually for testing."}.get(b.get("reason"), "")
     fr = "".join('<li>%s <b>%s</b>%s</li>' % (esc(f["label"]), esc(f["time"]), ' <span class="mb-stale">stale</span>' if f.get("stale") else "") for f in b["freshness"])
     rows = "".join('<div class="mb-row"><dt>%s</dt><dd>%s</dd></div>' % (esc(k), esc(v)) for k, v in b["items"])

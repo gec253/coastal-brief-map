@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import hmac
 import html
 import json
 import os
@@ -1076,6 +1077,44 @@ import windgrid  # noqa: E402
 import freshwater  # noqa: E402
 import brief  # noqa: E402
 
+# ---------------------------------------------------------------- private preview access
+# /preview?key=<PREVIEW_KEY> sets an HttpOnly cookie that unlocks the flagged previews (/lake, /lab/wind,
+# /lab/tiles, /brief) in that browser only. The key lives only in the PREVIEW_KEY env var on Render; the
+# cookie holds an HMAC of it, so rotating the key locks every browser out. Without the key set, /preview is 404.
+PREVIEW_COOKIE = "cb_preview"
+PREVIEW_DAYS = 60
+
+
+def _preview_secret() -> str:
+    k = (os.environ.get("PREVIEW_KEY") or "").strip()
+    return k if len(k) >= 24 else ""
+
+
+def _preview_cookie_value(k: str) -> str:
+    return hmac.new(k.encode(), b"coastal-brief-preview-v1", hashlib.sha256).hexdigest()
+
+
+def _flag(name: str) -> bool:
+    return (os.environ.get(name) or "").strip().lower() in ("1", "true", "on", "yes")
+
+
+PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow"><title>Private previews · The Coastal Brief</title><link rel="stylesheet" href="/styles.css">
+<style>body{background:var(--d-panel);color:var(--d-ink)}.pv{max-width:560px;margin:0 auto;padding:18px 16px 40px}
+.pv h1{font:600 1.6rem/1.1 var(--f-display);margin:10px 0 4px}.pv p{color:var(--d-ink-2)}
+.pv a.card{display:block;padding:14px 16px;margin:10px 0;border:1px solid var(--d-edge);border-radius:12px;background:var(--d-inst);color:var(--d-ink);text-decoration:none}
+.pv a.card b{display:block;font-size:1.05rem}.pv a.card span{font-size:.86rem;color:var(--d-ink-2)}
+.pv .badge{display:inline-block;font:700 .7rem/1.6 var(--f-ui);letter-spacing:.1em;text-transform:uppercase;color:#fff;background:#8c2f23;padding:2px 8px;border-radius:3px}</style></head>
+<body><main class="pv"><span class="badge">Private preview · this browser only</span><h1>Previews</h1>
+<p>These pages are unlocked for this browser for %d days. The public still gets “not found”, and nothing here is linked from the site.</p>
+<a class="card" href="/lake"><b>Falls Lake</b><span>Freshwater dashboard: lake level vs guide curve, dam release, inflows, rain, river gauges</span></a>
+<a class="card" href="/brief?region=crystal-coast"><b>Morning Brief · Crystal Coast</b><span>Today's brief, built from live readings</span></a>
+<a class="card" href="/brief?region=hatteras"><b>Morning Brief · Hatteras</b><span>Today's brief, built from live readings</span></a>
+<a class="card" href="/brief?region=falls-lake"><b>Morning Brief · Falls Lake</b><span>Freshwater version</span></a>
+<a class="card" href="/lab/wind"><b>Wind flow</b><span>Animated model wind (NOAA GFS forecast)</span></a>
+<a class="card" href="/lab/tiles"><b>Tile designs</b><span>The instrument tile prototype</span></a>
+<p><a href="/preview?lock=1">Lock this browser again</a></p></main></body></html>""" % PREVIEW_DAYS
+
 conditions.install(cache_get, cache_get_any, cache_put_ttl, lambda url: fetch_url(url, tries=2))
 
 
@@ -1102,8 +1141,55 @@ class Handler(SimpleHTTPRequestHandler):
             return
         return super().do_HEAD()
 
+    def _preview_ok(self) -> bool:
+        k = _preview_secret()
+        if not k:
+            return False
+        want = _preview_cookie_value(k)
+        for part in (self.headers.get("Cookie") or "").split(";"):
+            name, _, val = part.strip().partition("=")
+            if name == PREVIEW_COOKIE and hmac.compare_digest(val, want):
+                return True
+        return False
+
+    def _preview_route(self, parsed):
+        k = _preview_secret()
+        if not k:
+            return self.send_error(404, "not found")
+        q = parse_qs(parsed.query)
+        secure = "; Secure" if (self.headers.get("X-Forwarded-Proto") or "").lower() == "https" else ""
+        if q.get("lock"):
+            ck = "%s=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax%s" % (PREVIEW_COOKIE, secure)
+            return self._send_private(None, "text/html; charset=utf-8", b"<p>Locked. Previews are hidden in this browser again.</p>", 200, [("Set-Cookie", ck)])
+        given = (q.get("key") or [""])[0]
+        if given:
+            if not hmac.compare_digest(given.encode(), k.encode()):
+                time.sleep(0.5)
+                return self.send_error(404, "not found")
+            ck = "%s=%s; Max-Age=%d; Path=/; HttpOnly; SameSite=Lax%s" % (PREVIEW_COOKIE, _preview_cookie_value(k), PREVIEW_DAYS * 86400, secure)
+            # redirect so the key does not stay in the address bar or history entry
+            self.send_response(303)
+            self.send_header("Location", "/preview")
+            self.send_header("Set-Cookie", ck)
+            self.send_header("Referrer-Policy", "no-referrer")
+            self.send_header("X-Robots-Tag", "noindex, nofollow")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+        if not self._preview_ok():
+            return self.send_error(404, "not found")
+        return self._send_private(None, "text/html; charset=utf-8", PREVIEW_HUB.encode())
+
     def do_GET(self):
         parsed = urlparse(self.path)
+        if parsed.path == "/preview":
+            return self._preview_route(parsed)
+        if parsed.path == "/api/brief/wake":
+            # Daily wake-up ping (GitHub Actions, 5:16 AM ET). Builds today's briefs if missing; returns no
+            # brief content, so it publishes nothing. Idempotent: at most one build per region per day.
+            if not (brief.flag_on() or _preview_secret()):
+                return self.send_error(404, "not found")
+            return self._json_private(brief.wake(include_fresh=freshwater.flag_on() or bool(_preview_secret())))
         if parsed.path in ("/catch-wall", "/catch-wall/"):
             return self._send_file(ROOT / "catch-wall.html", "text/html; charset=utf-8")
         if parsed.path == "/api/health":
@@ -1150,7 +1236,7 @@ class Handler(SimpleHTTPRequestHandler):
             return self._fake_storage(parsed)
         if parsed.path in ("/lake", "/lake.js", "/api/freshwater"):
             # Private freshwater preview, off unless FRESHWATER_ENABLED=1. Not linked from the site.
-            if not freshwater.flag_on():
+            if not (freshwater.flag_on() or self._preview_ok()):
                 return self.send_error(404, "not found")
             if parsed.path == "/lake":
                 return self._send_private(ROOT / "lake.html", "text/html; charset=utf-8")
@@ -1161,11 +1247,12 @@ class Handler(SimpleHTTPRequestHandler):
             return self._send_json(payload, cache_s=0, status=status)
         if parsed.path in ("/brief", "/api/brief"):
             # Morning Brief preview, off unless MORNING_BRIEF_ENABLED=1. Not linked from the site.
-            if not brief.flag_on():
+            pv = self._preview_ok()
+            if not (brief.flag_on() or pv):
                 return self.send_error(404, "not found")
             q = parse_qs(parsed.query)
             rid = (q.get("region") or [""])[0] or "crystal-coast"
-            status, b = brief.get(rid)
+            status, b = brief.get(rid, include_fresh=freshwater.flag_on() or pv)
             if parsed.path == "/api/brief":
                 return self._json_private(b, status)
             if status != 200:
@@ -1173,20 +1260,23 @@ class Handler(SimpleHTTPRequestHandler):
             return self._send_private(None, "text/html; charset=utf-8", brief.page(b).encode())
         if parsed.path in ("/lab/tiles", "/lab/tiles.js"):
             # Tile design prototype, off unless TILES_LAB_ENABLED=1. Not linked from the site.
-            if (os.environ.get("TILES_LAB_ENABLED") or "").strip() not in ("1", "true", "on"):
+            if not (_flag("TILES_LAB_ENABLED") or self._preview_ok()):
                 return self.send_error(404, "not found")
             if parsed.path == "/lab/tiles":
                 return self._send_private(ROOT / "tiles-lab.html", "text/html; charset=utf-8")
             return self._send_private(ROOT / "tiles-lab.js", "text/javascript; charset=utf-8")
         if parsed.path in ("/lab/wind", "/lab/wind.js", "/api/wind-grid"):
             # Prototype, off unless WIND_PARTICLES_ENABLED=1. Not linked from the site.
-            if (os.environ.get("WIND_PARTICLES_ENABLED") or "").strip() not in ("1", "true", "on"):
+            pv = self._preview_ok()
+            if not (_flag("WIND_PARTICLES_ENABLED") or pv):
                 return self.send_error(404, "not found")
             if parsed.path == "/lab/wind":
                 return self._send_private(ROOT / "wind-lab.html", "text/html; charset=utf-8")
             if parsed.path == "/lab/wind.js":
                 return self._send_private(ROOT / "wind-lab.js", "text/javascript; charset=utf-8")
             g = windgrid.latest_grid()
+            if pv and not _flag("WIND_PARTICLES_ENABLED"):
+                return self._json_private(g, 200 if g.get("ok") else 502)
             return self._send_json(g, cache_s=600 if g.get("ok") else 60, status=200 if g.get("ok") else 502)
         if parsed.path == "/api/sst-time":
             return self._send_json(sst_latest_times(), cache_s=600)
