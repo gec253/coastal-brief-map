@@ -230,7 +230,7 @@ def cache_get_any(url: str) -> tuple[int, str, bytes] | None:
 # docs, and test fixtures are not.
 _STATIC_EXT = {".html", ".css", ".js", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".ico",
                ".woff2", ".json", ".txt", ".xml", ".webmanifest", ".map"}
-_STATIC_DENY_PREFIX = ("/.", "/admin", "/wind-lab.", "/docs/", "/tests/", "/scripts/", "/__pycache__/", "/requirements")
+_STATIC_DENY_PREFIX = ("/.", "/admin", "/wind-lab.", "/lake.", "/docs/", "/tests/", "/scripts/", "/__pycache__/", "/requirements")
 
 
 def _static_allowed(path: str) -> bool:
@@ -1072,6 +1072,7 @@ def fetch_radar_tile(z: str, x: str, y: str, t: str) -> tuple[int, str, bytes]:
 import conditions  # noqa: E402
 import photos  # noqa: E402
 import windgrid  # noqa: E402
+import freshwater  # noqa: E402
 
 conditions.install(cache_get, cache_get_any, cache_put_ttl, lambda url: fetch_url(url, tries=2))
 
@@ -1145,6 +1146,17 @@ class Handler(SimpleHTTPRequestHandler):
             return self._admin_get(parsed)
         if parsed.path.startswith("/fake-storage/approved/"):
             return self._fake_storage(parsed)
+        if parsed.path in ("/lake", "/lake.js", "/api/freshwater"):
+            # Private freshwater preview, off unless FRESHWATER_ENABLED=1. Not linked from the site.
+            if not freshwater.flag_on():
+                return self.send_error(404, "not found")
+            if parsed.path == "/lake":
+                return self._send_private(ROOT / "lake.html", "text/html; charset=utf-8")
+            if parsed.path == "/lake.js":
+                return self._send_private(ROOT / "lake.js", "text/javascript; charset=utf-8")
+            rid = (parse_qs(parsed.query).get("region") or ["falls-lake"])[0]
+            status, payload = freshwater.assemble(rid)
+            return self._send_json(payload, cache_s=0, status=status)
         if parsed.path in ("/lab/wind", "/lab/wind.js", "/api/wind-grid"):
             # Prototype, off unless WIND_PARTICLES_ENABLED=1. Not linked from the site.
             if (os.environ.get("WIND_PARTICLES_ENABLED") or "").strip() not in ("1", "true", "on"):

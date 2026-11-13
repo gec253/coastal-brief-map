@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Falls Lake (private preview) · The Coastal Brief</title>
+  <link rel="stylesheet" href="/styles.css">
+  <meta name="theme-color" content="#0B2A3D">
+  <link rel="icon" href="/branding/favicon.svg" type="image/svg+xml">
+  <script>(function () { try { var t = localStorage.getItem("coastalBrief.theme"); if (t !== "light" && t !== "dark") t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; document.documentElement.setAttribute("data-theme", t); } catch (e) {} })();</script>
+  <style>
+    .fw-preview { display: inline-block; margin: 0 0 6px; padding: 2px 10px; border-radius: 999px; background: var(--copper); color: #fff; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.04em; }
+    .fw-grid { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+    @media (min-width: 761px) { .fw-grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); } .fw-hero { grid-row: span 3; } }
+    /* reserved loaded heights per breakpoint (measured), so readings arriving don't push content */
+    .dash { --fh: 716px; --ft: 182px; --fr: 270px; --fn: 241px; --fg: 288px; --fi: 220px; }
+    @media (max-width: 1099px) { .dash { --fh: 736px; --fn: 260px; --fg: 269px; } }
+    @media (max-width: 919px) { .dash { --fh: 798px; --ft: 201px; --fr: 289px; --fn: 283px; --fg: 288px; } }
+    @media (max-width: 839px) { .dash { --fh: 844px; --fr: 313px; --fn: 306px; } }
+    @media (max-width: 799px) { .dash { --fh: 863px; --fr: 332px; } }
+    @media (max-width: 760px) { .dash { --fh: 601px; --ft: 166px; --fr: 251px; --fn: 245px; --fg: 284px; --fi: 216px; } }
+    @media (max-width: 599px) { .dash { --fh: 594px; --ft: 186px; } }
+    @media (max-width: 499px) { .dash { --fh: 583px; --fr: 274px; --fn: 256px; --fg: 265px; } }
+    @media (max-width: 430px) { .dash { --fh: 584px; --ft: 198px; --fr: 287px; --fn: 258px; --fg: 284px; } }
+    @media (max-width: 370px) { .dash { --fh: 572px; --fr: 310px; } }
+    .fw-hero { min-height: var(--fh); } #fw-temp { min-height: var(--ft); } #fw-release { min-height: var(--fr); } #fw-rain { min-height: var(--fn); }
+    #fw-river .fw-g { min-height: var(--fg); } #fw-inflows .fw-g { min-height: var(--fi); }
+    .fw-big { font-family: var(--f-num); font-weight: 600; font-size: 3.6rem; line-height: 0.95; color: var(--d-ink); font-variant-numeric: tabular-nums; }
+    .fw-big small { font-size: 1.3rem; margin-left: 4px; color: var(--d-ink-2); }
+    .fw-mid { font-family: var(--f-num); font-weight: 600; font-size: 2.4rem; line-height: 1; color: var(--d-ink); font-variant-numeric: tabular-nums; }
+    .fw-mid small { font-size: 1.05rem; margin-left: 3px; color: var(--d-ink-2); }
+    .fw-vs { margin: 6px 0 2px; font-weight: 700; font-size: 1.05rem; color: var(--d-ink); }
+    .fw-vs.low { color: var(--copper); }
+    .fw-note { margin: 4px 0 0; font-size: 0.86rem; color: var(--d-ink-2); }
+    .fw-row { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 16px; align-items: center; margin: 12px 0 4px; }
+    .fw-pool { width: 120px; height: 180px; color: var(--d-ink-2); }
+    .fw-pool text { font-family: var(--f-num); font-size: 11px; fill: var(--d-ink-2); }
+    .fw-pool .lbl { font-family: var(--f-ui); font-size: 10.5px; font-weight: 700; fill: var(--d-ink); }
+    .fw-dl { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; }
+    .fw-dl dt { font-size: 0.74rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--d-ink-2); }
+    .fw-dl dd { margin: 2px 0 0; font-family: var(--f-num); font-weight: 600; font-size: 1.3rem; color: var(--d-ink); }
+    .fw-spark { display: block; width: 100%; height: auto; max-height: 150px; color: var(--d-ink-2); }
+    .fw-spark text { font-family: var(--f-num); font-size: 11px; fill: var(--d-ink-2); }
+    .fw-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 6px; }
+    .fw-k { margin: 0; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--d-ink-2); }
+    .fw-v { margin: 2px 0 0; font-family: var(--f-num); font-weight: 600; font-size: 1.45rem; color: var(--d-ink); font-variant-numeric: tabular-nums; }
+    .fw-band { display: inline-block; margin-top: 6px; padding: 2px 9px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; border: 1px solid var(--d-edge); color: var(--d-ink); }
+    .fw-band.much-below, .fw-band.record-low { border-color: var(--copper); color: var(--copper); }
+    .fw-band.below { border-color: rgba(169, 99, 58, 0.6); }
+    .fw-band.normal { border-color: var(--seaglass); }
+    .fw-band.above, .fw-band.much-above { border-color: var(--teal); color: var(--teal); }
+    .fw-sec { margin: 22px 0 8px; font-family: var(--f-display); font-size: 1.35rem; color: var(--d-ink); }
+    .fw-gauges { display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); }
+    @media (min-width: 640px) { .fw-gauges { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (min-width: 1100px) { .fw-gauges.three { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    .fw-g h3 { margin: 0 0 6px; font-family: var(--f-ui); font-size: 1rem; font-weight: 700; color: var(--d-ink); }
+    .fw-g .fw-meta { margin: 6px 0 0; font-size: 0.84rem; color: var(--d-ink-2); }
+    .fw-fc { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    @media (min-width: 900px) { .fw-fc { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+    .fw-fc div { padding: 10px 12px; border: 1px solid var(--d-edge-2); border-radius: 12px; background: var(--d-inst-2); min-height: 96px; }
+    .fw-fc b { display: block; font-size: 0.9rem; color: var(--d-ink); }
+    .fw-fc span { display: block; font-size: 0.86rem; color: var(--d-ink-2); }
+    .fw-fc .t { font-family: var(--f-num); font-size: 1.5rem; font-weight: 600; color: var(--d-ink); }
+    .fw-links { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+    .fw-links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--d-accent); font-weight: 700; }
+    .fw-src { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .fw-src th, .fw-src td { text-align: left; padding: 6px 8px 6px 0; border-bottom: 1px solid var(--d-edge-2); vertical-align: top; color: var(--d-ink-2); }
+    .fw-src th { color: var(--d-ink); font-weight: 700; }
+    .fw-src a { color: var(--d-accent); }
+    .fw-unavail { color: var(--d-ink-2); font-style: italic; }
+    @media (max-width: 760px) { .fw-src thead { display: none; } .fw-src tr, .fw-src td { display: block; } .fw-src td { border: 0; padding: 1px 0; } .fw-src tr { padding: 8px 0; border-bottom: 1px solid var(--d-edge-2); } .fw-big { font-size: 3.1rem; }   }
+  </style>
+</head>
+<body>
+  <header class="site">
+    <div class="wrap header-row">
+      <div class="brand">
+        <h1><a class="site-title" href="/"><svg class="crest" viewBox="0 0 64 40" aria-hidden="true" focusable="false"><path class="crest-sea" d="M0 30 C10 18 18 16 28 22 S48 34 64 20 L64 40 L0 40 Z"/><path class="crest-arc" d="M14 15 C26 4 46 4 58 14 L55 17 C44 9 28 9 17 18 Z"/><path class="crest-in" d="M24 15 C32 9 44 9 52 14 L50 16.5 C42 12 33 12 26 16.8 Z"/></svg><span class="wordmark">The Coastal Brief</span></a></h1>
+        <p class="tagline tl-main">Know the Water. Live the Coast.</p>
+        <p class="tagline tl-sub">From the rivers to the sounds to the sea</p>
+        <nav class="site-nav" aria-label="Site">
+          <a href="/">Conditions</a>
+          <a href="/catch-wall">Catch Wall</a>
+          <a href="/coastal-life">Coastal Life</a>
+        </nav>
+      </div>
+      <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
+    </div>
+    <div class="wrap"><div class="meta-row"><span class="badge" id="fw-badge">Loading readings…</span><span class="loc">Private preview. Not linked or public.</span></div></div>
+  </header>
+
+  <main class="wrap">
+    <section class="panel glance dash" aria-labelledby="fw-h">
+      <div class="dash-head">
+        <div class="dash-title">
+          <p class="fw-preview">Freshwater · private preview</p>
+          <p class="eyebrow">Live lake instruments</p>
+          <h2 id="fw-h">Falls Lake</h2>
+          <p class="dash-sub" id="fw-sub">Neuse River basin · Wake, Durham &amp; Granville counties</p>
+        </div>
+        <div class="dash-controls">
+          <div class="dash-legend" aria-label="Reading types">
+            <span class="tag tag-observed">Observed</span>
+            <span class="tag tag-forecast">Forecast</span>
+          </div>
+        </div>
+      </div>
+      <div class="dash-alert is-clear is-pending" id="fw-alert" role="status" style="min-height:var(--rh-al)"><div class="al-item"><span class="al-dot"></span><span class="al-ev">Checking NWS alerts…</span><span class="al-meta">Watches, warnings, and advisories at the dam.</span></div></div>
+
+      <div class="fw-grid">
+        <article class="inst fw-hero is-loading" id="fw-lake" data-title="Lake level"></article>
+        <article class="inst fw-tile is-loading" id="fw-temp" data-title="Water temp"></article>
+        <article class="inst fw-tile is-loading" id="fw-release" data-title="Release below dam"></article>
+        <article class="inst fw-tile is-loading" id="fw-rain" data-title="Rain"></article>
+      </div>
+
+      <h3 class="fw-sec">Neuse River below the lake</h3>
+      <div class="fw-gauges three" id="fw-river"><div class="inst fw-g is-loading"></div><div class="inst fw-g is-loading"></div><div class="inst fw-g is-loading"></div></div>
+
+      <h3 class="fw-sec">Main inflows</h3>
+      <div class="fw-gauges" id="fw-inflows"><div class="inst fw-g is-loading"></div><div class="inst fw-g is-loading"></div></div>
+
+      <h3 class="fw-sec">NWS forecast at the dam</h3>
+      <div class="fw-fc" id="fw-fc"><div></div><div></div><div></div><div></div></div>
+      <p class="fine" id="fw-fc-meta"></p>
+
+      <h3 class="fw-sec">Access and regulations</h3>
+      <p class="fine">Links only: ramp data and regulations stay on the official sites (NCWRC ramp data is licensed for non-commercial use).</p>
+      <ul class="fw-links" id="fw-links"></ul>
+
+      <details class="sources">
+        <summary>Where these readings come from</summary>
+        <div id="fw-sources"></div>
+      </details>
+    </section>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">
+      <p>Data: U.S. Geological Survey (provisional, subject to revision); U.S. Army Corps of Engineers, Wilmington District (guide curve); National Weather Service (forecasts, alerts, QPF) and the National Water Prediction Service (river forecasts). Not affiliated with or endorsed by these agencies.</p>
+      <p>Not boating or safety advice. Lake levels change; always check official sources before going out.</p>
+    </div>
+  </footer>
+  <script src="/lake.js" defer></script>
+</body>
+</html>

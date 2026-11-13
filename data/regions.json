@@ -413,10 +413,11 @@
       "id": "falls-lake",
       "enabled": false,
       "draft": true,
+      "previewReady": true,
       "waterType": "freshwater",
       "instrumentSet": "freshwater-lake",
       "name": "Falls Lake",
-      "area": "Neuse River basin, Wake and Durham counties",
+      "area": "Neuse River basin · Wake, Durham & Granville counties",
       "anchor": {
         "label": "Falls Lake Dam (USGS 02087182)",
         "lat": 35.9411,
@@ -429,47 +430,210 @@
         ],
         "zoom": 11
       },
-      "notes": "DRAFT ONLY. Not served: conditions.py refuses freshwater regions until the freshwater instrument set is built. Sources checked live 13 Nov 2026 (see docs/FRESHWATER_PLAN.md).",
-      "readings": {
-        "lakeElevation": {
-          "kind": "observed",
-          "provider": "usgs",
-          "site": "02087182",
-          "parameter": "62614",
-          "datum": "NGVD29 (ft-msl, same as USACE)",
-          "role": "Lake level at the dam"
+      "notes": "PRIVATE PREVIEW. Served only when FRESHWATER_ENABLED=1 (never in production). Sources checked live 13 Nov 2026; see docs/FALLS_LAKE_SOURCES.md.",
+      "lake": {
+        "usgs": "02087182",
+        "nwps": "NUDN7",
+        "elevNgvd29": "62614",
+        "elevNavd88": "62615",
+        "waterTemp": "00010",
+        "rain": "00045",
+        "guideCurveFt": 251.5,
+        "guideCurveDatum": "NGVD29 (USACE ft-msl)",
+        "guideCurveNote": "USACE Wilmington District: guide curve for Falls is 251.5 ft each day of the year.",
+        "guideCurveSource": "https://epec.saw.usace.army.mil/dsslake.txt",
+        "guideCurveChecked": "2026-11-13",
+        "usacePage": "https://epec.saw.usace.army.mil/fall.htm"
+      },
+      "release": {
+        "usgs": "02087183",
+        "nwps": "NEUN7",
+        "label": "Neuse River below Falls Dam (release)",
+        "regulated": true
+      },
+      "inflows": [
+        {
+          "usgs": "02085070",
+          "nwps": "ENON7",
+          "label": "Eno River near Durham"
         },
-        "waterTemp": {
-          "kind": "observed",
-          "provider": "usgs",
-          "site": "02087182",
-          "parameter": "00010",
-          "units": "degC",
-          "role": "Water at the dam"
-        },
-        "releaseFlow": {
-          "kind": "observed",
-          "provider": "usgs",
-          "site": "02087183",
-          "parameter": "00060",
-          "role": "Neuse River below the dam (release)"
+        {
+          "usgs": "02085500",
+          "nwps": "BMAN7",
+          "label": "Flat River at Bahama"
         }
-      },
-      "normalPool": {
-        "elevationFt": 251.5,
-        "source": "USACE Wilmington District guide curve (epec.saw.usace.army.mil)",
-        "checked": "2026-11-13"
-      },
+      ],
+      "river": [
+        {
+          "usgs": "02087500",
+          "nwps": "CLYN7",
+          "label": "Neuse River near Clayton",
+          "flow": true,
+          "regulated": true
+        },
+        {
+          "usgs": "02087570",
+          "nwps": "SMFN7",
+          "label": "Neuse River at Smithfield",
+          "flow": false,
+          "flowNote": "USGS stopped publishing discharge here; stage only.",
+          "regulated": true
+        },
+        {
+          "usgs": "02089000",
+          "nwps": "GLDN7",
+          "label": "Neuse River near Goldsboro",
+          "flow": true,
+          "regulated": true
+        }
+      ],
       "forecast": {
         "label": "Falls Lake Dam",
         "lat": 35.9411,
         "lon": -78.5833,
         "gridId": "RAH",
-        "office": "NWS Raleigh (RAH)",
-        "note": "look up gridX/gridY from api.weather.gov/points before enabling"
+        "gridX": 76,
+        "gridY": 65,
+        "office": "NWS Raleigh (RAH)"
       },
+      "alertPoint": [
+        35.9411,
+        -78.5833
+      ],
       "alertZones": [
         "NCZ041"
+      ],
+      "links": [
+        {
+          "label": "NCWRC boating access areas (ramps)",
+          "url": "https://www.ncwildlife.gov/boating/boating-access-areas"
+        },
+        {
+          "label": "NCWRC fishing regulations",
+          "url": "https://www.ncwildlife.gov/hunt/fishing-hunting-trapping-regulations"
+        },
+        {
+          "label": "Falls Lake State Recreation Area",
+          "url": "https://www.ncparks.gov/state-parks/falls-lake-state-recreation-area"
+        },
+        {
+          "label": "USACE Falls Lake water management",
+          "url": "https://epec.saw.usace.army.mil/fall.htm"
+        }
+      ]
+    },
+    {
+      "id": "neuse-river",
+      "enabled": false,
+      "draft": true,
+      "waterType": "freshwater",
+      "instrumentSet": "freshwater-river",
+      "name": "Neuse River (Falls Dam to Goldsboro)",
+      "area": "Wake, Johnston & Wayne counties",
+      "anchor": {
+        "label": "Neuse River near Clayton (USGS 02087500)",
+        "lat": 35.6472,
+        "lon": -78.4053
+      },
+      "map": {
+        "center": [
+          35.65,
+          -78.3
+        ],
+        "zoom": 9
+      },
+      "notes": "DRAFT CONFIG ONLY, not rendered yet. Gauges checked live 13 Nov 2026.",
+      "river": [
+        {
+          "usgs": "02087183",
+          "nwps": "NEUN7",
+          "label": "Neuse River below Falls Dam",
+          "flow": true
+        },
+        {
+          "usgs": "02087500",
+          "nwps": "CLYN7",
+          "label": "Neuse River near Clayton",
+          "flow": true
+        },
+        {
+          "usgs": "02087570",
+          "nwps": "SMFN7",
+          "label": "Neuse River at Smithfield",
+          "flow": false
+        },
+        {
+          "usgs": "02089000",
+          "nwps": "GLDN7",
+          "label": "Neuse River near Goldsboro",
+          "flow": true
+        }
+      ],
+      "waterTemp": {
+        "status": "none",
+        "note": "No active USGS water-temperature sensor on the Neuse main stem (checked 13 Nov 2026)."
+      },
+      "forecast": {
+        "label": "Clayton",
+        "lat": 35.6472,
+        "lon": -78.4053,
+        "gridId": "RAH",
+        "gridX": 84,
+        "gridY": 53,
+        "office": "NWS Raleigh (RAH)"
+      },
+      "alertZones": [
+        "NCZ042"
+      ]
+    },
+    {
+      "id": "jordan-lake",
+      "enabled": false,
+      "draft": true,
+      "waterType": "freshwater",
+      "instrumentSet": "freshwater-lake",
+      "name": "Jordan Lake",
+      "area": "Cape Fear basin · Chatham & Wake counties",
+      "anchor": {
+        "label": "B. Everett Jordan Dam (USGS 02098197)",
+        "lat": 35.6547,
+        "lon": -79.0683
+      },
+      "map": {
+        "center": [
+          35.78,
+          -79.02
+        ],
+        "zoom": 11
+      },
+      "notes": "DRAFT CONFIG ONLY, not rendered yet. Checked live 13 Nov 2026. No USGS water temperature at the dam. The old release gauge 02098198 (Haw River below Jordan Dam) stopped reporting in 2010 (flow) and 2016 (stage), so Haw River near Moncure 02098206 (about 1.6 mi below the dam, above the Deep River confluence) is the nearest live flow: dam release plus a little local runoff, labelled as such.",
+      "lake": {
+        "usgs": "02098197",
+        "nwps": "NHPN7",
+        "elevNgvd29": "62614",
+        "elevNavd88": "62615",
+        "rain": "00045",
+        "guideCurveFt": 216.0,
+        "guideCurveDatum": "NGVD29 (USACE ft-msl)",
+        "guideCurveSource": "https://epec.saw.usace.army.mil/dsslake.txt",
+        "guideCurveChecked": "2026-11-13"
+      },
+      "release": {
+        "usgs": "02098206",
+        "nwps": "HRMN7",
+        "label": "Haw River near Moncure"
+      },
+      "forecast": {
+        "label": "Jordan Lake Dam",
+        "lat": 35.6547,
+        "lon": -79.0683,
+        "gridId": "RAH",
+        "gridX": 60,
+        "gridY": 50,
+        "office": "NWS Raleigh (RAH)"
+      },
+      "alertZones": [
+        "NCZ040"
       ]
     }
   ]
