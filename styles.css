@@ -1362,6 +1362,7 @@ a.site-title { display: inline-flex; align-items: center; gap: 10px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  canvas.flow { display: none; }
   .needle, .wave-layer, .energy-track span, .inst, .inst.is-loading::before, .src > summary::after {
     animation: none !important;
     transition: none !important;
@@ -1416,3 +1417,133 @@ a.site-title { display: inline-flex; align-items: center; gap: 10px; }
 .inst-sm .src-time, .wcol .src-time { justify-self: start; align-self: center; }
 .src-time { white-space: nowrap; }
 .inst-sm .src-time, .wcol .src-time { white-space: normal; }
+
+/* =====================================================================
+   Phase 1b refinements
+   ===================================================================== */
+:root { --copper-ink: #8E4F2A; }
+[data-theme="dark"] { --copper-ink: #D99A6C; }
+.eyebrow, .from-k, .dial .dial-card.is-n, [data-theme="dark"] .eyebrow, [data-theme="dark"] .from-k { color: var(--copper-ink); fill: var(--copper-ink); }
+.chip-stale, [data-theme="dark"] .chip-stale { color: var(--copper-ink); }
+.trend-falling, [data-theme="dark"] .trend-falling { color: var(--copper-ink); }
+
+/* Needle is driven by a JS spring now */
+.needle { transition: none; will-change: transform; }
+canvas.flow { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+/* Larger, easier captions and labels */
+.inst-k { font-size: 0.92rem; }
+.tag { font-size: 0.8rem; }
+.src { font-size: 0.95rem; }
+.src-id { font-size: 0.98rem; }
+.src-body { font-size: 0.98rem; }
+.readouts dt, .ts-k, .sub-k, .tl-k, .energy-k, .rp-k { font-size: 0.84rem; }
+.readouts dd { font-size: 1.4rem; }
+.mid-label, .big-label { font-size: 1rem; }
+.energy-v { font-size: 1.2rem; }
+.tl-t { font-size: 1.3rem; }
+.tl-v { font-size: 0.98rem; }
+.dash-note, .sources table { font-size: 0.95rem; }
+.al-meta { font-size: 0.95rem; }
+.tide-chart .tg-t { font-size: 14px; }
+.tide-chart .tm-t { font-size: 15px; }
+.tide-chart .tn-t { font-size: 13px; }
+.dial .dial-deg { font-size: 12px; }
+.dial .dial-card { font-size: 19px; }
+
+/* Observed water level */
+.tide-obs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--d-inst-2);
+  border: 1px solid var(--d-edge-2);
+}
+.tide-obs.is-off { grid-template-columns: 1fr; }
+.tide-obs.is-stale .to-v { opacity: 0.62; }
+.to-cell { display: flex; flex-direction: column; min-width: 0; }
+.to-v { font-family: var(--f-num); font-size: 1.7rem; font-weight: 600; line-height: 1.1; color: var(--d-ink); font-variant-numeric: tabular-nums; }
+.to-v small { font-size: 0.95rem; font-weight: 500; color: var(--d-ink-2); }
+.to-s { font-size: 0.92rem; color: var(--d-ink-2); }
+.to-obs .ts-k { color: var(--d-obs); }
+.to-obs .ts-k::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--d-obs); margin-right: 6px; vertical-align: 0; }
+.tide-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 10px 0 0; font-size: 0.9rem; color: var(--d-ink-2); }
+.lg { display: inline-flex; align-items: center; gap: 6px; }
+.lg i { display: inline-block; width: 22px; height: 0; border-top: 3px solid var(--coastal); border-radius: 2px; }
+[data-theme="dark"] .lg-pred i { border-top-color: var(--seaglass-lt); }
+.lg-obs i { width: 22px; border-top: 2px dotted var(--d-obs); position: relative; }
+.lg-obs i::after { content: ""; position: absolute; right: -2px; top: -5.5px; width: 8px; height: 8px; border-radius: 50%; background: var(--d-obs); }
+.lg-now i { width: 0; height: 14px; border-top: 0; border-left: 2px solid var(--copper); }
+.tide-chart .t-obs-line { fill: none; stroke: var(--d-obs); stroke-width: 2; stroke-dasharray: 1 4; stroke-linecap: round; }
+.tide-chart .t-obs-dot { fill: var(--d-obs); }
+.tide-chart .t-obs-last { fill: var(--d-obs); stroke: var(--d-inst); stroke-width: 2; }
+
+/* ---------- Header: THE COASTAL BRIEF ---------- */
+header.site h1 { margin: 0; line-height: 1; }
+a.site-title { gap: 12px; }
+.wordmark {
+  font-family: var(--f-ui);
+  font-weight: 700;
+  font-size: 1.85rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--oyster);
+}
+.tagline.tl-main {
+  margin: 10px 0 0;
+  font-family: var(--f-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 1.4rem;
+  letter-spacing: 0.005em;
+  color: var(--seaglass-lt);
+  font-variation-settings: "opsz" 48;
+}
+.tagline.tl-sub {
+  margin: 4px 0 0;
+  font-size: 0.86rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(246, 241, 231, 0.82);
+}
+.site-nav { margin-top: 12px; font-size: 0.95rem; }
+.site-nav a { padding: 6px 0 3px; }
+.meta-row { font-size: 0.92rem; }
+@media (max-width: 700px) {
+  .wordmark { font-size: 1.12rem; letter-spacing: 0.12em; }
+  .crest { width: 36px; height: 23px; }
+  a.site-title { gap: 9px; }
+  .tagline.tl-main { font-size: 1.12rem; margin-top: 8px; }
+  .tagline.tl-sub { font-size: 0.76rem; letter-spacing: 0.08em; line-height: 1.35; }
+  .theme-toggle { padding: 6px 10px; font-size: 0.8rem; }
+}
+
+/* Footer quick links */
+.quick-links { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 0 0 10px; padding: 0; list-style: none; font-size: 0.95rem; }
+.quick-links a { font-weight: 700; }
+
+/* Mobile phones: keep instrument numbers big, captions readable */
+@media (max-width: 760px) {
+  .big-num { font-size: 3.6rem; }
+  .wind-speed { font-size: 4.5rem; }
+  .mid-num { font-size: 2.7rem; }
+  .to-v { font-size: 1.55rem; }
+  .tide-obs { padding: 8px 10px; gap: 8px; }
+  .to-s { font-size: 0.86rem; }
+  .readouts dd { font-size: 1.3rem; }
+  .src { font-size: 0.95rem; }
+  .inst-sm .tag { font-size: 0; }
+}
+@media (max-width: 380px) {
+  .tide-obs { grid-template-columns: 1fr 1fr; }
+  .to-diff { grid-column: 1 / -1; }
+}
+
+.tag + .tag { margin-left: 0; }
+
+/* Map tile seams: tiles overlap slightly (app.js), so blend them normally */
+#map.leaflet-container img.leaflet-tile { mix-blend-mode: normal; }

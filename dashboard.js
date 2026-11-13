@@ -86,6 +86,7 @@
       "</span><span class=\"src-time\">" + esc(when) + "</span></summary><div class=\"src-body\">" + body + "</div></details>";
   }
   function kindTag(kind) {
+    if (kind === "pred-obs") return '<span class="tag tag-predicted">Predicted</span><span class="tag tag-observed">Observed</span>';
     const label = kind === "forecast" ? "Forecast" : kind === "predicted" ? "Predicted" : "Observed";
     return '<span class="tag tag-' + esc(kind || "observed") + '">' + label + "</span>";
   }
@@ -207,23 +208,130 @@
       ? "Wind from " + v.dirCompass + ", " + Math.round(v.dirDeg) + " degrees, " + Math.round(v.speedKt) + " knots" + (isNum(v.gustKt) ? ", gusting " + Math.round(v.gustKt) : "")
       : "Wind direction not available");
     needle.classList.toggle("is-hidden", !isNum(v.dirDeg));
-    if (isNum(v.dirDeg)) {
-      let target = v.dirDeg;
-      if (state.windAngle != null) {
-        let delta = ((target - (state.windAngle % 360)) + 540) % 360 - 180;
-        target = state.windAngle + delta;
-      }
-      const first = state.windAngle == null;
-      state.windAngle = target;
-      if (first && !reduced()) {
-        needle.style.transition = "none";
-        needle.style.transform = "rotate(" + (target - 40) + "deg)";
-        void needle.getBoundingClientRect();
-        needle.style.transition = "";
-      }
-      requestAnimationFrame(function () { needle.style.transform = "rotate(" + target + "deg)"; });
-    }
+    if (isNum(v.dirDeg)) setNeedle(v.dirDeg);
+    flow.set(isNum(v.dirDeg) && has ? v.dirDeg : null, has ? v.speedKt : 0, r && r.status === "ok");
   }
+
+  // Needle: a lightly damped spring, so it swings to the new heading and
+  // settles with one small overshoot. Always takes the short way round.
+  const needleSpring = { cur: null, vel: 0, target: 0, raf: 0, last: 0 };
+  function applyNeedle(a) {
+    const n = $("wind-needle");
+    if (n) n.style.transform = "rotate(" + a.toFixed(2) + "deg)";
+  }
+  function setNeedle(deg) {
+    const S = needleSpring;
+    if (S.cur == null) {
+      S.cur = reduced() ? deg : deg - 70;
+      S.target = deg;
+    } else {
+      const delta = ((deg - (S.target % 360)) + 540) % 360 - 180;
+      S.target = S.target + delta;
+    }
+    state.windAngle = S.target;
+    if (reduced()) { S.cur = S.target; S.vel = 0; applyNeedle(S.cur); return; }
+    applyNeedle(S.cur);
+    if (S.raf) return;
+    S.last = performance.now();
+    function step(t) {
+      const dt = Math.min(0.05, (t - S.last) / 1000);
+      S.last = t;
+      const k = 38, c = 9.5; // stiffness, damping (≈ 0.77 damping ratio: one soft overshoot)
+      const acc = k * (S.target - S.cur) - c * S.vel;
+      S.vel += acc * dt;
+      S.cur += S.vel * dt;
+      applyNeedle(S.cur);
+      if (Math.abs(S.target - S.cur) < 0.05 && Math.abs(S.vel) < 0.05) {
+        S.cur = S.target; S.vel = 0; applyNeedle(S.cur); S.raf = 0; return;
+      }
+      S.raf = requestAnimationFrame(step);
+    }
+    S.raf = requestAnimationFrame(step);
+  }
+
+  // Air-flow streaks inside the dial ring. Drift direction is the observed
+  // wind direction (toward which it blows) and pace scales with observed
+  // speed. Nothing is drawn without a current reading, when calm, off
+  // screen, in a hidden tab, or with reduced motion.
+  const flow = (function () {
+    let cv = null, ctx = null, dir = null, kt = 0, live = false, raf = 0, parts = [], last = 0, dpr = 1, size = 0;
+    function ensure() {
+      const wrap = document.querySelector("#i-wind .dial-wrap");
+      if (!wrap) return false;
+      cv = wrap.querySelector("canvas.flow");
+      if (!cv) {
+        cv = document.createElement("canvas");
+        cv.className = "flow";
+        cv.setAttribute("aria-hidden", "true");
+        wrap.insertBefore(cv, wrap.querySelector(".dial-center"));
+      }
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      size = wrap.clientWidth;
+      if (cv.width !== Math.round(size * dpr) || cv.height !== Math.round(size * dpr)) { cv.width = Math.round(size * dpr); cv.height = Math.round(size * dpr); }
+      ctx = cv.getContext("2d");
+      return !!ctx;
+    }
+    // positions are in dial units (viewBox 300, centre 150); band r 64–91
+    function spawn(p) {
+      const ang = Math.random() * Math.PI * 2, r = Math.sqrt(64 * 64 + Math.random() * (91 * 91 - 64 * 64));
+      p.x = Math.cos(ang) * r; p.y = Math.sin(ang) * r; p.life = 0; p.span = 1.4 + Math.random() * 1.6;
+    }
+    function seed() {
+      parts = [];
+      for (let i = 0; i < 42; i++) { const p = {}; spawn(p); p.life = Math.random() * p.span; parts.push(p); }
+    }
+    function visible() {
+      const d = $("conditions");
+      return !document.hidden && !(d && d.classList.contains("is-offscreen"));
+    }
+    function frame(t) {
+      raf = 0;
+      if (!ctx || dir == null || !live || reduced()) return;
+      if (!visible()) return; // resumes on visibility/scroll events
+      const dt = Math.min(0.05, (t - (last || t)) / 1000);
+      last = t;
+      const S = size * dpr, C = S / 2, unit = S / 300;
+      ctx.clearRect(0, 0, S, S);
+      // blowing toward dir+180; screen y grows downward
+      const toward = ((dir + 180) * Math.PI) / 180;
+      const vx = Math.sin(toward), vy = -Math.cos(toward);
+      const dark = document.documentElement.getAttribute("data-theme") === "dark";
+      ctx.lineCap = "round";
+      ctx.lineWidth = 1.7 * dpr;
+      const spd = 14 + Math.min(40, kt) * 2.2; // dial units per second
+      const len = 7 + Math.min(30, kt) * 0.55;
+      for (const p of parts) {
+        p.x += vx * spd * dt; p.y += vy * spd * dt; p.life += dt;
+        const rr = Math.hypot(p.x, p.y);
+        if (p.life > p.span || rr > 91 || rr < 64) { spawn(p); continue; }
+        const edge = Math.min(1, (91 - rr) / 6, (rr - 64) / 6);
+        const fade = Math.sin(Math.PI * (p.life / p.span)) * edge;
+        ctx.strokeStyle = dark ? "rgba(169,214,204," + (0.62 * fade).toFixed(3) + ")" : "rgba(43,111,143," + (0.5 * fade).toFixed(3) + ")";
+        ctx.beginPath();
+        ctx.moveTo(C + (p.x - vx * len) * unit, C + (p.y - vy * len) * unit);
+        ctx.lineTo(C + p.x * unit, C + p.y * unit);
+        ctx.stroke();
+      }
+      raf = requestAnimationFrame(frame);
+    }
+    function kick() {
+      if (!raf && ctx && dir != null && live && !reduced() && visible()) { last = 0; raf = requestAnimationFrame(frame); }
+    }
+    document.addEventListener("visibilitychange", kick);
+    window.addEventListener("scroll", kick, { passive: true });
+    window.addEventListener("resize", function () { if (ensure()) kick(); });
+    return {
+      set: function (d, speed, fresh) {
+        if (!ensure()) return;
+        dir = d; kt = speed || 0;
+        // only animate a current (not stale) reading of at least 1 knot
+        live = d != null && fresh && kt >= 1;
+        if (!parts.length) seed();
+        if (!live || reduced()) { ctx.clearRect(0, 0, cv.width, cv.height); if (raf) { cancelAnimationFrame(raf); raf = 0; } return; }
+        kick();
+      },
+    };
+  })();
 
   // ---------- seas ----------
   function waveSvg(hFt, periodS, cls) {
@@ -315,23 +423,52 @@
     const rising = n0 ? n0.type === "H" : null;
     const mins = n0 ? Math.round((n0.t - now) / 60000) : null;
     const inTxt = mins == null ? "" : (mins >= 60 ? Math.floor(mins / 60) + " h " + (mins % 60) + " min" : mins + " min");
-    el.innerHTML = head("Tide", null, "predicted") +
+    el.innerHTML = head("Tide", null, t.observed && t.observed.status !== "unavailable" ? "pred-obs" : "predicted") +
       '<div class="tide-top">' +
       '<div class="tide-next">' + (n0
         ? '<div class="tide-next-k">Next ' + (n0.type === "H" ? "high" : "low") + "</div>" +
           '<div class="big-read"><span class="big-num">' + esc(clock(n0.t).replace(/\s?(AM|PM)/, "")) + '</span><span class="big-unit">' + esc(/PM/.test(clock(n0.t)) ? "PM" : "AM") + ' ET</span></div>' +
           '<div class="big-label">' + fmt(n0.v, 1) + " ft · in " + esc(inTxt) + "</div>"
         : '<div class="big-label">No upcoming tide in the prediction window.</div>') + "</div>" +
-      '<div class="tide-state">' + (isNum(nowH) ? '<div class="ts-row"><span class="ts-k">Now</span><span class="ts-v">' + fmt(nowH, 1) + " ft</span></div>" +
+      '<div class="tide-state">' + (isNum(nowH) ? '<div class="ts-row"><span class="ts-k">Predicted now</span><span class="ts-v">' + fmt(nowH, 1) + " ft</span></div>" +
         '<div class="ts-row"><span class="ts-k">Trend</span><span class="ts-v">' + (rising == null ? "—" : rising ? "Rising ↑" : "Falling ↓") + "</span></div>" : "") +
         (prev ? '<div class="ts-row"><span class="ts-k">Last ' + (prev.type === "H" ? "high" : "low") + '</span><span class="ts-v">' + esc(etTime(prev.t, false)) + "</span></div>" : "") +
       "</div></div>" +
+      obsStrip(t.observed) +
+      '<div class="tide-legend" aria-hidden="true"><span class="lg lg-pred"><i></i>Predicted tide</span>' +
+      (t.observed && t.observed.status !== "unavailable" ? '<span class="lg lg-obs"><i></i>Observed water level</span>' : "") +
+      '<span class="lg lg-now"><i></i>Now</span></div>' +
       '<div class="tide-chart" id="tide-chart"></div>' +
       '<ol class="tide-list">' + next.slice(0, 4).map(function (e) {
         return '<li class="' + (e.type === "H" ? "is-high" : "is-low") + '"><span class="tl-k">' + (e.type === "H" ? "High" : "Low") + '</span><span class="tl-t">' + esc(etTime(e.t)) + '</span><span class="tl-v">' + fmt(e.v, 1) + " ft</span></li>";
       }).join("") + "</ol>" +
-      '<div class="inst-foot">' + predCaption(t) + "</div>";
+      '<div class="inst-foot">' + predCaption(t) + obsCaption(t.observed, t.station) + "</div>";
     drawTideChart(t);
+  }
+  function obsStrip(o) {
+    if (!o || o.status === "unavailable") {
+      return '<div class="tide-obs is-off"><div class="to-cell"><span class="ts-k">Observed water level</span><span class="to-v num-off">—</span>' +
+        '<span class="to-s">' + (o && o.lastReport ? "Not reporting since " + esc(etTime(o.lastReport)) : "Not reporting right now") + "</span></div></div>";
+    }
+    const L = o.latest || {};
+    const d = L.diff;
+    const diffTxt = !isNum(d) ? "—" : (Math.abs(d) < 0.05 ? "±0.0" : (d > 0 ? "+" : "−") + Math.abs(d).toFixed(1)) + " ft";
+    const diffWord = !isNum(d) ? "" : Math.abs(d) < 0.05 ? "about as predicted" : d > 0 ? "higher than predicted" : "lower than predicted";
+    return '<div class="tide-obs' + (o.status === "stale" ? " is-stale" : "") + '">' +
+      '<div class="to-cell to-obs"><span class="ts-k">Observed</span><span class="to-v">' + numSpan("wlo", L.v, 1) + ' <small>ft</small></span><span class="to-s">' + esc(etTime(L.t)) + (o.status === "stale" ? ' <span class="chip-stale">Stale</span>' : "") + "</span></div>" +
+      '<div class="to-cell"><span class="ts-k">Predicted then</span><span class="to-v">' + (isNum(L.predicted) ? fmt(L.predicted, 1) : "—") + ' <small>ft</small></span><span class="to-s">same minute</span></div>' +
+      '<div class="to-cell to-diff"><span class="ts-k">Difference</span><span class="to-v">' + esc(diffTxt) + '</span><span class="to-s">' + esc(diffWord) + "</span></div></div>";
+  }
+  function obsCaption(o, st) {
+    st = st || {};
+    if (!o) return "";
+    return '<details class="src"><summary><span class="src-id">' + esc(st.id || "") + '</span><span class="src-name">Observed water level</span><span class="src-time">' +
+      esc(o.status === "unavailable" ? (o.lastReport ? "last report " + etTime(o.lastReport) : "no recent report") : etTime(o.time)) + "</span></summary>" +
+      '<div class="src-body"><p>Measured water level at ' + esc(st.name || "the tide station") + " (" + esc(st.id || "") + "), NOAA CO-OPS, every 6 minutes, in feet above MLLW, the same datum as the predictions. " +
+      "These are preliminary readings that NOAA has not yet verified. The difference is observed minus predicted at the same minute; wind, pressure, and river flow cause it.</p>" +
+      "<p>Marked stale after " + esc(o.staleAfterMin || 30) + " minutes without a new reading; hidden after 6 hours.</p>" +
+      '<p class="src-links">' + (o.sourceUrl ? '<a href="' + esc(o.sourceUrl) + '" target="_blank" rel="noopener">NOAA water levels page</a>' : "") +
+      (o.dataUrl ? ' · <a href="' + esc(o.dataUrl) + '" target="_blank" rel="noopener">Raw data</a>' : "") + "</p></div></details>";
   }
   function predCaption(t) {
     const st = (t && t.station) || {};
@@ -362,8 +499,9 @@
     const t0 = now - (phone ? 4 : 6) * 3600e3, t1 = now + (phone ? 16 : 18) * 3600e3;
     const pts = t.curve.filter(function (p) { return p[0] >= t0 - 6 * 60e3 && p[0] <= t1 + 6 * 60e3; });
     if (pts.length < 10) { box.innerHTML = '<p class="fine">Not enough prediction points for a graph.</p>'; return; }
+    const obs = (t.observed && t.observed.status !== "unavailable" && t.observed.points || []).filter(function (p) { return p[0] >= t0 && p[0] <= t1; });
     let vmin = Infinity, vmax = -Infinity;
-    pts.forEach(function (p) { vmin = Math.min(vmin, p[1]); vmax = Math.max(vmax, p[1]); });
+    pts.concat(obs).forEach(function (p) { vmin = Math.min(vmin, p[1]); vmax = Math.max(vmax, p[1]); });
     const span = Math.max(0.5, vmax - vmin);
     vmin -= span * 0.12; vmax += span * 0.12;
     const x = function (tt) { return padL + ((tt - t0) / (t1 - t0)) * (W - padL - padR); };
@@ -393,19 +531,33 @@
         '<text x="' + xx.toFixed(1) + '" y="' + ty.toFixed(1) + '" text-anchor="' + anchor + '" class="tm-t"><tspan class="tm-k">' + (high ? "H " : "L ") + "</tspan>" +
         esc(clock(e.t).replace(" ", "").toLowerCase()) + " · " + fmt(e.v, 1) + "′</text>";
     });
+    let obsSvg = "";
+    if (obs.length) {
+      let ol = "";
+      let prev = null;
+      obs.forEach(function (p) {
+        // break the line across gaps longer than 20 minutes instead of drawing through missing data
+        ol += (prev && p[0] - prev[0] <= 20 * 60e3 ? " L" : "M") + x(p[0]).toFixed(1) + " " + y(p[1]).toFixed(1);
+        prev = p;
+      });
+      obsSvg = '<path d="' + ol + '" class="t-obs-line"/>';
+      obs.forEach(function (p, i) {
+        if (i % 2 === 0 || i === obs.length - 1) obsSvg += '<circle cx="' + x(p[0]).toFixed(1) + '" cy="' + y(p[1]).toFixed(1) + '" r="' + (i === obs.length - 1 ? 4.2 : 2.1) + '" class="' + (i === obs.length - 1 ? "t-obs-last" : "t-obs-dot") + '"/>';
+      });
+    }
     const nx = x(now), nh = interp(t.curve, now);
     const ny = isNum(nh) ? y(nh) : null;
     const nowMark = '<line x1="' + nx.toFixed(1) + '" x2="' + nx.toFixed(1) + '" y1="' + (padT - 18) + '" y2="' + (H - padB) + '" class="tn-line"/>' +
       '<text x="' + nx.toFixed(1) + '" y="' + (padT - 22) + '" class="tn-t">Now ' + esc(clock(now).replace(" ", "").toLowerCase()) + "</text>" +
       (ny != null ? '<circle cx="' + nx.toFixed(1) + '" cy="' + ny.toFixed(1) + '" r="9" class="tn-halo"/><circle cx="' + nx.toFixed(1) + '" cy="' + ny.toFixed(1) + '" r="4.5" class="tn-dot"/>' : "");
     const past = '<rect x="' + padL + '" y="' + padT + '" width="' + Math.max(0, nx - padL).toFixed(1) + '" height="' + (H - padT - padB) + '" class="t-past"/>';
-    box.innerHTML = '<svg viewBox="0 0 ' + W + " " + H + '" width="' + W + '" height="' + H + '" role="img" aria-label="Predicted tide curve for the next ' + (phone ? 16 : 18) + ' hours">' +
+    box.innerHTML = '<svg viewBox="0 0 ' + W + " " + H + '" width="' + W + '" height="' + H + '" role="img" aria-label="Predicted tide curve for the next ' + (phone ? 16 : 18) + ' hours' + (obs.length ? ', with observed water level for the past hours' : '') + '">' +
       '<defs><linearGradient id="tideFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="tf-top"/><stop offset="1" class="tf-bot"/></linearGradient>' +
       '<clipPath id="tideReveal"><rect x="0" y="0" width="' + W + '" height="' + H + '" class="reveal-rect"/></clipPath></defs>' +
       past + grid +
       '<line x1="' + padL + '" x2="' + (W - padR) + '" y1="' + (H - padB) + '" y2="' + (H - padB) + '" class="t-base"/>' +
       '<g clip-path="url(#tideReveal)"><path d="' + area + '" fill="url(#tideFill)" class="t-area"/><path d="' + line + '" class="t-line"/></g>' +
-      marks + nowMark + "</svg>";
+      obsSvg + marks + nowMark + "</svg>";
     const rr = box.querySelector(".reveal-rect");
     if (rr && !reduced() && !box.dataset.revealed) {
       box.dataset.revealed = "1";
@@ -563,7 +715,7 @@
         (r.status === "unavailable" ? "Not reporting" : esc(etTime(r.time)) + (r.status === "stale" ? " (stale)" : "")) + "</td></tr>";
     });
     const t = d.tides || {}, f = d.forecast || {}, m = d.marine || {};
-    html += "<tr><td>Tide</td><td>" + kindTag("predicted") + "</td><td>" + esc((t.station || {}).name || "—") + " (" + esc((t.station || {}).id || "") + ")</td><td>" + (isNum((t.station || {}).distanceMi) ? esc(t.station.distanceMi + " mi " + t.station.bearingFromAnchor + " of " + t.station.anchor) : "") + "</td><td>NOAA CO-OPS predictions</td></tr>";
+    html += "<tr><td>Tide</td><td>" + kindTag("predicted") + "</td><td>" + esc((t.station || {}).name || "—") + " (" + esc((t.station || {}).id || "") + ")</td><td>" + (isNum((t.station || {}).distanceMi) ? esc(t.station.distanceMi + " mi " + t.station.bearingFromAnchor + " of " + t.station.anchor) : "") + "</td><td>NOAA CO-OPS predictions" + (t.observed && t.observed.status !== "unavailable" ? " and observed water level (preliminary)" : "") + "</td></tr>";
     html += "<tr><td>Marine forecast</td><td>" + kindTag("forecast") + "</td><td>NWS zone " + esc(m.zone || "") + "</td><td>" + esc(m.zoneName || "") + "</td><td>" + (m.updated ? "Issued " + esc(etTime(m.updated)) : "—") + "</td></tr>";
     html += "<tr><td>7-day forecast</td><td>" + kindTag("forecast") + "</td><td>" + esc(f.office || "NWS") + "</td><td>" + esc(f.label || "") + " point forecast</td><td>" + (f.updated ? "Updated " + esc(etTime(f.updated)) : "—") + "</td></tr>";
     html += "</tbody></table>";

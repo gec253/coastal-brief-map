@@ -200,6 +200,22 @@ def cache_put(url: str, key: str, status: int, ctype: str, body: bytes) -> None:
     _prune_cache()
 
 
+IMAGE_PROXIES = {"ndfd", "sst", "sstfb", "enc"}
+
+
+def _looks_like_image_request(url: str) -> bool:
+    low = url.lower()
+    return low.split("?")[0].endswith((".png", ".jpg", ".jpeg")) or "format=image" in low or "request=getmap" in low
+
+
+def _is_image(ctype: str, body: bytes) -> bool:
+    if not body:
+        return False
+    if body[:8] == b"\x89PNG\r\n\x1a\n" or body[:3] == b"\xff\xd8\xff" or body[:4] == b"GIF8":
+        return True
+    return False
+
+
 def cache_get_any(url: str) -> tuple[int, str, bytes] | None:
     """Last cached copy even if expired. Used only as an outage fallback."""
     body_path, meta_path = cache_paths(url)
@@ -1100,12 +1116,20 @@ class Handler(SimpleHTTPRequestHandler):
         url = target + (("?" + query) if query else "")
         # Drop a browser retry param if one is present so the cache key stays stable.
         # (The current front end no longer appends _r=.)
+        wants_image = key in IMAGE_PROXIES and _looks_like_image_request(url)
         cached = cache_get(url)
+        if cached and wants_image and not _is_image(cached[1], cached[2]):
+            cached = None  # an error page was cached earlier; fetch again
         if cached:
             status, ctype, body = cached
             from_cache = True
         else:
             status, ctype, body = fetch_url(url)
+            if status == 200 and wants_image and not _is_image(ctype, body):
+                # ArcGIS/WMS servers sometimes answer 200 with an HTML or XML error page.
+                status, ctype, body = fetch_url(url, tries=2)
+                if status == 200 and not _is_image(ctype, body):
+                    status, ctype, body = 502, "text/plain; charset=utf-8", b"upstream returned a non-image tile"
             from_cache = False
             if status == 200:
                 with CACHE_LOCK:
@@ -1114,7 +1138,10 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
         ttl = TTL.get(key, TTL["default"])
-        self.send_header("Cache-Control", "public, max-age=%s" % ttl)
+        if status == 200:
+            self.send_header("Cache-Control", "public, max-age=%s" % ttl)
+        else:
+            self.send_header("Cache-Control", "no-store")
         self.send_header("X-Cache", "HIT" if from_cache else "MISS")
         self._cache_header_sent = True
         self.end_headers()

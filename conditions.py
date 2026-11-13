@@ -474,13 +474,65 @@ def local_epoch_ms(t):
     return int(dt.timestamp() * 1000)
 
 
+OBS_WL_STALE_MIN = 30      # CO-OPS posts 6-minute water levels, usually 6-15 min behind
+OBS_WL_MAX_MIN = 6 * 60    # older than this: not shown at all
+
+
+def observed_water_level(sid, curve_pts, now):
+    """CO-OPS observed (preliminary) water level, MLLW feet, last ~10 hours.
+    Returns the trace plus the latest value and the prediction at that same minute."""
+    url = coops_url(sid, "water_level", "range=10&datum=MLLW")
+    body = get_json(url, TTL_OBS)
+    base = {"kind": "observed", "dataUrl": url, "staleAfterMin": OBS_WL_STALE_MIN,
+            "sourceUrl": "https://tidesandcurrents.noaa.gov/waterlevels.html?id=%s" % sid}
+    if not body:
+        base["status"] = "unavailable"
+        return base
+    try:
+        data = json.loads(body.decode("utf-8")).get("data") or []
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        data = []
+    pts = []
+    for r in data:
+        t = coops_time(r.get("t"))
+        v = fnum(r.get("v"))
+        if t is None or v is None:
+            continue
+        pts.append([int(t.timestamp() * 1000), round(v, 3)])
+    if not pts:
+        base["status"] = "unavailable"
+        return base
+    last_t, last_v = pts[-1]
+    age = (now.timestamp() * 1000 - last_t) / 60000.0
+    base.update(lastReport=iso(datetime.fromtimestamp(last_t / 1000, timezone.utc)), ageMin=round(age))
+    if age > OBS_WL_MAX_MIN:
+        base["status"] = "unavailable"
+        return base
+    pred = None
+    for i in range(1, len(curve_pts)):
+        a0, a1 = curve_pts[i - 1], curve_pts[i]
+        if a0[0] <= last_t <= a1[0]:
+            pred = a0[1] + (a1[1] - a0[1]) * (last_t - a0[0]) / float(a1[0] - a0[0] or 1)
+            break
+    base.update(
+        status="ok" if age <= OBS_WL_STALE_MIN else "stale",
+        time=base["lastReport"], points=pts,
+        latest={"t": last_t, "v": round(last_v, 2),
+                "predicted": round(pred, 2) if pred is not None else None,
+                "diff": round(last_v - pred, 2) if pred is not None else None},
+        quality="preliminary",
+    )
+    return base
+
+
 def tides_block(tcfg, stations, anchor, now):
     sid = tcfg["station"]
     today = now.astimezone(ET).date()
     b = et_ymd(today - timedelta(days=1))
     e = et_ymd(today + timedelta(days=2))
     hilo = tide_preds(sid, b, e, "hilo")
-    curve = tide_preds(sid, et_ymd(today), et_ymd(today + timedelta(days=1)), "6")
+    # Yesterday through tomorrow so the graph window (about 9 h back to 21 h ahead) is always covered.
+    curve = tide_preds(sid, b, et_ymd(today + timedelta(days=1)), "6")
     meta = stations.get(sid) or {}
     info = station_info(sid, meta, anchor)
     if not hilo or not curve:
@@ -490,8 +542,15 @@ def tides_block(tcfg, stations, anchor, now):
         pts = [[local_epoch_ms(p["t"]), round(float(p["v"]), 3)] for p in curve]
     except (KeyError, ValueError, TypeError):
         return {"status": "unavailable", "kind": "predicted", "station": info}
+    now_ms = now.timestamp() * 1000
+    full = pts
+    pts = [p for p in pts if now_ms - 9.5 * 3600e3 <= p[0] <= now_ms + 21.5 * 3600e3]
+    try:
+        observed = observed_water_level(sid, full, now)
+    except Exception:
+        observed = {"kind": "observed", "status": "unavailable"}
     return {"status": "ok", "kind": "predicted", "station": info, "datum": "MLLW", "units": "ft",
-            "events": events, "curve": pts, "interval": "6 min",
+            "events": events, "curve": pts, "interval": "6 min", "observed": observed,
             "sourceUrl": "https://tidesandcurrents.noaa.gov/noaatidepredictions.html?id=%s" % sid}
 
 

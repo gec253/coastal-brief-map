@@ -336,8 +336,30 @@
     if (layers.sst) layers.sst.setOpacity(op.sst);
   }
 
+  // Tiles overlap their neighbours slightly so rows and columns never leave a
+  // hairline (seen on phones). Leaflet's default "plus-lighter" tile blend
+  // would brighten that overlap, so tiles use normal blending (styles.css).
+  function patchTileSeams() {
+    if (!window.L || L.GridLayer.prototype._cbSeamPatched) return;
+    const orig = L.GridLayer.prototype._initTile;
+    L.GridLayer.include({
+      _cbSeamPatched: true,
+      _initTile: function (tile) {
+        orig.call(this, tile);
+        const size = this.getTileSize();
+        // 1px bleed on every side: neighbours overlap by 2px, which covers
+        // the soft (resampled) edge of each tile whichever one draws on top.
+        tile.style.width = size.x + 2 + "px";
+        tile.style.height = size.y + 2 + "px";
+        tile.style.marginLeft = "-1px";
+        tile.style.marginTop = "-1px";
+      },
+    });
+  }
+
   function initMap() {
     if (map) return;
+    patchTileSeams();
     $("map-placeholder").textContent = "Loading map…";
     $("map-status").textContent = "Initializing Leaflet…";
 
@@ -351,6 +373,10 @@
 
     map.createPane("basemap");
     map.getPane("basemap").style.zIndex = 200;
+    // Nautical chart sits above the street map, so areas the ENC service does
+    // not cover (inland) show the street map instead of an empty gap.
+    map.createPane("chart");
+    map.getPane("chart").style.zIndex = 210;
     map.createPane("wash");
     map.getPane("wash").style.zIndex = 350;
     map.createPane("radar");
@@ -377,7 +403,7 @@
         minZoom: 2,
         maxNativeZoom: 18,
         opacity: 1,
-        pane: "basemap",
+        pane: "chart",
         attribution: "Charts: NOAA ENC Chart Display Service",
       }
     );
@@ -438,6 +464,37 @@
     $("map-status").textContent =
       "Map loaded. Starting view is central coastal NC (zoom 7 on a phone, 8 on desktop) and follows the region picked above. Teal pins are the stations behind the readings in Conditions at a glance. Use the chips on the side of the map to switch layers. Wind and waves sit on the street map or nautical chart. Water temperature and radar each take over the map. Tiles come through a local NOAA proxy because the wind, wave, and SST services do not send CORS headers.";
     setTimeout(() => map.invalidateSize(), 80);
+    startPixelSnap();
+  }
+
+  // On phones the map box can land on a fraction of a device pixel (the page
+  // above it is laid out in fractional units). Tiles then meet mid-pixel and
+  // Chrome draws a light hairline between tile rows. Nudge the map by the
+  // sub-pixel remainder so tile edges fall on whole device pixels.
+  let snapQueued = false;
+  function snapMapToPixels() {
+    snapQueued = false;
+    const el = $("map");
+    if (!el) return;
+    const dpr = window.devicePixelRatio || 1;
+    el.style.transform = "";
+    const r = el.getBoundingClientRect();
+    const fy = r.top * dpr, fx = r.left * dpr;
+    const dy = (Math.round(fy) - fy) / dpr, dx = (Math.round(fx) - fx) / dpr;
+    if (Math.abs(dx) > 0.001 || Math.abs(dy) > 0.001) {
+      el.style.transform = "translate(" + dx.toFixed(4) + "px," + dy.toFixed(4) + "px)";
+    }
+  }
+  function queueSnap() {
+    if (snapQueued) return;
+    snapQueued = true;
+    requestAnimationFrame(snapMapToPixels);
+  }
+  function startPixelSnap() {
+    queueSnap();
+    window.addEventListener("resize", queueSnap);
+    if (window.ResizeObserver) new ResizeObserver(queueSnap).observe(document.body);
+    if (map) map.on("resize", queueSnap);
   }
 
   // Station pins for the region shown in Conditions at a glance. Each pin is
@@ -584,7 +641,7 @@
     if (!map) return;
     const fullscreen = isFullscreen();
     const showChart = !fullscreen && baseKind === "chart";
-    const showStreet = !fullscreen && baseKind !== "chart";
+    const showStreet = !fullscreen; // also under the chart, to fill areas outside ENC coverage
     const showDarkUnderlay = fullscreen;
     if (layers.chart) {
       if (showChart && !map.hasLayer(layers.chart)) layers.chart.addTo(map);
@@ -832,10 +889,11 @@
 
   function activateMap() {
     $("map-shell").classList.add("is-active");
-    if (map) setTimeout(() => map.invalidateSize(), 50);
+    if (map) setTimeout(() => { map.invalidateSize(); queueSnap(); }, 50);
   }
   function releaseMap() {
     $("map-shell").classList.remove("is-active");
+    if (map) queueSnap();
   }
 
   function armLazyMap() {
