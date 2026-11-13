@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Coastal Brief — North Carolina fishing, surfing, and boating conditions</title>
   <meta name="description" content="North Carolina fishing, surfing, and boating conditions. Wind, waves, water temperature, tides, and radar for the coast, with NOAA data.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;600;700&display=swap">
   <link rel="stylesheet" href="styles.css">
   <meta name="theme-color" content="#0B2A3D">
   <meta property="og:title" content="Coastal Brief — North Carolina coastal conditions">
@@ -41,7 +44,7 @@
   <header class="site">
     <div class="wrap header-row">
       <div class="brand">
-        <h1><a class="site-title" href="/">Coastal Brief</a></h1>
+        <h1><a class="site-title" href="/"><svg class="crest" viewBox="0 0 64 40" aria-hidden="true" focusable="false"><path class="crest-sea" d="M0 30 C10 18 18 16 28 22 S48 34 64 20 L64 40 L0 40 Z"/><path class="crest-arc" d="M14 15 C26 4 46 4 58 14 L55 17 C44 9 28 9 17 18 Z"/><path class="crest-in" d="M24 15 C32 9 44 9 52 14 L50 16.5 C42 12 33 12 26 16.8 Z"/></svg><span>Coastal Brief</span></a></h1>
         <p class="tagline">North Carolina fishing, surfing, and boating conditions — public page prototype</p>
         <nav class="site-nav" aria-label="Site">
           <a href="/" aria-current="page">Conditions</a>
@@ -52,58 +55,51 @@
     </div>
     <div class="wrap">
       <div class="meta-row">
-        <span class="badge" id="freshness-badge">Last updated —</span>
-        <span class="loc">Fixed view: central coastal NC (34.7°N, 76.7°W). Location is not requested from your browser.</span>
+        <span class="badge" id="freshness-badge">Loading live readings…</span>
+        <span class="loc" id="loc-line">Morehead City · Beaufort · Crystal Coast, North Carolina. Location is not requested from your browser.</span>
       </div>
     </div>
   </header>
 
   <main class="wrap">
-    <section class="panel glance" id="conditions" aria-labelledby="glance-h">
-      <h2 id="glance-h">Conditions at a glance</h2>
-      <p class="fine">Readings below are from NOAA buoy 41025 (Diamond Shoals) and the NWS Morehead City forecast, fetched for this test. Units are converted to knots, feet, °F, and inches of mercury. Source units are noted under each value. Next tide is a live NOAA prediction for Beaufort.</p>
-      <div class="glance-grid">
-        <article class="cell gauge gauge-waves is-loading" id="card-waves">
-          <div class="k">Waves</div>
-          <div class="gauge-art" id="g-waves"></div>
-          <div class="v" id="v-waves">—</div>
-          <div class="s" id="s-waves"></div>
-          <div class="meta" id="m-waves"></div>
-        </article>
-        <article class="cell gauge gauge-wind is-loading" id="card-wind">
-          <div class="k">Wind</div>
-          <div class="gauge-art" id="g-wind"></div>
-          <div class="v" id="v-wind">—</div>
-          <div class="s" id="s-wind"></div>
-          <div class="meta" id="m-wind"></div>
-        </article>
-        <article class="cell gauge gauge-wtmp is-loading" id="card-wtmp">
-          <div class="k">Water</div>
-          <div class="gauge-art" id="g-wtmp"></div>
-          <div class="v" id="v-wtmp">—</div>
-          <div class="s" id="s-wtmp"></div>
-          <div class="meta" id="m-wtmp"></div>
-        </article>
-        <article class="cell gauge gauge-pres is-loading" id="card-pres">
-          <div class="k">Pressure</div>
-          <div class="gauge-art" id="g-pres"></div>
-          <div class="v" id="v-pres">—</div>
-          <div class="s" id="s-pres"></div>
-          <div class="meta" id="m-pres"></div>
-        </article>
-        <article class="cell gauge gauge-tide is-loading" id="card-tide">
-          <div class="k">Next tide</div>
-          <div class="gauge-art" id="g-tide"></div>
-          <div class="v" id="v-tide">—</div>
-          <div class="s" id="s-tide"></div>
-          <div class="meta" id="m-tide"></div>
-        </article>
+    <section class="panel glance dash is-booting" id="conditions" aria-labelledby="glance-h">
+      <div class="dash-head">
+        <div class="dash-title">
+          <p class="eyebrow">Live marine instruments</p>
+          <h2 id="glance-h">Conditions at a glance</h2>
+          <p class="dash-sub" id="dash-sub">Crystal Coast, North Carolina</p>
+        </div>
+        <div class="dash-controls">
+          <label class="region-pick" for="region-select">
+            <span class="rp-k">Region</span>
+            <svg class="rp-pin" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.6A2.6 2.6 0 1 1 12 6.4a2.6 2.6 0 0 1 0 5.2z"/></svg>
+            <select id="region-select" aria-label="Choose a region"><option value="crystal-coast">Morehead City · Beaufort</option></select>
+          </label>
+          <div class="dash-legend" aria-label="Reading types">
+            <span class="tag tag-observed">Observed</span>
+            <span class="tag tag-forecast">Forecast</span>
+            <span class="tag tag-predicted">Predicted</span>
+          </div>
+        </div>
       </div>
-      <div class="surf-line">
-        <span class="surf-tag">Surf</span>
-        <span class="surf-main" id="v-surf">—</span>
-        <div class="fine" id="s-surf"></div>
+      <div class="dash-alert" id="dash-alert" role="status" hidden></div>
+      <div class="console">
+        <article class="inst inst-wind is-loading" id="i-wind" data-title="Wind"></article>
+        <article class="inst inst-seas is-loading" id="i-seas" data-title="Seas"></article>
+        <article class="inst inst-swell is-loading" id="i-swell" data-title="Swell"></article>
+        <article class="inst inst-tide is-loading" id="i-tide" data-title="Tide"></article>
+        <div class="secondary">
+          <article class="inst inst-sm inst-water is-loading" id="i-water" data-title="Water temp"></article>
+          <article class="inst inst-sm inst-air is-loading" id="i-air" data-title="Air temp"></article>
+          <article class="inst inst-sm inst-pres is-loading" id="i-pres" data-title="Barometer"></article>
+        </div>
+        <article class="inst inst-marine is-loading" id="i-marine" data-title="Marine forecast"></article>
       </div>
+      <details class="sources">
+        <summary>Where these readings come from</summary>
+        <div id="sources-table"></div>
+      </details>
+      <p class="fine dash-note">Each reading comes from its own station and says which one. Tap a station line to see its location, report time, and the value as reported. Units are converted to knots, feet, °F, and inches of mercury. Always check the official NWS marine forecast before going out.</p>
     </section>
 
     <section class="panel tide-panel" id="tide-search" aria-labelledby="tide-h">
@@ -126,7 +122,7 @@
     </section>
 
     <section class="panel" aria-labelledby="fc-h">
-      <h2 id="fc-h">Seven-day forecast — Morehead City</h2>
+      <h2 id="fc-h">Seven-day forecast — <span id="fc-place">Morehead City</span></h2>
       <p class="fine" id="fc-meta"></p>
       <div class="forecast-strip" id="forecast-strip"></div>
     </section>
@@ -196,6 +192,7 @@
   </div>
 
   <!-- Leaflet JS/CSS are injected by app.js only after the map section enters view. -->
+  <script src="dashboard.js" defer></script>
   <script src="app.js" defer></script>
 </body>
 </html>

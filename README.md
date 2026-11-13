@@ -134,3 +134,13 @@ You do not have to run this yourself. For the record:
 - A **small craft advisory** does not turn ads all the way off. It only reduces ad density on the affected region’s pages (Outer Banks / northern sounds, Crystal Coast / central waters, or Cape Fear / southern waters).
 - After a hard pause, ads stay off until **12 hours** have passed with no qualifying warning.
 - Storm mode for the public site is still a separate switch and still needs your confirmation. It is not flipped automatically by this flag.
+
+## Conditions at a glance — regions and stations
+
+The dashboard reads `/api/conditions?region=<id>`. The server (`conditions.py`) builds it from `data/regions.json`:
+
+- Each region lists, for every reading, the stations to use in order of preference. The first station with a fresh report wins, and the page names it.
+- Readings older than their normal reporting gap are marked stale with their time. Readings older than 12 hours are shown as unavailable. Nothing is filled in.
+- Upstream calls are cached on disk: about 6–8 minutes for observations, 30 minutes for NWS forecasts, 5 minutes for alerts, 6 hours for tide predictions.
+
+To add a region, add an entry to `regions` (and any new stations to `stations`), check every source against live data, then set `"enabled": true`. Only enabled regions appear in the selector.

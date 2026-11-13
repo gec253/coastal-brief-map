@@ -90,256 +90,8 @@
       }
     } catch (e) {}
   }
-  function markJustPosted(el) {
-    if (!el) return;
-    el.classList.remove("just-posted");
-    void el.offsetWidth;
-    el.classList.add("just-posted");
-    setTimeout(function () { el.classList.remove("just-posted"); }, 4000);
-  }
-  function updateMiniBar(parts) {
-    if (parts.wind != null) $("mini-wind").textContent = parts.wind;
-    if (parts.wtmp != null) $("mini-wtmp").textContent = parts.wtmp;
-    if (parts.tide != null) $("mini-tide").textContent = parts.tide;
-  }
-  function polar(cx, cy, r, deg) {
-    const rad = ((deg - 90) * Math.PI) / 180;
-    return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)];
-  }
-  function windCompassSvg(dirDeg, label, speedKt, gustKt) {
-    const deg = isFinite(Number(dirDeg)) ? Number(dirDeg) : 0;
-    const aria = "Wind compass, " + label + " " + speedKt + " knots, gust " + gustKt + " knots, wind from " + Math.round(deg) + " degrees";
-    const tip = polar(38, 38, 24, deg);
-    const left = polar(38, 38, 8, deg + 140);
-    const right = polar(38, 38, 8, deg - 140);
-    return (
-      '<svg viewBox="0 0 76 76" role="img" aria-label="' + escapeHtml(aria) + '">' +
-      '<circle cx="38" cy="38" r="34" fill="none" stroke="#5BA8A0" stroke-width="2"/>' +
-      '<text x="38" y="14" text-anchor="middle" font-size="8" fill="currentColor">N</text>' +
-      '<text x="38" y="70" text-anchor="middle" font-size="8" fill="currentColor">S</text>' +
-      '<text x="10" y="41" text-anchor="middle" font-size="8" fill="currentColor">W</text>' +
-      '<text x="66" y="41" text-anchor="middle" font-size="8" fill="currentColor">E</text>' +
-      '<polygon points="' + tip[0].toFixed(1) + "," + tip[1].toFixed(1) + " " +
-        left[0].toFixed(1) + "," + left[1].toFixed(1) + " " +
-        right[0].toFixed(1) + "," + right[1].toFixed(1) + '" fill="#5BA8A0" stroke="currentColor" stroke-width="1"/>' +
-      '<circle cx="38" cy="38" r="3.2" fill="currentColor"/>' +
-      "</svg>"
-    );
-  }
-  function thermoSvg(f) {
-    const t = isFinite(Number(f)) ? Number(f) : 50;
-    const pct = Math.max(0, Math.min(1, (t - 32) / (90 - 32)));
-    const bot = 52;
-    const top = 14;
-    const fillY = bot - (bot - top) * pct;
-    const h = bot - fillY + 8;
-    const aria = "Water temperature thermometer, " + t + " degrees Fahrenheit";
-    return (
-      '<svg viewBox="0 0 76 76" role="img" aria-label="' + escapeHtml(aria) + '">' +
-      '<rect x="33" y="10" width="10" height="44" rx="5" fill="none" stroke="#5BA8A0" stroke-width="2"/>' +
-      '<circle cx="38" cy="60" r="10" fill="#5BA8A0"/>' +
-      '<rect x="35" y="' + fillY.toFixed(1) + '" width="6" height="' + h.toFixed(1) + '" fill="currentColor"/>' +
-      "</svg>"
-    );
-  }
-  function pressureSvg(inHg, trend) {
-    const v = isFinite(Number(inHg)) ? Number(inHg) : 30;
-    const pct = Math.max(0, Math.min(1, (v - 28.8) / (31.2 - 28.8)));
-    const angle = -120 + 240 * pct;
-    const tip = polar(38, 42, 26, angle);
-    const a0 = polar(38, 42, 28, -120);
-    const a1 = polar(38, 42, 28, 120);
-    const arrow = trend === "falling" ? " falling" : trend === "rising" ? " rising" : " steady";
-    const aria = "Pressure dial, " + v.toFixed(2) + " inches of mercury," + arrow;
-    return (
-      '<svg viewBox="0 0 76 76" role="img" aria-label="' + escapeHtml(aria) + '">' +
-      '<path d="M ' + a0[0].toFixed(1) + " " + a0[1].toFixed(1) + " A 28 28 0 1 1 " + a1[0].toFixed(1) + " " + a1[1].toFixed(1) + '" fill="none" stroke="#5BA8A0" stroke-width="3" stroke-linecap="round"/>' +
-      '<line x1="38" y1="42" x2="' + tip[0].toFixed(1) + '" y2="' + tip[1].toFixed(1) + '" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>' +
-      '<circle cx="38" cy="42" r="3.2" fill="#5BA8A0"/>' +
-      '<text x="16" y="70" font-size="7" fill="currentColor">29</text>' +
-      '<text x="52" y="70" font-size="7" text-anchor="end" fill="currentColor">31</text>' +
-      "</svg>"
-    );
-  }
-  function swellSvg(heightFt, periodS) {
-    const h = isFinite(Number(heightFt)) ? Number(heightFt) : 2;
-    const p = isFinite(Number(periodS)) ? Number(periodS) : 8;
-    const amp = Math.max(6, Math.min(18, h * 3.5));
-    const y = 40;
-    function wavePath(offset) {
-      let d = "M " + (-20 + offset) + " " + y;
-      for (let x = -20; x <= 96; x += 4) {
-        const yy = y + Math.sin((x + offset) / 10) * amp;
-        d += " L " + x + " " + yy.toFixed(1);
-      }
-      return d;
-    }
-    const motion = prefersReducedMotion() ? "" : " swell-wave";
-    const aria = "Animated swell, " + h.toFixed(1) + " feet at " + p + " seconds";
-    return (
-      '<svg viewBox="0 0 76 76" role="img" aria-label="' + escapeHtml(aria) + '">' +
-      '<g class="' + motion.trim() + '">' +
-      '<path d="' + wavePath(0) + '" fill="none" stroke="#5BA8A0" stroke-width="2.5" stroke-linecap="round"/>' +
-      '<path d="' + wavePath(10) + '" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.55" stroke-linecap="round"/>' +
-      "</g></svg>"
-    );
-  }
-  function tideIconSvg(type, label) {
-    const high = type === "H";
-    const aria = "Next tide, " + (label || (high ? "high" : "low"));
-    const pts = high ? "38,14 58,50 18,50" : "18,26 58,26 38,62";
-    return (
-      '<svg viewBox="0 0 76 76" role="img" aria-label="' + escapeHtml(aria) + '">' +
-      '<polygon points="' + pts + '" fill="#5BA8A0" stroke="currentColor" stroke-width="1"/>' +
-      "</svg>"
-    );
-  }
-  function formatNextTide(type, timeET, heightFt) {
-    const clock = String(timeET || "").replace(" ET", "").replace(" PM", "p").replace(" AM", "a");
-    return (type === "H" ? "Hi " : "Lo ") + clock;
-  }
-  function etYmd(date, addDays) {
-    const map = {};
-    new Intl.DateTimeFormat("en-US", {
-      timeZone: "America/New_York",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).formatToParts(date).forEach(function (part) {
-      if (part.type !== "literal") map[part.type] = part.value;
-    });
-    const utc = new Date(Date.UTC(Number(map.year), Number(map.month) - 1, Number(map.day) + (addDays || 0)));
-    return String(utc.getUTCFullYear()) + String(utc.getUTCMonth() + 1).padStart(2, "0") + String(utc.getUTCDate()).padStart(2, "0");
-  }
-  function loadLiveNextTide() {
-    const begin = etYmd(new Date(), 0);
-    const end = etYmd(new Date(), 1);
-    const url = "/api/tides?station=" + encodeURIComponent(DEFAULT_TIDE_STATION_ID) + "&begin=" + begin + "&end=" + end + "&curve=" + begin;
-    return fetch(url)
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        const card = $("card-tide");
-        if (card) card.classList.remove("is-loading");
-        if (!data || !data.ok) {
-          $("v-tide").textContent = "—";
-          $("s-tide").textContent = (data && data.error) || "Could not load the next tide.";
-          $("m-tide").textContent = DEFAULT_TIDE_STATION_NAME;
-          $("g-tide").innerHTML = tideIconSvg("H", "unavailable");
-          updateMiniBar({ tide: "—" });
-          return;
-        }
-        const now = new Date();
-        const preds = data.predictions || [];
-        let next = null;
-        for (let i = 0; i < preds.length; i++) {
-          const d = parseTideTime(preds[i].t);
-          if (d && d > now) { next = preds[i]; break; }
-        }
-        if (!next) {
-          $("v-tide").textContent = "—";
-          $("s-tide").textContent = "No upcoming tide in the next day.";
-          $("m-tide").textContent = (data.station && data.station.name) || DEFAULT_TIDE_STATION_NAME;
-          updateMiniBar({ tide: "—" });
-          return;
-        }
-        const clock = formatTideClock(next.t) + " ET";
-        const typ = next.type === "H" ? "H" : "L";
-        const height = Number(next.v);
-        const label = formatNextTide(typ, clock, height);
-        $("v-tide").textContent = label;
-        $("s-tide").textContent = (isFinite(height) ? height.toFixed(1) + " ft · " : "") + "live NOAA prediction";
-        $("m-tide").textContent = ((data.station && data.station.name) || DEFAULT_TIDE_STATION_NAME) + " · " + clock;
-        $("g-tide").innerHTML = tideIconSvg(typ, (typ === "H" ? "high " : "low ") + clock);
-        updateMiniBar({ tide: label });
-        markJustPosted($("card-tide"));
-        const tag = document.createElement("span");
-        tag.className = "just-posted badge";
-        tag.style.marginLeft = "6px";
-        tag.textContent = "Just posted";
-        if (!$("m-tide").querySelector(".just-posted")) {
-          $("m-tide").appendChild(document.createTextNode(" "));
-          $("m-tide").appendChild(tag);
-          setTimeout(function () { if (tag.parentNode) tag.parentNode.removeChild(tag); }, 4000);
-        }
-      })
-      .catch(function () {
-        const card = $("card-tide");
-        if (card) card.classList.remove("is-loading");
-        $("v-tide").textContent = "—";
-        $("s-tide").textContent = "Could not load the next tide.";
-        $("m-tide").textContent = DEFAULT_TIDE_STATION_NAME;
-        updateMiniBar({ tide: "—" });
-      });
-  }
-
-  function loadSnapshot() {
-    return fetch("/api/snapshot")
-      .then((r) => r.json())
-      .catch(() => fetch("data/snapshot.json").then((r) => r.json()));
-  }
-
   function loadAds() {
     return fetch("/api/ads").then((r) => r.json());
-  }
-
-  function fillWeather(data) {
-    const b = data.buoy;
-    $("v-waves").textContent = b.waves.heightFt.toFixed(1) + " ft";
-    $("s-waves").textContent =
-      b.waves.periodS + " s · " + b.waves.timeET + " · from " + b.waves.heightM + " m";
-    $("v-wind").textContent = b.wind.dirLabel + " " + b.wind.speedKt + " kt";
-    $("s-wind").textContent =
-      "gust " + b.wind.gustKt + " kt · " + b.wind.timeET + " · from " + b.wind.speedMs + " m/s";
-    $("v-wtmp").textContent = b.waterTemp.fahrenheit + "°F";
-    $("s-wtmp").textContent = b.waterTemp.timeET + " · from " + b.waterTemp.celsius + "°C";
-    $("v-pres").textContent = b.pressure.inHg.toFixed(2) + " " + (b.pressure.trend === "falling" ? "↓" : b.pressure.trend === "rising" ? "↑" : "→");
-    $("s-pres").textContent = b.pressure.trend + " · " + b.pressure.timeET + " · from " + b.pressure.hPa + " hPa";
-
-    $("v-surf").textContent =
-      b.surf.swellPeriodS + " s · " + b.surf.swellDir + " · " + b.surf.swellHeightFt.toFixed(1) + " ft";
-    $("s-surf").textContent =
-      b.surf.periodRead + ". " + b.surf.windVsBeach + ". " +
-      b.surf.note + " " + b.name + " (" + b.id + "), " + b.surf.timeET +
-      ". Swell height converted from " + b.surf.swellHeightM.toFixed(1) + " m.";
-
-    $("freshness-badge").textContent = "Last updated " + b.surf.timeET;
-    $("freshness-badge").classList.remove("amber");
-
-    $("g-waves").innerHTML = swellSvg(b.waves.heightFt, b.waves.periodS);
-    $("g-wind").innerHTML = windCompassSvg(b.wind.dirDeg, b.wind.dirLabel, b.wind.speedKt, b.wind.gustKt);
-    $("g-wtmp").innerHTML = thermoSvg(b.waterTemp.fahrenheit);
-    $("g-pres").innerHTML = pressureSvg(b.pressure.inHg, b.pressure.trend);
-    $("m-waves").textContent = b.name + " · " + b.waves.timeET;
-    $("m-wind").textContent = b.name + " · " + b.wind.timeET;
-    $("m-wtmp").textContent = b.name + " · " + b.waterTemp.timeET;
-    $("m-pres").textContent = b.name + " · " + b.pressure.timeET;
-    ["card-waves", "card-wind", "card-wtmp", "card-pres"].forEach(function (id) {
-      const el = $(id);
-      if (el) el.classList.remove("is-loading");
-    });
-    updateMiniBar({
-      wind: b.wind.dirLabel + " " + b.wind.speedKt + " kt",
-      wtmp: b.waterTemp.fahrenheit + "°F",
-    });
-    loadLiveNextTide();
-
-    const fc = data.forecast;
-    $("fc-meta").textContent =
-      fc.office + ". Issued " + fc.generatedAtET + ". Temperatures are °F as reported. Wind is shown in knots, converted from the NWS mph figures.";
-    const strip = $("forecast-strip");
-    strip.innerHTML = "";
-    const periods = fc.periods.filter((p) => p.name !== "This Afternoon");
-    periods.forEach((p) => {
-      const el = document.createElement("div");
-      el.className = "day";
-      el.innerHTML =
-        '<div class="dn"></div><div class="dt"></div><div class="dw"></div><div></div>';
-      el.children[0].textContent = p.name;
-      el.children[1].textContent = p.tempF + "°F";
-      el.children[2].textContent = p.windDir + " " + p.windKt;
-      el.children[3].textContent = p.short;
-      strip.appendChild(el);
-    });
   }
 
   function fillAds(ads) {
@@ -678,34 +430,55 @@
     layers.wind.addTo(map);
     setLegend("wind");
 
-    const buoy = L.circleMarker([35.026, -75.38], {
-      radius: 7,
-      color: "#0B2A3D",
-      weight: 2,
-      fillColor: "#5BA8A0",
-      fillOpacity: 1,
-    }).addTo(map);
-    buoy.bindPopup(
-      "<strong>NDBC 41025 — Diamond Shoals</strong><br>Source for the wave, wind, water, pressure, and surf cards."
-    );
-
-    const town = L.circleMarker([34.72, -76.73], {
-      radius: 6,
-      color: "#0B2A3D",
-      weight: 2,
-      fillColor: "#F3E6D0",
-      fillOpacity: 1,
-    }).addTo(map);
-    town.bindPopup(
-      "<strong>Morehead City</strong><br>NWS 7-day forecast point. Map is centered on central coastal NC, not on this pin."
-    );
+    regionLayer = L.layerGroup().addTo(map);
+    if (lastConditions) drawRegionStations(lastConditions, !!(lastConditions.region && lastConditions.region.id !== "crystal-coast"));
 
     $("map-placeholder").style.display = "none";
     $("map-shell").classList.remove("is-loading");
     $("map-status").textContent =
-      "Map loaded. Starting view is fixed at 34.7°N, 76.7°W (zoom 7 on a phone, 8 on desktop). Use the chips on the side of the map to switch layers. Wind and waves sit on the street map or nautical chart. Water temperature and radar each take over the map. Tiles come through a local NOAA proxy because the wind, wave, and SST services do not send CORS headers.";
+      "Map loaded. Starting view is central coastal NC (zoom 7 on a phone, 8 on desktop) and follows the region picked above. Teal pins are the stations behind the readings in Conditions at a glance. Use the chips on the side of the map to switch layers. Wind and waves sit on the street map or nautical chart. Water temperature and radar each take over the map. Tiles come through a local NOAA proxy because the wind, wave, and SST services do not send CORS headers.";
     setTimeout(() => map.invalidateSize(), 80);
   }
+
+  // Station pins for the region shown in Conditions at a glance. Each pin is
+  // the actual station behind a reading, so the map shows where data comes from.
+  let regionLayer = null;
+  let lastConditions = null;
+  function drawRegionStations(d, pan) {
+    if (!map || !regionLayer || !window.L || !d) return;
+    regionLayer.clearLayers();
+    const uses = {};
+    const LABELS = { wind: "wind", seas: "seas", swell: "swell", waterTemp: "inshore water temp", waterTempOffshore: "offshore water temp", airTemp: "air temp", pressure: "barometer", harborWind: "inlet wind" };
+    Object.keys(d.readings || {}).forEach(function (k) {
+      const st = d.readings[k] && d.readings[k].station;
+      if (!st || st.lat == null) return;
+      if (!uses[st.id]) uses[st.id] = { st: st, what: [] };
+      uses[st.id].what.push(LABELS[k] || k);
+    });
+    const ts = d.tides && d.tides.station;
+    if (ts && ts.lat != null) {
+      if (!uses[ts.id]) uses[ts.id] = { st: ts, what: [] };
+      uses[ts.id].what.push("tide predictions");
+    }
+    Object.keys(uses).forEach(function (id) {
+      const u = uses[id];
+      L.circleMarker([u.st.lat, u.st.lon], {
+        radius: 7, color: "#0B2A3D", weight: 2, fillColor: "#5BA8A0", fillOpacity: 1,
+      }).addTo(regionLayer).bindPopup(
+        "<strong>" + escapeHtml(u.st.name) + " (" + escapeHtml(u.st.id) + ")</strong><br>" +
+        escapeHtml(u.st.network || "") + "<br>Source for: " + escapeHtml(u.what.join(", ")) + "."
+      );
+    });
+    if (pan && d.region && d.region.map && d.region.map.center) {
+      map.setView(d.region.map.center, map.getZoom(), { animate: !prefersReducedMotion() });
+    }
+  }
+  document.addEventListener("cb:conditions", function (e) {
+    const prevId = lastConditions && lastConditions.region && lastConditions.region.id;
+    lastConditions = e.detail;
+    const changed = prevId && prevId !== (e.detail.region && e.detail.region.id);
+    drawRegionStations(e.detail, !!changed);
+  });
 
   function isFullscreen() {
     return activeMarine === "sst" || activeMarine === "radar";
@@ -1677,13 +1450,10 @@
   initRadarControls();
   initTides();
 
-  loadSnapshot()
-    .then(fillWeather)
-    .catch((err) => {
-      $("s-waves").textContent = "Could not load readings: " + err;
-    })
-    .then(() => loadAds().then(fillAds).catch(function () {
+  loadAds()
+    .then(fillAds)
+    .catch(function () {
       $("ops-box").textContent = "Could not refresh the live ads flag from NWS alerts. The last saved ads.json will be used when the proxy is running.";
-    }))
+    })
     .finally(armLazyMap);
 })();

@@ -1,0 +1,337 @@
+{
+  "version": 1,
+  "default": "crystal-coast",
+  "notes": "Region config for the Conditions at a Glance dashboard. Only regions with enabled=true appear in the selector. Each reading lists sources in order of preference; the server uses the first one with a fresh report and says which one it used. Station choices were checked against live NDBC, CO-OPS, and NWS data on 12 Nov 2026.",
+  "stations": {
+    "CLKN7": {
+      "name": "Cape Lookout",
+      "network": "NDBC C-MAN station",
+      "agency": "NOAA National Data Buoy Center",
+      "type": "ndbc",
+      "lat": 34.611,
+      "lon": -76.528,
+      "setting": "Fixed station at Cape Lookout, exposed to open ocean wind",
+      "url": "https://www.ndbc.noaa.gov/station_page.php?station=clkn7"
+    },
+    "41159": {
+      "name": "Onslow Bay Outer (CDIP 217)",
+      "network": "Directional wave buoy",
+      "agency": "NOAA NDBC / CORMP / Scripps CDIP",
+      "type": "ndbc",
+      "lat": 34.211,
+      "lon": -76.944,
+      "setting": "Offshore buoy in Onslow Bay, the water south of Bogue Banks and Beaufort Inlet",
+      "url": "https://www.ndbc.noaa.gov/station_page.php?station=41159"
+    },
+    "41064": {
+      "name": "Onslow Bay Outer (LEJ3)",
+      "network": "CORMP buoy",
+      "agency": "NOAA NDBC / UNCW CORMP",
+      "type": "ndbc",
+      "lat": 34.207,
+      "lon": -76.949,
+      "setting": "Offshore weather buoy in Onslow Bay",
+      "url": "https://www.ndbc.noaa.gov/station_page.php?station=41064"
+    },
+    "8656483": {
+      "name": "Beaufort, Duke Marine Lab",
+      "network": "NOAA tide and weather station",
+      "agency": "NOAA CO-OPS (Tides & Currents)",
+      "type": "coops",
+      "lat": 34.7173,
+      "lon": -76.6707,
+      "setting": "Pivers Island at Beaufort Inlet, harbor and inlet water",
+      "url": "https://tidesandcurrents.noaa.gov/stationhome.html?id=8656483"
+    },
+    "KMRH": {
+      "name": "Beaufort, Michael J. Smith Field",
+      "network": "NWS airport weather station (ASOS)",
+      "agency": "National Weather Service",
+      "type": "nws",
+      "lat": 34.7326,
+      "lon": -76.6566,
+      "setting": "Beaufort airport, on land",
+      "url": "https://forecast.weather.gov/data/obhistory/KMRH.html"
+    },
+    "41025": {
+      "name": "Diamond Shoals",
+      "network": "NDBC weather buoy",
+      "agency": "NOAA National Data Buoy Center",
+      "type": "ndbc",
+      "lat": 35.026,
+      "lon": -75.38,
+      "setting": "Offshore buoy south-east of Cape Hatteras",
+      "url": "https://www.ndbc.noaa.gov/station_page.php?station=41025"
+    },
+    "41120": {
+      "name": "Cape Hatteras East (CDIP 250)",
+      "network": "Directional wave buoy",
+      "agency": "NOAA NDBC / Scripps CDIP",
+      "type": "ndbc",
+      "lat": 35.258,
+      "lon": -75.285,
+      "setting": "Offshore wave buoy east of Cape Hatteras",
+      "url": "https://www.ndbc.noaa.gov/station_page.php?station=41120"
+    },
+    "8654467": {
+      "name": "USCG Station Hatteras",
+      "network": "NOAA tide and weather station",
+      "agency": "NOAA CO-OPS (Tides & Currents)",
+      "type": "coops",
+      "lat": 35.2086,
+      "lon": -75.7042,
+      "setting": "Hatteras Inlet, sound side near Hatteras village",
+      "url": "https://tidesandcurrents.noaa.gov/stationhome.html?id=8654467"
+    },
+    "KHSE": {
+      "name": "Hatteras, Mitchell Field",
+      "network": "NWS airport weather station (ASOS)",
+      "agency": "National Weather Service",
+      "type": "nws",
+      "lat": 35.2322,
+      "lon": -75.6225,
+      "setting": "Frisco airport, on land",
+      "url": "https://forecast.weather.gov/data/obhistory/KHSE.html"
+    }
+  },
+  "regions": [
+    {
+      "id": "crystal-coast",
+      "enabled": true,
+      "name": "Morehead City \u00b7 Beaufort",
+      "area": "Crystal Coast, North Carolina",
+      "anchor": {
+        "label": "Beaufort Inlet",
+        "lat": 34.695,
+        "lon": -76.668
+      },
+      "map": {
+        "center": [
+          34.7,
+          -76.7
+        ],
+        "zoom": 8
+      },
+      "readings": {
+        "wind": {
+          "kind": "observed",
+          "role": "Ocean wind at the cape",
+          "sources": [
+            "CLKN7",
+            "41064"
+          ]
+        },
+        "seas": {
+          "kind": "observed",
+          "role": "Offshore seas, Onslow Bay",
+          "sources": [
+            "41159"
+          ]
+        },
+        "swell": {
+          "kind": "observed",
+          "role": "Swell split from the wave spectrum",
+          "sources": [
+            "41159"
+          ]
+        },
+        "waterTemp": {
+          "kind": "observed",
+          "role": "Inlet and harbor water",
+          "sources": [
+            "8656483"
+          ]
+        },
+        "waterTempOffshore": {
+          "kind": "observed",
+          "role": "Offshore surface water",
+          "sources": [
+            "41159",
+            "41064"
+          ]
+        },
+        "airTemp": {
+          "kind": "observed",
+          "role": "Air at Beaufort",
+          "sources": [
+            "8656483",
+            "KMRH"
+          ]
+        },
+        "pressure": {
+          "kind": "observed",
+          "role": "Barometer at Beaufort",
+          "sources": [
+            "8656483",
+            "CLKN7"
+          ]
+        },
+        "harborWind": {
+          "kind": "observed",
+          "role": "Harbor wind at the inlet",
+          "sources": [
+            "8656483"
+          ]
+        }
+      },
+      "tide": {
+        "station": "8656483",
+        "name": "Beaufort, Duke Marine Lab",
+        "datum": "MLLW"
+      },
+      "forecast": {
+        "label": "Morehead City",
+        "lat": 34.7229,
+        "lon": -76.726,
+        "gridId": "MHX",
+        "gridX": 58,
+        "gridY": 59,
+        "office": "NWS Newport/Morehead City (MHX)"
+      },
+      "marine": {
+        "zone": "AMZ158",
+        "zoneName": "S of Cape Lookout NC to Surf City NC out to 20 NM",
+        "office": "NWS Newport/Morehead City (MHX)"
+      },
+      "alertZones": [
+        "AMZ158",
+        "AMZ156",
+        "NCZ195"
+      ]
+    },
+    {
+      "id": "hatteras",
+      "enabled": true,
+      "name": "Hatteras Island",
+      "area": "Cape Hatteras, Outer Banks",
+      "anchor": {
+        "label": "Cape Hatteras",
+        "lat": 35.2515,
+        "lon": -75.5288
+      },
+      "map": {
+        "center": [
+          35.2,
+          -75.6
+        ],
+        "zoom": 8
+      },
+      "readings": {
+        "wind": {
+          "kind": "observed",
+          "role": "Offshore wind, Diamond Shoals",
+          "sources": [
+            "41025"
+          ]
+        },
+        "seas": {
+          "kind": "observed",
+          "role": "Offshore seas east of the cape",
+          "sources": [
+            "41120",
+            "41025"
+          ]
+        },
+        "swell": {
+          "kind": "observed",
+          "role": "Swell split from the wave spectrum",
+          "sources": [
+            "41120",
+            "41025"
+          ]
+        },
+        "waterTemp": {
+          "kind": "observed",
+          "role": "Hatteras Inlet water",
+          "sources": [
+            "8654467"
+          ]
+        },
+        "waterTempOffshore": {
+          "kind": "observed",
+          "role": "Offshore surface water",
+          "sources": [
+            "41120",
+            "41025"
+          ]
+        },
+        "airTemp": {
+          "kind": "observed",
+          "role": "Air at Hatteras",
+          "sources": [
+            "8654467",
+            "KHSE"
+          ]
+        },
+        "pressure": {
+          "kind": "observed",
+          "role": "Barometer at Hatteras",
+          "sources": [
+            "8654467",
+            "41025"
+          ]
+        },
+        "harborWind": {
+          "kind": "observed",
+          "role": "Inlet wind at Hatteras",
+          "sources": [
+            "8654467"
+          ]
+        }
+      },
+      "tide": {
+        "station": "8654467",
+        "name": "USCG Station Hatteras",
+        "datum": "MLLW"
+      },
+      "forecast": {
+        "label": "Hatteras",
+        "lat": 35.2196,
+        "lon": -75.69,
+        "gridId": "MHX",
+        "gridX": 93,
+        "gridY": 86,
+        "office": "NWS Newport/Morehead City (MHX)"
+      },
+      "marine": {
+        "zone": "AMZ154",
+        "zoneName": "S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM",
+        "office": "NWS Newport/Morehead City (MHX)"
+      },
+      "alertZones": [
+        "AMZ154",
+        "AMZ152",
+        "AMZ135",
+        "NCZ205"
+      ]
+    },
+    {
+      "id": "atlantic-beach",
+      "enabled": false,
+      "name": "Atlantic Beach \u00b7 Emerald Isle",
+      "area": "Bogue Banks",
+      "status": "planned: needs a verified Bogue Inlet tide station and nearshore wind source"
+    },
+    {
+      "id": "cape-lookout",
+      "enabled": false,
+      "name": "Cape Lookout",
+      "area": "Core Banks",
+      "status": "planned"
+    },
+    {
+      "id": "new-bern",
+      "enabled": false,
+      "name": "New Bern \u00b7 Neuse River",
+      "area": "Neuse River",
+      "status": "planned: needs river wind and water-level sources (AMZ137)"
+    },
+    {
+      "id": "wilmington",
+      "enabled": false,
+      "name": "Wilmington \u00b7 Wrightsville Beach",
+      "area": "Cape Fear coast",
+      "status": "planned: 41037 and 41038 were stale on 12 Nov 2026"
+    }
+  ]
+}

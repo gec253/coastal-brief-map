@@ -36,7 +36,7 @@ TIDE_PRED_TTL = 6 * 60 * 60
 GEOCODE_TTL = 7 * 24 * 60 * 60
 GEO_LOCK = threading.Lock()
 _GEO_LAST = 0.0
-UA = "CoastalBriefMapTest/1.0 (coastal-brief prototype; contact via site ops)"
+UA = "TheCoastalBrief/1.0 (+https://thecoastalbrief.com; coastal conditions site)"
 
 # Only these origins may be proxied (SSRF guard). Keys are URL prefixes.
 PROXIES = {
@@ -198,6 +198,35 @@ def cache_put(url: str, key: str, status: int, ctype: str, body: bytes) -> None:
     except OSError:
         return
     _prune_cache()
+
+
+def cache_get_any(url: str) -> tuple[int, str, bytes] | None:
+    """Last cached copy even if expired. Used only as an outage fallback."""
+    body_path, meta_path = cache_paths(url)
+    try:
+        meta = json.loads(meta_path.read_text())
+        return int(meta.get("status", 200)), str(meta.get("ctype", "application/octet-stream")), body_path.read_bytes()
+    except (OSError, json.JSONDecodeError, ValueError):
+        return None
+
+
+def cache_put_ttl(url: str, ttl: int, body: bytes, ctype: str = "application/octet-stream") -> None:
+    if not body:
+        return
+    body_path, meta_path = cache_paths(url)
+    with CACHE_LOCK:
+        try:
+            body_path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = body_path.with_suffix(".tmp%d" % threading.get_ident())
+            tmp.write_bytes(body)
+            tmp.replace(body_path)
+            meta_path.write_text(json.dumps({
+                "url": url, "status": 200, "ctype": ctype,
+                "expires": time.time() + ttl, "stored": time.time(), "bytes": len(body),
+            }))
+        except OSError:
+            return
+        _prune_cache()
 
 
 def _prune_cache() -> None:
@@ -953,6 +982,11 @@ def fetch_radar_tile(z: str, x: str, y: str, t: str) -> tuple[int, str, bytes]:
     return status, ctype or "image/png", body
 
 
+import conditions  # noqa: E402
+
+conditions.install(cache_get, cache_get_any, cache_put_ttl, lambda url: fetch_url(url, tries=2))
+
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(ROOT), **kwargs)
@@ -985,6 +1019,16 @@ class Handler(SimpleHTTPRequestHandler):
         if parsed.path == "/api/geocode":
             status, payload = handle_geocode(parsed.query)
             return self._send_json(payload, cache_s=300, status=status)
+        if parsed.path == "/api/regions":
+            return self._send_json(conditions.public_regions(), cache_s=300)
+        if parsed.path == "/api/conditions":
+            rid = (parse_qs(parsed.query or "").get("region") or [""])[0].strip()
+            try:
+                status, payload = conditions.assemble(rid or None)
+            except Exception as e:  # keep the page up if one feed misbehaves
+                sys.stderr.write("conditions failed: %s\n" % e)
+                status, payload = 502, {"ok": False, "error": "Conditions are unavailable right now."}
+            return self._send_json(payload, cache_s=60, status=status)
         if parsed.path == "/api/radar/usage":
             return self._send_json(radar_usage_payload(), cache_s=0)
         if parsed.path == "/api/radar":
