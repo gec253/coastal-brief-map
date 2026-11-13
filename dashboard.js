@@ -746,8 +746,43 @@
     if ($("mini-tide")) $("mini-tide").textContent = mini.tide;
   }
 
+  // Phone summary: the four readings people check first, so the first screen
+  // answers "what is it doing out there". Each cell jumps to its instrument.
+  function renderGlance(d) {
+    const box = $("glance-strip");
+    if (!box) return;
+    const R = d.readings || {};
+    function cell(id, k, v, s, r) {
+      const stale = r && r.status === "stale";
+      const off = !r || r.status === "unavailable" || v === "—";
+      return '<a class="gs-cell' + (stale ? " is-stale" : "") + (off ? " is-off" : "") + '" href="#' + id + '">' +
+        '<span class="gs-k">' + esc(k) + (stale ? ' <span class="gs-stale">stale</span>' : "") + "</span>" +
+        '<span class="gs-v">' + esc(off ? "—" : v) + "</span>" +
+        '<span class="gs-s">' + esc(off ? "not reporting" : s) + "</span></a>";
+    }
+    const w = val(R.wind), se = val(R.seas), wt = val(R.waterTemp);
+    const ev = ((d.tides && d.tides.events) || []).filter(function (e) { return e.t > Date.now(); })[0];
+    const tideR = d.tides && d.tides.status === "ok" ? { status: "ok" } : null;
+    box.innerHTML =
+      cell("i-wind", "Wind", isNum(w.speedKt) ? (w.dirCompass ? w.dirCompass + " " : "") + Math.round(w.speedKt) + " kt" : "—",
+        isNum(w.gustKt) ? "gust " + Math.round(w.gustKt) + " kt" : "observed", R.wind) +
+      cell("i-seas", "Seas", isNum(se.heightFt) ? fmt(se.heightFt, 1) + " ft" : "—",
+        isNum(se.dominantPeriodS) ? Math.round(se.dominantPeriodS) + " s" + (se.meanDirCompass ? " · " + se.meanDirCompass : "") : "observed", R.seas) +
+      cell("i-water", "Water", isNum(wt.f) ? Math.round(wt.f) + "°F" : "—", "inshore station", R.waterTemp) +
+      cell("i-tide", ev ? (ev.type === "H" ? "Next high" : "Next low") : "Tide", ev ? clock(ev.t) : "—",
+        ev && isNum(ev.v) ? fmt(ev.v, 1) + " ft predicted" : "predicted", ev ? tideR : null);
+    box.hidden = false;
+    if (!state.glanceIO && window.IntersectionObserver) {
+      state.glanceIO = new IntersectionObserver(function (ents) {
+        ents.forEach(function (e) { document.body.classList.toggle("glance-on-screen", e.isIntersecting); });
+      });
+      state.glanceIO.observe(box);
+    }
+  }
+
   function render(d) {
     state.data = d;
+    renderGlance(d);
     const R = d.readings || {};
     renderAlerts(d.alerts, d.marine);
     renderWind(R.wind);

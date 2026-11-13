@@ -1547,3 +1547,72 @@ a.site-title { gap: 12px; }
 
 /* Map tile seams: tiles overlap slightly (app.js), so blend them normally */
 #map.leaflet-container img.leaflet-tile { mix-blend-mode: normal; }
+
+/* =====================================================================
+   Overnight B: phone-first layout
+   ===================================================================== */
+.glance-strip { display: none; }
+@media (max-width: 760px) {
+  .glance-strip:not([hidden]) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 10px 0 10px;
+  }
+  .gs-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-height: 72px;
+    padding: 9px 12px 8px;
+    border-radius: 12px;
+    background: var(--d-inst);
+    border: 1px solid var(--d-edge);
+    color: var(--d-ink);
+    text-decoration: none;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.35) inset, 0 1px 3px rgba(11,42,61,0.08);
+  }
+  .gs-cell:active { transform: translateY(1px); }
+  .gs-cell:focus-visible { outline: 3px solid var(--seaglass); outline-offset: 2px; }
+  .gs-k { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--d-ink-2); }
+  .gs-v { font-family: var(--f-num); font-size: 1.75rem; font-weight: 600; line-height: 1.05; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .gs-s { font-size: 0.88rem; color: var(--d-ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gs-stale { color: var(--copper-ink); letter-spacing: 0.04em; }
+  .gs-cell.is-stale .gs-v { opacity: 0.7; }
+  .gs-cell.is-off .gs-v { color: var(--d-ink-2); }
+
+  /* Compact header and dashboard top on phones */
+  header.site { padding: 10px 0 10px; }
+  .tagline.tl-main { margin-top: 6px; }
+  .tagline.tl-sub { margin-top: 2px; }
+  .site-nav { margin-top: 6px; }
+  .site-nav a { min-height: 44px; display: inline-flex; align-items: center; padding: 0 2px; }
+  .meta-row { margin-top: 2px; }
+  .meta-row .loc { display: none; }
+  .theme-toggle { min-height: 44px; }
+  .dash .eyebrow { margin-bottom: 0; }
+  .dash h2 { font-size: 1.5rem; }
+  .dash-sub { display: none; }
+  .dash-head { gap: 8px; margin-bottom: 0; }
+  .region-pick { min-height: 48px; }
+  .dash-legend .tag { font-size: 0.72rem; padding: 2px 7px; }
+
+  /* The bottom mini-bar repeats the glance strip; hide it while the strip is on screen */
+  body.glance-on-screen .mini-bar { transform: translateY(110%); }
+  .mini-bar { transition: transform 0.25s ease; }
+}
+@media (max-width: 760px) and (prefers-reduced-motion: reduce) {
+  .mini-bar { transition: none; }
+}
+
+/* Touch targets: 44px minimum for controls */
+.region-pick select { min-height: 44px; }
+.al-link { display: inline-flex; align-items: center; min-height: 44px; }
+details.sources > summary { min-height: 44px; display: flex; align-items: center; }
+#tide-q, #tide-submit, #tide-date { min-height: 44px; }
+a.site-title { padding: 11px 0; margin: -11px 0; }
+.quick-links a { display: inline-flex; align-items: center; min-height: 44px; }
+@media (max-width: 760px) {
+  .map-chip { min-height: 44px; }
+  details.src > summary { min-height: 44px; }
+}
