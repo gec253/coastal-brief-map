@@ -1951,3 +1951,34 @@ body.no-scroll { overflow: hidden; }
 .gal-water a[aria-current="true"] { border-color: var(--teal); color: var(--d-ink); box-shadow: inset 0 0 0 1px var(--teal); }
 .gal-water a:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
 .cs-sub { margin: 0 0 4px; font-size: 0.82rem; line-height: 1.35; color: var(--d-ink-2); }
+
+/* Phase 3: layout stability. Reserve the loaded size of everything above the fold
+   (alert box, header badge, first instruments) at each breakpoint so readings
+   arriving don't push content. Heights measured from loaded instruments at
+   320-1500 px; content is top-aligned and the footer stays at the bottom. */
+.badge { min-width: 12.4em; text-align: center; box-sizing: border-box; }
+.dash-alert { min-height: var(--rh-al); align-content: center; }
+.dash-alert .al-meta { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; }
+.console .inst-wind, .console .inst-wind.is-loading { min-height: var(--rh-wind); }
+.console .inst-seas, .console .inst-seas.is-loading { min-height: var(--rh-seas); }
+.console .inst-swell, .console .inst-swell.is-loading { min-height: var(--rh-swell); }
+.console .inst-tide.is-loading { min-height: var(--rh-tide); }
+.console .inst-sm.is-loading { min-height: var(--rh-sm); }
+.console .inst-marine.is-loading { min-height: var(--rh-mar); }
+.dash { --rh-al: 94px; --rh-wind: 692px; --rh-seas: 341px; --rh-swell: 338px; --rh-tide: 705px; --rh-sm: 246px; --rh-mar: 280px; }
+@media (max-width: 1089px) { .dash { --rh-al: 120px; --rh-wind: 695px; --rh-seas: 354px; --rh-swell: 329px; --rh-tide: 705px; --rh-sm: 265px; --rh-mar: 304px; } }
+@media (max-width: 980px) { .dash { --rh-wind: 727px; --rh-seas: 386px; --rh-sm: 204px; } }
+@media (max-width: 919px) { .dash { --rh-al: 142px; --rh-wind: 747px; --rh-seas: 406px; --rh-mar: 328px; } }
+@media (max-width: 799px) { .dash { --rh-mar: 352px; } }
+@media (max-width: 760px) { .dash { --rh-al: 142px; --rh-wind: 661px; --rh-seas: 328px; --rh-swell: 328px; --rh-tide: 751px; --rh-sm: 202px; --rh-mar: 373px; } }
+@media (max-width: 499px) { .dash { --rh-al: 164px; --rh-seas: 350px; --rh-tide: 814px; --rh-sm: 240px; --rh-mar: 469px; } }
+@media (max-width: 430px) { .dash { --rh-wind: 687px; --rh-seas: 413px; --rh-swell: 341px; --rh-tide: 860px; --rh-sm: 250px; --rh-mar: 552px; } }
+@media (max-width: 399px) { .dash { --rh-tide: 887px; --rh-sm: 262px; --rh-mar: 576px; } }
+@media (max-width: 359px) { .dash { --rh-al: 186px; } }
+/* The location line wraps under the badge at tablet widths in one font and not the
+   other; give it its own line up to 960px so the header height never depends on
+   which font has loaded. */
+@media (min-width: 761px) and (max-width: 960px) { .meta-row .loc { flex-basis: 100%; } }
+@media (max-width: 380px) { .site-nav { gap: 2px 9px; font-size: 0.8rem; } }
+@media (max-width: 430px) { .cs-links { gap: 0 10px; font-size: 0.84rem; } }
+@media (max-width: 355px) { .site-nav { gap: 2px 7px; font-size: 0.76rem; } }

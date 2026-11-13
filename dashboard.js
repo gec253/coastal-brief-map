@@ -658,9 +658,11 @@
     if (!items.length) {
       box.hidden = false;
       box.className = "dash-alert is-clear";
-      box.innerHTML = a && a.status === "ok"
-        ? '<span class="al-dot"></span><span>No NWS watches, warnings, or advisories for ' + esc((a.zones || []).join(", ")) + ' right now.</span>'
-        : '<span class="al-dot"></span><span>Could not check NWS alerts. See weather.gov before heading out.</span>';
+      // Same three-part layout as an active alert, so the box keeps its height.
+      box.innerHTML = (a && a.status === "ok"
+        ? '<div class="al-item"><span class="al-dot"></span><span class="al-ev">No NWS alerts right now</span><span class="al-meta">No watches, warnings, or advisories for ' + esc((a.zones || []).join(", ")) + ".</span></div>"
+        : '<div class="al-item"><span class="al-dot"></span><span class="al-ev">Alerts unavailable</span><span class="al-meta">Could not check NWS alerts. See weather.gov before heading out.</span></div>') +
+        '<a class="al-link" href="https://www.weather.gov/mhx/" target="_blank" rel="noopener">NWS details</a>';
       return;
     }
     box.hidden = false;
@@ -941,7 +943,7 @@
     const al = $("dash-alert");
     if (al && al.classList.contains("is-pending")) {
       al.className = "dash-alert is-clear";
-      al.innerHTML = '<span class="al-dot"></span><span>Could not check NWS alerts. See weather.gov before heading out.</span>';
+      al.innerHTML = '<div class="al-item"><span class="al-dot"></span><span class="al-ev">Alerts unavailable</span><span class="al-meta">Could not check NWS alerts. See weather.gov before heading out.</span></div><a class="al-link" href="https://www.weather.gov/mhx/" target="_blank" rel="noopener">NWS details</a>';
     }
     const gs = $("glance-strip");
     if (gs) gs.querySelectorAll(".gs-cell.is-loading").forEach(function (c) {
