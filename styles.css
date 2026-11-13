@@ -1780,3 +1780,7 @@ footer.site { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http
 }
 .fc-col h3 { margin: 10px 0 4px; font-family: var(--f-ui); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--d-ink-2); }
 .fc-col-m h3 { color: var(--d-fc); }
+@media (max-width: 760px) {
+  #map .leaflet-control-zoom a { width: 44px; height: 44px; line-height: 44px; font-size: 22px; }
+  .map-chips { top: 112px; }
+}
