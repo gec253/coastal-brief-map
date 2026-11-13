@@ -101,7 +101,8 @@
       "lat": 34.207,
       "lon": -76.949,
       "setting": "Offshore weather buoy in Onslow Bay",
-      "url": "https://www.ndbc.noaa.gov/station_page.php?station=41064"
+      "url": "https://www.ndbc.noaa.gov/station_page.php?station=41064",
+      "staleAfterMin": 130
     },
     "8656483": {
       "name": "Beaufort, Duke Marine Lab",
@@ -323,9 +324,9 @@
           "kind": "observed",
           "role": "Offshore surface water",
           "sources": [
-            "41120",
-            "41025"
-          ]
+            "41120"
+          ],
+          "note": "If this buoy has no usable report, offshore water temperature is shown as unavailable. Diamond Shoals (41025) is not used as a substitute because its water is often several degrees warmer."
         },
         "airTemp": {
           "kind": "observed",

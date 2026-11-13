@@ -40,6 +40,27 @@ STALE_MIN = {
 }
 MAX_AGE_H = 12
 
+
+def stale_after_min(kind: str, sid: str | None, stations: dict | None) -> int:
+    """Minutes after which a reading is stale.
+
+    Kind defaults stay in place for frequent stations. A station may set
+    staleAfterMin in data/regions.json when it reports more slowly (for
+    example an hourly buoy). That setting only lengthens the window; it
+    never shortens a longer kind default such as offshore water temperature.
+    """
+    base = STALE_MIN.get(kind, 90)
+    if not sid or not stations:
+        return base
+    raw = (stations.get(sid) or {}).get("staleAfterMin")
+    try:
+        extra = int(raw) if raw is not None else None
+    except (TypeError, ValueError):
+        extra = None
+    if extra is not None and extra > base:
+        return extra
+    return base
+
 COMPASS16 = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
              "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
 
@@ -415,10 +436,11 @@ def station_info(sid, meta, anchor):
 
 
 def resolve_reading(kind, spec, stations, anchor, now):
-    stale_min = STALE_MIN.get(kind, 90)
     tried = []
     candidates = []
-    for sid in spec.get("sources") or []:
+    sources = spec.get("sources") or []
+    for sid in sources:
+        stale_min = stale_after_min(kind, sid, stations)
         res = fetch_one(kind, sid, stations)
         if not res or not res.get("time"):
             tried.append({"id": sid, "result": "no report"})
@@ -426,6 +448,7 @@ def resolve_reading(kind, spec, stations, anchor, now):
         age_min = (now - res["time"]).total_seconds() / 60.0
         res["_sid"] = sid
         res["_age"] = age_min
+        res["_stale_min"] = stale_min
         if age_min <= stale_min:
             return build(kind, spec, res, stations, anchor, "ok", tried)
         tried.append({"id": sid, "result": "last report " + (("%d min" % round(age_min)) if age_min < 180 else ("%d h" % round(age_min / 60)) if age_min < 2880 else ("%d days" % round(age_min / 1440))) + " old"})
@@ -434,13 +457,15 @@ def resolve_reading(kind, spec, stations, anchor, now):
     if usable:
         return build(kind, spec, usable[0], stations, anchor, "stale", tried)
     out = {"kind": spec.get("kind", "observed"), "role": spec.get("role"), "status": "unavailable",
-           "tried": tried, "staleAfterMin": stale_min}
+           "tried": tried, "staleAfterMin": stale_after_min(kind, sources[0] if sources else None, stations)}
+    if spec.get("note"):
+        out["note"] = spec["note"]
     if candidates:
         c = max(candidates, key=lambda x: x["time"])
         out["lastReport"] = iso(c["time"])
         out["station"] = station_info(c["_sid"], stations.get(c["_sid"]) or {}, anchor)
-    elif spec.get("sources"):
-        sid = spec["sources"][0]
+    elif sources:
+        sid = sources[0]
         out["station"] = station_info(sid, stations.get(sid) or {}, anchor)
     return out
 
@@ -448,14 +473,17 @@ def resolve_reading(kind, spec, stations, anchor, now):
 def build(kind, spec, res, stations, anchor, status, tried):
     sid = res["_sid"]
     meta = stations.get(sid) or {}
-    return {
+    out = {
         "kind": spec.get("kind", "observed"), "role": spec.get("role"), "status": status,
         "time": iso(res["time"]), "ageMin": round(res["_age"]),
-        "staleAfterMin": STALE_MIN.get(kind, 90),
+        "staleAfterMin": res.get("_stale_min", stale_after_min(kind, sid, stations)),
         "station": station_info(sid, meta, anchor),
         "values": res["values"], "raw": res.get("raw"), "rawUnits": res.get("rawUnits"),
         "dataUrl": res.get("url"), "tried": tried,
     }
+    if spec.get("note"):
+        out["note"] = spec["note"]
+    return out
 
 
 # ---------- Tides ----------

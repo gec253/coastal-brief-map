@@ -77,6 +77,7 @@
       (where ? "<p>" + esc(where) + ". " + esc(st.setting || "") + ".</p>" : "") +
       (r.time ? "<p>Observed " + esc(etTime(r.time)) + " (" + esc(ago(ageNow(r.time))) + "). Marked stale after " + esc(r.staleAfterMin) + " min.</p>" : "") +
       (r.status === "unavailable" ? "<p>No usable report right now" + (r.lastReport ? "; last report " + esc(etTime(r.lastReport)) : "") + ". Nothing is shown in its place.</p>" : "") +
+      (r.note ? "<p>" + esc(r.note) + "</p>" : "") +
       (fallback.length ? "<p>Preferred station " + esc(fallback.map(function (t) { return t.id + " (" + t.result + ")"; }).join(", ")) + ", so this reading is from " + esc(st.id) + ".</p>" : "") +
       (r.raw ? "<p>As reported" + (r.rawUnits ? " (" + esc(r.rawUnits) + ")" : "") + ":</p>" + rawList(r.raw) : "") +
       (opts.note ? "<p>" + esc(opts.note) + "</p>" : "") +
