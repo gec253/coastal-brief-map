@@ -56,6 +56,46 @@ shown as a forecast.
 Not yet measured: real iPhone battery and thermal behaviour, Safari (WebKit could not be
 run on this box because system libraries are missing).
 
+## Refinement, 13 Nov 2026
+
+What changed in `/lab/wind` (still 404 unless `WIND_PARTICLES_ENABLED=1`, never linked):
+- Theme-aware: Esri Light Gray or Dark Gray canvas basemap, and a speed ramp tuned for each
+  (deep inks on light, luminous tints on dark). Stroke width and opacity rise with speed.
+  A 0–35+ kt colour scale is shown beside the controls.
+- **Motion toggle** (`Motion: on / off (arrows)`), stored in `localStorage`; defaults to the OS
+  `prefers-reduced-motion` setting. Off draws static arrows and stops the loop entirely.
+- Tap readout: "Model forecast 19 kt from WNW (295°) · GFS 10 m, interpolated", so the picture can
+  be checked against numbers.
+- Loop pauses when the tab is hidden, when the map is scrolled off screen (IntersectionObserver), and
+  while the map pans or zooms. Measured: 0 frames drawn in each paused state.
+- Speed: lat/lon per pixel column/row precomputed once per view (Web Mercator separates them), typed
+  arrays for particles, strokes batched into 12 speed buckets (12 `stroke()` calls a frame instead of
+  ~1,000), canvas DPR capped at 1.5 on touch devices, particle count backs off if frames run long.
+- Phones draw at 30 fps (particles step twice as far, shorter trails) to halve raster and battery cost;
+  `?fps=60` forces 60 for comparison, `?perf=1` shows an FPS/draw/heap HUD.
+
+### Measurements (headless Chromium on this box, 10 s windows, software raster)
+
+| Viewport | CPU throttle | FPS | JS draw p50 / p95 | Particles | JS heap | Main thread busy |
+|---|---|---|---|---|---|---|
+| 390×844 @3x, light | 1× | 29.9 (capped) | 0.1 / 0.2 ms | 801 | 2.7 MB | 13% |
+| 390×844 @3x, dark | 4× | 30.1 | 0.4 / 0.9 ms | 801 | 3.5 MB | 48% |
+| 390×844 @3x, light | 6× | 30.0 | 0.5 / 1.2 ms | 801 | 3.9 MB | 73% |
+| 1280×900, dark | 1× | 60.0 | 0.3 / 0.4 ms | 1,724 | 2.7 MB | 31% |
+
+Same phone runs at uncapped 60 fps before the 30 fps cap: 21% busy at 1×, 80% at 4×, and 49 fps at 6×,
+so the cap cut main-thread load by about 40%. Almost all of the busy time is raster (the box has no GPU);
+JavaScript itself is under 2% of wall time. Real iPhones raster canvas on the GPU, so these are a pessimistic
+proxy; battery and thermals still need a check on Ed's phone.
+
+### Accuracy check (model vs observation, 13 Nov 2026)
+- Client interpolation equals the raw GRIB values exactly at grid nodes (checked at 3 nodes).
+- NDBC 41025 Diamond Shoals observed 300° 11 m/s (21 kt), 8:40 AM ET; GFS valid 9 AM ET at that node:
+  295°, 18.9 kt. Close.
+- NOS BFTN7 Beaufort observed 330° 4.1 m/s (8 kt), 8:30 AM ET; GFS node: 304°, 10.2 kt. The 25 km cell
+  mixes open water and land, so the model runs stronger than the sheltered harbor station. This is the
+  expected limitation of GFS near the sounds, and why HRRR is still the recommendation.
+
 ## Reliability and cost
 
 - Cost: $0. NOMADS is free; requests are tiny and cached (at most ~50 a day).

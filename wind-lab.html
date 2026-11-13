@@ -2,9 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex, nofollow">
   <title>Wind particles prototype (not public) — The Coastal Brief</title>
+  <script>
+    (function () { try { var t = localStorage.getItem("coastalBrief.theme");
+      if (t !== "light" && t !== "dark") t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", t); } catch (e) {} })();
+  </script>
   <link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
   <style>
@@ -12,10 +17,21 @@
     .lab { max-width: 1100px; margin: 0 auto; padding: 12px; }
     .lab h1 { font-family: var(--f-display); font-size: 1.5rem; margin: 4px 0; }
     .lab-badge { display: inline-block; font-weight: 700; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: #fff; background: #8c2f23; padding: 2px 8px; border-radius: 3px; }
-    #wmap { height: min(70vh, 620px); border-radius: 10px; border: 1px solid var(--d-edge); }
-    .lab-meta { font-size: 0.9rem; color: var(--d-ink-2); margin: 8px 0; }
+    .wl-stage { position: relative; }
+    #wmap { height: min(68vh, 620px); min-height: 360px; border-radius: 10px; border: 1px solid var(--d-edge); background: #dfe3e6; }
+    [data-theme="dark"] #wmap { background: #1d2328; }
+    .lab-meta { font-size: 0.9rem; color: var(--d-ink-2); margin: 8px 0; min-height: 2.6em; }
     .lab-meta strong { color: var(--d-ink); }
     canvas.wind-particles { pointer-events: none; }
+    .wl-bar { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin: 8px 0; min-height: 34px; }
+    .wl-btn { font: inherit; font-size: 0.86rem; font-weight: 600; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--d-edge); background: var(--d-card, transparent); color: var(--d-ink); cursor: pointer; }
+    .wl-btn[aria-pressed="false"] { opacity: 0.85; }
+    .wl-legend { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--d-ink-2); }
+    .wl-ramp { width: 150px; height: 8px; border-radius: 4px; }
+    .wl-read { position: absolute; left: 10px; bottom: 26px; z-index: 500; font-size: 0.82rem; line-height: 1.35; padding: 6px 10px; border-radius: 8px; background: rgba(255,255,255,0.92); color: #14202a; box-shadow: 0 1px 4px rgba(0,0,0,0.2); max-width: 70%; pointer-events: none; }
+    [data-theme="dark"] .wl-read { background: rgba(20,28,34,0.92); color: #e8eef2; }
+    .wl-read[hidden] { display: none; }
+    .wl-hud { position: absolute; right: 10px; top: 10px; z-index: 500; font: 12px/1.3 ui-monospace, Menlo, monospace; background: rgba(0,0,0,0.65); color: #fff; padding: 4px 7px; border-radius: 6px; pointer-events: none; }
   </style>
 </head>
 <body>
@@ -23,8 +39,15 @@
     <p><span class="lab-badge">Prototype · not linked · not for navigation</span></p>
     <h1>Model wind flow</h1>
     <p class="lab-meta" id="wl-meta" role="status">Loading model wind…</p>
-    <div id="wmap" role="region" aria-label="Map of coastal North Carolina with animated model wind"></div>
-    <p class="lab-meta">This shows a <strong>computer model forecast</strong> (NOAA GFS, about 25 km grid), not buoy or station measurements. Streaks move with the forecast 10 m wind; brighter and faster means stronger. Coastline detail is coarser than the model grid suggests. With reduced motion on, static arrows are drawn instead.</p>
+    <div class="wl-bar">
+      <button type="button" class="wl-btn" id="wl-motion" aria-pressed="true">Motion: on</button>
+      <span class="wl-legend" aria-label="Wind speed colour scale, knots"><span>0</span><canvas class="wl-ramp" id="wl-ramp" width="150" height="8"></canvas><span>35+ kt</span></span>
+    </div>
+    <div class="wl-stage">
+      <div id="wmap" role="region" aria-label="Map of coastal North Carolina with animated model wind. Tap the map for the model wind at that point."></div>
+      <p class="wl-read" id="wl-read" hidden></p>
+    </div>
+    <p class="lab-meta">This shows a <strong>computer model forecast</strong> (NOAA GFS, 0.25° grid, about 25 km), not buoy or station measurements. Streaks move with the forecast 10 m wind; brighter, thicker and faster means stronger. Values between grid points are interpolated, so coastline and sound detail is coarser than it looks. Tap the map to read the model wind at a point. Motion follows your device's reduced-motion setting unless you change it here; with motion off, static arrows are drawn.</p>
   </main>
   <script src="/vendor/leaflet/leaflet.js"></script>
   <script src="/lab/wind.js" defer></script>
