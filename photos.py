@@ -76,7 +76,11 @@ class SupabaseBackend:
         self.table = _env("SUPABASE_TABLE", "photo_submissions")
 
     def _req(self, method, path, body=None, headers=None, timeout=20):
-        h = {"apikey": self._key, "Authorization": "Bearer " + self._key}
+        # New sb_secret_ keys are not JWTs: send them on apikey only.
+        # Legacy service_role JWTs (eyJ...) also go on Authorization.
+        h = {"apikey": self._key}
+        if self._key.startswith("eyJ"):
+            h["Authorization"] = "Bearer " + self._key
         h.update(headers or {})
         req = Request(self.url + path, data=body, method=method, headers=h)
         try:
@@ -208,7 +212,7 @@ def backend():
             root = _env("PHOTO_FAKE_DIR")
             _backend = FakeBackend(root) if (root and not on_render()) else False
         else:
-            url, key = _env("SUPABASE_URL"), _env("SUPABASE_SERVICE_ROLE_KEY")
+            url, key = _env("SUPABASE_URL"), _env("SUPABASE_SECRET_KEY") or _env("SUPABASE_SERVICE_ROLE_KEY")
             _backend = SupabaseBackend(url, key) if (url.startswith("https://") and key) else False
         return _backend or None
 
@@ -217,10 +221,24 @@ def turnstile_site_key() -> str:
     return _env("TURNSTILE_SITE_KEY")
 
 
+_PIL_OK = None
+
+
+def pillow_ok() -> bool:
+    global _PIL_OK
+    if _PIL_OK is None:
+        try:
+            import PIL.Image  # noqa: F401
+            _PIL_OK = True
+        except ImportError:
+            _PIL_OK = False
+    return _PIL_OK
+
+
 def uploads_active() -> bool:
     """Public submissions are accepted only when every safeguard is configured."""
     b = backend()
-    if not flag_on() or not b:
+    if not flag_on() or not b or not pillow_ok():
         return False
     if b.name == "fake":
         return True  # local testing only (FakeBackend refuses to run on Render)
@@ -655,5 +673,35 @@ if __name__ == "__main__":
         print(hash_password(pw))
     elif sys.argv[1:] == ["secret"]:
         print(secrets.token_urlsafe(48))
+    elif sys.argv[1:] == ["check"]:
+        # Setup self-test: reads env, never prints keys. Writes and deletes one tiny test object.
+        b = backend()
+        print("flag PHOTO_UPLOADS_ENABLED:", "on" if flag_on() else "off")
+        print("backend:", b.name if b else "NOT CONFIGURED (SUPABASE_URL / SUPABASE_SECRET_KEY)")
+        print("turnstile keys:", "set" if (_env("TURNSTILE_SITE_KEY") and _env("TURNSTILE_SECRET_KEY")) else "MISSING")
+        print("admin password hash:", "set" if _env("PHOTO_ADMIN_PASSWORD_HASH").startswith("scrypt$") else "MISSING")
+        print("session secret:", "set" if len(_env("PHOTO_SESSION_SECRET")) >= 32 else "MISSING or too short")
+        try:
+            import PIL  # noqa: F401
+            print("Pillow: installed")
+        except ImportError:
+            print("Pillow: MISSING (build command must install requirements-photos.txt)")
+        if b:
+            try:
+                b.select(limit=1)
+                print("table: reachable")
+                key = "_selftest/%s.webp" % uuid.uuid4()
+                b.put(b.pending, key, b"selftest", "image/webp")
+                ok = b.get(b.pending, key) == b"selftest"
+                b.delete(b.pending, [key])
+                print("pending bucket write/read/delete:", "ok" if ok else "MISMATCH")
+                try:
+                    with urlopen(Request(b.url + "/storage/v1/object/public/%s/%s" % (b.pending, key)), timeout=10) as r:
+                        print("WARNING: pending bucket answered a public URL with", r.status)
+                except HTTPError as e:
+                    print("pending bucket is private: public URL refused (%s)" % e.code)
+            except StorageError as e:
+                print("storage error:", str(e)[:200])
+        print("uploads active:", uploads_active(), "| admin page:", admin_configured())
     else:
-        print("usage: python photos.py hash | secret")
+        print("usage: python photos.py hash | secret | check")
