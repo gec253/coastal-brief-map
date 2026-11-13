@@ -1700,3 +1700,15 @@ a.site-title { padding: 11px 0; margin: -11px 0; }
 .fc-wind, .fc-pop { white-space: nowrap; }
 .fc-lowk { align-self: center; }
 .fc-marine b { color: var(--d-fc); text-transform: uppercase; font-size: 0.78rem; }
+
+/* =====================================================================
+   Overnight D: map chips
+   ===================================================================== */
+.map-chips { width: 178px; }
+.map-chip { overflow-wrap: normal; word-break: keep-all; hyphens: manual; }
+@media (max-width: 760px) {
+  /* "coming soon" layers are placeholders; on a phone they hid a third of the map */
+  .map-chip.is-soon { display: none; }
+  .map-chips { width: 148px; }
+  .map-chip { font-size: 0.64rem; }
+}
