@@ -22,7 +22,7 @@ from datetime import datetime, timedelta, timezone
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.error import HTTPError, URLError
-from urllib.parse import parse_qs, urlparse, quote_plus
+from urllib.parse import parse_qs, urlparse, quote_plus, unquote
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent
@@ -224,6 +224,24 @@ def cache_get_any(url: str) -> tuple[int, str, bytes] | None:
         return int(meta.get("status", 200)), str(meta.get("ctype", "application/octet-stream")), body_path.read_bytes()
     except (OSError, json.JSONDecodeError, ValueError):
         return None
+
+
+# Only public site assets are served from the repo folder; source, config,
+# docs, and test fixtures are not.
+_STATIC_EXT = {".html", ".css", ".js", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".ico",
+               ".woff2", ".json", ".txt", ".xml", ".webmanifest", ".map"}
+_STATIC_DENY_PREFIX = ("/.", "/docs/", "/tests/", "/scripts/", "/__pycache__/", "/requirements")
+
+
+def _static_allowed(path: str) -> bool:
+    p = posixpath.normpath(unquote(path or "/"))
+    if path.endswith("/") and not p.endswith("/"):
+        p += "/"
+    if p in ("/", "/index.html"):
+        return True
+    if any(p.startswith(d) for d in _STATIC_DENY_PREFIX) or "/." in p:
+        return False
+    return posixpath.splitext(p)[1].lower() in _STATIC_EXT
 
 
 SST_TIME_DEFAULTS = {"mur": "2026-11-09T09:00:00Z", "blended": "2026-11-08T12:00:00Z"}
@@ -1060,9 +1078,19 @@ class Handler(SimpleHTTPRequestHandler):
 
     def end_headers(self):
         # Default for static files. Proxy/API responses set their own cache header first.
-        if not getattr(self, "_cache_header_sent", False):
+        if getattr(self, "_static_cache", None):
+            self.send_header("Cache-Control", self._static_cache)
+            self._static_cache = None
+        elif not getattr(self, "_cache_header_sent", False):
             self.send_header("Cache-Control", "no-store")
         super().end_headers()
+
+    def do_HEAD(self):
+        parsed = urlparse(self.path)
+        if not (parsed.path.startswith("/api/") or parsed.path in ("/catch-wall", "/catch-wall/")) and not _static_allowed(parsed.path):
+            self.send_error(404, "not found")
+            return
+        return super().do_HEAD()
 
     def do_GET(self):
         parsed = urlparse(self.path)
@@ -1104,6 +1132,12 @@ class Handler(SimpleHTTPRequestHandler):
             return self._radar_tile(parsed)
         if parsed.path.startswith("/proxy/"):
             return self._proxy(parsed)
+        if not _static_allowed(parsed.path):
+            self.send_error(404, "not found")
+            return
+        if parsed.path.startswith("/fonts/") and parsed.path.endswith(".woff2"):
+            self._cache_header_sent = True
+            self._static_cache = "public, max-age=31536000, immutable"
         return super().do_GET()
 
     def _send_file(self, path: Path, ctype: str):
