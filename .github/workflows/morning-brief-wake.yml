@@ -1,0 +1,45 @@
+# Wakes the Render service at 5:16 AM Eastern so the Morning Brief is built by 5:30.
+# GitHub cron runs in UTC, so there is one schedule for EST (10:16 UTC) and one for EDT (09:16 UTC);
+# the guard skips whichever one lands at the wrong local hour. The endpoint only builds today's briefs
+# if they are missing and returns no brief content, so this publishes nothing. Free (public repo).
+name: Morning Brief wake-up
+on:
+  schedule:
+    - cron: "16 9 * * *"
+    - cron: "16 10 * * *"
+  workflow_dispatch: {}
+permissions: {}
+jobs:
+  wake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Ping only between 5:00 and 6:59 AM Eastern (manual runs always ping)
+        id: guard
+        run: |
+          h=$(TZ=America/New_York date +%H)
+          echo "Eastern time now: $(TZ=America/New_York date '+%Y-%m-%d %H:%M %Z')"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$h" = "05" ] || [ "$h" = "06" ]; then
+            echo "go=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "Skipping: this schedule is for the other half of the DST year."
+          fi
+      - name: Wake the site and start the brief build
+        if: steps.guard.outputs.go == '1'
+        run: |
+          # The first request can take about a minute while a sleeping free instance starts.
+          ping() {
+            for i in 1 2 3 4 5; do
+              code=$(curl -sS -o body.txt -w '%{http_code}' --max-time 120 https://thecoastalbrief.com/api/brief/wake || echo 000)
+              echo "attempt $i: HTTP $code $(cat body.txt 2>/dev/null)"
+              case "$code" in
+                200) return 0 ;;
+                404) echo "Brief is not enabled on the server yet (needs PREVIEW_KEY or MORNING_BRIEF_ENABLED on Render)."; return 0 ;;
+              esac
+              sleep 20
+            done
+            return 1
+          }
+          ping
+          sleep 45
+          ping
