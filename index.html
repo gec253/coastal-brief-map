@@ -142,11 +142,29 @@
           <button type="button" class="map-chip" data-chip="wind" aria-pressed="true">Wind</button>
           <button type="button" class="map-chip" data-chip="waves" aria-pressed="false">Waves</button>
           <button type="button" class="map-chip" data-chip="chart" aria-pressed="false" aria-label="Nautical chart">Chart</button>
-          <button type="button" class="map-chip is-soon" data-chip="depth" aria-disabled="true" aria-label="Depth contours, coming soon">Depth contours</button>
-          <button type="button" class="map-chip is-soon" data-chip="chlorophyll" aria-disabled="true" aria-label="Chlorophyll, coming soon">Chlorophyll</button>
-          <button type="button" class="map-chip is-soon" data-chip="salinity" aria-disabled="true" aria-label="Salinity, coming soon">Salinity</button>
-          <button type="button" class="map-chip is-soon" data-chip="oxygen" aria-disabled="true" aria-label="Dissolved oxygen, coming soon">Dissolved oxygen</button>
-          <button type="button" class="map-chip is-soon" data-chip="ais" aria-disabled="true" aria-label="AIS heat zones, coming soon">AIS heat</button>
+          <button type="button" class="map-chip map-more-btn" id="map-more-btn" aria-expanded="false" aria-controls="map-more">More layers</button>
+        </div>
+        <div class="map-more" id="map-more" role="group" aria-labelledby="map-more-title" hidden>
+          <div class="map-more-head">
+            <p class="map-more-title" id="map-more-title">Map layers</p>
+            <button type="button" class="map-more-close" id="map-more-close" aria-label="Close layer list">×</button>
+          </div>
+          <p class="map-more-sub">Available now</p>
+          <ul class="map-more-list">
+            <li><button type="button" data-more-chip="wind">Wind forecast</button><span>NWS NDFD</span></li>
+            <li><button type="button" data-more-chip="waves">Wave forecast</button><span>NWS NDFD</span></li>
+            <li><button type="button" data-more-chip="sst">Water temperature</button><span>NOAA CoastWatch / JPL MUR</span></li>
+            <li><button type="button" data-more-chip="radar">Weather radar</button><span>NOAA MRMS via WeatherAPI.com</span></li>
+            <li><button type="button" data-more-chip="chart">Nautical chart</button><span>NOAA ENC</span></li>
+          </ul>
+          <p class="map-more-sub">Planned, not available yet</p>
+          <ul class="map-more-list is-planned">
+            <li>Depth contours</li>
+            <li>Chlorophyll</li>
+            <li>Salinity</li>
+            <li>Dissolved oxygen</li>
+            <li>AIS vessel traffic</li>
+          </ul>
         </div>
         <div class="radar-controls" id="radar-controls" hidden>
           <div class="radar-clock" id="radar-clock" role="status">Radar not started</div>
@@ -173,7 +191,6 @@
       <p class="fine" id="map-status">Map has not loaded yet.</p>
     </section>
 
-    <div class="ops" id="ops-box"></div>
   </main>
 
   <footer class="site">
@@ -192,7 +209,6 @@
       <p>Your location is never requested; the region picker sets what you see.</p>
       <p>The Coastal Brief is not weather, surf, or fishing advice. Radar and other conditions data are for general information only and can be incomplete or late. Always check official NWS marine forecasts and advisories before going out. Do not rely on this site as the only source for safety decisions.</p>
       <p>Licenses are sold by the NC Wildlife Resources Commission; The Coastal Brief is not affiliated with it.</p>
-      <p>Market and stock data are not shown on this public page.</p>
     </div>
   </footer>
 

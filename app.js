@@ -1,7 +1,10 @@
-/* Coastal Brief NOAA map test. No geolocation. No market data. */
+/* The Coastal Brief: marine map, tide search. No geolocation. */
 (function () {
-  const SST_TIME = "2026-11-09T09:00:00Z";
-  const SST_FALLBACK_TIME = "2026-11-08T12:00:00Z";
+  // Known-good analysis times; replaced at runtime by /api/sst-time (latest on ERDDAP).
+  let SST_TIME = "2026-11-09T09:00:00Z";
+  let SST_FALLBACK_TIME = "2026-11-08T12:00:00Z";
+  const sstDateFmt = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
+  function sstWhen(iso) { try { return sstDateFmt.format(new Date(iso)) + " ET"; } catch (e) { return iso; } }
   const CENTER = [34.7, -76.7];
   const ZOOM = 8;
   const WASH_OPACITY = { light: { wind: 0.72, waves: 0.85, sst: 0.85 }, chart: { wind: 0.55, waves: 0.58, sst: 0.6 }, fullscreen: { wind: 0.72, waves: 0.85, sst: 0.95 } };
@@ -97,14 +100,9 @@
   function fillAds(ads) {
     if (!ads) return;
     const mode = ads.mode || (ads.hardPause || !ads.adsOn ? "paused" : (ads.reducedRegions && ads.reducedRegions.length ? "reduced" : "full"));
-    const head = ads.adsOn
-      ? (mode === "reduced" ? "Ads flag would be ON, at reduced density." : "Ads flag would be ON.")
-      : "Ads flag would be OFF (paused).";
-    const reasons = (ads.reasons || []).join(" ");
-    $("ops-box").innerHTML =
-      "<strong>Ad-pause check (site ops, not shown as a public alert):</strong> " +
-      head + " " + reasons +
-      " A small craft advisory only thins ads on the affected region’s pages. After a hard pause, ads resume only when 12 hours have passed with no gale-or-stronger or tropical warning. Storm mode still needs Ed’s confirmation and is a separate switch. The site flips its own ads-on/off flag in ads.json (AdSense has no on/off API).";
+    // The ad-pause decision (ads.json) is used by the site itself; it is not
+    // public information, so nothing is written to the page here.
+    document.documentElement.dataset.adsMode = mode;
   }
 
   function tickRow(pairs) {
@@ -123,22 +121,21 @@
     if (kind === "wind") {
       return (
         "<strong>Wind forecast (knots)</strong> — NWS NDFD color table, official unit knots. " +
-        "Colors come from digital.weather.gov’s windspd colormap (1-knot steps, 0–150). " +
-        "Checked tonight against live forecast tiles: pixel colors matched the table exactly. Forecast, not the buoy reading." +
+        "Colors follow digital.weather.gov’s wind speed scale in 1-knot steps. Forecast, not a buoy reading." +
         '<div class="bar wind-bar" aria-hidden="true"></div>' +
         tickRow([[0, "0"], [20, "20"], [40, "40"], [60, "60"], [80, "80"], [100, "100 kt"]])
       );
     }
     if (kind === "waves") {
       return (
-        "<strong>Wave forecast (feet)</strong> — NWS NDFD significant wave height. Wash and number labels are requested as two separate layers (combining them paints land black). Colors from the official NDFD waveheight table. Forecast, not a beach break." +
+        "<strong>Wave forecast (feet)</strong> — NWS NDFD significant wave height. Colors from the official NDFD waveheight table. Forecast, not a beach break." +
         '<div class="bar wave-bar" aria-hidden="true"></div>' +
         tickRow([[0, "0"], [5, "5"], [10, "10"], [15, "15"], [20, "20 ft"]])
       );
     }
     const sstNote = sstUsingFallback
-      ? " Using the CoastWatch blended 5 km product as a fallback (latest analysis 8 Nov 2026, 7:00 AM ET) because the usual JPL MUR tiles failed. Coarser than the 1 km MUR layer."
-      : " CoastWatch / JPL MUR analysis, 9 Nov 2026, 4:00 AM ET.";
+      ? " Using the CoastWatch blended 5 km analysis of " + sstWhen(SST_FALLBACK_TIME) + " because the usual JPL MUR tiles failed. Coarser than the 1 km MUR layer."
+      : " CoastWatch / JPL MUR analysis of " + sstWhen(SST_TIME) + ". Daily satellite analysis, about a day behind.";
     return (
       "<strong>Sea-surface temperature</strong> —" + sstNote +
       " Source is °C (0–32°C); the scale below is converted to °F. Satellite estimate, not the buoy reading." +
@@ -177,8 +174,12 @@
     );
   }
 
+  let lastLegendKind = null;
+  const CHART_NOTE = '<p class="chart-note"><strong>Nautical chart</strong> — NOAA ENC Chart Display Service. Chart coverage follows NOAA’s charted waters, so detail ends at chart limits; land is shown on the street map. Not for navigation. Use official NOAA charts aboard.</p>';
   function setLegend(kind) {
-    $("legend-box").innerHTML = kind === "radar" ? radarLegendHtml() : legendHtml(kind);
+    lastLegendKind = kind;
+    const chartOn = baseKind === "chart" && kind !== "radar" && kind !== "sst";
+    $("legend-box").innerHTML = (kind === "radar" ? radarLegendHtml() : legendHtml(kind)) + (chartOn ? CHART_NOTE : "");
   }
 
   function loadScript(src) {
@@ -361,7 +362,7 @@
     if (map) return;
     patchTileSeams();
     $("map-placeholder").textContent = "Loading map…";
-    $("map-status").textContent = "Initializing Leaflet…";
+    $("map-status").textContent = "Loading the map…";
 
     const startZoom = window.innerWidth <= 700 ? 7 : ZOOM;
     map = L.map("map", {
@@ -396,7 +397,45 @@
     });
 
     // ENC WMTS default028mm, zoomOffset -2. Used as a base map, not an overlay.
-    layers.chart = L.tileLayer(
+    // The chart paints its land in one flat cream (244,232,193) and stops at the
+    // edge of its chart cells, which left a hard rectangle where the street map
+    // takes over. Key out only that land fill so land looks the same inside and
+    // outside chart coverage; water, depths, and every chart symbol stay as NOAA drew them.
+    const ChartLayer = L.TileLayer.extend({
+      createTile: function (coords, done) {
+        const tile = document.createElement("img");
+        tile.alt = "";
+        tile.setAttribute("role", "presentation");
+        tile.onerror = function (e) { done(e, tile); };
+        tile.onload = function () {
+          if (tile.dataset.keyed) { done(null, tile); return; }
+          try {
+            const c = document.createElement("canvas");
+            c.width = tile.naturalWidth; c.height = tile.naturalHeight;
+            const ctx = c.getContext("2d", { willReadFrequently: true });
+            ctx.drawImage(tile, 0, 0);
+            const d = ctx.getImageData(0, 0, c.width, c.height);
+            const a = d.data;
+            for (let i = 0; i < a.length; i += 4) {
+              if (a[i + 3] && Math.abs(a[i] - 244) < 5 && Math.abs(a[i + 1] - 232) < 5 && Math.abs(a[i + 2] - 193) < 5) a[i + 3] = 0;
+            }
+            ctx.putImageData(d, 0, 0);
+            c.toBlob(function (blob) {
+              if (!blob) { done(null, tile); return; }
+              const u = URL.createObjectURL(blob);
+              tile.dataset.keyed = "1";
+              tile.addEventListener("load", function () { URL.revokeObjectURL(u); }, { once: true });
+              tile.src = u;
+            });
+          } catch (err) {
+            done(null, tile);
+          }
+        };
+        tile.src = this.getTileUrl(coords);
+        return tile;
+      },
+    });
+    layers.chart = new ChartLayer(
       "/proxy/enc/arcgis/rest/services/MarineChart_Services/NOAACharts/MapServer/WMTS/tile/1.0.0/MarineChart_Services_NOAACharts/default/default028mm/{z}/{y}/{x}.png",
       {
         zoomOffset: -2,
@@ -447,6 +486,17 @@
     layers.sst = makePrimarySst();
     bindSstLoading(layers.sst);
     armSstFallback(layers.sst);
+    // Use the newest analysis ERDDAP has, instead of a fixed date.
+    fetch("/api/sst-time").then(function (r) { return r.ok ? r.json() : null; }).then(function (t) {
+      if (!t) return;
+      const ok = function (v) { return typeof v === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(v); };
+      if (ok(t.blended)) SST_FALLBACK_TIME = t.blended;
+      if (ok(t.mur) && t.mur !== SST_TIME) {
+        SST_TIME = t.mur;
+        if (!sstUsingFallback && layers.sst) { layers.sst.options.time = SST_TIME; if (map && map.hasLayer(layers.sst)) layers.sst.redraw(); }
+      }
+      if (activeMarine === "sst") setLegend("sst");
+    }).catch(function () {});
 
     ["wind", "waves", "waveLabels", "chart"].forEach(function (k) {
       if (layers[k]) withRetry(layers[k], 3);
@@ -462,7 +512,7 @@
     $("map-placeholder").style.display = "none";
     $("map-shell").classList.remove("is-loading");
     $("map-status").textContent =
-      "Map loaded. Starting view is central coastal NC (zoom 7 on a phone, 8 on desktop) and follows the region picked above. Teal pins are the stations behind the readings in Conditions at a glance. Use the chips on the side of the map to switch layers. Wind and waves sit on the street map or nautical chart. Water temperature and radar each take over the map. Tiles come through a local NOAA proxy because the wind, wave, and SST services do not send CORS headers.";
+      "The map follows the region picked above. Teal pins mark the stations behind the readings in Conditions at a glance. Use the layer buttons to switch between wind, waves, water temperature, radar, and the nautical chart.";
     setTimeout(() => map.invalidateSize(), 80);
     startPixelSnap();
   }
@@ -631,6 +681,7 @@
     if (!map) return;
     applyBaseVisibility();
     applyWashOpacity();
+    if (lastLegendKind) setLegend(lastLegendKind);
   }
 
   function streetBasemap() {
@@ -904,7 +955,7 @@
         return;
       }
       leafletReady = true;
-      $("map-status").textContent = "Map entered view — loading Leaflet and NOAA tiles…";
+      $("map-status").textContent = "Loading the map…";
       loadCss("vendor/leaflet/leaflet.css")
         .then(() => loadScript("vendor/leaflet/leaflet.js"))
         .then(() => {
@@ -933,6 +984,30 @@
     );
     io.observe(section);
   }
+
+  (function moreLayers() {
+    const btn = $("map-more-btn"), panel = $("map-more"), close = $("map-more-close");
+    if (!btn || !panel) return;
+    function setOpen(open, refocus) {
+      panel.hidden = !open;
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+      if (open) { const first = panel.querySelector("button[data-more-chip]"); if (first) first.focus(); }
+      else if (refocus) btn.focus();
+    }
+    btn.addEventListener("click", function () { setOpen(panel.hidden); });
+    if (close) close.addEventListener("click", function () { setOpen(false, true); });
+    panel.addEventListener("keydown", function (e) { if (e.key === "Escape") { e.preventDefault(); setOpen(false, true); } });
+    document.addEventListener("click", function (e) {
+      if (!panel.hidden && !panel.contains(e.target) && e.target !== btn) setOpen(false);
+    });
+    panel.querySelectorAll("button[data-more-chip]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        const chip = document.querySelector(".map-chip[data-chip='" + b.getAttribute("data-more-chip") + "']");
+        setOpen(false);
+        if (chip) { chip.click(); chip.focus(); }
+      });
+    });
+  })();
 
   document.querySelectorAll(".map-chip[data-chip]").forEach((btn) => {
     btn.addEventListener("click", () => handleChip(btn.getAttribute("data-chip")));
@@ -1511,7 +1586,7 @@
   loadAds()
     .then(fillAds)
     .catch(function () {
-      $("ops-box").textContent = "Could not refresh the live ads flag from NWS alerts. The last saved ads.json will be used when the proxy is running.";
+      /* ads flag unavailable: nothing to show publicly */
     })
     .finally(armLazyMap);
 })();

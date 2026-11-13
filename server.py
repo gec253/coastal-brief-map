@@ -226,6 +226,40 @@ def cache_get_any(url: str) -> tuple[int, str, bytes] | None:
         return None
 
 
+SST_TIME_DEFAULTS = {"mur": "2026-11-09T09:00:00Z", "blended": "2026-11-08T12:00:00Z"}
+_SST_TIME_CACHE: dict = {}
+
+
+def sst_latest_times() -> dict:
+    """Latest analysis time for each SST product, read from ERDDAP griddap.
+    Falls back to the last good answer, then to known-good dates."""
+    now = time.time()
+    hit = _SST_TIME_CACHE.get("v")
+    if hit and now - hit[0] < 3600:
+        return hit[1]
+    out = {"ok": True, "source": "ERDDAP griddap time[last]"}
+    for key, url in (
+        ("mur", "https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41.csv?time%5Blast%5D"),
+        ("blended", "https://coastwatch.noaa.gov/erddap/griddap/noaacwBLENDEDsstDNDaily.csv?time%5Blast%5D"),
+    ):
+        val = None
+        try:
+            status, _ct, body = fetch_url(url, tries=2)
+            if status == 200:
+                lines = body.decode("utf-8", "replace").strip().splitlines()
+                cand = lines[-1].strip() if lines else ""
+                if re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", cand):
+                    val = cand
+        except Exception:
+            val = None
+        if not val:
+            val = ((hit[1] if hit else {}) or {}).get(key) or SST_TIME_DEFAULTS[key]
+            out.setdefault("fallback", []).append(key)
+        out[key] = val
+    _SST_TIME_CACHE["v"] = (now, out)
+    return out
+
+
 def _recent_image_copy(url: str, max_age_s: int):
     """Last good image stored for this exact URL, if it is recent enough."""
     body_path, meta_path = cache_paths(url)
@@ -1059,6 +1093,8 @@ class Handler(SimpleHTTPRequestHandler):
                 sys.stderr.write("conditions failed: %s\n" % e)
                 status, payload = 502, {"ok": False, "error": "Conditions are unavailable right now."}
             return self._send_json(payload, cache_s=60, status=status)
+        if parsed.path == "/api/sst-time":
+            return self._send_json(sst_latest_times(), cache_s=600)
         if parsed.path == "/api/radar/usage":
             return self._send_json(radar_usage_payload(), cache_s=0)
         if parsed.path == "/api/radar":
