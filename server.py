@@ -226,6 +226,20 @@ def cache_get_any(url: str) -> tuple[int, str, bytes] | None:
         return None
 
 
+def _recent_image_copy(url: str, max_age_s: int):
+    """Last good image stored for this exact URL, if it is recent enough."""
+    body_path, meta_path = cache_paths(url)
+    try:
+        meta = json.loads(meta_path.read_text())
+        if time.time() - float(meta.get("stored", 0)) > max_age_s:
+            return None
+        body = body_path.read_bytes()
+        ctype = str(meta.get("ctype", "image/png"))
+        return (ctype, body) if _is_image(ctype, body) else None
+    except (OSError, json.JSONDecodeError, ValueError):
+        return None
+
+
 def cache_put_ttl(url: str, ttl: int, body: bytes, ctype: str = "application/octet-stream") -> None:
     if not body:
         return
@@ -1117,6 +1131,7 @@ class Handler(SimpleHTTPRequestHandler):
         # Drop a browser retry param if one is present so the cache key stays stable.
         # (The current front end no longer appends _r=.)
         wants_image = key in IMAGE_PROXIES and _looks_like_image_request(url)
+        stale_copy = False
         cached = cache_get(url)
         if cached and wants_image and not _is_image(cached[1], cached[2]):
             cached = None  # an error page was cached earlier; fetch again
@@ -1134,11 +1149,21 @@ class Handler(SimpleHTTPRequestHandler):
             if status == 200:
                 with CACHE_LOCK:
                     cache_put(url, key, status, ctype, body)
+            elif wants_image:
+                # Upstream down or answering with an error page: reuse this exact
+                # tile from the last few hours rather than leave a hole.
+                old = _recent_image_copy(url, max_age_s=6 * 3600)
+                if old:
+                    status, ctype, body = 200, old[0], old[1]
+                    from_cache = True
+                    stale_copy = True
         self.send_response(status)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
         ttl = TTL.get(key, TTL["default"])
-        if status == 200:
+        if status == 200 and stale_copy:
+            self.send_header("Cache-Control", "public, max-age=60")
+        elif status == 200:
             self.send_header("Cache-Control", "public, max-age=%s" % ttl)
         else:
             self.send_header("Cache-Control", "no-store")
