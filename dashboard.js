@@ -671,30 +671,154 @@
     }).join("") + '<a class="al-link" href="https://www.weather.gov/mhx/" target="_blank" rel="noopener">NWS details</a>';
   }
 
-  // ---------- forecast strip (existing section, now live) ----------
-  function renderForecast(f, region) {
+  // ---------- seven-day forecast ----------
+  // Land point forecast (NWS gridpoint) grouped into days, with the NWS
+  // coastal waters (marine zone) forecast for the same day shown separately
+  // and labelled as the marine zone. Values are only those NWS publishes;
+  // the only derived bits are knots (from NWS mph) and seas/wind phrases
+  // quoted from the marine text.
+  const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const dayKeyFmt = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" });
+  const fcWdFmt = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", weekday: "short" });
+  const mdFmt = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "short", day: "numeric" });
+  function fcDayKey(t) { return dayKeyFmt.format(toDate(t)); }
+
+  function skyKind(txt) {
+    const t = (txt || "").toLowerCase();
+    if (/thunder|t-storm/.test(t)) return "storm";
+    if (/snow|sleet|flurr|ice|freezing/.test(t)) return "snow";
+    if (/rain|shower|drizzle/.test(t)) return "rain";
+    if (/fog|haze|smoke|mist/.test(t)) return "fog";
+    if (/partly sunny|mostly cloudy|partly cloudy/.test(t)) return /mostly cloudy/.test(t) ? "cloud" : "part";
+    if (/cloudy|overcast/.test(t)) return "cloud";
+    if (/sunny|clear|fair/.test(t)) return "clear";
+    return "cloud";
+  }
+  function skyIcon(kind, night) {
+    const sun = night
+      ? '<path class="sk-moon" d="M27 9a10 10 0 1 0 8 15A11 11 0 0 1 27 9z"/>'
+      : '<circle class="sk-sun" cx="22" cy="18" r="7"/><g class="sk-rays">' + [0, 45, 90, 135, 180, 225, 270, 315].map(function (a) {
+          const r = (a * Math.PI) / 180;
+          return '<line x1="' + (22 + Math.cos(r) * 10.5).toFixed(1) + '" y1="' + (18 + Math.sin(r) * 10.5).toFixed(1) + '" x2="' + (22 + Math.cos(r) * 13.5).toFixed(1) + '" y2="' + (18 + Math.sin(r) * 13.5).toFixed(1) + '"/>';
+        }).join("") + "</g>";
+    const cloud = '<path class="sk-cloud" d="M14 34h20a7 7 0 0 0 0-14 9.5 9.5 0 0 0-18 2.4A5.8 5.8 0 0 0 14 34z"/>';
+    let body = "";
+    if (kind === "clear") body = sun;
+    else if (kind === "part") body = sun + cloud;
+    else if (kind === "cloud") body = cloud;
+    else if (kind === "rain") body = cloud + '<g class="sk-rain"><line x1="18" y1="37" x2="16" y2="42"/><line x1="25" y1="37" x2="23" y2="42"/><line x1="32" y1="37" x2="30" y2="42"/></g>';
+    else if (kind === "storm") body = cloud + '<path class="sk-bolt" d="M25 34l-4 6h4l-2 6 6-8h-4l2-4z"/>';
+    else if (kind === "snow") body = cloud + '<g class="sk-snow"><circle cx="18" cy="40" r="1.4"/><circle cx="25" cy="42" r="1.4"/><circle cx="32" cy="40" r="1.4"/></g>';
+    else if (kind === "fog") body = '<g class="sk-fog"><line x1="9" y1="20" x2="37" y2="20"/><line x1="12" y1="26" x2="40" y2="26"/><line x1="9" y1="32" x2="34" y2="32"/></g>';
+    return '<svg class="sky sky-' + kind + '" viewBox="0 0 46 46" aria-hidden="true">' + body + "</svg>";
+  }
+
+  // Marine periods carry names only ("Tonight", "Fri", "Fri Night", "Sat").
+  // Map each to the calendar day it belongs to; unknown names are skipped.
+  function marineByDay(m, firstDate) {
+    const out = {};
+    if (!m || m.status !== "ok") return out;
+    const base = toDate(firstDate || Date.now());
+    const todayWd = WD.indexOf(fcWdFmt.format(base));
+    (m.periods || []).forEach(function (p) {
+      const nm = (p.name || "").trim();
+      let off = null;
+      if (/^(today|this afternoon|tonight|rest of today|rest of tonight|this evening|overnight)$/i.test(nm)) off = 0;
+      else {
+        const wd = WD.indexOf(nm.slice(0, 3).replace(/^(\w)(\w+)/, function (_, a, b) { return a.toUpperCase() + b.toLowerCase(); }));
+        if (wd >= 0 && todayWd >= 0) off = (wd - todayWd + 7) % 7;
+      }
+      if (off == null) return;
+      const k = fcDayKey(base.getTime() + off * 86400000);
+      (out[k] = out[k] || []).push(p);
+    });
+    return out;
+  }
+  function marineGist(text) {
+    const t = text || "";
+    const wind = (t.match(/\b([NESW]{1,3}|[Vv]ariable) winds? [^.]*?\d+(?: to \d+)? kt/) || [])[0];
+    const seas = (t.match(/\bSeas [^.]*?\d+(?: to \d+)? ft(?: or less)?/) || [])[0];
+    return { wind: wind || null, seas: seas || null };
+  }
+
+  function renderForecast(f, region, m) {
     const h = $("fc-place");
     if (h) h.textContent = (f && f.label) || (region && region.name) || "";
     const strip = $("forecast-strip");
     const meta = $("fc-meta");
+    const foot = $("fc-foot");
     if (!strip) return;
     if (!f || f.status !== "ok") {
-      strip.innerHTML = "";
-      if (meta) meta.textContent = "The NWS forecast is unavailable right now.";
+      strip.innerHTML = '<p class="fc-off">The NWS forecast is unavailable right now. See <a href="https://www.weather.gov/mhx/" target="_blank" rel="noopener">weather.gov/mhx</a>.</p>';
+      if (meta) meta.textContent = "";
+      if (foot) foot.textContent = "";
       return;
     }
-    if (meta) meta.textContent = f.office + " point forecast for " + f.label + ". Updated " + etTime(f.updated) + ". Temperatures are °F as reported. Wind is shown in knots, converted from the NWS mph figures.";
-    strip.innerHTML = "";
-    f.periods.forEach(function (p) {
-      const el = document.createElement("div");
-      el.className = "day" + (p.isDaytime ? "" : " is-night");
-      el.innerHTML = '<div class="dn"></div><div class="dt"></div><div class="dw"></div><div class="ds"></div>';
-      el.children[0].textContent = p.name;
-      el.children[1].textContent = p.tempF != null ? p.tempF + "°F" : "—";
-      el.children[2].textContent = (p.windDir || "") + " " + (p.windKt || "");
-      el.children[3].textContent = p.short || "";
-      strip.appendChild(el);
+    if (meta) meta.textContent = "Land forecast for " + f.label + " from " + f.office + ", updated " + etTime(f.updated) + ". Wind in knots (converted from NWS mph). Tap a day for the full text.";
+    // group periods into calendar days
+    const days = [];
+    const byKey = {};
+    (f.periods || []).forEach(function (p) {
+      const k = fcDayKey(p.start);
+      if (!byKey[k]) { byKey[k] = { key: k, start: p.start, day: null, night: null }; days.push(byKey[k]); }
+      if (p.isDaytime) byKey[k].day = p; else byKey[k].night = p;
     });
+    const mDays = marineByDay(m, days[0] && days[0].start);
+    const temps = [];
+    days.forEach(function (d) { [d.day, d.night].forEach(function (p) { if (p && isNum(p.tempF)) temps.push(p.tempF); }); });
+    const tMin = Math.min.apply(null, temps), tMax = Math.max.apply(null, temps);
+    const span = Math.max(1, tMax - tMin);
+    const todayK = fcDayKey(Date.now());
+
+    strip.innerHTML = days.slice(0, 7).map(function (d, i) {
+      const lead = d.day || d.night;
+      const hi = d.day && isNum(d.day.tempF) ? d.day.tempF : null;
+      const lo = d.night && isNum(d.night.tempF) ? d.night.tempF : null;
+      const name = d.key === todayK ? (d.day ? "Today" : "Tonight") : fcWdFmt.format(toDate(d.start));
+      const kind = skyKind(lead.short);
+      const pops = [d.day && d.day.pop, d.night && d.night.pop].filter(isNum);
+      const pop = pops.length ? Math.max.apply(null, pops) : null;
+      const wl = lead.windKt ? (lead.windDir ? lead.windDir + " " : "") + lead.windKt : "—";
+      // temperature bar positioned on the week's range
+      const a = isNum(lo) ? lo : hi, b = isNum(hi) ? hi : lo;
+      const bar = isNum(a) ? '<span class="fc-bar" aria-hidden="true"><i style="left:' + (((a - tMin) / span) * 100).toFixed(1) + "%;right:" + (100 - ((b - tMin) / span) * 100).toFixed(1) + '%"></i></span>' : "";
+      const mp = mDays[d.key] || [];
+      const gist = mp.length ? marineGist(mp[0].text) : null;
+      const zone = m && m.zone ? m.zone : "marine zone";
+      const marineChip = gist && (gist.seas || gist.wind)
+        ? '<span class="fc-marine" title="From the NWS marine zone forecast for ' + esc(zone) + '"><b>Marine</b> ' + esc(gist.seas || gist.wind) + "</span>"
+        : "";
+      const tempTxt = isNum(hi)
+        ? '<span class="fc-hi" aria-label="High ' + hi + '°F">' + hi + "°</span>" + (isNum(lo) ? '<span class="fc-lo" aria-label="Low ' + lo + '°F">' + lo + "°</span>" : '<span class="fc-lo fc-na">—</span>')
+        : (isNum(lo) ? '<span class="fc-k fc-lowk">Low</span><span class="fc-hi" aria-label="Low ' + lo + '°F">' + lo + "°</span>" : '<span class="fc-hi fc-na">—</span><span></span>');
+      const body =
+        '<div class="fc-body">' +
+        '<div class="fc-col"><h4>Land · ' + esc(f.label) + "</h4>" +
+        (d.day ? '<p><b>' + esc(d.day.name) + ".</b> " + esc(d.day.detail || d.day.short || "") + "</p>" : "") +
+        (d.night ? '<p><b>' + esc(d.night.name) + ".</b> " + esc(d.night.detail || d.night.short || "") + "</p>" : "") +
+        "</div>" +
+        (mp.length
+          ? '<div class="fc-col fc-col-m"><h4>Marine zone ' + esc(zone) + (m.zoneName ? " · " + esc(m.zoneName) : "") + "</h4>" +
+            mp.map(function (q) { return "<p><b>" + esc(q.name) + ".</b> " + esc(q.text) + "</p>"; }).join("") + "</div>"
+          : (m && m.status === "ok" ? '<div class="fc-col fc-col-m"><h4>Marine zone ' + esc(zone) + '</h4><p class="fc-na">The NWS marine zone forecast does not reach this day.</p></div>' : "")) +
+        "</div>";
+      return '<details class="fc-day' + (d.day ? "" : " is-night") + '"' + (i === 0 && window.innerWidth > 600 ? " open" : "") + ">" +
+        "<summary>" +
+        '<span class="fc-when"><span class="fc-name">' + esc(name) + '</span><span class="fc-date">' + esc(mdFmt.format(toDate(d.start))) + "</span></span>" +
+        skyIcon(kind, !d.day) +
+        '<span class="fc-short">' + esc(lead.short || "") + (marineChip ? "<br>" + marineChip : "") + "</span>" +
+        '<span class="fc-temps">' + tempTxt + bar + "</span>" +
+        '<span class="fc-wind"><span class="fc-k">Wind</span>' + esc(wl) + "</span>" +
+        '<span class="fc-pop' + (pop >= 30 ? " is-wet" : "") + '"><span class="fc-k">Rain</span>' + (isNum(pop) ? pop + "%" : "—") + "</span>" +
+        '<span class="fc-chev" aria-hidden="true"></span>' +
+        "</summary>" + body + "</details>";
+    }).join("");
+    if (foot) {
+      foot.innerHTML = "The land forecast is for the town, not the water offshore. Marine lines come from the NWS coastal waters forecast" +
+        (m && m.zone ? " for zone " + esc(m.zone) : "") + (m && m.updated ? ", issued " + esc(etTime(m.updated)) : "") +
+        ', and cover about five days. <a href="' + esc(f.sourceUrl) + '" target="_blank" rel="noopener">Point forecast</a>' +
+        (m && m.sourceUrl ? ' · <a href="' + esc(m.sourceUrl) + '" target="_blank" rel="noopener">Marine zone forecast</a>' : "") + ".";
+    }
   }
 
   // ---------- sources table ----------
@@ -796,7 +920,7 @@
     renderHarbor(R.harborWind);
     tweenAll($("i-wind"));
     renderMarine(d.marine);
-    renderForecast(d.forecast, d.region);
+    renderForecast(d.forecast, d.region, d.marine);
     renderSources(d);
     renderHeaderBits(d);
     $("conditions").classList.remove("is-booting");

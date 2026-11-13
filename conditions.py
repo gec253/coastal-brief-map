@@ -592,6 +592,7 @@ def forecast_block(fcfg):
             "windMph": p.get("windSpeed"), "windKt": mph_to_kt_text(p.get("windSpeed")),
             "windDir": p.get("windDirection"), "short": p.get("shortForecast"),
             "pop": ((p.get("probabilityOfPrecipitation") or {}).get("value")),
+            "detail": p.get("detailedForecast"),
         })
     return {"status": "ok", "kind": "forecast", "label": fcfg.get("label"), "office": fcfg.get("office"),
             "updated": props.get("updateTime") or props.get("generatedAt"), "periods": out,
@@ -610,7 +611,7 @@ def marine_block(mcfg):
         base["status"] = "unavailable"
         return base
     base.update(status="ok", updated=props.get("updated"),
-                periods=[{"name": p.get("name"), "text": p.get("detailedForecast")} for p in periods[:3]])
+                periods=[{"name": p.get("name"), "text": p.get("detailedForecast")} for p in periods[:14]])
     return base
 
 
