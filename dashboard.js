@@ -938,6 +938,16 @@
     });
     const badge = $("freshness-badge");
     if (badge) { badge.textContent = "Readings unavailable"; badge.classList.add("amber"); }
+    const al = $("dash-alert");
+    if (al && al.classList.contains("is-pending")) {
+      al.className = "dash-alert is-clear";
+      al.innerHTML = '<span class="al-dot"></span><span>Could not check NWS alerts. See weather.gov before heading out.</span>';
+    }
+    const gs = $("glance-strip");
+    if (gs) gs.querySelectorAll(".gs-cell.is-loading").forEach(function (c) {
+      c.classList.remove("is-loading"); c.classList.add("is-off");
+      const sub = c.querySelector(".gs-s"); if (sub) sub.textContent = "unavailable";
+    });
   }
 
   function load(regionId, quiet) {

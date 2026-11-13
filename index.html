@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=Source+Sans+3:wght@400;600;700&display=swap">
   <link rel="stylesheet" href="styles.css">
   <meta name="theme-color" content="#0B2A3D">
+  <link rel="icon" href="/branding/favicon.svg" type="image/svg+xml">
   <meta property="og:title" content="The Coastal Brief — Know the Water. Live the Coast.">
   <meta property="og:description" content="Fishing, surfing, and boating conditions for the North Carolina coast: wind, waves, water temperature, tides, and radar.">
   <meta property="og:url" content="https://thecoastalbrief.com/">
@@ -83,8 +84,8 @@
           </div>
         </div>
       </div>
-      <nav class="glance-strip" id="glance-strip" aria-label="Key readings, jump to each instrument" hidden></nav>
-      <div class="dash-alert" id="dash-alert" role="status" hidden></div>
+      <nav class="glance-strip" id="glance-strip" aria-label="Key readings, jump to each instrument"><a class="gs-cell is-loading" href="#i-wind"><span class="gs-k">Wind</span><span class="gs-v">—</span><span class="gs-s">loading…</span></a><a class="gs-cell is-loading" href="#i-seas"><span class="gs-k">Seas</span><span class="gs-v">—</span><span class="gs-s">loading…</span></a><a class="gs-cell is-loading" href="#i-water"><span class="gs-k">Water</span><span class="gs-v">—</span><span class="gs-s">loading…</span></a><a class="gs-cell is-loading" href="#i-tide"><span class="gs-k">Tide</span><span class="gs-v">—</span><span class="gs-s">loading…</span></a></nav>
+      <div class="dash-alert is-clear is-pending" id="dash-alert" role="status"><span class="al-dot"></span><span>Checking NWS watches, warnings, and advisories…</span></div>
       <div class="console">
         <article class="inst inst-wind is-loading" id="i-wind" data-title="Wind"></article>
         <article class="inst inst-seas is-loading" id="i-seas" data-title="Seas"></article>
@@ -110,7 +111,7 @@
       <form id="tide-form" action="#" method="get">
         <label class="tide-label" for="tide-q">Place or station</label>
         <div class="tide-row">
-          <input type="search" id="tide-q" name="q" autocomplete="off" spellcheck="false" placeholder="e.g. Oregon Inlet, Wrightsville Beach, Beaufort" aria-autocomplete="list" aria-controls="tide-suggest" aria-expanded="false">
+          <input type="search" id="tide-q" name="q" role="combobox" autocomplete="off" spellcheck="false" placeholder="e.g. Oregon Inlet, Wrightsville Beach, Beaufort" aria-autocomplete="list" aria-controls="tide-suggest" aria-expanded="false">
           <button type="submit" id="tide-submit">Search</button>
         </div>
         <div class="tide-suggest" id="tide-suggest" role="listbox" hidden></div>
