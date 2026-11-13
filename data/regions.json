@@ -266,7 +266,8 @@
       "alertZones": [
         "AMZ158",
         "AMZ156",
-        "NCZ195"
+        "NCZ195",
+        "NCZ196"
       ],
       "waterType": "saltwater"
     },
