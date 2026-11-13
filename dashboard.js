@@ -999,7 +999,7 @@
       // Saltwater regions first; freshwater is shown honestly as not yet available.
       sel.innerHTML = '<optgroup label="Saltwater">' + state.regions.filter(function (r) { return (r.waterType || "saltwater") === "saltwater"; })
         .map(function (r) { return '<option value="' + esc(r.id) + '">' + esc(r.name) + "</option>"; }).join("") +
-        '</optgroup><optgroup label="Freshwater"><option value="" disabled>Lakes and rivers: coming soon</option></optgroup>';
+        '</optgroup><optgroup label="Freshwater"><option value="" disabled>Coming soon</option></optgroup>';
       sel.disabled = state.regions.length < 1;
       sel.addEventListener("change", function () { setRegion(sel.value, true); });
       setRegion(pickInitial(cfg.default), false);
