@@ -230,7 +230,7 @@ def cache_get_any(url: str) -> tuple[int, str, bytes] | None:
 # docs, and test fixtures are not.
 _STATIC_EXT = {".html", ".css", ".js", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".ico",
                ".woff2", ".json", ".txt", ".xml", ".webmanifest", ".map"}
-_STATIC_DENY_PREFIX = ("/.", "/admin", "/wind-lab.", "/lake.", "/docs/", "/tests/", "/scripts/", "/__pycache__/", "/requirements")
+_STATIC_DENY_PREFIX = ("/.", "/admin", "/wind-lab.", "/lake.", "/tiles-lab.", "/docs/", "/tests/", "/scripts/", "/__pycache__/", "/requirements")
 
 
 def _static_allowed(path: str) -> bool:
@@ -1157,6 +1157,13 @@ class Handler(SimpleHTTPRequestHandler):
             rid = (parse_qs(parsed.query).get("region") or ["falls-lake"])[0]
             status, payload = freshwater.assemble(rid)
             return self._send_json(payload, cache_s=0, status=status)
+        if parsed.path in ("/lab/tiles", "/lab/tiles.js"):
+            # Tile design prototype, off unless TILES_LAB_ENABLED=1. Not linked from the site.
+            if (os.environ.get("TILES_LAB_ENABLED") or "").strip() not in ("1", "true", "on"):
+                return self.send_error(404, "not found")
+            if parsed.path == "/lab/tiles":
+                return self._send_private(ROOT / "tiles-lab.html", "text/html; charset=utf-8")
+            return self._send_private(ROOT / "tiles-lab.js", "text/javascript; charset=utf-8")
         if parsed.path in ("/lab/wind", "/lab/wind.js", "/api/wind-grid"):
             # Prototype, off unless WIND_PARTICLES_ENABLED=1. Not linked from the site.
             if (os.environ.get("WIND_PARTICLES_ENABLED") or "").strip() not in ("1", "true", "on"):
