@@ -99,13 +99,21 @@ def load_regions() -> dict:
         return {"regions": [], "stations": {}}
 
 
+def _servable(r: dict) -> bool:
+    """Enabled saltwater regions only. Freshwater regions need their own
+    instrument set (lake level, streamflow), which is not built yet, so they are
+    never served even if someone flips enabled=true by mistake."""
+    return bool(r.get("enabled")) and not r.get("draft") and (r.get("waterType") or "saltwater") == "saltwater"
+
+
 def public_regions() -> dict:
     cfg = load_regions()
     out = []
     for r in cfg.get("regions") or []:
-        if not r.get("enabled"):
+        if not _servable(r):
             continue
-        out.append({"id": r["id"], "name": r["name"], "area": r.get("area"), "map": r.get("map")})
+        out.append({"id": r["id"], "name": r["name"], "area": r.get("area"), "map": r.get("map"),
+                    "waterType": r.get("waterType") or "saltwater"})
     return {"ok": True, "default": cfg.get("default"), "regions": out}
 
 
@@ -639,7 +647,7 @@ def alerts_block(zones):
 
 def assemble(region_id: str | None) -> tuple[int, dict]:
     cfg = load_regions()
-    regions = {r["id"]: r for r in cfg.get("regions") or [] if r.get("enabled")}
+    regions = {r["id"]: r for r in cfg.get("regions") or [] if _servable(r)}
     rid = region_id if region_id in regions else cfg.get("default")
     if rid not in regions:
         return 404, {"ok": False, "error": "Unknown region."}

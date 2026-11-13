@@ -2,6 +2,76 @@
   "version": 1,
   "default": "crystal-coast",
   "notes": "Region config for the Conditions at a Glance dashboard. Only regions with enabled=true appear in the selector. Each reading lists sources in order of preference; the server uses the first one with a fresh report and says which one it used. Station choices were checked against live NDBC, CO-OPS, and NWS data on 12 Nov 2026.",
+  "waterTypes": {
+    "saltwater": {
+      "label": "Saltwater",
+      "blurb": "Ocean, inlets, and sounds",
+      "instrumentSet": "coastal"
+    },
+    "freshwater": {
+      "label": "Freshwater",
+      "blurb": "Lakes, rivers, and reservoirs",
+      "instrumentSet": "freshwater-lake",
+      "comingSoon": true
+    }
+  },
+  "instrumentSets": {
+    "coastal": {
+      "readings": [
+        "wind",
+        "seas",
+        "swell",
+        "waterTemp",
+        "waterTempOffshore",
+        "airTemp",
+        "pressure",
+        "harborWind"
+      ],
+      "blocks": [
+        "tide",
+        "forecast",
+        "marine",
+        "alerts"
+      ]
+    },
+    "freshwater-lake": {
+      "readings": [
+        "lakeElevation",
+        "waterTemp",
+        "airTemp",
+        "wind",
+        "rain24h"
+      ],
+      "blocks": [
+        "normalPool",
+        "forecast",
+        "qpf",
+        "alerts",
+        "access",
+        "regulations"
+      ],
+      "status": "planned, not built"
+    },
+    "freshwater-river": {
+      "readings": [
+        "streamflow",
+        "gageHeight",
+        "waterTemp",
+        "airTemp",
+        "rain24h"
+      ],
+      "blocks": [
+        "flowPercentile",
+        "riverForecast",
+        "forecast",
+        "qpf",
+        "alerts",
+        "access",
+        "regulations"
+      ],
+      "status": "planned, not built"
+    }
+  },
   "stations": {
     "CLKN7": {
       "name": "Cape Lookout",
@@ -98,7 +168,7 @@
     {
       "id": "crystal-coast",
       "enabled": true,
-      "name": "Morehead City \u00b7 Beaufort",
+      "name": "Morehead City · Beaufort",
       "area": "Crystal Coast, North Carolina",
       "anchor": {
         "label": "Beaufort Inlet",
@@ -197,7 +267,8 @@
         "AMZ158",
         "AMZ156",
         "NCZ195"
-      ]
+      ],
+      "waterType": "saltwater"
     },
     {
       "id": "hatteras",
@@ -303,35 +374,103 @@
         "AMZ152",
         "AMZ135",
         "NCZ205"
-      ]
+      ],
+      "waterType": "saltwater"
     },
     {
       "id": "atlantic-beach",
       "enabled": false,
-      "name": "Atlantic Beach \u00b7 Emerald Isle",
+      "name": "Atlantic Beach · Emerald Isle",
       "area": "Bogue Banks",
-      "status": "planned: needs a verified Bogue Inlet tide station and nearshore wind source"
+      "status": "planned: needs a verified Bogue Inlet tide station and nearshore wind source",
+      "waterType": "saltwater"
     },
     {
       "id": "cape-lookout",
       "enabled": false,
       "name": "Cape Lookout",
       "area": "Core Banks",
-      "status": "planned"
+      "status": "planned",
+      "waterType": "saltwater"
     },
     {
       "id": "new-bern",
       "enabled": false,
-      "name": "New Bern \u00b7 Neuse River",
+      "name": "New Bern · Neuse River",
       "area": "Neuse River",
-      "status": "planned: needs river wind and water-level sources (AMZ137)"
+      "status": "planned: needs river wind and water-level sources (AMZ137)",
+      "waterType": "saltwater"
     },
     {
       "id": "wilmington",
       "enabled": false,
-      "name": "Wilmington \u00b7 Wrightsville Beach",
+      "name": "Wilmington · Wrightsville Beach",
       "area": "Cape Fear coast",
-      "status": "planned: 41037 and 41038 were stale on 12 Nov 2026"
+      "status": "planned: 41037 and 41038 were stale on 12 Nov 2026",
+      "waterType": "saltwater"
+    },
+    {
+      "id": "falls-lake",
+      "enabled": false,
+      "draft": true,
+      "waterType": "freshwater",
+      "instrumentSet": "freshwater-lake",
+      "name": "Falls Lake",
+      "area": "Neuse River basin, Wake and Durham counties",
+      "anchor": {
+        "label": "Falls Lake Dam (USGS 02087182)",
+        "lat": 35.9411,
+        "lon": -78.5833
+      },
+      "map": {
+        "center": [
+          36.02,
+          -78.68
+        ],
+        "zoom": 11
+      },
+      "notes": "DRAFT ONLY. Not served: conditions.py refuses freshwater regions until the freshwater instrument set is built. Sources checked live 13 Nov 2026 (see docs/FRESHWATER_PLAN.md).",
+      "readings": {
+        "lakeElevation": {
+          "kind": "observed",
+          "provider": "usgs",
+          "site": "02087182",
+          "parameter": "62614",
+          "datum": "NGVD29 (ft-msl, same as USACE)",
+          "role": "Lake level at the dam"
+        },
+        "waterTemp": {
+          "kind": "observed",
+          "provider": "usgs",
+          "site": "02087182",
+          "parameter": "00010",
+          "units": "degC",
+          "role": "Water at the dam"
+        },
+        "releaseFlow": {
+          "kind": "observed",
+          "provider": "usgs",
+          "site": "02087183",
+          "parameter": "00060",
+          "role": "Neuse River below the dam (release)"
+        }
+      },
+      "normalPool": {
+        "elevationFt": 251.5,
+        "source": "USACE Wilmington District guide curve (epec.saw.usace.army.mil)",
+        "checked": "2026-11-13"
+      },
+      "forecast": {
+        "label": "Falls Lake Dam",
+        "lat": 35.9411,
+        "lon": -78.5833,
+        "gridId": "RAH",
+        "office": "NWS Raleigh (RAH)",
+        "note": "look up gridX/gridY from api.weather.gov/points before enabling"
+      },
+      "alertZones": [
+        "NCZ041"
+      ]
     }
   ]
 }
