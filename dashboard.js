@@ -793,14 +793,14 @@
         : (isNum(lo) ? '<span class="fc-k fc-lowk">Low</span><span class="fc-hi" aria-label="Low ' + lo + '°F">' + lo + "°</span>" : '<span class="fc-hi fc-na">—</span><span></span>');
       const body =
         '<div class="fc-body">' +
-        '<div class="fc-col"><h4>Land · ' + esc(f.label) + "</h4>" +
+        '<div class="fc-col"><h3>Land · ' + esc(f.label) + "</h3>" +
         (d.day ? '<p><b>' + esc(d.day.name) + ".</b> " + esc(d.day.detail || d.day.short || "") + "</p>" : "") +
         (d.night ? '<p><b>' + esc(d.night.name) + ".</b> " + esc(d.night.detail || d.night.short || "") + "</p>" : "") +
         "</div>" +
         (mp.length
-          ? '<div class="fc-col fc-col-m"><h4>Marine zone ' + esc(zone) + (m.zoneName ? " · " + esc(m.zoneName) : "") + "</h4>" +
+          ? '<div class="fc-col fc-col-m"><h3>Marine zone ' + esc(zone) + (m.zoneName ? " · " + esc(m.zoneName) : "") + "</h3>" +
             mp.map(function (q) { return "<p><b>" + esc(q.name) + ".</b> " + esc(q.text) + "</p>"; }).join("") + "</div>"
-          : (m && m.status === "ok" ? '<div class="fc-col fc-col-m"><h4>Marine zone ' + esc(zone) + '</h4><p class="fc-na">The NWS marine zone forecast does not reach this day.</p></div>' : "")) +
+          : (m && m.status === "ok" ? '<div class="fc-col fc-col-m"><h3>Marine zone ' + esc(zone) + '</h3><p class="fc-na">The NWS marine zone forecast does not reach this day.</p></div>' : "")) +
         "</div>";
       return '<details class="fc-day' + (d.day ? "" : " is-night") + '"' + (i === 0 && window.innerWidth > 600 ? " open" : "") + ">" +
         "<summary>" +
