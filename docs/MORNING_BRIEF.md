@@ -47,6 +47,22 @@ Tested locally 13 Nov 2026 with live data: on-request build, memory reuse, reloa
 restart, next-day upstream failure (stale notice), empty store plus failure (503), disabled region (404), and the
 scheduler firing at a patched time (both regions written with reason "scheduled").
 
+## Wake-up ping (approved 13 Nov 2026: option B)
+- `GET /api/brief/wake` builds today's brief for each region that does not have one yet, in the background,
+  and returns only `{"ok", "issueDate", "building"}`. It publishes nothing; `/brief` stays 404 for the public.
+  It is active when `MORNING_BRIEF_ENABLED=1` **or** `PREVIEW_KEY` is set, so briefs are ready for preview
+  browsers even while the brief is not public. At most one build per region per day.
+- Briefs built by the ping between 5:15 and 5:45 AM ET are labeled as scheduled.
+- Workflow: `docs/workflows/morning-brief-wake.yml`. Two UTC crons (09:16 and 10:16) with a guard that only
+  pings when it is 5 or 6 AM Eastern, so it fires at 5:16 AM ET in both EST and EDT. A 404 (brief not enabled
+  on the server yet) is reported and the run does not fail.
+- **To install:** the automation token cannot write `.github/workflows/` (GitHub requires the `workflow`
+  scope). Ed can add it in the GitHub web UI: *Add file → Create new file*, path
+  `.github/workflows/morning-brief-wake.yml`, paste the file, commit. Or grant the token the `workflow`
+  scope and it will be moved there.
+- Free Render instances lose memory and disk when they spin down, so a brief built at 5:16 is rebuilt (and
+  labeled "rebuilt") if the service has slept before someone opens it. Durable storage (option D) fixes that.
+
 ## The catch, and what Ed must approve to go live
 If the Render service spins down when idle, nothing runs at 5:15 and every day's brief will be built on the
 first visit instead, at whatever time that is. To guarantee a 5:30 publish, one of these is needed:
