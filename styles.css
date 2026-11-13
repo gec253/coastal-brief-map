@@ -2027,3 +2027,6 @@ body.no-scroll { overflow: hidden; }
 /* Air, barometer, marine forecast: the shared v2 finish without a texture */
 :root[data-tiles="v2"] .inst-air, :root[data-tiles="v2"] .inst-pres { --bz: rgba(169, 99, 58, 0.5); }
 :root[data-tiles="v2"] .inst-marine { --bz: rgba(43, 111, 143, 0.55); }
+/* Copper text meets WCAG AA on every tile background (tiles v2 and v1): text uses --copper-ink
+   (#8E4F2A light, #D99A6C dark); copper lines, needles and dots keep the brighter accent. */
+.tide-chart .tn-t, [data-theme="dark"] .tide-chart .tn-t, .mc-n, [data-theme="dark"] .dial .dial-card.is-n { fill: var(--copper-ink); }
