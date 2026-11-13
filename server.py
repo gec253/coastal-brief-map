@@ -230,7 +230,7 @@ def cache_get_any(url: str) -> tuple[int, str, bytes] | None:
 # docs, and test fixtures are not.
 _STATIC_EXT = {".html", ".css", ".js", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".ico",
                ".woff2", ".json", ".txt", ".xml", ".webmanifest", ".map"}
-_STATIC_DENY_PREFIX = ("/.", "/admin", "/docs/", "/tests/", "/scripts/", "/__pycache__/", "/requirements")
+_STATIC_DENY_PREFIX = ("/.", "/admin", "/wind-lab.", "/docs/", "/tests/", "/scripts/", "/__pycache__/", "/requirements")
 
 
 def _static_allowed(path: str) -> bool:
@@ -1071,6 +1071,7 @@ def fetch_radar_tile(z: str, x: str, y: str, t: str) -> tuple[int, str, bytes]:
 
 import conditions  # noqa: E402
 import photos  # noqa: E402
+import windgrid  # noqa: E402
 
 conditions.install(cache_get, cache_get_any, cache_put_ttl, lambda url: fetch_url(url, tries=2))
 
@@ -1144,6 +1145,16 @@ class Handler(SimpleHTTPRequestHandler):
             return self._admin_get(parsed)
         if parsed.path.startswith("/fake-storage/approved/"):
             return self._fake_storage(parsed)
+        if parsed.path in ("/lab/wind", "/lab/wind.js", "/api/wind-grid"):
+            # Prototype, off unless WIND_PARTICLES_ENABLED=1. Not linked from the site.
+            if (os.environ.get("WIND_PARTICLES_ENABLED") or "").strip() not in ("1", "true", "on"):
+                return self.send_error(404, "not found")
+            if parsed.path == "/lab/wind":
+                return self._send_private(ROOT / "wind-lab.html", "text/html; charset=utf-8")
+            if parsed.path == "/lab/wind.js":
+                return self._send_private(ROOT / "wind-lab.js", "text/javascript; charset=utf-8")
+            g = windgrid.latest_grid()
+            return self._send_json(g, cache_s=600 if g.get("ok") else 60, status=200 if g.get("ok") else 502)
         if parsed.path == "/api/sst-time":
             return self._send_json(sst_latest_times(), cache_s=600)
         if parsed.path == "/api/radar/usage":

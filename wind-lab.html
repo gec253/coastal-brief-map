@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Wind particles prototype (not public) — The Coastal Brief</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+  <style>
+    body { background: var(--d-panel); color: var(--d-ink); }
+    .lab { max-width: 1100px; margin: 0 auto; padding: 12px; }
+    .lab h1 { font-family: var(--f-display); font-size: 1.5rem; margin: 4px 0; }
+    .lab-badge { display: inline-block; font-weight: 700; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: #fff; background: #8c2f23; padding: 2px 8px; border-radius: 3px; }
+    #wmap { height: min(70vh, 620px); border-radius: 10px; border: 1px solid var(--d-edge); }
+    .lab-meta { font-size: 0.9rem; color: var(--d-ink-2); margin: 8px 0; }
+    .lab-meta strong { color: var(--d-ink); }
+    canvas.wind-particles { pointer-events: none; }
+  </style>
+</head>
+<body>
+  <main class="lab">
+    <p><span class="lab-badge">Prototype · not linked · not for navigation</span></p>
+    <h1>Model wind flow</h1>
+    <p class="lab-meta" id="wl-meta" role="status">Loading model wind…</p>
+    <div id="wmap" role="region" aria-label="Map of coastal North Carolina with animated model wind"></div>
+    <p class="lab-meta">This shows a <strong>computer model forecast</strong> (NOAA GFS, about 25 km grid), not buoy or station measurements. Streaks move with the forecast 10 m wind; brighter and faster means stronger. Coastline detail is coarser than the model grid suggests. With reduced motion on, static arrows are drawn instead.</p>
+  </main>
+  <script src="/vendor/leaflet/leaflet.js"></script>
+  <script src="/lab/wind.js" defer></script>
+</body>
+</html>
