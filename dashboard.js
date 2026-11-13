@@ -1009,6 +1009,13 @@
     state.timer = setInterval(function () {
       if (document.visibilityState === "visible" && state.regionId) load(state.regionId, true);
     }, REFRESH_MS);
+    // Coming back to a tab (or unlocking a phone) after a while: refresh now
+    // rather than showing old readings until the next timer tick.
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState !== "visible" || !state.regionId || !state.data) return;
+      const age = Date.now() - new Date(state.data.generatedAt).getTime();
+      if (!(age < REFRESH_MS)) load(state.regionId, true);
+    });
     // Pause the gentle wave motion when the dashboard is off screen.
     if ("IntersectionObserver" in window) {
       new IntersectionObserver(function (ents) {
