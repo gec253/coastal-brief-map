@@ -230,7 +230,7 @@ def cache_get_any(url: str) -> tuple[int, str, bytes] | None:
 # docs, and test fixtures are not.
 _STATIC_EXT = {".html", ".css", ".js", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".ico",
                ".woff2", ".json", ".txt", ".xml", ".webmanifest", ".map"}
-_STATIC_DENY_PREFIX = ("/.", "/docs/", "/tests/", "/scripts/", "/__pycache__/", "/requirements")
+_STATIC_DENY_PREFIX = ("/.", "/admin", "/docs/", "/tests/", "/scripts/", "/__pycache__/", "/requirements")
 
 
 def _static_allowed(path: str) -> bool:
@@ -242,6 +242,11 @@ def _static_allowed(path: str) -> bool:
     if any(p.startswith(d) for d in _STATIC_DENY_PREFIX) or "/." in p:
         return False
     return posixpath.splitext(p)[1].lower() in _STATIC_EXT
+
+
+def hmac_compare(a: str, b: str) -> bool:
+    import hmac
+    return bool(a) and hmac.compare_digest(a.encode(), b.encode())
 
 
 SST_TIME_DEFAULTS = {"mur": "2026-11-09T09:00:00Z", "blended": "2026-11-08T12:00:00Z"}
@@ -1065,6 +1070,7 @@ def fetch_radar_tile(z: str, x: str, y: str, t: str) -> tuple[int, str, bytes]:
 
 
 import conditions  # noqa: E402
+import photos  # noqa: E402
 
 conditions.install(cache_get, cache_get_any, cache_put_ttl, lambda url: fetch_url(url, tries=2))
 
@@ -1121,6 +1127,23 @@ class Handler(SimpleHTTPRequestHandler):
                 sys.stderr.write("conditions failed: %s\n" % e)
                 status, payload = 502, {"ok": False, "error": "Conditions are unavailable right now."}
             return self._send_json(payload, cache_s=60, status=status)
+        if parsed.path in ("/coastal-life", "/coastal-life/", "/photos", "/photos/"):
+            return self._send_file(ROOT / "catch-wall.html", "text/html; charset=utf-8")
+        if parsed.path == "/api/photos/config":
+            return self._send_json(photos.public_config(), cache_s=60)
+        if parsed.path == "/api/photos":
+            q = parse_qs(parsed.query or "")
+            view = (q.get("view") or ["all"])[0]
+            feat = (q.get("featured") or [""])[0] == "1"
+            return self._send_json(photos.public_photos(view, feat), cache_s=60)
+        if parsed.path in ("/admin", "/admin/"):
+            if not photos.admin_configured():
+                return self.send_error(404, "not found")
+            return self._send_private(ROOT / "admin.html", "text/html; charset=utf-8")
+        if parsed.path.startswith("/api/admin/"):
+            return self._admin_get(parsed)
+        if parsed.path.startswith("/fake-storage/approved/"):
+            return self._fake_storage(parsed)
         if parsed.path == "/api/sst-time":
             return self._send_json(sst_latest_times(), cache_s=600)
         if parsed.path == "/api/radar/usage":
@@ -1139,6 +1162,112 @@ class Handler(SimpleHTTPRequestHandler):
             self._cache_header_sent = True
             self._static_cache = "public, max-age=31536000, immutable"
         return super().do_GET()
+
+    # ------------------------------------------------------------ photos
+    def _client_ip(self) -> str:
+        ip = self.headers.get("CF-Connecting-IP") or (self.headers.get("X-Forwarded-For") or "").split(",")[0]
+        return (ip or self.client_address[0] or "").strip()[:64]
+
+    def _same_origin(self) -> bool:
+        origin = self.headers.get("Origin")
+        if not origin:
+            return False
+        host = (self.headers.get("X-Forwarded-Host") or self.headers.get("Host") or "").lower()
+        return urlparse(origin).netloc.lower() == host
+
+    def _send_private(self, path: Path, ctype: str, data: bytes | None = None, status: int = 200, extra=None):
+        if data is None:
+            data = path.read_bytes()
+        self.send_response(status)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header("X-Robots-Tag", "noindex, nofollow")
+        self.send_header("Referrer-Policy", "no-referrer")
+        for k, v in (extra or []):
+            self.send_header(k, v)
+        self.end_headers()  # Cache-Control: no-store (default)
+        self.wfile.write(data)
+
+    def _json_private(self, obj, status=200, cookie=None):
+        extra = [("Set-Cookie", cookie)] if cookie else []
+        return self._send_private(None, "application/json; charset=utf-8", json.dumps(obj).encode(), status, extra)
+
+    def _admin_get(self, parsed):
+        csrf = photos.read_session(self.headers.get("Cookie", ""))
+        if parsed.path == "/api/admin/session" and photos.admin_configured() and not csrf:
+            return self._json_private({"ok": False})
+        if not photos.admin_configured() or not csrf:
+            return self._json_private({"ok": False, "error": "Sign in first."}, 401 if photos.admin_configured() else 404)
+        if parsed.path == "/api/admin/list":
+            status = (parse_qs(parsed.query or "").get("status") or ["pending"])[0]
+            try:
+                return self._json_private(photos.admin_list(status))
+            except photos.StorageError as e:
+                sys.stderr.write("admin list: %s\n" % e)
+                return self._json_private({"ok": False, "error": "Storage error."}, 502)
+        if parsed.path == "/api/admin/session":
+            return self._json_private({"ok": True, "csrf": csrf})
+        m = re.fullmatch(r"/api/admin/image/([0-9a-f-]{36})/(thumb|400|800|1600)", parsed.path)
+        if m:
+            data = photos.admin_image(m.group(1), m.group(2))
+            if data is None:
+                return self._json_private({"ok": False}, 404)
+            return self._send_private(None, "image/webp", data)
+        return self._json_private({"ok": False}, 404)
+
+    def _fake_storage(self, parsed):
+        b = photos.backend()
+        if not b or b.name != "fake":
+            return self.send_error(404, "not found")
+        key = unquote(parsed.path[len("/fake-storage/approved/"):])
+        try:
+            data = b.get(b.approved, key)
+        except photos.StorageError:
+            return self.send_error(404, "not found")
+        self.send_response(200)
+        self.send_header("Content-Type", "image/webp")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def do_POST(self):
+        parsed = urlparse(self.path)
+        routes = ("/api/photos/submit", "/api/admin/login", "/api/admin/logout", "/api/admin/action")
+        if parsed.path not in routes:
+            return self._json_private({"ok": False, "error": "Not found."}, 404)
+        # Flag off (or not configured): refuse before reading any body.
+        if parsed.path == "/api/photos/submit" and not photos.uploads_active():
+            return self._json_private({"ok": False, "error": "Not found."}, 404)
+        if parsed.path != "/api/photos/submit" and not photos.admin_configured():
+            return self._json_private({"ok": False, "error": "Not found."}, 404)
+        if not self._same_origin():
+            return self._json_private({"ok": False, "error": "Cross-site request refused."}, 403)
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = -1
+        cap = photos.MAX_BYTES + 256 * 1024 if parsed.path == "/api/photos/submit" else 64 * 1024
+        if length < 0 or length > cap:
+            self.close_connection = True
+            return self._json_private({"ok": False, "error": "That file is larger than 15 MB."}, 413)
+        body = self.rfile.read(length) if length else b""
+        ip = self._client_ip()
+        if parsed.path == "/api/photos/submit":
+            status, payload = photos.handle_submit(self.headers.get("Content-Type", ""), body, ip)
+            return self._json_private(payload, status)
+        if parsed.path == "/api/admin/login":
+            status, payload, cookie = photos.admin_login(body, ip)
+            return self._json_private(payload, status, cookie)
+        csrf = photos.read_session(self.headers.get("Cookie", ""))
+        if not csrf:
+            return self._json_private({"ok": False, "error": "Sign in first."}, 401)
+        if not hmac_compare(self.headers.get("X-CSRF-Token", ""), csrf):
+            return self._json_private({"ok": False, "error": "Session check failed. Reload the page."}, 403)
+        if parsed.path == "/api/admin/logout":
+            return self._json_private({"ok": True}, 200, photos.session_cookie("", clear=True))
+        status, payload = photos.admin_action(body)
+        return self._json_private(payload, status)
 
     def _send_file(self, path: Path, ctype: str):
         if not path.is_file():

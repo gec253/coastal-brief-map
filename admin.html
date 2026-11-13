@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Photo review — The Coastal Brief</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    body.admin-page { background: var(--d-panel); color: var(--d-ink); min-height: 100vh; }
+    .ad-top { position: sticky; top: 0; z-index: 5; display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; background: var(--navy); color: #F6F1E7; }
+    .ad-brand { margin: 0; font-weight: 700; font-size: 0.95rem; }
+    .ad-ghost { appearance: none; border: 1px solid rgba(246,241,231,0.4); background: transparent; color: #F6F1E7; border-radius: 999px; min-height: 40px; padding: 0 14px; font: inherit; font-weight: 700; }
+    .ad-main { max-width: 760px; margin: 0 auto; padding: 14px 12px 60px; }
+    .ad-login { display: flex; flex-direction: column; gap: 8px; max-width: 360px; margin: 40px auto; }
+    .ad-login[hidden], #ad-app[hidden] { display: none; }
+    .ad-login h1 { font-family: var(--f-display); margin: 0 0 8px; }
+    .ad-login input { font: inherit; font-size: 16px; min-height: 44px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--d-edge); background: var(--d-inst); color: var(--d-ink); }
+    .ad-err { color: #b3261e; font-weight: 700; min-height: 1.2em; margin: 0; }
+    [data-theme="dark"] .ad-err { color: #ffb4ab; }
+    .ad-status { margin: 0 0 10px; color: var(--d-ink-2); }
+    .ad-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+    .ad-card { background: var(--d-inst); border: 1px solid var(--d-edge); border-radius: 12px; overflow: hidden; }
+    .ad-card img { display: block; width: 100%; height: auto; max-height: 55vh; object-fit: contain; background: var(--d-inst-2); }
+    .ad-body { padding: 10px 12px 12px; display: grid; gap: 8px; }
+    .ad-meta { margin: 0; font-size: 0.82rem; color: var(--d-ink-2); }
+    .ad-body label { font-weight: 700; font-size: 0.85rem; display: grid; gap: 4px; }
+    .ad-body input[type=text], .ad-body textarea, .ad-body select { font: inherit; font-size: 16px; min-height: 44px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--d-edge); background: var(--d-panel); color: var(--d-ink); box-sizing: border-box; width: 100%; }
+    .ad-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .ad-row button { flex: 1 1 auto; min-height: 48px; border-radius: 10px; font: inherit; font-weight: 700; border: 1px solid var(--d-edge); background: var(--d-panel); color: var(--d-ink); }
+    .ad-row .ok { background: #1F6E66; border-color: #1F6E66; color: #fff; }
+    .ad-row .bad { background: #8c2f23; border-color: #8c2f23; color: #fff; }
+    .ad-feat { display: flex !important; grid-template-columns: none; align-items: center; gap: 10px !important; font-weight: 700; min-height: 44px; }
+    .ad-feat input { width: 22px; height: 22px; }
+    .ad-tabs { display: flex; }
+  </style>
+  <script>
+    (function () { try { var t = localStorage.getItem("coastalBrief.theme"); if (t !== "light" && t !== "dark") t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; document.documentElement.setAttribute("data-theme", t); } catch (e) {} })();
+  </script>
+</head>
+<body class="admin-page">
+  <header class="ad-top">
+    <p class="ad-brand">The Coastal Brief · Photo review</p>
+    <button type="button" id="ad-logout" class="ad-ghost" hidden>Sign out</button>
+  </header>
+  <main class="ad-main">
+    <form id="ad-login" class="ad-login" hidden>
+      <h1>Sign in</h1>
+      <label for="ad-pw">Admin password</label>
+      <input type="password" id="ad-pw" autocomplete="current-password" required>
+      <p class="ad-err" id="ad-login-err" role="alert"></p>
+      <button type="submit" class="btn-share">Sign in</button>
+    </form>
+    <section id="ad-app" hidden>
+      <nav class="gal-tabs ad-tabs" aria-label="Submission status">
+        <a href="#pending" data-status="pending">Pending</a>
+        <a href="#approved" data-status="approved">Published</a>
+        <a href="#rejected" data-status="rejected">Rejected</a>
+        <a href="#removed" data-status="removed">Removed</a>
+      </nav>
+      <p class="ad-status" id="ad-status" role="status"></p>
+      <ul class="ad-list" id="ad-list"></ul>
+    </section>
+  </main>
+  <script>
+(function () {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  let csrf = "", status = "pending";
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  function api(path, body) {
+    const opt = body ? { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf }, body: JSON.stringify(body), credentials: "same-origin" } : { credentials: "same-origin" };
+    return fetch(path, opt).then((r) => r.json().then((j) => { j._status = r.status; return j; }).catch(() => ({ ok: false, _status: r.status })));
+  }
+  function showLogin() { $("ad-login").hidden = false; $("ad-app").hidden = true; $("ad-logout").hidden = true; $("ad-pw").focus(); }
+  function showApp() { $("ad-login").hidden = true; $("ad-app").hidden = false; $("ad-logout").hidden = false; load(); }
+  $("ad-login").addEventListener("submit", function (e) {
+    e.preventDefault();
+    $("ad-login-err").textContent = "";
+    api("/api/admin/login", { password: $("ad-pw").value }).then(function (r) {
+      $("ad-pw").value = "";
+      if (!r.ok) { $("ad-login-err").textContent = r.error || "Could not sign in."; return; }
+      csrf = r.csrf; showApp();
+    });
+  });
+  $("ad-logout").addEventListener("click", function () { api("/api/admin/logout", {}).then(function () { csrf = ""; showLogin(); }); });
+  function tabSync() {
+    document.querySelectorAll(".ad-tabs a").forEach((a) => a.dataset.status === status ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
+  }
+  document.querySelectorAll(".ad-tabs a").forEach(function (a) {
+    a.addEventListener("click", function (e) { e.preventDefault(); status = a.dataset.status; load(); });
+  });
+  const LABEL = { pending: "pending", approved: "published", rejected: "rejected", removed: "removed" };
+  function load() {
+    tabSync();
+    $("ad-status").textContent = "Loading…";
+    api("/api/admin/list?status=" + status).then(function (r) {
+      if (r._status === 401) { showLogin(); return; }
+      if (!r.ok) { $("ad-status").textContent = r.error || "Could not load."; return; }
+      $("ad-status").textContent = r.items.length ? r.items.length + " " + LABEL[status] : "Nothing " + LABEL[status] + ".";
+      $("ad-list").innerHTML = r.items.map(card).join("");
+    });
+  }
+  function card(it) {
+    const when = it.created_at ? new Date(it.created_at).toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short" }) + " ET" : "";
+    const editable = it.status === "pending" || it.status === "approved";
+    let h = '<li class="ad-card" data-id="' + esc(it.id) + '">';
+    if (it.preview) h += '<img src="' + esc(it.preview) + '" alt="Submitted photo" loading="lazy" width="' + (it.width || 800) + '" height="' + (it.height || 600) + '" style="aspect-ratio:' + (it.width || 4) + "/" + (it.height || 3) + '">';
+    h += '<div class="ad-body"><p class="ad-meta">' + esc(when) + " · " + (it.width || "?") + "×" + (it.height || "?") + " px" + (it.display_name ? " · from " + esc(it.display_name) : "") + "</p>";
+    if (editable) {
+      h += '<label>Category<select name="category"><option value="fishing"' + (it.category === "fishing" ? " selected" : "") + '>Fishing (Catch Wall)</option><option value="life"' + (it.category === "life" ? " selected" : "") + ">Coastal Life</option></select></label>";
+      h += '<label class="ad-species"' + (it.category === "fishing" ? "" : " hidden") + '>Species<input type="text" name="species" maxlength="60" value="' + esc(it.species) + '"></label>';
+      h += '<label>Location<input type="text" name="location" maxlength="60" value="' + esc(it.location) + '"></label>';
+      h += '<label>Caption<textarea name="caption" maxlength="280" rows="2">' + esc(it.caption) + "</textarea></label>";
+      h += '<label>Name shown<input type="text" name="display_name" maxlength="40" value="' + esc(it.display_name) + '"></label>';
+      if (it.status === "approved") h += '<label class="ad-feat"><input type="checkbox" name="featured"' + (it.featured ? " checked" : "") + "> Feature on the home page</label>";
+      h += '<div class="ad-row"><button type="button" data-act="edit">Save changes</button></div>';
+      if (it.status === "pending") h += '<div class="ad-row"><button type="button" class="ok" data-act="approve">Approve and publish</button><button type="button" class="bad" data-act="reject">Reject</button></div>';
+      else h += '<div class="ad-row"><button type="button" class="bad" data-act="remove">Remove from the site</button></div>';
+    } else {
+      h += '<p class="ad-meta">' + esc(it.category === "fishing" ? "Fishing" : "Coastal Life") + (it.caption ? " · " + esc(it.caption) : "") + "</p>";
+    }
+    return h + "</div></li>";
+  }
+  $("ad-list").addEventListener("change", function (e) {
+    if (e.target.name === "category") {
+      const sp = e.target.closest(".ad-card").querySelector(".ad-species");
+      if (sp) sp.hidden = e.target.value !== "fishing";
+    }
+  });
+  $("ad-list").addEventListener("click", function (e) {
+    const b = e.target.closest("button[data-act]");
+    if (!b) return;
+    const li = b.closest(".ad-card"), act = b.dataset.act;
+    if ((act === "reject" || act === "remove") && !confirm(act === "reject" ? "Reject and delete this photo?" : "Remove this photo from the site?")) return;
+    const body = { id: li.dataset.id, action: act };
+    if (act === "edit" || act === "approve") {
+      // Save edits first so an approval publishes the corrected text.
+      li.querySelectorAll("input[type=text], textarea, select").forEach((f) => body[f.name] = f.value);
+      const fe = li.querySelector("input[name=featured]");
+      if (fe) body.featured = fe.checked;
+    }
+    b.disabled = true;
+    const step = act === "approve" ? api("/api/admin/action", Object.assign({}, body, { action: "edit" })).then((r) => r.ok ? api("/api/admin/action", { id: body.id, action: "approve" }) : r) : api("/api/admin/action", body);
+    step.then(function (r) {
+      b.disabled = false;
+      if (r._status === 401) { showLogin(); return; }
+      if (!r.ok) { alert(r.error || "That did not work."); return; }
+      $("ad-status").textContent = act === "edit" ? "Saved." : "Done.";
+      if (act !== "edit") load();
+    });
+  });
+  api("/api/admin/session").then(function (r) { if (r.ok) { csrf = r.csrf; showApp(); } else showLogin(); });
+})();
+
+  </script>
+</body>
+</html>

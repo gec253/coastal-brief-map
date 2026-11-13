@@ -3,12 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Catch wall — The Coastal Brief</title>
-  <meta name="description" content="A photo wall for North Carolina catches. Placeholder tiles for now; photos can be added later.">
+  <title>Photos — Catch Wall &amp; Coastal Life — The Coastal Brief</title>
+  <meta name="description" content="Community photos from the North Carolina coast: catches on the Catch Wall, and boats, beaches, sunsets, and waterfront life on Coastal Life. Every photo is reviewed before it appears.">
   <link rel="preload" href="/fonts/source-sans-3-var.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/fraunces-var.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/fraunces-italic-var.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/styles.css">
+  <link rel="canonical" href="https://thecoastalbrief.com/catch-wall">
   <meta name="theme-color" content="#0B2A3D">
   <link rel="icon" href="/branding/favicon.svg" type="image/svg+xml">
   <script>
@@ -23,9 +24,9 @@
     })();
   </script>
 </head>
-<body class="catch-page">
+<body class="catch-page gallery-page">
   <nav class="skip-links" aria-label="Skip links">
-    <a class="skip" href="#catch-wall">Skip to photos</a>
+    <a class="skip" href="#gallery">Skip to photos</a>
   </nav>
   <header class="site">
     <div class="wrap header-row">
@@ -35,18 +36,89 @@
         <p class="tagline tl-sub">North Carolina Marine Conditions, Fishing &amp; Coastal Life</p>
         <nav class="site-nav" aria-label="Site">
           <a href="/">Conditions</a>
-          <a href="/catch-wall" aria-current="page">Catch wall</a>
+          <a href="/catch-wall" data-nav="catch">Catch Wall</a>
+          <a href="/coastal-life" data-nav="life">Coastal Life</a>
         </nav>
       </div>
       <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
     </div>
   </header>
 
-  <main class="wrap">
-    <p class="catch-lead">A wall for catch photos from the North Carolina coast. These tiles are neutral placeholders until real photos are added. There are no captions, and there is no species filter yet.</p>
-    <div class="catch-wall" id="catch-wall"></div>
-    <p class="fine" id="catch-status" role="status"></p>
+  <main class="wrap gallery-main" id="main">
+    <div class="gal-head">
+      <div class="gal-title">
+        <p class="eyebrow" id="gal-eyebrow">Community photos</p>
+        <h2 id="gal-h">Catch Wall</h2>
+        <p class="gal-lead" id="gal-lead">Catches from North Carolina water, shared by the people who caught them.</p>
+      </div>
+      <div class="gal-share" id="gal-share">
+        <button type="button" class="btn-share" id="share-open" hidden>Share your photo</button>
+        <p class="gal-soon" id="share-soon">Photo sharing opens soon.</p>
+      </div>
+    </div>
+    <nav class="gal-tabs" aria-label="Photo galleries">
+      <a href="/catch-wall" data-view="catch">Catch Wall</a>
+      <a href="/coastal-life" data-view="life">Coastal Life</a>
+      <a href="/photos" data-view="all">All photos</a>
+    </nav>
+    <p class="sr-only" id="gal-count" role="status" aria-live="polite"></p>
+    <div class="gallery" id="gallery" aria-labelledby="gal-h"></div>
+    <div class="gal-empty" id="gal-empty" hidden></div>
   </main>
+
+  <dialog class="lightbox" id="lightbox" aria-labelledby="lb-caption">
+    <div class="lb-frame">
+      <img id="lb-img" alt="" decoding="async">
+    </div>
+    <div class="lb-bar">
+      <p class="lb-caption" id="lb-caption"></p>
+      <p class="lb-count" id="lb-count"></p>
+    </div>
+    <button type="button" class="lb-btn lb-prev" id="lb-prev" aria-label="Previous photo">‹</button>
+    <button type="button" class="lb-btn lb-next" id="lb-next" aria-label="Next photo">›</button>
+    <button type="button" class="lb-btn lb-close" id="lb-close" aria-label="Close photo">×</button>
+  </dialog>
+
+  <dialog class="share-dlg" id="share-dlg" aria-labelledby="share-h">
+    <form id="share-form" class="share-form" novalidate>
+      <div class="sh-head">
+        <h2 id="share-h">Share your photo</h2>
+        <button type="button" class="sh-close" id="share-close" aria-label="Close">×</button>
+      </div>
+      <p class="sh-intro">Photos are reviewed before they appear. No account needed. Location data is removed from the file.</p>
+      <fieldset class="sh-cat">
+        <legend>What kind of photo?</legend>
+        <label><input type="radio" name="category" value="fishing" required> Fishing</label>
+        <label><input type="radio" name="category" value="life"> Coastal Life</label>
+      </fieldset>
+      <input type="file" class="sh-file-input" id="sh-photo" name="photo" accept="image/*,.heic,.heif" required>
+      <label class="sh-file" for="sh-photo">
+        <span class="sh-file-btn">Choose a photo</span>
+        <span class="sh-file-hint">Camera, photo library, or a file. JPEG, PNG, WebP, or HEIC, up to 15 MB.</span>
+      </label>
+      <div class="sh-preview" id="sh-preview" hidden><img id="sh-preview-img" alt="Preview of the photo you chose"><p id="sh-preview-name"></p></div>
+      <label for="sh-name">Your name as shown <span class="opt">optional</span></label>
+      <input type="text" id="sh-name" name="display_name" maxlength="40" autocomplete="nickname">
+      <div id="sh-species-wrap">
+        <label for="sh-species">Species <span class="opt">optional</span></label>
+        <input type="text" id="sh-species" name="species" maxlength="60" placeholder="e.g. Red drum">
+      </div>
+      <label for="sh-loc">General location <span class="opt">optional</span></label>
+      <input type="text" id="sh-loc" name="location" maxlength="60" placeholder="e.g. Cape Lookout, Bogue Sound">
+      <label for="sh-cap">Caption <span class="opt">optional</span></label>
+      <textarea id="sh-cap" name="caption" maxlength="280" rows="3"></textarea>
+      <div class="sh-hp" aria-hidden="true"><label for="sh-web">Leave this empty</label><input type="text" id="sh-web" name="website" tabindex="-1" autocomplete="off"></div>
+      <label class="sh-consent"><input type="checkbox" name="consent" value="yes" required> I took this photo or have permission to share it, and I give The Coastal Brief permission to display it on this site.</label>
+      <div class="sh-turnstile" id="sh-turnstile"></div>
+      <p class="sh-error" id="sh-error" role="alert"></p>
+      <button type="submit" class="btn-share" id="sh-submit">Send for review</button>
+    </form>
+    <div class="share-done" id="share-done" hidden tabindex="-1">
+      <h2>Thanks. Your photo is awaiting approval.</h2>
+      <p>It will appear on the site once it has been reviewed. Nothing else is needed from you.</p>
+      <button type="button" class="btn-share" id="share-done-close">Done</button>
+    </div>
+  </dialog>
 
   <footer class="site">
     <div class="wrap">
@@ -56,9 +128,10 @@
         <li><a href="https://www.ncwildlife.gov/" rel="noopener" target="_blank">NC Wildlife Resources Commission</a></li>
       </ul>
       <p>The Coastal Brief is not weather, surf, or fishing advice. Always check official NWS marine forecasts and advisories before going out.</p>
+      <p>Photos are shared by visitors, reviewed before they appear, and stay the property of the people who took them.</p>
       <p>Licenses are sold by the NC Wildlife Resources Commission; The Coastal Brief is not affiliated with it.</p>
     </div>
   </footer>
-  <script src="/catch-wall.js" defer></script>
+  <script src="/gallery.js" defer></script>
 </body>
 </html>
