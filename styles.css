@@ -1982,3 +1982,48 @@ body.no-scroll { overflow: hidden; }
 @media (max-width: 380px) { .site-nav { gap: 2px 9px; font-size: 0.8rem; } }
 @media (max-width: 430px) { .cs-links { gap: 0 10px; font-size: 0.84rem; } }
 @media (max-width: 355px) { .site-nav { gap: 2px 7px; font-size: 0.76rem; } }
+
+/* ===================== Tiles v2 (approved 13 Nov 2026) =====================
+   Instrument identities from the /lab/tiles prototype, applied as a skin over the existing tiles:
+   layered gradient + generated SVG texture + per-instrument bezel accent + refined shadow.
+   No layout, size or markup changes. Switch: data-tiles="v2" on <html> in index.html
+   (remove it to revert; ?tiles=v1 shows the old look for comparison). Tag colours for
+   observed / forecast / predicted are deliberately not changed. */
+:root[data-tiles="v2"] .inst {
+  background: var(--tx, none), linear-gradient(165deg, var(--d-inst) 0%, var(--d-inst-2) 100%);
+  background-size: var(--tx-size, auto), auto;
+  background-repeat: var(--tx-rep, repeat), no-repeat;
+  background-position: var(--tx-pos, 0 0), 0 0;
+  border-radius: 16px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 1px 1px rgba(11, 42, 61, 0.05), 0 6px 18px -8px rgba(11, 42, 61, 0.22);
+}
+:root[data-tiles="v2"][data-theme="dark"] .inst {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 1px 1px rgba(0, 0, 0, 0.3), 0 10px 24px -10px rgba(0, 0, 0, 0.6);
+}
+:root[data-tiles="v2"] .inst::after { background: linear-gradient(90deg, transparent, var(--bz, rgba(91, 168, 160, 0.55)), transparent); }
+/* Wind: atmospheric blue-gray, faint streamlines */
+:root[data-tiles="v2"] .inst-wind { --d-inst: #F6F8FA; --d-inst-2: #EBF0F4; --d-edge: rgba(20, 40, 58, 0.13); --bz: rgba(42, 101, 132, 0.6);
+  --tx: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='120'%3E%3Cg fill='none' stroke='%2314283A' stroke-opacity='.07'%3E%3Cpath d='M0 20c40-8 80 8 120 0s80-8 120 0'/%3E%3Cpath d='M0 50c40-6 80 6 120 0s80-6 120 0'/%3E%3Cpath d='M0 82c40-9 80 9 120 0s80-9 120 0'/%3E%3Cpath d='M0 108c40-5 80 5 120 0s80-5 120 0'/%3E%3C/g%3E%3C/svg%3E"); --tx-size: 240px 120px; }
+:root[data-tiles="v2"][data-theme="dark"] .inst-wind { --d-inst: #1A2733; --d-inst-2: #111C25; --d-edge: rgba(200, 220, 235, 0.12); --bz: rgba(156, 200, 226, 0.5);
+  --tx: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='120'%3E%3Cg fill='none' stroke='%23CFE2F0' stroke-opacity='.06'%3E%3Cpath d='M0 20c40-8 80 8 120 0s80-8 120 0'/%3E%3Cpath d='M0 50c40-6 80 6 120 0s80-6 120 0'/%3E%3Cpath d='M0 82c40-9 80 9 120 0s80-9 120 0'/%3E%3Cpath d='M0 108c40-5 80 5 120 0s80-5 120 0'/%3E%3C/g%3E%3C/svg%3E"); }
+/* Swell: deep Atlantic, long contour swells */
+:root[data-tiles="v2"] .inst-swell { --d-inst: #F3F7FA; --d-inst-2: #E7EFF5; --d-edge: rgba(11, 42, 61, 0.13); --bz: rgba(30, 95, 134, 0.6);
+  --tx: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='64'%3E%3Cg fill='none' stroke='%230B2A3D' stroke-opacity='.07'%3E%3Cpath d='M0 16C53 4 107 4 160 16s107 12 160 0'/%3E%3Cpath d='M0 48C53 36 107 36 160 48s107 12 160 0'/%3E%3C/g%3E%3C/svg%3E"); --tx-size: 320px 64px; }
+:root[data-tiles="v2"][data-theme="dark"] .inst-swell { --d-inst: #0F2C42; --d-inst-2: #081A2B; --d-edge: rgba(140, 201, 234, 0.14); --bz: rgba(140, 201, 234, 0.5);
+  --tx: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='64'%3E%3Cg fill='none' stroke='%238CC9EA' stroke-opacity='.07'%3E%3Cpath d='M0 16C53 4 107 4 160 16s107 12 160 0'/%3E%3Cpath d='M0 48C53 36 107 36 160 48s107 12 160 0'/%3E%3C/g%3E%3C/svg%3E"); }
+/* Seas: Pamlico Sound green-blue, short crossing chop */
+:root[data-tiles="v2"] .inst-seas { --d-inst: #F3F8F5; --d-inst-2: #E6F1EC; --d-edge: rgba(16, 48, 44, 0.13); --bz: rgba(26, 97, 89, 0.6);
+  --tx: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='30'%3E%3Cg fill='none' stroke='%2310302C' stroke-opacity='.07'%3E%3Cpath d='M0 10q7.5-7 15 0t15 0 15 0 15 0'/%3E%3Cpath d='M-7.5 25q7.5-7 15 0t15 0 15 0 15 0 15 0'/%3E%3C/g%3E%3C/svg%3E"); --tx-size: 60px 30px; }
+:root[data-tiles="v2"][data-theme="dark"] .inst-seas { --d-inst: #11302C; --d-inst-2: #0A201D; --d-edge: rgba(127, 208, 195, 0.13); --bz: rgba(127, 208, 195, 0.5);
+  --tx: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='30'%3E%3Cg fill='none' stroke='%237FD0C3' stroke-opacity='.06'%3E%3Cpath d='M0 10q7.5-7 15 0t15 0 15 0 15 0'/%3E%3Cpath d='M-7.5 25q7.5-7 15 0t15 0 15 0 15 0 15 0'/%3E%3C/g%3E%3C/svg%3E"); }
+/* Tide: warm coastal sand; the curve is the art */
+:root[data-tiles="v2"] .inst-tide { --d-inst: #FCF8F0; --d-inst-2: #F6EEDF; --d-edge: rgba(46, 36, 24, 0.13); --bz: rgba(201, 147, 46, 0.6); }
+:root[data-tiles="v2"][data-theme="dark"] .inst-tide { --d-inst: #26221B; --d-inst-2: #1A1712; --d-edge: rgba(245, 238, 226, 0.11); --bz: rgba(201, 147, 46, 0.5); }
+/* Water temp: aquatic teal, ripple rings in the corner */
+:root[data-tiles="v2"] .inst-water { --d-inst: #F0F8F7; --d-inst-2: #E2F1EE; --d-edge: rgba(13, 46, 53, 0.13); --bz: rgba(22, 90, 83, 0.6);
+  --tx: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cg fill='none' stroke='%230D2E35' stroke-opacity='.07'%3E%3Ccircle cx='190' cy='30' r='30'/%3E%3Ccircle cx='190' cy='30' r='58'/%3E%3Ccircle cx='190' cy='30' r='90'/%3E%3Ccircle cx='190' cy='30' r='126'/%3E%3C/g%3E%3C/svg%3E"); --tx-size: 220px 220px; --tx-rep: no-repeat; --tx-pos: top right; }
+:root[data-tiles="v2"][data-theme="dark"] .inst-water { --d-inst: #0F2D32; --d-inst-2: #0A2024; --d-edge: rgba(127, 208, 195, 0.12); --bz: rgba(127, 208, 195, 0.5);
+  --tx: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cg fill='none' stroke='%23A9D6CC' stroke-opacity='.07'%3E%3Ccircle cx='190' cy='30' r='30'/%3E%3Ccircle cx='190' cy='30' r='58'/%3E%3Ccircle cx='190' cy='30' r='90'/%3E%3Ccircle cx='190' cy='30' r='126'/%3E%3C/g%3E%3C/svg%3E"); }
+/* Air, barometer, marine forecast: the shared v2 finish without a texture */
+:root[data-tiles="v2"] .inst-air, :root[data-tiles="v2"] .inst-pres { --bz: rgba(169, 99, 58, 0.5); }
+:root[data-tiles="v2"] .inst-marine { --bz: rgba(43, 111, 143, 0.55); }

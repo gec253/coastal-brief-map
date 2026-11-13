@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-tiles="v2">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -29,6 +29,7 @@
           t = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
         }
         document.documentElement.setAttribute("data-theme", t);
+        if (/[?&]tiles=v1\b/.test(location.search)) document.documentElement.removeAttribute("data-tiles");
       } catch (e) {}
     })();
   </script>
