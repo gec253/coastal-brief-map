@@ -109,6 +109,8 @@
     h += '<div class="ad-body"><p class="ad-meta">' + esc(when) + " · " + (it.width || "?") + "×" + (it.height || "?") + " px" + (it.display_name ? " · from " + esc(it.display_name) : "") + "</p>";
     if (editable) {
       h += '<label>Category<select name="category"><option value="fishing"' + (it.category === "fishing" ? " selected" : "") + '>Fishing (Catch Wall)</option><option value="life"' + (it.category === "life" ? " selected" : "") + ">Coastal Life</option></select></label>";
+      const fw = it.water_type === "freshwater";
+      h += '<label>Water<select name="water_type"><option value="saltwater"' + (fw ? "" : " selected") + '>Saltwater</option><option value="freshwater"' + (fw ? " selected" : "") + ">Freshwater</option></select></label>";
       h += '<label class="ad-species"' + (it.category === "fishing" ? "" : " hidden") + '>Species<input type="text" name="species" maxlength="60" value="' + esc(it.species) + '"></label>';
       h += '<label>Location<input type="text" name="location" maxlength="60" value="' + esc(it.location) + '"></label>';
       h += '<label>Caption<textarea name="caption" maxlength="280" rows="2">' + esc(it.caption) + "</textarea></label>";
@@ -118,7 +120,7 @@
       if (it.status === "pending") h += '<div class="ad-row"><button type="button" class="ok" data-act="approve">Approve and publish</button><button type="button" class="bad" data-act="reject">Reject</button></div>';
       else h += '<div class="ad-row"><button type="button" class="bad" data-act="remove">Remove from the site</button></div>';
     } else {
-      h += '<p class="ad-meta">' + esc(it.category === "fishing" ? "Fishing" : "Coastal Life") + (it.caption ? " · " + esc(it.caption) : "") + "</p>";
+      h += '<p class="ad-meta">' + esc(it.category === "fishing" ? "Fishing" : "Coastal Life") + " · " + (it.water_type === "freshwater" ? "Freshwater" : "Saltwater") + (it.caption ? " · " + esc(it.caption) : "") + "</p>";
     }
     return h + "</div></li>";
   }

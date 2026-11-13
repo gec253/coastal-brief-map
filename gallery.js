@@ -4,8 +4,8 @@
   const $ = (id) => document.getElementById(id);
   const THEME_STORE = "coastalBrief.theme";
   const VIEWS = {
-    catch: { h: "Catch Wall", eyebrow: "Community photos · Fishing", lead: "Catches from North Carolina water, shared by the people who caught them.", path: "/catch-wall" },
-    life: { h: "Coastal Life", eyebrow: "Community photos · The coast", lead: "Boats, beaches, sunsets, waterfronts, watermen, and the people who make the coast home.", path: "/coastal-life" },
+    catch: { h: "Catch Wall", eyebrow: "Community photos · Fishing", lead: "Catches from North Carolina water, salt and fresh, shared by the people who caught them.", path: "/catch-wall" },
+    life: { h: "Coastal Life", eyebrow: "Community photos · The coast", lead: "Life on North Carolina water: boats, beaches, lakes and rivers, sunsets, waterfronts, watermen, and the people who make it home.", path: "/coastal-life" },
     all: { h: "All photos", eyebrow: "Community photos", lead: "Everything on the Catch Wall and Coastal Life, newest first.", path: "/photos" },
   };
 
@@ -35,7 +35,11 @@
     if (/^\/photos/.test(location.pathname)) return "all";
     return "catch";
   }
+  const WATERS = { all: "All waters", salt: "Saltwater", fresh: "Freshwater" };
+  function waterFromUrl() { const w = new URLSearchParams(location.search).get("water"); return WATERS[w] ? w : "all"; }
   let view = viewFromUrl();
+  let water = waterFromUrl();
+  function urlFor(v, w) { return VIEWS[v].path + (w && w !== "all" ? "?water=" + w : ""); }
   let all = null;            // every approved photo, fetched once
   let shown = [];            // photos in the current view
   let config = { uploads: false };
@@ -60,6 +64,11 @@
     document.querySelectorAll(".gal-tabs a").forEach(function (a) {
       if (a.dataset.view === view) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
+    document.querySelectorAll(".gal-tabs a").forEach(function (a) { a.href = urlFor(a.dataset.view, water); });
+    document.querySelectorAll(".gal-water a").forEach(function (a) {
+      a.href = urlFor(view, a.dataset.water);
+      if (a.dataset.water === water) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current");
+    });
     document.querySelectorAll(".site-nav a[data-nav]").forEach(function (a) {
       if (a.dataset.nav === view) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
@@ -74,7 +83,8 @@
 
   function render() {
     const g = $("gallery");
-    shown = (all || []).filter((p) => view === "all" || (view === "catch" ? p.category === "fishing" : p.category === "life"));
+    shown = (all || []).filter((p) => (view === "all" || (view === "catch" ? p.category === "fishing" : p.category === "life")) &&
+      (water === "all" || (water === "salt" ? p.water !== "freshwater" : p.water === "freshwater")));
     g.innerHTML = "";
     $("gal-empty").hidden = true;
     if (!shown.length) { renderEmpty(); return; }
@@ -96,12 +106,12 @@
         ((c.what || c.who) ? '<figcaption>' + (c.what ? '<span class="gi-what">' + esc(c.what) + "</span>" : "") + (c.who ? '<span class="gi-who">' + esc(c.who) + "</span>" : "") + "</figcaption>" : "");
       cols[k].appendChild(fig);
     });
-    $("gal-count").textContent = shown.length + (shown.length === 1 ? " photo" : " photos") + " in " + VIEWS[view].h;
+    $("gal-count").textContent = shown.length + (shown.length === 1 ? " photo" : " photos") + " in " + VIEWS[view].h + (water === "all" ? "" : ", " + WATERS[water]);
   }
 
   function renderEmpty() {
     const e = $("gal-empty");
-    const what = view === "catch" ? "catch" : view === "life" ? "coastal moment" : "photo";
+    const what = (water === "fresh" ? "freshwater " : water === "salt" ? "saltwater " : "") + (view === "catch" ? "catch" : view === "life" ? "moment on the water" : "photo");
     e.innerHTML =
       '<div class="ph-grid" aria-hidden="true">' + [0, 1, 2].map((i) => '<div class="ph-tile ph-' + i + '"><span>Your photo here</span></div>').join("") + "</div>" +
       '<div class="ph-text"><h3>No photos here yet.</h3><p>' +
@@ -110,7 +120,7 @@
         : "Photo sharing opens soon. When it does, every photo will be reviewed before it appears.") +
       "</p>" + (config.uploads ? '<button type="button" class="btn-share" data-share>Share your photo</button>' : "") + "</div>";
     e.hidden = false;
-    $("gal-count").textContent = "No photos in " + VIEWS[view].h + " yet";
+    $("gal-count").textContent = "No photos in " + VIEWS[view].h + (water === "all" ? "" : ", " + WATERS[water]) + " yet";
     const b = e.querySelector("[data-share]");
     if (b) b.addEventListener("click", openShare);
   }
@@ -127,11 +137,21 @@
       ev.preventDefault();
       if (a.dataset.view === view) return;
       view = a.dataset.view;
-      history.pushState({ view: view }, "", VIEWS[view].path);
+      history.pushState({ view: view, water: water }, "", urlFor(view, water));
       syncChrome(); render();
     });
   });
-  window.addEventListener("popstate", function () { view = viewFromUrl(); syncChrome(); render(); });
+  document.querySelectorAll(".gal-water a").forEach(function (a) {
+    a.addEventListener("click", function (ev) {
+      if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button) return;
+      ev.preventDefault();
+      if (a.dataset.water === water) return;
+      water = a.dataset.water;
+      history.pushState({ view: view, water: water }, "", urlFor(view, water));
+      syncChrome(); render();
+    });
+  });
+  window.addEventListener("popstate", function () { view = viewFromUrl(); water = waterFromUrl(); syncChrome(); render(); });
 
   /* ---------- lightbox ---------- */
   const lb = $("lightbox");
@@ -222,6 +242,8 @@
     $("share-form").hidden = false; $("share-done").hidden = true;
     const cat = $("share-form").querySelector("input[name=category][value='" + (view === "life" ? "life" : "fishing") + "']");
     if (cat && !$("share-form").querySelector("input[name=category]:checked")) cat.checked = true;
+    const wt = $("share-form").querySelector("input[name=water_type][value='" + (water === "fresh" ? "freshwater" : "saltwater") + "']");
+    if (wt && water !== "all" && !$("share-form").querySelector("input[name=water_type]:checked")) wt.checked = true;
     syncSpecies();
     loadTurnstile();
     if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
@@ -258,6 +280,7 @@
     const form = e.currentTarget, err = $("sh-error"), btn = $("sh-submit");
     err.textContent = "";
     if (!form.querySelector("input[name=category]:checked")) { err.textContent = "Please choose Fishing or Coastal Life."; return; }
+    if (!form.querySelector("input[name=water_type]:checked")) { err.textContent = "Please choose Saltwater or Freshwater."; return; }
     if (!$("sh-photo").files.length) { err.textContent = "Please choose a photo."; $("sh-photo").focus(); return; }
     if (!form.consent.checked) { err.textContent = "Please confirm you own the photo or have permission to share it."; form.consent.focus(); return; }
     const fd = new FormData(form);

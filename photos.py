@@ -40,6 +40,7 @@ MIN_SIDE = 320                        # reject tiny images
 SIZES = (400, 800, 1600)              # WebP widths for srcset
 THUMB = 240                           # admin/thumbnail width
 CATEGORIES = ("fishing", "life")
+WATER_TYPES = ("saltwater", "freshwater")
 STATUSES = ("pending", "approved", "rejected", "removed")
 TEXT_LIMITS = {"display_name": 40, "species": 60, "location": 60, "caption": 280}
 SESSION_COOKIE = "cb_admin"
@@ -252,7 +253,7 @@ def admin_configured() -> bool:
 def public_config() -> dict:
     on = uploads_active()
     return {"uploads": on, "turnstileSiteKey": turnstile_site_key() if on else "",
-            "maxBytes": MAX_BYTES, "categories": list(CATEGORIES)}
+            "maxBytes": MAX_BYTES, "categories": list(CATEGORIES), "waterTypes": list(WATER_TYPES)}
 
 
 # ---------------------------------------------------------------- rate limits
@@ -430,6 +431,9 @@ def handle_submit(content_type: str, body: bytes, ip: str):
     category = (form.get("category") or "").strip().lower()
     if category not in CATEGORIES:
         return 400, {"ok": False, "error": "Please choose Fishing or Coastal Life."}
+    water = (form.get("water_type") or "").strip().lower()
+    if water not in WATER_TYPES:
+        return 400, {"ok": False, "error": "Please choose Saltwater or Freshwater."}
     if not verify_turnstile(form.get("cf-turnstile-response", ""), ip):
         return 400, {"ok": False, "error": "The spam check did not pass. Please try again."}
     if "_file" not in form or not form["_file"][1]:
@@ -444,7 +448,7 @@ def handle_submit(content_type: str, body: bytes, ip: str):
         for name, blob in img["files"].items():
             b.put(b.pending, "%s/%s.webp" % (pid, name), blob, "image/webp")
         b.insert({
-            "id": pid, "status": "pending", "category": category,
+            "id": pid, "status": "pending", "category": category, "water_type": water,
             "display_name": clean_text(form.get("display_name"), "display_name") or None,
             "species": (clean_text(form.get("species"), "species") or None) if category == "fishing" else None,
             "location": clean_text(form.get("location"), "location") or None,
@@ -468,7 +472,7 @@ def handle_submit(content_type: str, body: bytes, ip: str):
 def _public_row(r, b):
     key = lambda n: "%s/%s.webp" % (r["id"], n)
     return {
-        "id": r["id"], "category": r.get("category"),
+        "id": r["id"], "category": r.get("category"), "water": r.get("water_type") or "saltwater",
         "w": r.get("width"), "h": r.get("height"),
         "src": {str(s): b.public_url(key(s)) for s in SIZES},
         "thumb": b.public_url(key("thumb")),
@@ -575,7 +579,7 @@ def admin_list(status: str):
     rows = b.select(status=status, limit=200)
     out = []
     for r in rows:
-        item = {k: r.get(k) for k in ("id", "status", "category", "display_name", "species", "location",
+        item = {k: r.get(k) for k in ("id", "status", "category", "water_type", "display_name", "species", "location",
                                       "caption", "width", "height", "featured", "created_at", "reviewed_at")}
         if r.get("status") == "approved":
             item["thumb"] = b.public_url("%s/thumb.webp" % r["id"])
@@ -626,6 +630,10 @@ def admin_action(body: bytes):
                 if req["category"] not in CATEGORIES:
                     return 400, {"ok": False, "error": "Bad category."}
                 fields["category"] = req["category"]
+            if "water_type" in req:
+                if req["water_type"] not in WATER_TYPES:
+                    return 400, {"ok": False, "error": "Bad water type."}
+                fields["water_type"] = req["water_type"]
             for f in ("caption", "species", "display_name", "location"):
                 if f in req:
                     fields[f] = clean_text(req[f], f) or None

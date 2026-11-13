@@ -1945,3 +1945,9 @@ body.no-scroll { overflow: hidden; }
 @media (max-width: 430px) { .site-nav { gap: 2px 12px; font-size: 0.84rem; letter-spacing: 0; } .site-nav a { letter-spacing: 0; } }
 @media (max-width: 559px) { .cs-tiles { grid-template-columns: 104px; grid-template-rows: 80px; } .cs-tile.cs-2 { display: none; } .cs-tile span { font-size: 0.6rem; } }
 @media (min-width: 1000px) { .coast-strip { min-height: 0; padding-top: 8px; padding-bottom: 8px; } .cs-tiles { grid-template-columns: repeat(4, 92px); grid-template-rows: 56px; } .cs-h { font-size: 1.15rem; margin: 0 0 2px; } .cs-links a { min-height: 28px; } }
+.gal-water { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: -6px 0 16px; font-size: 0.86rem; }
+.gw-k { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--d-ink-2); margin-right: 4px; }
+.gal-water a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--d-edge); color: var(--d-ink-2); text-decoration: none; font-weight: 700; }
+.gal-water a[aria-current="true"] { border-color: var(--teal); color: var(--d-ink); box-shadow: inset 0 0 0 1px var(--teal); }
+.gal-water a:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.cs-sub { margin: 0 0 4px; font-size: 0.82rem; line-height: 1.35; color: var(--d-ink-2); }

@@ -60,7 +60,7 @@ def multipart(fields, file_bytes=None, filename="x.jpg", ctype="image/jpeg"):
     return "multipart/form-data; boundary=" + bd, out
 
 
-GOOD = {"category": "fishing", "consent": "yes", "cf-turnstile-response": "local-test-pass",
+GOOD = {"category": "fishing", "water_type": "saltwater", "consent": "yes", "cf-turnstile-response": "local-test-pass",
         "species": "Red drum", "location": "Cape Lookout", "caption": "Test fixture", "display_name": "Tester"}
 
 
@@ -141,7 +141,7 @@ class PhotoPipeline(unittest.TestCase):
             photos.MAX_PIXELS = old
 
     def test_submit_validation(self):
-        for drop, code in (("consent", 400), ("category", 400), ("cf-turnstile-response", 400)):
+        for drop, code in (("consent", 400), ("category", 400), ("water_type", 400), ("cf-turnstile-response", 400)):
             f = dict(GOOD); f.pop(drop)
             ct, body = multipart(f, jpeg_with_gps())
             self.assertEqual(photos.handle_submit(ct, body, "2.2.2.2")[0], code, drop)
@@ -169,13 +169,15 @@ class PhotoPipeline(unittest.TestCase):
         self.assertFalse((Path(TMP) / "approved" / pid).exists())
         self.assertIsNotNone(photos.admin_image(pid, "thumb"))
         # edit + approve
-        st, _ = photos.admin_action(json.dumps({"id": pid, "action": "edit", "caption": "Edited", "category": "life", "species": "ignored"}).encode())
+        st, _ = photos.admin_action(json.dumps({"id": pid, "action": "edit", "caption": "Edited", "category": "life", "species": "ignored", "water_type": "freshwater"}).encode())
+        self.assertEqual(photos.admin_action(json.dumps({"id": pid, "action": "edit", "water_type": "brackish"}).encode())[0], 400)
         self.assertEqual(st, 200)
         st, _ = photos.admin_action(json.dumps({"id": pid, "action": "approve"}).encode())
         self.assertEqual(st, 200)
         pub = [p for p in photos.public_photos("life")["photos"] if p["id"] == pid]
         self.assertEqual(len(pub), 1)
         self.assertEqual(pub[0]["caption"], "Edited")
+        self.assertEqual(pub[0]["water"], "freshwater")
         self.assertEqual(pub[0]["species"], "")                              # species cleared for Coastal Life
         self.assertFalse([p for p in photos.public_photos("catch")["photos"] if p["id"] == pid])
         self.assertTrue([p for p in photos.public_photos("all")["photos"] if p["id"] == pid])

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Photos — Catch Wall &amp; Coastal Life — The Coastal Brief</title>
-  <meta name="description" content="Community photos from the North Carolina coast: catches on the Catch Wall, and boats, beaches, sunsets, and waterfront life on Coastal Life. Every photo is reviewed before it appears.">
+  <meta name="description" content="Community photos from North Carolina water, from the rivers to the sounds to the sea: catches on the Catch Wall, and life on the water on Coastal Life. Saltwater and freshwater. Every photo is reviewed before it appears.">
   <link rel="preload" href="/fonts/source-sans-3-var.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/fraunces-var.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/fraunces-italic-var.woff2" as="font" type="font/woff2" crossorigin>
@@ -61,6 +61,12 @@
       <a href="/coastal-life" data-view="life">Coastal Life</a>
       <a href="/photos" data-view="all">All photos</a>
     </nav>
+    <nav class="gal-water" aria-label="Filter by water">
+      <span class="gw-k" aria-hidden="true">Water</span>
+      <a href="?water=all" data-water="all">All</a>
+      <a href="?water=salt" data-water="salt">Saltwater</a>
+      <a href="?water=fresh" data-water="fresh">Freshwater</a>
+    </nav>
     <p class="sr-only" id="gal-count" role="status" aria-live="polite"></p>
     <div class="gallery" id="gallery" aria-labelledby="gal-h"></div>
     <div class="gal-empty" id="gal-empty" hidden></div>
@@ -91,6 +97,11 @@
         <label><input type="radio" name="category" value="fishing" required> Fishing</label>
         <label><input type="radio" name="category" value="life"> Coastal Life</label>
       </fieldset>
+      <fieldset class="sh-cat">
+        <legend>Which water?</legend>
+        <label><input type="radio" name="water_type" value="saltwater" required> Saltwater</label>
+        <label><input type="radio" name="water_type" value="freshwater"> Freshwater</label>
+      </fieldset>
       <input type="file" class="sh-file-input" id="sh-photo" name="photo" accept="image/*,.heic,.heif" required>
       <label class="sh-file" for="sh-photo">
         <span class="sh-file-btn">Choose a photo</span>
@@ -101,10 +112,10 @@
       <input type="text" id="sh-name" name="display_name" maxlength="40" autocomplete="nickname">
       <div id="sh-species-wrap">
         <label for="sh-species">Species <span class="opt">optional</span></label>
-        <input type="text" id="sh-species" name="species" maxlength="60" placeholder="e.g. Red drum">
+        <input type="text" id="sh-species" name="species" maxlength="60" placeholder="e.g. Red drum, largemouth bass">
       </div>
       <label for="sh-loc">General location <span class="opt">optional</span></label>
-      <input type="text" id="sh-loc" name="location" maxlength="60" placeholder="e.g. Cape Lookout, Bogue Sound">
+      <input type="text" id="sh-loc" name="location" maxlength="60" placeholder="e.g. Cape Lookout, Falls Lake, New River">
       <label for="sh-cap">Caption <span class="opt">optional</span></label>
       <textarea id="sh-cap" name="caption" maxlength="280" rows="3"></textarea>
       <div class="sh-hp" aria-hidden="true"><label for="sh-web">Leave this empty</label><input type="text" id="sh-web" name="website" tabindex="-1" autocomplete="off"></div>
