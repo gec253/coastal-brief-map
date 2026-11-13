@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import html
 import json
 import os
 import posixpath
@@ -1073,6 +1074,7 @@ import conditions  # noqa: E402
 import photos  # noqa: E402
 import windgrid  # noqa: E402
 import freshwater  # noqa: E402
+import brief  # noqa: E402
 
 conditions.install(cache_get, cache_get_any, cache_put_ttl, lambda url: fetch_url(url, tries=2))
 
@@ -1157,6 +1159,18 @@ class Handler(SimpleHTTPRequestHandler):
             rid = (parse_qs(parsed.query).get("region") or ["falls-lake"])[0]
             status, payload = freshwater.assemble(rid)
             return self._send_json(payload, cache_s=0, status=status)
+        if parsed.path in ("/brief", "/api/brief"):
+            # Morning Brief preview, off unless MORNING_BRIEF_ENABLED=1. Not linked from the site.
+            if not brief.flag_on():
+                return self.send_error(404, "not found")
+            q = parse_qs(parsed.query)
+            rid = (q.get("region") or [""])[0] or "crystal-coast"
+            status, b = brief.get(rid)
+            if parsed.path == "/api/brief":
+                return self._json_private(b, status)
+            if status != 200:
+                return self._send_private(None, "text/html; charset=utf-8", ("<p>%s</p>" % html.escape(b.get("error", ""))).encode(), status)
+            return self._send_private(None, "text/html; charset=utf-8", brief.page(b).encode())
         if parsed.path in ("/lab/tiles", "/lab/tiles.js"):
             # Tile design prototype, off unless TILES_LAB_ENABLED=1. Not linked from the site.
             if (os.environ.get("TILES_LAB_ENABLED") or "").strip() not in ("1", "true", "on"):
@@ -1415,6 +1429,7 @@ def main():
         get_ads(force=True)
     except Exception as e:
         sys.stderr.write("ads warmup failed: %s\n" % e)
+    brief.start_scheduler()
     httpd = ThreadingHTTPServer((args.host, args.port), Handler)
     print("Coastal Brief map at http://%s:%s/" % (args.host, args.port), flush=True)
     try:
