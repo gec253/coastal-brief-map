@@ -191,11 +191,8 @@ html[data-concept] .mast-nav-inner {
   min-height: 48px;
   padding-top: 0;
   padding-bottom: 0;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  overflow-x: hidden; /* never a horizontal scroll; links must fit */
 }
-html[data-concept] .mast-nav-inner::-webkit-scrollbar { display: none; }
 html[data-concept] .mast-mono {
   flex: 0 0 auto;
   display: inline-flex;
@@ -509,7 +506,12 @@ html[data-concept="c"] .mast-mono { font-weight: 600; }
     text-transform: uppercase;
     margin-right: 6px;
   }
-  html[data-concept] .compact-bar .site-nav { gap: 0 18px; font-size: 0.78rem; }
+  html[data-concept] .compact-bar .site-nav { gap: 0 12px; font-size: 0.76rem; letter-spacing: 0.03em; }
+  html[data-concept="b"] .compact-bar .site-nav a,
+  html[data-concept="b"] .compact-bar #nav-brief,
+  html[data-concept="b"] .compact-bar .rn-btn {
+    min-height: 44px;
+  }
   html[data-concept] .mast-nav-inner { overflow: visible; }
 }
 @media (min-width: 1100px) {
@@ -586,8 +588,23 @@ html[data-concept][data-theme="dark"] header.site[data-identity] .theme-toggle {
   border: 1px solid rgba(243, 230, 208, 0.5);
 }
 
-/* Phone: region on row 1, section links on row 2 — no overlap, easy targets. */
-@media (max-width: 700px) {
+/* Short dateline at phone widths so concept B (kicker + toggle) does not ellipsize. */
+html[data-concept] .mast-date-short { display: none; }
+@media (max-width: 760px) {
+  html[data-concept] .mast-date-full { display: none; }
+  html[data-concept] .mast-date-short { display: inline; }
+}
+
+/* Preview proposal for main: the header picker is the single region control.
+   The in-card picker stays in the DOM (dashboard.js / region-nav.js stay in sync)
+   but is not shown, so the region is not repeated. */
+html[data-concept] .dash-controls .region-pick {
+  display: none;
+}
+
+/* Phone + large phone: region on row 1, section links on row 2.
+   Side padding is kept; all four links fit inside it with no scroll or clip. */
+@media (max-width: 760px) {
   html[data-concept] .mast-nav-inner {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
@@ -595,8 +612,8 @@ html[data-concept][data-theme="dark"] header.site[data-identity] .theme-toggle {
     align-items: center;
     gap: 2px 8px;
     min-height: 0;
-    padding: 4px 0 6px;
-    overflow: visible;
+    padding: 4px 14px 6px;
+    overflow: hidden;
   }
   html[data-concept] .mast-mono { grid-column: 1; grid-row: 1; }
   html[data-concept] .compact-bar .region-nav {
@@ -609,11 +626,38 @@ html[data-concept][data-theme="dark"] header.site[data-identity] .theme-toggle {
   html[data-concept] .compact-bar .site-nav {
     grid-column: 1 / -1;
     grid-row: 2;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    justify-content: stretch;
     flex: none;
     width: 100%;
-    gap: 0 6px;
-    font-size: 0.66rem;
+    gap: 0 2px;
+    font-family: "Barlow Condensed", "Barlow Condensed Fallback", sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  html[data-concept] .compact-bar .site-nav a,
+  html[data-concept] .compact-bar #nav-brief {
+    justify-content: center;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0 1px;
+    text-align: center;
+  }
+  /* B's instrument borders are kept, but padding is tightened so the four labels fit. */
+  html[data-concept="b"] .compact-bar .site-nav { gap: 0 4px; }
+  html[data-concept="b"] .compact-bar .site-nav a,
+  html[data-concept="b"] .compact-bar #nav-brief {
+    min-height: 44px;
+    padding: 0 2px;
+  }
+  html[data-concept="a"] .compact-bar .site-nav {
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+    font-size: 0.78rem;
   }
 }
 

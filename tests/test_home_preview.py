@@ -17,6 +17,7 @@ HOME_MARKERS = (
     b"home-photo-band",
     b"/preview/home.css",
     b"/preview/home/photos/",
+    b"mast-date-short",
 )
 
 
@@ -113,6 +114,8 @@ class HomePreview(unittest.TestCase):
             self.assertIn(b'id="conditions"', body)
             self.assertIn(b'id="region-nav"', body)
             self.assertIn(b'id="nav-brief"', body)
+            self.assertIn(b'id="region-select"', body)
+            self.assertIn(b"mast-date-short", body)
             self.assertIn(b"fetchpriority=\"high\"", body)
             self.assertIn(b"type=\"image/avif\"", body)
             self.assertIn(b"type=\"image/webp\"", body)

@@ -40,6 +40,8 @@ CONCEPT_MARKERS = (
     b"home-photo",
     b"/preview/home.css",
     b"featured-photos",
+    b"mast-date-short",
+    b"mast-date-full",
 )
 
 
@@ -138,6 +140,10 @@ class MastheadPreview(unittest.TestCase):
             self.assertIn(b"From the rivers to the sounds to the sea", body)
             self.assertIn(b"mast-preview-dock", body)
             self.assertIn(b"Replay", body)
+            self.assertIn(b"mast-date-short", body)
+            self.assertIn(b"mast-date-full", body)
+            self.assertIn(b'id="region-select"', body)
+            self.assertIn(b"region-pick", body)
             # Region is in the picker only, not repeated as a mast line.
             self.assertNotIn(b"mast-region-line", body)
         status, body, hdrs = self._req("/preview/masthead.css", env=env, cookie=ck)

@@ -1115,6 +1115,44 @@ def _apply_chrome(data: bytes) -> bytes:
     return _apply_dateline(_apply_brief_nav(data))
 
 
+def _preview_dateline_html() -> bytes:
+    """Preview-only dateline: full label plus a short phone form (SAT · NOV 14, 2026)."""
+    now = datetime.now(ZoneInfo("America/New_York"))
+    full = "%s, %s %d, %d · Eastern Time" % (
+        now.strftime("%A"),
+        now.strftime("%B"),
+        now.day,
+        now.year,
+    )
+    short = "%s · %s %d, %d" % (
+        now.strftime("%a"),
+        now.strftime("%b"),
+        now.day,
+        now.year,
+    )
+    iso = now.date().isoformat()
+    return (
+        b'<time datetime="%s">'
+        b'<span class="mast-date-full">%s</span>'
+        b'<span class="mast-date-short">%s</span>'
+        b"</time>"
+    ) % (
+        iso.encode("ascii"),
+        html.escape(full).encode("utf-8"),
+        html.escape(short).encode("utf-8"),
+    )
+
+
+def _apply_preview_dateline(data: bytes) -> bytes:
+    """Swap the public dateline in the concept masthead only; public pages are unchanged."""
+    return re.sub(
+        br'(<p class="mast-dateline" id="mast-dateline">)\s*<time datetime="[^"]*">[^<]*</time>',
+        br"\1" + _preview_dateline_html(),
+        data,
+        count=1,
+    )
+
+
 # Private masthead concepts. Public pages never include this markup or CSS.
 MASTHEAD_CONCEPTS = ("a", "b", "c")
 MASTHEAD_DIR = ROOT / "preview" / "masthead"
@@ -1203,7 +1241,7 @@ def _masthead_preview_html(concept: str, shot: bool = False, dock: str | None = 
         (b'src="coast-strip.js"', b'src="/coast-strip.js"'),
     ):
         data = data.replace(a, b)
-    return _apply_chrome(data)
+    return _apply_preview_dateline(_apply_chrome(data))
 
 # Private photo-led homepage concepts, always on masthead concept C.
 HOME_CONCEPTS = ("cinematic", "magazine")
