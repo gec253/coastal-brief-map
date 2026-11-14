@@ -13,8 +13,8 @@ Cover the whole North Carolina coast, from Corolla to Sunset Beach and out to of
 - Scout alone merges and deploys. Specialists work on local branches.
 
 ## Coastal expansion order
-1. Wilmington / Wrightsville Beach (research started Nov 13, 2026)
-2. Nags Head / Outer Banks (research started Nov 13, 2026)
+1. Wilmington / Wrightsville Beach: private preview live Nov 14, 2026 (cookie-gated, not public). Next: Ed's review on his phone.
+2. Nags Head / Outer Banks: private preview live Nov 14, 2026 (cookie-gated, not public). Next: Ed's review on his phone.
 3. Emerald Isle / Swansboro
 4. Topsail Beach / Surf City
 5. Carolina Beach / Kure Beach
@@ -25,8 +25,9 @@ Cover the whole North Carolina coast, from Corolla to Sunset Beach and out to of
 Public: Falls Lake, Jordan Lake, Neuse River. Next steps continue alongside the coastal work.
 
 ## Design
-Next phase after the identity work: redesign the 1200x630 Open Graph share image (masthead, navy, ivory, brass). Ed approves it before the public image is replaced.
-Full visual identity project: a traditional newspaper-inspired masthead, premium typography, a scrolling header, authentic NC character, and refined instruments.
+Live Nov 14, 2026 (Ed approved): newspaper masthead with compact sticky folio, region picker, header Morning Brief link, and the new 1200x630 share image (branding/og-masthead.jpg; og-preview.png kept). No chart texture on phones. See docs/IDENTITY.md.
+Open: mobile homepage Lighthouse is below main (about 85-86 vs 91; the header is the LCP element). Refined instruments are the next design phase.
 
-## Live now (Nov 13, 2026)
+## Live now (Nov 14, 2026)
 Crystal Coast and Hatteras dashboards and Morning Briefs; Falls Lake, Jordan Lake and Neuse River pages, plus the Falls Lake brief.
+Also live Nov 14: robots.txt and sitemap.xml (public pages only), and AMZ152 shown alongside AMZ154 on the Hatteras marine tile.
