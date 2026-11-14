@@ -1221,7 +1221,7 @@ def _preview_style_tag(*paths: Path) -> bytes:
 
 
 def _masthead_preview_html(concept: str, shot: bool = False, dock: str | None = None, css_files: list[Path] | None = None, extra_attrs: bytes = b"") -> bytes:
-    """Homepage with a concept masthead swapped in. Public index.html is not modified."""
+    """Homepage with a concept masthead swapped in. Comparison previews stay private."""
     if concept not in MASTHEAD_CONCEPTS:
         concept = "c"
     src = (ROOT / "index.html").read_bytes()
@@ -1231,7 +1231,7 @@ def _masthead_preview_html(concept: str, shot: bool = False, dock: str | None = 
     if start < 0 or mid < 0 or mid < start:
         raise RuntimeError("masthead preview: unexpected index.html shape")
     data = src[:start] + header + b"\n\n    " + src[mid:]
-    attrs = b' data-concept="%s"' % concept.encode("ascii")
+    attrs = b' data-preview data-concept="%s"' % concept.encode("ascii")
     if extra_attrs:
         attrs += extra_attrs
     if shot:
@@ -1258,7 +1258,47 @@ def _masthead_preview_html(concept: str, shot: bool = False, dock: str | None = 
         data = data.replace(a, b)
     return _apply_preview_dateline(_apply_chrome(data))
 
+
+def _public_home_html(region_id: str | None = None, preview: bool = False) -> bytes:
+    """Public homepage: masthead A, magazine photo band, pinned Bodie sunrise, first-paint conditions."""
+    src = (ROOT / "index.html").read_bytes()
+    header = (MASTHEAD_DIR / "header.html").read_bytes().strip()
+    start = src.find(b'<header class="site"')
+    mid = src.find(_MASTHEAD_META)
+    if start < 0 or mid < 0 or mid < start:
+        raise RuntimeError("public home: unexpected index.html shape")
+    data = src[:start] + header + b"\n\n    " + src[mid:]
+    data = data.replace(
+        b'<html lang="en" data-tiles="v2">',
+        b'<html lang="en" data-tiles="v2" data-concept="a" data-home="magazine">',
+        1,
+    )
+    needle = b'  <link rel="stylesheet" href="styles.css">\n'
+    if needle not in data:
+        raise RuntimeError("public home: stylesheet link missing")
+    data = data.replace(needle, needle + b"  " + _MASTHEAD_PLAY, 1)
+    photo = _featured_photo()
+    band = _home_photo_band_html("magazine", photo, public=True)
+    mid = data.find(_MASTHEAD_META)
+    if mid < 0:
+        raise RuntimeError("public home: meta-row missing")
+    data = data[:mid] + band + b"\n    " + data[mid:]
+    src_base = str(photo.get("src") or "").replace("/preview/home/photos/", "/featured/")
+    preload = (
+        "  <link rel=\"preload\" as=\"image\" type=\"image/avif\" href=\"%s-w800.avif\" "
+        "imagesrcset=\"%s-w800.avif 800w, %s-w1280.avif 1280w\" "
+        "imagesizes=\"(min-width: 900px) 58vw, 100vw\" fetchpriority=\"high\">\n"
+        % (src_base, src_base, src_base)
+    ).encode("ascii")
+    font_pre = b'  <link rel="preload" href="/fonts/source-sans-3-var.woff2"'
+    if font_pre in data:
+        data = data.replace(font_pre, preload + font_pre, 1)
+    data = _apply_preview_dateline(_apply_chrome(data))
+    return homepage_boot.inject(data, region_id, preview=preview)
+
+
 # Private photo-led homepage concepts. Final = Magazine layout on masthead A.
+# The public homepage uses the same photos via /featured/.
 HOME_CONCEPTS = ("cinematic", "magazine", "final")
 HOME_DIR = ROOT / "preview" / "home"
 HOME_PHOTOS_DIR = HOME_DIR / "photos"
@@ -1286,8 +1326,10 @@ def _featured_photo(photo_id: str | None = None) -> dict:
     return photo_list[now.timetuple().tm_yday % len(photo_list)]
 
 
-def _home_photo_band_html(home: str, photo: dict) -> bytes:
+def _home_photo_band_html(home: str, photo: dict, public: bool = False) -> bytes:
     src = str(photo.get("src") or ("/preview/home/photos/" + str(photo.get("id") or "")))
+    if public:
+        src = src.replace("/preview/home/photos/", "/featured/")
     widths = [int(w) for w in (photo.get("widths") or [800, 1280]) if int(w) > 0]
     if 800 not in widths:
         widths = [800] + widths
@@ -1392,7 +1434,7 @@ def _home_preview_dock(home: str, photo: dict, photo_list: list[dict], mast: str
 
 
 def _home_preview_html(home: str, shot: bool = False, photo_id: str | None = None, mast: str | None = None) -> bytes:
-    """Homepage photo preview. Final = Magazine layout on masthead A with the pinned photo. Public index.html is not modified."""
+    """Homepage photo preview. Comparison routes stay private; the public homepage uses _public_home_html."""
     if home not in HOME_CONCEPTS:
         home = "final"
     layout = _home_layout(home)
@@ -1607,6 +1649,19 @@ class Handler(SimpleHTTPRequestHandler):
             return self._send_bytes(robots_body(), "text/plain; charset=utf-8", cache_s=300)
         if parsed.path == "/sitemap.xml":
             return self._send_bytes(sitemap_body(), "application/xml; charset=utf-8", cache_s=300)
+        if parsed.path.startswith("/featured/"):
+            name = posixpath.basename(unquote(parsed.path))
+            if not _HOME_PHOTO_RE.match(name):
+                return self.send_error(404, "not found")
+            path = (HOME_PHOTOS_DIR / name).resolve()
+            try:
+                path.relative_to(HOME_PHOTOS_DIR.resolve())
+            except ValueError:
+                return self.send_error(404, "not found")
+            if not path.is_file():
+                return self.send_error(404, "not found")
+            ctype = "image/avif" if path.suffix.lower() == ".avif" else "image/webp"
+            return self._send_file(path, ctype)
         if parsed.path == "/preview":
             return self._preview_route(parsed)
         if parsed.path == "/preview/masthead" or parsed.path == "/preview/masthead.css":
@@ -1627,9 +1682,11 @@ class Handler(SimpleHTTPRequestHandler):
             if conditions.is_preview_salt_region(rid):
                 if not self._preview_ok():
                     return self.send_error(404, "not found")
-                data = _apply_chrome((ROOT / "index.html").read_bytes())
-                data = homepage_boot.inject(data, rid, preview=True)
-                data = data.replace(b'name="robots" content="index, follow"', b'name="robots" content="noindex, nofollow"')
+                data = _public_home_html(rid, preview=True)
+                if b'name="robots"' not in data:
+                    data = data.replace(b"<head>", b'<head>\n  <meta name="robots" content="noindex, nofollow">', 1)
+                else:
+                    data = data.replace(b'name="robots" content="index, follow"', b'name="robots" content="noindex, nofollow"')
                 return self._send_private(None, "text/html; charset=utf-8", data)
             return self._send_html(ROOT / "index.html", region_id=rid or None)
         if parsed.path == "/api/brief/wake":
@@ -1942,9 +1999,10 @@ class Handler(SimpleHTTPRequestHandler):
     def _send_html(self, path: Path, share: str | None = None, region_id: str | None = None, preview: bool = False):
         if not path.is_file():
             return self.send_error(404, "file not found")
-        data = _apply_chrome(path.read_bytes())
         if path.name == "index.html":
-            data = homepage_boot.inject(data, region_id, preview=preview)
+            data = _public_home_html(region_id, preview=preview)
+        else:
+            data = _apply_chrome(path.read_bytes())
         if share:
             data = _apply_share_meta(data, share)
         self.send_response(200)

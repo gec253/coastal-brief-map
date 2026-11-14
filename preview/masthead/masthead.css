@@ -598,7 +598,7 @@ html[data-concept] .mast-date-short { display: none; }
 /* Comparison previews only: hide the in-card picker so the header is the
    single region control. The final preview (html[data-final]) keeps the
    card picker visible, as on main; #region-select stays in the DOM and in sync. */
-html[data-concept]:not([data-final]) .dash-controls .region-pick {
+html[data-preview][data-concept]:not([data-final]) .dash-controls .region-pick {
   display: none;
 }
 

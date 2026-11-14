@@ -68,25 +68,30 @@ class HomePreview(unittest.TestCase):
     def _cookie(self):
         return "%s=%s" % (self.server.PREVIEW_COOKIE, self.server._preview_cookie_value(self.KEY))
 
-    def test_public_homepage_has_no_home_markup_and_matches_chrome(self):
+    def test_public_homepage_is_the_final_design(self):
         status, body, hdrs = self._req("/")
         self.assertEqual(status, 200)
-        for marker in HOME_MARKERS:
-            self.assertNotIn(marker, body, marker)
         self.assertNotIn("noindex", hdrs.get("x-robots-tag", ""))
+        self.assertIn(b'data-concept="a"', body)
+        self.assertIn(b'data-home="magazine"', body)
+        self.assertIn(b"home-photo-band", body)
+        self.assertIn(b"/featured/bodie-sunrise", body)
         self.assertIn(b'id="region-select"', body)
-        self.assertIn(b'id="nav-brief"', body)
+        self.assertIn(b'id="region-nav"', body)
         self.assertIn(b'property="og:image"', body)
+        self.assertNotIn(b"/preview/home.css", body)
+        self.assertNotIn(b"/preview/home/photos/", body)
+        self.assertNotIn(b'id="mast-preview-dock"', body)
 
     def test_public_homepage_identical_with_preview_cookie(self):
         env = {"PREVIEW_KEY": self.KEY}
         status, body, hdrs = self._req("/", env=env, cookie=self._cookie())
         self.assertEqual(status, 200)
-        for marker in HOME_MARKERS:
-            self.assertNotIn(marker, body, marker)
-        # The preview cookie must not turn public / into the private homepage preview.
-        self.assertNotIn(b'data-final', body)
-        self.assertNotIn(b'data-home="magazine"', body)
+        # Cookie must not swap public / for a gated comparison preview.
+        self.assertIn(b'data-home="magazine"', body)
+        self.assertIn(b"/featured/bodie-sunrise", body)
+        self.assertNotIn(b"data-preview", body)
+        self.assertNotIn(b'id="mast-preview-dock"', body)
         self.assertNotIn("noindex", hdrs.get("x-robots-tag", ""))
 
     def test_preview_404_without_cookie(self):

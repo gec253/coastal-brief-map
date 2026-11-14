@@ -103,15 +103,27 @@ class MastheadPreview(unittest.TestCase):
             committed = subprocess.check_output(["git", "show", "origin/main:" + rel], cwd=ROOT)
             self.assertEqual(committed, (ROOT / rel).read_bytes(), rel)
 
-    def test_public_homepage_has_no_concept_markup(self):
+    def test_public_homepage_is_the_final_design(self):
         status, body, hdrs = self._req("/")
         self.assertEqual(status, 200)
-        for marker in CONCEPT_MARKERS:
-            self.assertNotIn(marker, body, marker)
         self.assertNotIn("noindex", hdrs.get("x-robots-tag", ""))
+        self.assertIn(b'data-concept="a"', body)
+        self.assertIn(b'data-home="magazine"', body)
+        self.assertNotIn(b"data-preview", body)
+        self.assertIn(b"home-photo-band", body)
+        self.assertIn(b"/featured/bodie-sunrise", body)
+        self.assertIn(b"Photograph: U.S. National Park Service, Cape Hatteras National Seashore", body)
         self.assertIn(b'id="region-select"', body)
+        self.assertIn(b'id="region-nav"', body)
+        self.assertIn(b"region-pick", body)
         self.assertIn(b'id="nav-brief"', body)
         self.assertIn(b'property="og:image"', body)
+        self.assertIn(b"cb-mast-reveal", body)
+        self.assertIn(b'id="cb-boot-conditions"', body)
+        # Comparison previews stay gated and are not inlined into public /.
+        self.assertNotIn(b"/preview/home.css", body)
+        self.assertNotIn(b"/preview/masthead.css", body)
+        self.assertNotIn(b'id="mast-preview-dock"', body)
 
     def test_other_public_pages_have_no_concept_markup(self):
         for path in ("/catch-wall", "/coastal-life", "/photos"):
@@ -156,11 +168,14 @@ class MastheadPreview(unittest.TestCase):
         self.assertIn("text/css", hdrs.get("content-type", ""))
         self.assertIn("noindex", hdrs.get("x-robots-tag", ""))
         self.assertIn(b"wave-swell", body)
-        # With the cookie, the public homepage is still the shipped identity.
-        status, home, _ = self._req("/", env=env, cookie=ck)
+        # With the cookie, public / is still the published homepage, not a gated preview.
+        status, home, hdrs = self._req("/", env=env, cookie=ck)
         self.assertEqual(status, 200)
-        for marker in CONCEPT_MARKERS:
-            self.assertNotIn(marker, home, marker)
+        self.assertIn(b'data-concept="a"', home)
+        self.assertIn(b'data-home="magazine"', home)
+        self.assertNotIn(b"data-preview", home)
+        self.assertNotIn(b'id="mast-preview-dock"', home)
+        self.assertNotIn("noindex", hdrs.get("x-robots-tag", ""))
 
     def test_shot_mode_hides_preview_dock(self):
         env = {"PREVIEW_KEY": self.KEY}
