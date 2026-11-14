@@ -1,0 +1,123 @@
+{
+  "fixtureNote": "TEST FIXTURE ONLY. Committed sample of a Hatteras Morning Brief, copied from cache/briefs/hatteras.json as it stood on 14 Nov 2026 (issued Sat Nov 14, 7:55 AM ET). Used by tests so they do not read the live cache/, which changes when a brief is rebuilt. This is not a live conditions file and must not be treated as current.",
+  "ok": true,
+  "regionId": "hatteras",
+  "issueDate": "2026-11-14",
+  "issuedAt": "2026-11-14T12:55:12.546191+00:00",
+  "issuedEt": "Sat Nov 14, 7:55 AM ET",
+  "reason": "on-request",
+  "words": 175,
+  "region": {
+    "id": "hatteras",
+    "name": "Hatteras Island",
+    "area": "Cape Hatteras, Outer Banks",
+    "anchor": {
+      "label": "Cape Hatteras",
+      "lat": 35.2515,
+      "lon": -75.5288
+    },
+    "map": {
+      "center": [
+        35.2,
+        -75.6
+      ],
+      "zoom": 8
+    }
+  },
+  "waterType": "saltwater",
+  "items": [
+    [
+      "Advisories",
+      "Small Craft Advisory until Sun 12:00 AM ET; Small Craft Advisory until 12:00 PM ET."
+    ],
+    [
+      "Wind",
+      "21 kt from the NNW, gusting 27, at Diamond Shoals; about steady from 19 kt 10 h earlier."
+    ],
+    [
+      "Seas",
+      "6.9 ft every 6 s from the N at Cape Hatteras East (CDIP 250); building from 4.6 ft 10 h earlier."
+    ],
+    [
+      "Swell",
+      "0.7 ft at 10 s from the NE (split from the buoy spectrum)."
+    ],
+    [
+      "Pressure",
+      "29.91 inHg, rising, up 4.9 hPa over 10 h at 41025."
+    ],
+    [
+      "Marine forecast",
+      "Today: NW winds 20 to 25 kt, diminishing to 15 to 20 kt this afternoon. (NWS AMZ154)"
+    ],
+    [
+      "Rain",
+      "1% chance through tonight; sunny, high 56\u00b0F."
+    ],
+    [
+      "Tides",
+      "low 6:00 AM ET (0.4 ft), high 12:07 PM ET (0.7 ft), low 6:47 PM ET (0.3 ft) at USCG Station Hatteras, MLLW."
+    ],
+    [
+      "Water temp",
+      "60\u00b0F inshore (USCG Station Hatteras), 68\u00b0F offshore (buoy 41120)."
+    ]
+  ],
+  "freshness": [
+    {
+      "label": "Wind",
+      "time": "7:10 AM ET",
+      "station": "41025",
+      "stale": false
+    },
+    {
+      "label": "Seas",
+      "time": "7:26 AM ET",
+      "station": "41120",
+      "stale": false
+    },
+    {
+      "label": "Barometer",
+      "time": "7:48 AM ET",
+      "station": "8654467",
+      "stale": false
+    },
+    {
+      "label": "Water level",
+      "time": "7:48 AM ET",
+      "station": "8654467",
+      "stale": false
+    },
+    {
+      "label": "Water temp",
+      "time": "7:48 AM ET",
+      "station": "8654467",
+      "stale": false
+    }
+  ],
+  "take": [
+    "NWS rates conditions hazardous to small craft until Sun 12:00 AM ET.",
+    "Seas are short-period wind chop, so expect a steep, close-together ride.",
+    "The NWS marine forecast has wind or seas easing later today.",
+    "Offshore water is 9\u00b0F warmer than inshore."
+  ],
+  "missing": [],
+  "marineZone": "AMZ154",
+  "marineUpdated": "2026-11-14T03:41:00-05:00",
+  "forecastUpdated": "2026-11-14T08:43:04+00:00",
+  "sources": "NOAA NDBC, NOAA CO-OPS, NWS (api.weather.gov)",
+  "validation": {
+    "status": "ok",
+    "checkedAt": "2026-11-14T12:55:12.546191+00:00",
+    "missingCore": [],
+    "checks": [
+      "region",
+      "location",
+      "issue date",
+      "timestamp",
+      "marine zone",
+      "forecast age",
+      "core readings"
+    ]
+  }
+}

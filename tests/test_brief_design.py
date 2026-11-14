@@ -1,12 +1,15 @@
 """Presentation-only checks for the Morning Brief page."""
 import json
 import unittest
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import brief
 
 ROOT = Path(__file__).resolve().parents[1]
 BRIEFS = ROOT / "cache" / "briefs"
+ET = ZoneInfo("America/New_York")
 
 
 def _load(name):
@@ -44,12 +47,19 @@ class BriefPage(unittest.TestCase):
         self.assertIn("predicted", html.lower())  # tide next
 
     def test_tide_next_is_predicted_and_after_issue(self):
-        b = _load("hatteras")
+        # Fixed fixture: the live cache/briefs/hatteras.json changes when a
+        # brief is rebuilt, which used to break a hardcoded tide time.
+        fixture = Path(__file__).resolve().parent / "fixtures" / "brief-hatteras-sample.json"
+        b = json.loads(fixture.read_text())
         cells = [c for c in brief._glance(b) if c["key"].startswith("Tide") or "tide" in c["key"].lower()]
         self.assertTrue(cells)
         self.assertEqual(cells[0]["kind"], "predicted")
         self.assertEqual(cells[0]["key"], "Tide next")
-        self.assertIn("6:03", cells[0]["value"])
+        issued = datetime.fromisoformat(str(b["issuedAt"]).replace("Z", "+00:00")).astimezone(ET)
+        shown = datetime.strptime(
+            cells[0]["value"] + " " + cells[0]["unit"], "%I:%M %p"
+        ).replace(year=issued.year, month=issued.month, day=issued.day, tzinfo=ET)
+        self.assertGreater(shown, issued)
 
     def test_freshwater_brief_keeps_observed_vs_forecast(self):
         b = _load("falls-lake")
