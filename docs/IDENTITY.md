@@ -28,7 +28,7 @@ The dateline is filled in America/New_York by the server (`_apply_dateline`). Th
 
 A decorative, very low-contrast CSS background only — not content, not the LCP element, not for navigation.
 
-- File: `/branding/masthead-chart.webp` (sparse white linework on transparent, 800×240, 13.2 KB). The masthead inlines this as a CSS data URI under a navy veil (~16% residual contrast) so it is a decorative background with no extra image request and is not an LCP image resource. The same file is also requested by `/brief.css` for the brief chrome.
+- File: `/branding/masthead-chart.webp` (sparse white linework on transparent, 800×240, 13.2 KB). The masthead draws it as a CSS background on `header.site[data-identity]::before` at 16% opacity. The same file is also requested by `/brief.css` for the brief chrome.
 - Source chart: **NOAA Chart 11545**, *Beaufort Inlet and Part of Core Sound; Lookout Bight*, scale 1:40,000, 2023 (final raster edition, image `11545-8-2023`), published by NOAA Office of Coast Survey (NOAA-NOS).
 - Record: https://www.historicalcharts.noaa.gov/image.php?filename=11545-8-2023
 - JPEG: https://www.historicalcharts.noaa.gov/jpgs/11545-8-2023.jpg
@@ -53,6 +53,6 @@ Deep navy, warm ivory, restrained brass, with Atlantic / Pamlico / marsh / dock 
 
 On the `design/og-image` branch only. The public file `branding/og-preview.png` is not replaced.
 
-A 1200×630 card at `branding/og-masthead.jpg` (JPEG quality 90, under 300 KB) uses the same navy, ivory, brass, and NOAA Chart 11545 texture as the masthead. “THE COASTAL BRIEF” is set in the existing SIL OFL Fraunces, with the mission line “From the rivers to the sounds to the sea.” Type, vector rules, and the public-domain chart only. Important type sits in a centered 630×630 safe area so 1.91:1 and square-ish crops (iMessage, Facebook, X `summary_large_image`, LinkedIn) still read.
+A 1200×630 card at `branding/og-masthead.jpg` (JPEG quality 90, under 300 KB) uses the same navy, ivory, and brass as the masthead, with a separate higher-resolution crop of the Lookout Bight inset (`branding/og-masthead-chart.webp`, 2400×1260). That crop is smoothed and contrast-crushed, with a soft center vignette, so it reads as a faint texture and the nameplate stays dominant — it is not the 13.2 KB site-masthead webp, which pixelated when enlarged to this size. “THE COASTAL BRIEF” is set in the existing SIL OFL Fraunces, with the mission line “From the rivers to the sounds to the sea.” Type, vector rules, and the public-domain chart only. Important type sits in a centered 630×630 safe area so 1.91:1 and square-ish crops (iMessage, Facebook, X `summary_large_image`, LinkedIn) still read.
 
 Reproduce with `node branding/render-og-masthead.js` from `branding/og-masthead.html`. Public pages (`/`, `/catch-wall`, `/coastal-life`, `/photos`, `/brief?region=…`, `/lake?region=…`) point `og:image` and `twitter:image` at `https://thecoastalbrief.com/branding/og-masthead.jpg` and include width, height, and alt.

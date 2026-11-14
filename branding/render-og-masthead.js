@@ -4,7 +4,7 @@
  *   node branding/render-og-masthead.js
  *
  * Uses the SIL OFL Fraunces and Source Sans 3 files in /fonts, and the
- * public-domain NOAA Chart 11545 texture in masthead-chart.webp. Requires
+ * public-domain NOAA Chart 11545 texture in og-masthead-chart.webp. Requires
  * Chrome and puppeteer-core (override with CHROME and PUPPETEER).
  */
 const { spawnSync } = require("child_process");

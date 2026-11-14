@@ -6,7 +6,9 @@
   Type: Fraunces and Source Sans 3, SIL Open Font License 1.1 (see /fonts).
   Texture: NOAA Chart 11545, Beaufort Inlet and Part of Core Sound; Lookout Bight,
   2023 final raster (11545-8-2023), public domain / CC0. Not for navigation.
-  Credit: docs/IDENTITY.md.
+  A separate higher-resolution Lookout Bight crop (branding/og-masthead-chart.webp,
+  2400×1260) is smoothed and contrast-crushed so it reads as a faint texture;
+  the 13.2 KB site masthead webp is not used here. Credit: docs/IDENTITY.md.
 -->
 <html lang="en">
 <head>
@@ -50,8 +52,9 @@
   .texture {
     position: absolute;
     inset: 0;
-    background: url("masthead-chart.webp") 68% 42% / cover no-repeat;
-    opacity: 0.14;
+    background: url("og-masthead-chart.webp") center / cover no-repeat;
+    opacity: 0.85;
+    mix-blend-mode: screen;
     pointer-events: none;
   }
   /* Centered safe area: remains intact in a 1.91:1 crop and a centered square crop. */
