@@ -1,0 +1,306 @@
+/* Private photo-led homepage concepts for /preview/home?c=cinematic|magazine.
+   Built on masthead concept C. Not used on public pages. */
+
+html[data-home] {
+  --id-navy: #071C29;
+  --id-ivory: #F3E6D0;
+  --id-ivory-2: #D4C6AE;
+  --id-brass: #C4A36A;
+}
+
+.home-photo-band {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  background: var(--id-navy);
+  color: var(--id-ivory);
+}
+
+.home-photo-frame {
+  position: relative;
+  width: 100%;
+  height: 200px; /* reserved; short phone band, no CLS */
+  overflow: hidden;
+  background: var(--id-navy);
+  aspect-ratio: 1.95 / 1;
+}
+
+.home-photo-frame picture,
+.home-photo-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.home-photo-frame img {
+  object-fit: cover;
+  object-position: 50% 50%;
+  background: var(--id-navy);
+}
+
+.home-photo-copy {
+  pointer-events: none;
+}
+
+.home-photo-copy a {
+  pointer-events: auto;
+}
+
+.home-photo-kicker,
+.home-photo-title,
+.home-photo-credit,
+.home-photo-jump {
+  margin: 0;
+}
+
+.home-photo-kicker {
+  font-family: "Source Sans 3", "Source Sans 3 Fallback", sans-serif;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--id-ivory-2);
+}
+
+.home-photo-title {
+  font-family: Fraunces, "Fraunces Fallback", Georgia, serif;
+  font-weight: 500;
+  font-style: italic;
+  font-size: 1.05rem;
+  line-height: 1.25;
+  color: var(--id-ivory);
+}
+
+.home-photo-credit,
+.home-photo-credit a {
+  font-family: "Source Sans 3", "Source Sans 3 Fallback", sans-serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--id-ivory);
+  text-decoration: none;
+}
+
+.home-photo-credit a:hover,
+.home-photo-credit a:focus-visible {
+  color: var(--id-brass);
+  text-decoration: underline;
+}
+
+.home-photo-jump {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 0 12px;
+  min-height: 32px;
+  line-height: 32px;
+  font-family: "Source Sans 3", "Source Sans 3 Fallback", sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--id-navy);
+  background: var(--id-ivory);
+  border: 1px solid var(--id-brass);
+  border-radius: 2px;
+  text-decoration: none;
+}
+
+.home-photo-jump:hover,
+.home-photo-jump:focus-visible {
+  background: var(--id-brass);
+  color: var(--id-navy);
+}
+
+/* -------- Cinematic Coastal: immersive short band, overlay type -------- */
+html[data-home="cinematic"] .home-photo-frame {
+  height: 200px;
+  max-height: 200px;
+  aspect-ratio: 1.95 / 1;
+}
+
+html[data-home="cinematic"] .home-photo-kicker,
+html[data-home="cinematic"] .home-photo-title,
+html[data-home="cinematic"] .home-photo-credit,
+html[data-home="cinematic"] .home-photo-credit a {
+  /* Ivory on near-opaque navy, well above WCAG AA. */
+  color: var(--id-ivory);
+}
+html[data-home="cinematic"] .home-photo-copy {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 22px 16px 10px;
+  background: linear-gradient(to top, rgba(7, 28, 41, 0.96) 0%, rgba(7, 28, 41, 0.92) 62%, rgba(7, 28, 41, 0) 100%);
+}
+
+html[data-home="cinematic"] .home-photo-title {
+  display: none; /* keep the phone band short and uncluttered */
+}
+
+html[data-home="cinematic"] .home-photo-jump {
+  display: none;
+}
+
+html[data-home="cinematic"] .home-photo-credit {
+  background: rgba(7, 28, 41, 0.88);
+  padding: 3px 8px;
+  border-radius: 2px;
+  color: var(--id-ivory);
+}
+
+@media (min-width: 761px) {
+  html[data-home="cinematic"] .home-photo-frame {
+    height: 300px;
+    max-height: 300px;
+    aspect-ratio: 2.6 / 1;
+  }
+  html[data-home="cinematic"] .home-photo-copy {
+    padding: 40px 28px 14px;
+  }
+  html[data-home="cinematic"] .home-photo-title {
+    display: block;
+    font-size: 1.35rem;
+    margin-top: 2px;
+  }
+  html[data-home="cinematic"] .home-photo-kicker + .home-photo-title {
+    max-width: 36rem;
+  }
+}
+
+@media (min-width: 1100px) {
+  html[data-home="cinematic"] .home-photo-frame {
+    height: 340px;
+    max-height: 340px;
+  }
+}
+
+/* -------- Modern Coastal Magazine: restrained editorial, weather one scroll away -------- */
+html[data-home="magazine"] .home-photo-band {
+  background: var(--id-navy);
+}
+
+html[data-home="magazine"] .home-photo-frame {
+  height: 152px;
+  max-height: 152px;
+  aspect-ratio: 2.56 / 1;
+}
+
+html[data-home="magazine"] .home-photo-copy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 10px;
+  padding: 6px 16px 8px;
+  background: var(--id-navy);
+}
+
+html[data-home="magazine"] .home-photo-kicker {
+  display: none;
+}
+
+html[data-home="magazine"] .home-photo-title {
+  font-size: 0.92rem;
+  flex: 1 1 12rem;
+}
+
+html[data-home="magazine"] .home-photo-jump {
+  min-height: 28px;
+  line-height: 28px;
+  font-size: 0.64rem;
+  padding: 0 10px;
+  margin-top: 0;
+}
+
+html[data-home="magazine"] .home-photo-credit {
+  background: rgba(7, 28, 41, 0.88);
+  padding: 2px 0;
+}
+
+html[data-home="magazine"] .home-photo-jump {
+  margin-top: 0;
+  margin-left: auto;
+}
+
+@media (min-width: 900px) {
+  html[data-home="magazine"] .home-photo-band {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(18rem, 0.75fr);
+    gap: 0;
+    max-width: 1120px;
+    margin: 12px auto 8px;
+    background: transparent;
+    padding: 0 20px;
+    align-items: stretch;
+  }
+  html[data-home="magazine"] .home-photo-frame {
+    height: 280px;
+    max-height: 280px;
+    aspect-ratio: 3 / 2;
+    border-radius: 2px 0 0 2px;
+  }
+  html[data-home="magazine"] .home-photo-copy {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 8px;
+    padding: 24px 28px;
+    background: var(--id-ivory);
+    color: var(--id-navy);
+    border-radius: 0 2px 2px 0;
+    border: 1px solid rgba(196, 163, 106, 0.45);
+    border-left: none;
+  }
+  html[data-home="magazine"] .home-photo-kicker {
+    display: block;
+    color: #5a4a32;
+  }
+  html[data-home="magazine"] .home-photo-jump {
+    min-height: 32px;
+    line-height: 32px;
+    font-size: 0.72rem;
+    padding: 0 12px;
+  }
+  html[data-home="magazine"] .home-photo-title {
+    font-size: 1.55rem;
+    color: var(--id-navy);
+    flex: 0 1 auto;
+  }
+  html[data-home="magazine"] .home-photo-credit,
+  html[data-home="magazine"] .home-photo-credit a {
+    color: #3a2f22;
+    background: none;
+  }
+  html[data-home="magazine"] .home-photo-credit a:hover,
+  html[data-home="magazine"] .home-photo-credit a:focus-visible {
+    color: #6a4e1f;
+  }
+  html[data-home="magazine"][data-theme="dark"] .home-photo-copy {
+    background: #0c2836;
+    color: var(--id-ivory);
+    border-color: rgba(196, 163, 106, 0.45);
+  }
+  html[data-home="magazine"][data-theme="dark"] .home-photo-kicker {
+    color: var(--id-ivory-2);
+  }
+  html[data-home="magazine"][data-theme="dark"] .home-photo-title {
+    color: var(--id-ivory);
+  }
+  html[data-home="magazine"][data-theme="dark"] .home-photo-credit,
+  html[data-home="magazine"][data-theme="dark"] .home-photo-credit a {
+    color: var(--id-ivory);
+  }
+}
+
+/* Dock extras for the home preview (shares .mast-preview-dock). */
+.mast-preview-dock .pv-sep {
+  opacity: 0.45;
+  margin: 0 2px;
+}

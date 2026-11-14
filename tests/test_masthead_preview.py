@@ -36,6 +36,10 @@ CONCEPT_MARKERS = (
     b"cb-mast-reveal",
     b"wave-swell",
     b"wave-glint",
+    b"data-home",
+    b"home-photo",
+    b"/preview/home.css",
+    b"featured-photos",
 )
 
 
@@ -110,7 +114,8 @@ class MastheadPreview(unittest.TestCase):
                 self.assertNotIn(marker, body, "%s %s" % (path, marker))
 
     def test_preview_404_without_key_or_cookie(self):
-        for path in ("/preview/masthead", "/preview/masthead?c=a", "/preview/masthead.css"):
+        for path in ("/preview/masthead", "/preview/masthead?c=a", "/preview/masthead.css",
+                     "/preview/home", "/preview/home?c=cinematic", "/preview/home.css"):
             status, _, _ = self._req(path)
             self.assertEqual(status, 404, path)
             status, _, _ = self._req(path, env={"PREVIEW_KEY": self.KEY})
