@@ -1,8 +1,14 @@
-# Morning Brief (private build, not live)
+# Morning Brief
 
-`/brief?region=<id>` (page) and `/api/brief?region=<id>` (JSON) return 404 unless `MORNING_BRIEF_ENABLED=1`.
-The flag is **not** set on Render. Code: `brief.py`, two routes in `server.py`. The brief never contains market
-or Finviz data; it only reads the site's own conditions and freshwater assemblers.
+Saltwater briefs (`/brief?region=crystal-coast` and `/brief?region=hatteras`, plus the JSON under `/api/brief`)
+are **on by default**. Nothing needs to be set on Render to launch them. Set `MORNING_BRIEF_ENABLED` to `0`,
+`false`, or `off` to take them down (a kill switch). Code: `brief.py`, two routes in `server.py`. The brief
+never contains market or Finviz data; it only reads the site's own conditions and freshwater assemblers.
+
+The Falls Lake brief stays private: it is 404 unless `FRESHWATER_ENABLED` is on or the browser has a preview
+cookie, and the in-page region chips hide Falls Lake from public visitors the same way. Public saltwater
+briefs are `index, follow`; Falls Lake and briefs served only via a preview cookie (kill switch on) stay
+`noindex, nofollow`. The brief is not linked from the homepage or header yet (link placement is still open).
 
 ## What a brief contains
 1. **Issue time and data freshness at the top**: when it was built, why (scheduled / on request / rebuilt),
@@ -21,7 +27,7 @@ or Finviz data; it only reads the site's own conditions and freshwater assembler
 Target 120–200 words. Today's samples: Crystal Coast 185, Hatteras 177, Falls Lake 131.
 
 ## Scheduling (as built, no new services)
-- With the flag on, `server.py` starts one daemon thread. It sleeps until **5:15 AM ET**, builds every enabled
+- When the brief is on (the default), `server.py` starts one daemon thread. It sleeps until **5:15 AM ET**, builds every enabled
   region (Crystal Coast, Hatteras; plus freshwater preview regions when `FRESHWATER_ENABLED=1`), and retries any
   region with missing sections every 3 minutes until **5:30 AM ET**. Building reuses the same cached fetchers as
   the live dashboard, so it does not slow or replace the live instruments, which keep refreshing all day.
@@ -49,13 +55,12 @@ scheduler firing at a patched time (both regions written with reason "scheduled"
 
 ## Wake-up ping (approved 13 Nov 2026: option B)
 - `GET /api/brief/wake` builds today's brief for each region that does not have one yet, in the background,
-  and returns only `{"ok", "issueDate", "building"}`. It publishes nothing; `/brief` stays 404 for the public.
-  It is active when `MORNING_BRIEF_ENABLED=1` **or** `PREVIEW_KEY` is set, so briefs are ready for preview
-  browsers even while the brief is not public. At most one build per region per day.
+  and returns only `{"ok", "issueDate", "building"}`. It publishes nothing itself; the public `/brief` pages
+  are what readers see. It runs when the brief is on (the default) **or** `PREVIEW_KEY` is set, so a preview
+  browser can still get a built brief when the kill switch is on. At most one build per region per day.
 - Briefs built by the ping between 5:15 and 5:45 AM ET are labeled as scheduled.
 - Workflow: `docs/workflows/morning-brief-wake.yml`. Two UTC crons (09:16 and 10:16) with a guard that only
-  pings when it is 5 or 6 AM Eastern, so it fires at 5:16 AM ET in both EST and EDT. A 404 (brief not enabled
-  on the server yet) is reported and the run does not fail.
+  pings when it is 5 or 6 AM Eastern, so it fires at 5:16 AM ET in both EST and EDT. A 404 (kill switch on and no preview key) is reported and the run does not fail.
 - **To install:** the automation token cannot write `.github/workflows/` (GitHub requires the `workflow`
   scope). Ed can add it in the GitHub web UI: *Add file → Create new file*, path
   `.github/workflows/morning-brief-wake.yml`, paste the file, commit. Or grant the token the `workflow`
@@ -63,8 +68,9 @@ scheduler firing at a patched time (both regions written with reason "scheduled"
 - Free Render instances lose memory and disk when they spin down, so a brief built at 5:16 is rebuilt (and
   labeled "rebuilt") if the service has slept before someone opens it. Durable storage (option D) fixes that.
 
-## The catch, and what Ed must approve to go live
-If the Render service spins down when idle, nothing runs at 5:15 and every day's brief will be built on the
+## The catch, and what is still open
+Saltwater briefs are public once this ships; no extra Render flag is required to launch. If the Render
+service spins down when idle, nothing runs at 5:15 and every day's brief will be built on the
 first visit instead, at whatever time that is. To guarantee a 5:30 publish, one of these is needed:
 
 | Option | Cost | Notes |
@@ -74,9 +80,9 @@ first visit instead, at whatever time that is. To guarantee a 5:30 publish, one 
 | C. Render Cron Job | Paid (Render bills cron jobs per run-minute, with a monthly minimum) | Most reliable; a new paid service and a hosting change, so needs Ed |
 | D. Durable storage for briefs (e.g. a `briefs` table in the Supabase project planned for photos) | Free tier | Keeps the exact 5:15 brief across restarts; needs the Supabase project Ed hasn't created yet |
 
-Recommendation: B (GitHub Actions, no new account) plus D once Supabase exists. Before launch Ed also needs to
-approve: turning on `MORNING_BRIEF_ENABLED` on Render, where the brief is linked from (homepage card vs. its own
-page), and the Captain's take wording rules.
+Recommendation: B (GitHub Actions, no new account) plus D once Supabase exists. Still open: where the brief is
+linked from (homepage card vs. its own page), and the Captain's take wording rules. To take the public brief
+down, set `MORNING_BRIEF_ENABLED` to `0`, `false`, or `off` on Render and redeploy.
 
 ## Samples (13 Nov 2026, built on request, live data)
 ```

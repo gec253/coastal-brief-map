@@ -384,16 +384,12 @@ a { color: inherit; }
 [data-water="freshwater"] .mb-row dt { color: #4A5C3A; }
 [data-theme="dark"][data-water="freshwater"] .mb-row dt { color: #B7C89A; }
 
+/* Reserved height only when an ad is actually served. No visible placeholder
+   and no empty gap when ads are off. Never placed above advisories. */
 .mb-ad {
   margin: 22px auto 0;
   max-width: 336px;
   min-height: 100px;
-  border: 1.5px dashed var(--edge);
-  border-radius: 10px;
-  display: grid; place-items: center;
-  text-align: center;
-  color: var(--ink-2);
-  font-size: 0.8rem; letter-spacing: 0.04em;
 }
 
 /* Captain's take: clearly set apart, labeled INTERPRETATION. */

@@ -1187,6 +1187,7 @@ class Handler(SimpleHTTPRequestHandler):
         if parsed.path == "/api/brief/wake":
             # Daily wake-up ping (GitHub Actions, 5:16 AM ET). Builds today's briefs if missing; returns no
             # brief content, so it publishes nothing. Idempotent: at most one build per region per day.
+            # Runs when the brief is on (the default) or a preview key is set.
             if not (brief.flag_on() or _preview_secret()):
                 return self.send_error(404, "not found")
             return self._json_private(brief.wake(include_fresh=freshwater.flag_on() or bool(_preview_secret())))
@@ -1246,18 +1247,31 @@ class Handler(SimpleHTTPRequestHandler):
             status, payload = freshwater.assemble(rid)
             return self._send_json(payload, cache_s=0, status=status)
         if parsed.path in ("/brief", "/api/brief"):
-            # Morning Brief preview, off unless MORNING_BRIEF_ENABLED=1. Not linked from the site.
+            # Saltwater Morning Brief is on by default. MORNING_BRIEF_ENABLED=0/false/off is the
+            # kill switch. Falls Lake stays private (freshwater flag or preview cookie).
+            # Not linked from the homepage or header.
             pv = self._preview_ok()
             if not (brief.flag_on() or pv):
                 return self.send_error(404, "not found")
             q = parse_qs(parsed.query)
             rid = (q.get("region") or [""])[0] or "crystal-coast"
-            status, b = brief.get(rid, include_fresh=freshwater.flag_on() or pv)
+            include_fresh = freshwater.flag_on() or pv
+            status, b = brief.get(rid, include_fresh=include_fresh)
             if parsed.path == "/api/brief":
                 return self._json_private(b, status)
             if status != 200:
                 return self._send_private(None, "text/html; charset=utf-8", ("<p>%s</p>" % html.escape(b.get("error", ""))).encode(), status)
-            return self._send_private(None, "text/html; charset=utf-8", brief.page(b, include_fresh=freshwater.flag_on() or pv).encode())
+            water = b.get("waterType") or ""
+            rid_final = b.get("regionId") or (b.get("region") or {}).get("id") or rid
+            # Indexable only when the brief is on for the public and this is not a freshwater page.
+            # Preview-only (kill switch) and Falls Lake stay noindex.
+            public = brief.flag_on() and water != "freshwater" and rid_final != "falls-lake"
+            # No ad creative is wired into the brief yet, so never reserve an
+            # empty gap. When ads are hooked up, pass ads_on from get_ads()
+            # (adsOn and mode != paused) and place the slot below advisories.
+            body = brief.page(b, include_fresh=include_fresh, public=public, ads_on=False)
+            robots = "index, follow" if public else "noindex, nofollow"
+            return self._send_private(None, "text/html; charset=utf-8", body.encode(), robots=robots)
         if parsed.path in ("/lab/tiles", "/lab/tiles.js"):
             # Tile design prototype, off unless TILES_LAB_ENABLED=1. Not linked from the site.
             if not (_flag("TILES_LAB_ENABLED") or self._preview_ok()):
@@ -1309,14 +1323,15 @@ class Handler(SimpleHTTPRequestHandler):
         host = (self.headers.get("X-Forwarded-Host") or self.headers.get("Host") or "").lower()
         return urlparse(origin).netloc.lower() == host
 
-    def _send_private(self, path: Path, ctype: str, data: bytes | None = None, status: int = 200, extra=None):
+    def _send_private(self, path: Path, ctype: str, data: bytes | None = None, status: int = 200, extra=None, robots: str = "noindex, nofollow"):
         if data is None:
             data = path.read_bytes()
         self.send_response(status)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(data)))
         self.send_header("X-Frame-Options", "DENY")
-        self.send_header("X-Robots-Tag", "noindex, nofollow")
+        if robots:
+            self.send_header("X-Robots-Tag", robots)
         self.send_header("Referrer-Policy", "no-referrer")
         for k, v in (extra or []):
             self.send_header(k, v)

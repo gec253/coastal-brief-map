@@ -96,5 +96,32 @@ class BriefPage(unittest.TestCase):
         self.assertIn("min-width: 601px", html)
 
 
+    def test_public_page_has_no_private_preview_wording(self):
+        b = _load("hatteras")
+        html = brief.page(b, public=True)
+        low = html.lower()
+        self.assertNotIn("private preview", low)
+        self.assertIn("<title>Morning Brief · Hatteras Island — The Coastal Brief</title>", html)
+        self.assertIn('content="index, follow"', html)
+        self.assertNotIn("Ad slot placeholder", html)
+        self.assertNotIn('class="mb-ad"', html)
+
+    def test_preview_or_fresh_page_stays_noindex(self):
+        b = _load("hatteras")
+        html = brief.page(b, public=False)
+        self.assertIn('content="noindex, nofollow"', html)
+        self.assertNotIn("private preview", html.lower())
+
+    def test_ad_slot_only_when_ads_are_on(self):
+        b = _load("hatteras")
+        off = brief.page(b, public=True, ads_on=False)
+        on = brief.page(b, public=True, ads_on=True)
+        self.assertNotIn('class="mb-ad"', off)
+        self.assertIn('<div class="mb-ad" aria-hidden="true"></div>', on)
+        self.assertNotIn("Ad slot placeholder", on)
+        # Ad slot is after advisories in the markup.
+        self.assertLess(on.find("mb-adv"), on.find('class="mb-ad"'))
+
+
 if __name__ == "__main__":
     unittest.main()

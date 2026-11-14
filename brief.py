@@ -1,6 +1,8 @@
 """Morning Brief: a short daily summary per enabled region, built only from verified readings.
 
-Off unless MORNING_BRIEF_ENABLED=1. Never includes market data. The Captain's take is produced by fixed
+On by default for saltwater regions. Set MORNING_BRIEF_ENABLED to 0, false, or off to disable
+(a kill switch). The Falls Lake brief stays private (FRESHWATER_ENABLED or a preview cookie).
+Never includes market data. The Captain's take is produced by fixed
 rules from the numbers in the brief; nothing is invented.
 
 Schedule: an in-process thread prepares every enabled region at 05:15 ET and retries failed sections
@@ -33,7 +35,9 @@ _thread = None
 
 
 def flag_on() -> bool:
-    return (os.environ.get("MORNING_BRIEF_ENABLED") or "").strip() in ("1", "true", "on")
+    """Saltwater briefs are on unless MORNING_BRIEF_ENABLED is explicitly 0, false, or off."""
+    v = (os.environ.get("MORNING_BRIEF_ENABLED") or "").strip().lower()
+    return v not in ("0", "false", "off")
 
 
 def enabled_regions(include_fresh: bool | None = None) -> list[str]:
@@ -447,11 +451,16 @@ def _advisory(b: dict):
     return None
 
 
-def page(b: dict, include_fresh: bool = False) -> str:
-    """Render the private brief page. On phones (<=600px) the prose
+def page(b: dict, include_fresh: bool = False, public: bool = False, ads_on: bool = False) -> str:
+    """Render the brief page. On phones (<=600px) the prose
     sections under the at-a-glance strip start collapsed so readings
     are not shown twice above the fold; they stay open on tablet,
-    desktop, and in print."""
+    desktop, and in print.
+
+    public: indexable saltwater page (no preview-only / freshwater).
+    ads_on: reserve an ad gap below advisories only when ads are active;
+    otherwise leave no empty gap and never show a placeholder box.
+    """
     esc = html.escape
     reason = {"scheduled": "Prepared on schedule (5:15 AM ET build, woken by the daily 5:16 AM check).",
               "on-request": "Built on request because the 5:15 AM scheduled build did not run (the server was asleep or restarting).",
@@ -520,9 +529,9 @@ def page(b: dict, include_fresh: bool = False) -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="robots" content="noindex, nofollow">
+<meta name="robots" content="%(robots)s">
 <meta name="theme-color" content="#0B2A3D">
-<title>Morning Brief · %(name)s (private preview) — The Coastal Brief</title>
+<title>Morning Brief · %(name)s — The Coastal Brief</title>
 <meta name="description" content="%(desc)s">
 <meta property="og:title" content="%(og_title)s">
 <meta property="og:description" content="%(desc)s">
@@ -557,7 +566,7 @@ def page(b: dict, include_fresh: bool = False) -> str:
   </div>
 </header>
 <main class="mb" id="brief-body">
-  <p class="mb-badge">Morning Brief · private preview</p>
+  <p class="mb-badge">Morning Brief</p>
   <p class="mb-kicker">%(water_label)s</p>
   <h1>%(name)s</h1>
   <p class="mb-tag">More than the forecast. It’s a way of life.</p>
@@ -594,7 +603,7 @@ def page(b: dict, include_fresh: bool = False) -> str:
     window.addEventListener("afterprint", apply);
   })();
   </script>
-  <div class="mb-ad" aria-hidden="true">Ad slot placeholder · inactive · reserved height, never above advisories</div>
+  %(ad)s
   <section class="mb-take">
     <p class="mb-take-k"><span>Captain’s take</span> <span class="mb-interp">Interpretation</span></p>
     <div class="mb-take-body">%(take)s</div>
@@ -625,6 +634,8 @@ def page(b: dict, include_fresh: bool = False) -> str:
 </script>
 </body>
 </html>""" % {
+        "robots": "index, follow" if public else "noindex, nofollow",
+        "ad": '<div class="mb-ad" aria-hidden="true"></div>' if ads_on else "",
         "water": esc(water),
         "water_label": "River &amp; lake" if water == "freshwater" else "The sounds &amp; the sea",
         "name": esc(name),
