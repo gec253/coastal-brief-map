@@ -2030,3 +2030,164 @@ body.no-scroll { overflow: hidden; }
 /* Copper text meets WCAG AA on every tile background (tiles v2 and v1): text uses --copper-ink
    (#8E4F2A light, #D99A6C dark); copper lines, needles and dots keep the brighter accent. */
 .tide-chart .tn-t, [data-theme="dark"] .tide-chart .tn-t, .mc-n, [data-theme="dark"] .dial .dial-card.is-n { fill: var(--copper-ink); }
+
+/* =====================================================================
+   Region navigation prototype (header + homepage)
+   "From the rivers to the sounds to the sea"
+   Reserved heights so the new row cannot shift the dashboard. The menu
+   is absolutely positioned and does not take part in document flow.
+   ===================================================================== */
+.region-nav-wrap {
+  position: relative;
+  padding-top: 8px;
+  padding-bottom: 2px;
+  min-height: 58px; /* line + button on one row (desktop), reserved */
+}
+.region-nav {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  min-height: 48px;
+  position: relative;
+}
+.rn-line {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 1.2em;
+  font-family: var(--f-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 0.95rem;
+  line-height: 1.2;
+  color: rgba(246, 241, 231, 0.88);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rn-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 1 auto;
+  min-height: 44px;
+  max-width: 100%;
+  margin: 0;
+  padding: 0 14px 0 12px;
+  border: 1px solid rgba(246, 241, 231, 0.45);
+  border-radius: 999px;
+  background: rgba(7, 28, 41, 0.35);
+  color: #F6F1E7;
+  font: 700 1.02rem/1 var(--f-ui);
+  cursor: pointer;
+}
+.rn-btn:hover { background: rgba(91, 168, 160, 0.22); }
+.rn-btn:focus-visible { outline: 3px solid var(--seaglass); outline-offset: 2px; }
+.rn-k {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(246, 241, 231, 0.72);
+}
+.rn-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 18rem;
+}
+.rn-chev {
+  width: 10px; height: 6px; flex: 0 0 auto;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%235BA8A0' stroke-width='2'/%3E%3C/svg%3E") center / 10px 6px no-repeat;
+}
+.rn-btn[aria-expanded="true"] .rn-chev { transform: rotate(180deg); }
+.rn-menu {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 6px);
+  right: 0;
+  left: auto;
+  width: min(360px, calc(100vw - 28px));
+  max-height: min(70vh, 420px);
+  overflow: auto;
+  padding: 8px;
+  border-radius: 14px;
+  background: var(--d-inst, #fffdf8);
+  color: var(--d-ink, #0B2A3D);
+  border: 1px solid var(--d-edge, rgba(11,42,61,0.14));
+  box-shadow: 0 12px 32px -12px rgba(11, 42, 61, 0.45), 0 1px 0 rgba(255,255,255,0.5) inset;
+}
+.rn-menu[hidden] { display: none; }
+.rn-g {
+  margin: 6px 8px 4px;
+  font: 700 0.68rem/1.2 var(--f-ui);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--d-ink-2, #3E5868);
+}
+.rn-opt {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--d-ink, #0B2A3D);
+}
+.rn-opt:hover, .rn-opt:focus { background: rgba(91, 168, 160, 0.16); outline: none; }
+.rn-opt:focus-visible { outline: 3px solid var(--seaglass); outline-offset: -2px; }
+.rn-opt.is-selected { box-shadow: inset 0 0 0 1.5px var(--seaglass); }
+.rn-opt-name { font-weight: 700; font-size: 1rem; }
+.rn-area { font-size: 0.8rem; color: var(--d-ink-2, #3E5868); }
+.rn-soon {
+  display: inline-block;
+  margin-left: 6px;
+  font: 700 0.62rem/1 var(--f-ui);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--copper-ink, #8E4F2A);
+  vertical-align: 1px;
+}
+/* Freshwater group: muted river greens and earth tones. */
+.rn-fresh {
+  margin-top: 6px;
+  padding: 6px 4px 4px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #F3F1E8, #E8E4D6);
+  border: 1px solid rgba(74, 92, 58, 0.2);
+}
+[data-theme="dark"] .rn-fresh {
+  background: linear-gradient(180deg, #242A20, #1A1E16);
+  border-color: rgba(183, 200, 154, 0.2);
+}
+.rn-fresh .rn-g { color: #4A5C3A; }
+[data-theme="dark"] .rn-fresh .rn-g { color: #B7C89A; }
+.rn-opt.is-soon { cursor: not-allowed; opacity: 0.78; }
+.rn-opt.is-soon:hover, .rn-opt.is-soon:focus { background: transparent; }
+
+@media (max-width: 760px) {
+  .region-nav-wrap { padding-top: 6px; padding-bottom: 4px; min-height: 86px; }
+  .region-nav {
+    flex-direction: column;
+    align-items: stretch;
+    min-height: 74px; /* line + 44px button, reserved */
+    gap: 4px;
+  }
+  .rn-line {
+    font-size: 0.82rem;
+    height: 1.2em;
+    width: 100%;
+  }
+  .rn-btn { width: 100%; justify-content: flex-start; }
+  .rn-name { max-width: none; flex: 1; }
+  .rn-menu { left: 0; right: 0; width: auto; }
+}
+@media (min-width: 761px) and (max-width: 900px) {
+  .rn-line { font-size: 0.88rem; }
+  .rn-name { max-width: 14rem; }
+}

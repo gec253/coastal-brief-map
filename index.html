@@ -54,6 +54,17 @@
       </div>
       <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
     </div>
+    <div class="wrap region-nav-wrap">
+      <div class="region-nav" id="region-nav" data-region-nav>
+        <p class="rn-line" id="rn-line">From the rivers to the sounds to the sea</p>
+        <button type="button" class="rn-btn" id="rn-btn" aria-expanded="false" aria-haspopup="listbox" aria-controls="rn-menu">
+          <span class="rn-k">Region</span>
+          <span class="rn-name" id="rn-name">Morehead City · Beaufort</span>
+          <span class="rn-chev" aria-hidden="true"></span>
+        </button>
+        <div class="rn-menu" id="rn-menu" role="listbox" tabindex="-1" hidden aria-labelledby="rn-line"></div>
+      </div>
+    </div>
     <div class="wrap">
       <div class="meta-row">
         <span class="badge" id="freshness-badge">Loading readings…</span>
@@ -232,6 +243,7 @@
   </div>
 
   <!-- Leaflet JS/CSS are injected by app.js only after the map section enters view. -->
+  <script src="region-nav.js" defer></script>
   <script src="dashboard.js" defer></script>
   <script src="app.js" defer></script>
   <script src="coast-strip.js" defer></script>
