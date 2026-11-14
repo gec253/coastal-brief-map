@@ -25,6 +25,7 @@ Cover the whole North Carolina coast, from Corolla to Sunset Beach and out to of
 Public: Falls Lake, Jordan Lake, Neuse River. Next steps continue alongside the coastal work.
 
 ## Design
+Next phase after the identity work: redesign the 1200x630 Open Graph share image (masthead, navy, ivory, brass). Ed approves it before the public image is replaced.
 Full visual identity project: a traditional newspaper-inspired masthead, premium typography, a scrolling header, authentic NC character, and refined instruments.
 
 ## Live now (Nov 13, 2026)
