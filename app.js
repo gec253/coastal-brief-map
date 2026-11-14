@@ -7,6 +7,18 @@
   function sstWhen(iso) { try { return sstDateFmt.format(new Date(iso)) + " ET"; } catch (e) { return iso; } }
   const CENTER = [34.7, -76.7];
   const ZOOM = 8;
+  // Region views: use map.zoom on first load and when the region changes,
+  // not on a same-region refresh or a zoom the user set by hand. Narrow
+  // viewports (width <= 700, same breakpoint as the old default) use
+  // configured zoom minus 1. regions.json has no bounds to fit.
+  function regionMapZoom(region, width) {
+    const z = region && region.map && typeof region.map.zoom === "number" ? region.map.zoom : ZOOM;
+    const w = width == null ? window.innerWidth : width;
+    return w <= 700 ? Math.max(1, z - 1) : z;
+  }
+  function regionMapCenter(region) {
+    return (region && region.map && region.map.center) || CENTER;
+  }
   const WASH_OPACITY = { light: { wind: 0.72, waves: 0.85, sst: 0.85 }, chart: { wind: 0.55, waves: 0.58, sst: 0.6 }, fullscreen: { wind: 0.72, waves: 0.85, sst: 0.95 } };
 
   const $ = (id) => document.getElementById(id);
@@ -364,9 +376,10 @@
     $("map-placeholder").textContent = "Loading map…";
     $("map-status").textContent = "Loading the map…";
 
-    const startZoom = window.innerWidth <= 700 ? 7 : ZOOM;
+    const region = lastConditions && lastConditions.region;
+    const startZoom = regionMapZoom(region);
     map = L.map("map", {
-      center: CENTER,
+      center: regionMapCenter(region),
       zoom: startZoom,
       zoomControl: true,
       attributionControl: true,
@@ -551,6 +564,17 @@
   // the actual station behind a reading, so the map shows where data comes from.
   let regionLayer = null;
   let lastConditions = null;
+  // dashboard.js runs first (defer order) and may have already dispatched
+  // cb:conditions before this file registered its listener. Seed from the
+  // same boot payload so initMap still gets the requested region's view.
+  (function seedBootConditions() {
+    const el = document.getElementById("cb-boot-conditions");
+    if (!el || !el.textContent) return;
+    try {
+      const d = JSON.parse(el.textContent);
+      if (d && d.ok && d.region) lastConditions = d;
+    } catch (e) {}
+  })();
   function drawRegionStations(d, pan) {
     if (!map || !regionLayer || !window.L || !d) return;
     regionLayer.clearLayers();
@@ -577,13 +601,16 @@
       );
     });
     if (pan && d.region && d.region.map && d.region.map.center) {
-      map.setView(d.region.map.center, map.getZoom(), { animate: !prefersReducedMotion() });
+      map.setView(d.region.map.center, regionMapZoom(d.region), { animate: !prefersReducedMotion() });
     }
   }
   document.addEventListener("cb:conditions", function (e) {
     const prevId = lastConditions && lastConditions.region && lastConditions.region.id;
+    const nextId = e.detail && e.detail.region && e.detail.region.id;
     lastConditions = e.detail;
-    const changed = prevId && prevId !== (e.detail.region && e.detail.region.id);
+    // First load (prevId empty) and later region switches both apply the
+    // region's center and zoom. Same-region updates leave the view alone.
+    const changed = !!nextId && prevId !== nextId;
     drawRegionStations(e.detail, !!changed);
   });
 
