@@ -85,8 +85,14 @@ def flag_on() -> bool:
 
 
 def enabled_regions(include_fresh: bool | None = None) -> list[str]:
+    """Regions that get a Morning Brief (build, wake, validation, archive, /brief).
+
+    A saltwater region needs to be public (enabled, not draft) AND carry "brief": true in
+    data/regions.json. Today that is only Crystal Coast and Hatteras, the two regions Ed
+    authorized for automatic publication. Making a region public on the map does not give
+    it a brief; adding one needs Ed's OK and the workflow's REGIONS list updated too."""
     cfg = conditions.load_regions()
-    out = [r["id"] for r in cfg.get("regions") or [] if conditions._servable(r)]
+    out = [r["id"] for r in cfg.get("regions") or [] if conditions._servable(r) and r.get("brief") is True]
     try:  # freshwater regions only when their own flag is on (or for a preview browser)
         import freshwater
         if freshwater.flag_on() if include_fresh is None else include_fresh:

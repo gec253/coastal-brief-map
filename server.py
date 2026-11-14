@@ -1532,7 +1532,7 @@ def sitemap_body() -> bytes:
 
 # ---------------------------------------------------------------- private preview access
 # /preview?key=<PREVIEW_KEY> sets an HttpOnly cookie that unlocks the flagged previews (/lab/wind,
-# /lab/tiles, /preview/masthead, and the not-yet-public saltwater dashboards) in that browser only. The key lives only in
+# /lab/tiles, /preview/masthead, and any not-yet-public saltwater dashboard) in that browser only. The key lives only in
 # the PREVIEW_KEY env var on Render; the cookie holds an HMAC of it, so rotating the key locks every
 # browser out. Without the key set, /preview is 404. Public freshwater and Morning Brief pages do not
 # need the cookie.
@@ -1561,11 +1561,7 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 .pv a.card b{display:block;font-size:1.05rem}.pv a.card span{font-size:.86rem;color:var(--d-ink-2)}
 .pv .badge{display:inline-block;font:700 .7rem/1.6 var(--f-ui);letter-spacing:.1em;text-transform:uppercase;color:#fff;background:#8c2f23;padding:2px 8px;border-radius:3px}</style></head>
 <body><main class="pv"><span class="badge">Private preview · this browser only</span><h1>Previews</h1>
-<p>These pages are unlocked for this browser for %d days. The wind and tile labs, and the Wilmington, Nags Head, Emerald Isle and Topsail dashboards, still return “not found” to the public. The Morning Brief and freshwater pages are public.</p>
-<a class="card" href="/?region=wilmington"><b>Wrightsville Beach</b><span>Private preview: wind, seas, water temperature and tides at Wrightsville Beach</span></a>
-<a class="card" href="/?region=nags-head"><b>Nags Head</b><span>Private preview: Nags Head / northern Outer Banks. Distant stations are labeled with where they actually are.</span></a>
-<a class="card" href="/?region=emerald-isle"><b>Emerald Isle</b><span>Private preview: Emerald Isle from Bogue Inlet to the east town line. Distant stations are labeled with where they actually are.</span></a>
-<a class="card" href="/?region=topsail"><b>Topsail</b><span>Private preview: Topsail Island from New River Inlet to New Topsail Inlet. Distant stations are labeled with where they actually are.</span></a>
+<p>These pages are unlocked for this browser for %d days. The wind and tile labs still return “not found” to the public. The Morning Brief, the freshwater pages and every saltwater dashboard (including Wilmington, Nags Head, Emerald Isle and Topsail) are public.</p>
 <a class="card" href="/lake"><b>Falls Lake</b><span>Freshwater dashboard: lake level vs guide curve, dam release, inflows, rain, river gauges</span></a>
 <a class="card" href="/lake?region=jordan-lake"><b>Jordan Lake</b><span>Pool vs 216.0 ft guide curve, release plus local runoff, Haw inflow</span></a>
 <a class="card" href="/lake?region=neuse-river"><b>Neuse River</b><span>Falls Dam to Goldsboro: stage, flow and NWS flood stages (Smithfield is stage only)</span></a>

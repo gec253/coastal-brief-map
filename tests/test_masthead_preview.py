@@ -92,10 +92,11 @@ class MastheadPreview(unittest.TestCase):
     def _cookie(self):
         return "%s=%s" % (self.server.PREVIEW_COOKIE, self.server._preview_cookie_value(self.KEY))
 
-    # Homepage speed-trim files, and the Catch Wall form, may differ from origin/main.
+    # Homepage speed-trim files, the Catch Wall form, and the header picker's default region list
+    # (region-nav.js, which gains each region when it goes public) may differ from origin/main.
     PUBLIC_FILES_LOCKED = tuple(
         rel for rel in PUBLIC_FILES
-        if rel not in ("index.html", "dashboard.js", "app.js", "styles.css", "catch-wall.html")
+        if rel not in ("index.html", "dashboard.js", "app.js", "styles.css", "catch-wall.html", "region-nav.js")
     )
 
     def test_public_files_match_origin_main(self):

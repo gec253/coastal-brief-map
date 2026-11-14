@@ -1,7 +1,7 @@
 {
   "version": 1,
   "default": "crystal-coast",
-  "notes": "Region config for the Conditions at a Glance dashboard. Only regions with enabled=true appear in the selector. Each reading lists sources in order of preference; the server uses the first one with a fresh report and says which one it used. Station choices were checked against live NDBC, CO-OPS, and NWS data on 12 Nov 2026. Wilmington and Nags Head private-preview sources were checked against live NDBC, CO-OPS, and NWS data on 13 Nov 2026.",
+  "notes": "Region config for the Conditions at a Glance dashboard. Only regions with enabled=true appear in the selector. Each reading lists sources in order of preference; the server uses the first one with a fresh report and says which one it used. Station choices were checked against live NDBC, CO-OPS, and NWS data on 12 Nov 2026. Wilmington and Nags Head private-preview sources were checked against live NDBC, CO-OPS, and NWS data on 13 Nov 2026. Only regions with brief=true get a Morning Brief (Crystal Coast and Hatteras; Falls Lake is added by brief.py when freshwater is on). Enabling a region does not give it a brief.",
   "waterTypes": {
     "saltwater": {
       "label": "Saltwater",
@@ -277,6 +277,7 @@
     {
       "id": "crystal-coast",
       "enabled": true,
+      "brief": true,
       "name": "Morehead City \u00b7 Beaufort",
       "area": "Crystal Coast, North Carolina",
       "anchor": {
@@ -383,6 +384,7 @@
     {
       "id": "hatteras",
       "enabled": true,
+      "brief": true,
       "name": "Hatteras Island",
       "area": "Cape Hatteras, Outer Banks",
       "anchor": {
@@ -519,7 +521,7 @@
     },
     {
       "id": "wilmington",
-      "enabled": false,
+      "enabled": true,
       "draft": false,
       "previewReady": true,
       "name": "Wilmington \u00b7 Wrightsville Beach",
@@ -622,11 +624,11 @@
         "NCZ108"
       ],
       "waterType": "saltwater",
-      "notes": "Private preview. Covers Wrightsville Beach from Masonboro Inlet to Mason Inlet. Not downtown Wilmington. 41038 is not used as a wind backup."
+      "notes": "Public since 14 Nov 2026. Covers Wrightsville Beach from Masonboro Inlet to Mason Inlet. Not downtown Wilmington. 41038 is not used as a wind backup."
     },
     {
       "id": "nags-head",
-      "enabled": false,
+      "enabled": true,
       "draft": false,
       "previewReady": true,
       "name": "Nags Head \u00b7 Outer Banks",
@@ -735,11 +737,11 @@
         "AMZ231"
       ],
       "waterType": "saltwater",
-      "notes": "Private preview. Kitty Hawk, Kill Devil Hills and Nags Head, south to Oregon Inlet. Wind, observed tide and some air readings come from Duck Pier or Oregon Inlet and are labeled as such. Inshore ocean water temperature is unavailable."
+      "notes": "Public since 14 Nov 2026. Kitty Hawk, Kill Devil Hills and Nags Head, south to Oregon Inlet. Wind, observed tide and some air readings come from Duck Pier or Oregon Inlet and are labeled as such. Inshore ocean water temperature is unavailable."
     },
     {
       "id": "emerald-isle",
-      "enabled": false,
+      "enabled": true,
       "draft": false,
       "previewReady": true,
       "name": "Emerald Isle",
@@ -840,11 +842,11 @@
         "NCZ195"
       ],
       "waterType": "saltwater",
-      "notes": "Private preview. Town of Emerald Isle only, from Bogue Inlet to the east town line. Not Swansboro, Cedar Point or Cape Carteret; alerts are AMZ158 and NCZ195 only (NCZ199 comes in when Swansboro is added). Wind, seas and offshore temperature come from the Onslow Bay Outer buoys, about 32 miles offshore, and are labeled as such. Air temperature is the Bogue Field ASOS, about 5 miles northeast; the offshore buoy is not used for air. Inshore water temperature is unavailable. Tide predictions are official highs and lows at Bogue Inlet, a subordinate station whose reference has no live water-level gauge; there is no 6-minute curve and no local observed water level."
+      "notes": "Public since 14 Nov 2026. Town of Emerald Isle only, from Bogue Inlet to the east town line. Not Swansboro, Cedar Point or Cape Carteret; alerts are AMZ158 and NCZ195 only (NCZ199 comes in when Swansboro is added). Wind, seas and offshore temperature come from the Onslow Bay Outer buoys, about 32 miles offshore, and are labeled as such. Air temperature is the Bogue Field ASOS, about 5 miles northeast; the offshore buoy is not used for air. Inshore water temperature is unavailable. Tide predictions are official highs and lows at Bogue Inlet, a subordinate station whose reference has no live water-level gauge; there is no 6-minute curve and no local observed water level."
     },
     {
       "id": "topsail",
-      "enabled": false,
+      "enabled": true,
       "draft": false,
       "previewReady": true,
       "name": "Topsail",
@@ -957,7 +959,7 @@
         "AMZ250"
       ],
       "waterType": "saltwater",
-      "notes": "Private preview. Topsail Island only, from New River Inlet to New Topsail Inlet. Land forecast is MHX 32, 43 at a point 0.4 mi west of the pier (the pier itself is in AMZ158). Marine tile shows AMZ158 and AMZ250 via marine.also, labeled by area. Alerts are NCZ199, NCZ106, AMZ158 and AMZ250. Wind and pressure come from 41064, about 35 miles offshore; seas, swell and offshore temperature from 41159, about 36 miles offshore; both labeled. Air and inshore water temperature are unavailable. Tide predictions are official highs and lows at 8657419; there is no 6-minute curve and no local observed water level."
+      "notes": "Public since 14 Nov 2026. Topsail Island only, from New River Inlet to New Topsail Inlet. Land forecast is MHX 32, 43 at a point 0.4 mi west of the pier (the pier itself is in AMZ158). Marine tile shows AMZ158 and AMZ250 via marine.also, labeled by area. Alerts are NCZ199, NCZ106, AMZ158 and AMZ250. Wind and pressure come from 41064, about 35 miles offshore; seas, swell and offshore temperature from 41159, about 36 miles offshore; both labeled. Air and inshore water temperature are unavailable. Tide predictions are official highs and lows at 8657419; there is no 6-minute curve and no local observed water level."
     },
     {
       "id": "falls-lake",

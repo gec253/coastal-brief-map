@@ -294,27 +294,32 @@ class WilmingtonNagsConfig(unittest.TestCase):
         self.regions = {r["id"]: r for r in self.cfg.get("regions") or []}
         self.stations = self.cfg["stations"]
 
-    def test_preview_regions_are_not_public(self):
+    def test_new_saltwater_regions_are_public(self):
+        # Made public by Ed on 14 Nov 2026. previewReady stays; they are no longer preview-only.
         for rid in ("wilmington", "nags-head", "emerald-isle", "topsail"):
             r = self.regions[rid]
-            self.assertFalse(r.get("enabled"), rid)
+            self.assertTrue(r.get("enabled"), rid)
             self.assertFalse(r.get("draft"), rid)
             self.assertTrue(r.get("previewReady"), rid)
             self.assertEqual(r.get("waterType"), "saltwater")
-            self.assertFalse(conditions._servable(r))
+            self.assertTrue(conditions._servable(r))
             self.assertTrue(conditions._servable(r, preview=True))
-            self.assertTrue(conditions.is_preview_salt_region(rid))
+            self.assertFalse(conditions.is_preview_salt_region(rid))
+            self.assertNotIn("brief", r, rid)  # no Morning Brief for these regions
         public_ids = [x["id"] for x in conditions.public_regions()["regions"]]
-        self.assertEqual(public_ids, ["crystal-coast", "hatteras"])
+        self.assertEqual(public_ids, ["crystal-coast", "hatteras", "wilmington", "nags-head", "emerald-isle", "topsail"])
         listed = conditions.listed_regions(preview=True)
         ids = [x["id"] for x in listed["regions"]]
-        self.assertEqual(ids, ["crystal-coast", "hatteras", "wilmington", "nags-head", "emerald-isle", "topsail"])
-        preview_flags = {x["id"]: x.get("preview") for x in listed["regions"]}
-        self.assertIsNone(preview_flags["crystal-coast"])
-        self.assertTrue(preview_flags["wilmington"])
-        self.assertTrue(preview_flags["nags-head"])
-        self.assertTrue(preview_flags["emerald-isle"])
-        self.assertTrue(preview_flags["topsail"])
+        self.assertEqual(ids, public_ids)
+        # Nothing is flagged as a preview any more, with or without the cookie.
+        self.assertFalse(any(x.get("preview") for x in listed["regions"]))
+
+    def test_planned_regions_stay_disabled(self):
+        for rid in ("atlantic-beach", "cape-lookout", "new-bern"):
+            r = self.regions[rid]
+            self.assertFalse(r.get("enabled"), rid)
+            self.assertFalse(conditions._servable(r), rid)
+            self.assertFalse(conditions._servable(r, preview=True), rid)
 
     def test_existing_public_regions_unchanged(self):
         cc = self.regions["crystal-coast"]
@@ -533,11 +538,16 @@ class SplitTideStations(unittest.TestCase):
 
 class AssemblePreviewGate(unittest.TestCase):
     def test_public_assemble_404s_preview_regions_without_fallback(self):
-        for rid in ("wilmington", "nags-head", "emerald-isle", "topsail"):
-            status, payload = conditions.assemble(rid)
-            self.assertEqual(status, 404, rid)
-            self.assertFalse(payload.get("ok"))
-            self.assertNotIn("readings", payload)
+        # No real region is preview-only today, so use a fake previewReady region.
+        cfg = conditions.load_regions()
+        fake = dict(next(r for r in cfg["regions"] if r["id"] == "wilmington"), id="fixture-preview", enabled=False)
+        cfg["regions"].append(fake)
+        with patch.object(conditions, "load_regions", return_value=cfg):
+            self.assertTrue(conditions.is_preview_salt_region("fixture-preview"))
+            status, payload = conditions.assemble("fixture-preview")
+        self.assertEqual(status, 404)
+        self.assertFalse(payload.get("ok"))
+        self.assertNotIn("readings", payload)
 
     def test_unknown_region_still_falls_back_to_default(self):
         # Existing public behavior: a typo does not 404, it uses the default region.
@@ -840,7 +850,7 @@ class TopsailConfig(unittest.TestCase):
         self.r = self.regions["topsail"]
 
     def test_coverage_zones_and_grid(self):
-        self.assertFalse(self.r.get("enabled"))
+        self.assertTrue(self.r.get("enabled"))
         self.assertFalse(self.r.get("draft"))
         self.assertTrue(self.r.get("previewReady"))
         self.assertEqual(self.r["anchor"]["label"], "Ocean City Fishing Pier")

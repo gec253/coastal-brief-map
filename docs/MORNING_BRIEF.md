@@ -28,10 +28,13 @@ or header yet (link placement is still open).
 Target 120–200 words. Today's samples: Crystal Coast 185, Hatteras 177, Falls Lake 131.
 
 ## Scheduling (as built, no new services)
-- When the brief is on (the default), `server.py` starts one daemon thread. It sleeps until **5:15 AM ET**, builds every enabled
+- When the brief is on (the default), `server.py` starts one daemon thread. It sleeps until **5:15 AM ET**, builds every brief
   region (Crystal Coast, Hatteras, and Falls Lake when freshwater is on), and retries any
   region with missing sections every 3 minutes until **5:30 AM ET**. Building reuses the same cached fetchers as
   the live dashboard, so it does not slow or replace the live instruments, which keep refreshing all day.
+- A saltwater region gets a brief only when it is public and has `"brief": true` in `data/regions.json`
+  (`brief.enabled_regions`). Wilmington, Nags Head, Emerald Isle and Topsail are public on the map but have no
+  brief: `/brief` and `/api/brief` return 404 for them and the wake, validation and archive never see them.
 - A brief "day" runs from 5:15 AM ET to 5:14 AM the next day.
 - **On-request fallback**: if no brief exists for the current day when someone asks (the server was asleep at
   5:15 or restarted), it is built on the spot and labeled "Built on request because the 5:15 AM scheduled build

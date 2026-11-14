@@ -10,7 +10,11 @@
 
   var SALT_DEFAULT = [
     { id: "crystal-coast", name: "Morehead City · Beaufort", area: "Crystal Coast, North Carolina", waterType: "saltwater" },
-    { id: "hatteras", name: "Hatteras Island", area: "Cape Hatteras, Outer Banks", waterType: "saltwater" }
+    { id: "hatteras", name: "Hatteras Island", area: "Cape Hatteras, Outer Banks", waterType: "saltwater" },
+    { id: "wilmington", name: "Wilmington · Wrightsville Beach", area: "Wrightsville Beach, North Carolina", waterType: "saltwater" },
+    { id: "nags-head", name: "Nags Head · Outer Banks", area: "Kitty Hawk to Oregon Inlet, Outer Banks", waterType: "saltwater" },
+    { id: "emerald-isle", name: "Emerald Isle", area: "Bogue Inlet to the east town line, Emerald Isle", waterType: "saltwater" },
+    { id: "topsail", name: "Topsail", area: "New River Inlet to New Topsail Inlet, Topsail Island", waterType: "saltwater" }
   ];
   var FRESH_DEFAULT = [
     { id: "falls-lake", name: "Falls Lake", waterType: "freshwater", href: "/lake?region=falls-lake" },

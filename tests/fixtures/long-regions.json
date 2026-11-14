@@ -1,19 +1,12 @@
 {
-  "comment": "Temporary fake entries for compact-folio short-name tests only. Do not add these to the live catalog.",
+  "comment": "Short-name fixtures. 'regions' are fake entries that must not be in the live catalog; 'existing' are live regions. Wilmington and Nags Head moved to 'existing' when they went public (14 Nov 2026).",
   "regions": [
     {
-      "id": "wilmington",
-      "name": "Wilmington · Wrightsville Beach",
-      "area": "Cape Fear, North Carolina",
+      "id": "fixture-long-harbor",
+      "name": "Example Harbor · Long Fixture Name",
+      "area": "Test area",
       "waterType": "saltwater",
-      "expectShort": "Wilmington"
-    },
-    {
-      "id": "nags-head",
-      "name": "Nags Head · Outer Banks",
-      "area": "Northern Outer Banks, North Carolina",
-      "waterType": "saltwater",
-      "expectShort": "Nags Head"
+      "expectShort": "Example Harbor"
     },
     {
       "id": "with-short-field",
@@ -39,6 +32,16 @@
       "id": "falls-lake",
       "name": "Falls Lake",
       "expectShort": "Falls Lake"
+    },
+    {
+      "id": "wilmington",
+      "name": "Wilmington · Wrightsville Beach",
+      "expectShort": "Wilmington"
+    },
+    {
+      "id": "nags-head",
+      "name": "Nags Head · Outer Banks",
+      "expectShort": "Nags Head"
     }
   ]
 }

@@ -385,6 +385,9 @@ class PublicConfigRegions(unittest.TestCase):
         pub = {r["id"] for r in photos.public_config(False)["regions"]}
         pv = {r["id"] for r in photos.public_config(True)["regions"]}
         self.assertIn("crystal-coast", pub)
-        self.assertNotIn("topsail", pub)
-        self.assertNotIn("wilmington", pub)
-        self.assertIn("topsail", pv)
+        # Public since 14 Nov 2026.
+        for rid in ("wilmington", "nags-head", "emerald-isle", "topsail"):
+            self.assertIn(rid, pub)
+            self.assertIn(rid, pv)
+        for rid in ("atlantic-beach", "cape-lookout", "new-bern"):
+            self.assertNotIn(rid, pub)
