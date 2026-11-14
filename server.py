@@ -1568,6 +1568,10 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 <a class="card" href="/brief?region=crystal-coast"><b>Morning Brief · Crystal Coast</b><span>Today's brief, built from live readings</span></a>
 <a class="card" href="/brief?region=hatteras"><b>Morning Brief · Hatteras</b><span>Today's brief, built from live readings</span></a>
 <a class="card" href="/brief?region=falls-lake"><b>Morning Brief · Falls Lake</b><span>Freshwater version</span></a>
+<a class="card" href="/preview/brief/wilmington"><b>Preview brief · Wilmington</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
+<a class="card" href="/preview/brief/nags-head"><b>Preview brief · Nags Head</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
+<a class="card" href="/preview/brief/emerald-isle"><b>Preview brief · Emerald Isle</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
+<a class="card" href="/preview/brief/topsail"><b>Preview brief · Topsail</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
 <a class="card" href="/lab/wind"><b>Wind flow</b><span>Animated model wind (NOAA GFS forecast)</span></a>
 <a class="card" href="/lab/tiles"><b>Tile designs</b><span>The instrument tile prototype</span></a>
 <a class="card" href="/preview/masthead?c=c"><b>Masthead concepts</b><span>Three directions for a cinematic gold wave-to-masthead reveal (A editorial, B nautical, C hybrid). Replay from the bar at the bottom.</span></a>
@@ -1666,6 +1670,16 @@ class Handler(SimpleHTTPRequestHandler):
             if not self._preview_ok():
                 return self.send_error(404, "not found")
             return self._json_private(photos.diagnostics())
+        if parsed.path.startswith("/preview/brief/"):
+            # Private preview Morning Briefs (Wilmington, Nags Head, Emerald Isle, Topsail). Same cookie as
+            # /preview; 404 without it. Built in memory, never stored or archived, never on /brief.
+            if not self._preview_ok():
+                return self.send_error(404, "not found")
+            import brief_preview
+            status, b = brief_preview.get(parsed.path[len("/preview/brief/"):].strip("/"))
+            if status != 200:
+                return self._send_private(None, "text/html; charset=utf-8", ("<p>%s</p>" % html.escape(b.get("error", ""))).encode(), status)
+            return self._send_private(None, "text/html; charset=utf-8", brief_preview.page(b).encode())
         if parsed.path == "/preview/masthead" or parsed.path == "/preview/masthead.css":
             return self._masthead_preview_route(parsed)
         if parsed.path == "/preview/home" or parsed.path == "/preview/home.css" or parsed.path.startswith("/preview/home/photos/"):
