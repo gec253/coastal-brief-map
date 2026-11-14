@@ -577,7 +577,8 @@
       "marine": {
         "zone": "AMZ250",
         "zoneName": "Coastal waters from Surf City to Cape Fear NC out 20 nm",
-        "office": "NWS Wilmington (ILM)"
+        "office": "NWS Wilmington (ILM)",
+        "zoneNote": "AMZ250 runs from Surf City to Cape Fear, a larger area than Wrightsville Beach."
       },
       "alertZones": [
         "AMZ250",
@@ -688,7 +689,8 @@
       "marine": {
         "zone": "AMZ150",
         "zoneName": "S of Currituck Beach Light NC to Oregon Inlet NC out to 20 NM",
-        "office": "NWS Newport/Morehead City (MHX)"
+        "office": "NWS Newport/Morehead City (MHX)",
+        "zoneNote": "AMZ150 runs from Currituck Beach Light to Oregon Inlet, a larger area than Kitty Hawk to Oregon Inlet."
       },
       "alertZones": [
         "AMZ150",

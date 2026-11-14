@@ -468,7 +468,7 @@
       '<div class="src-body"><p>Measured water level at ' + esc(st.name || "the tide station") + " (" + esc(st.id || "") + "), NOAA CO-OPS, every 6 minutes, in feet above MLLW, the same datum as the predictions. " +
       "These are preliminary readings that NOAA has not yet verified. The difference is observed minus predicted at the same minute; wind, pressure, and river flow cause it.</p>" +
       (o.note ? "<p>" + esc(o.note) + "</p>" : "") +
-      (isNum(st.distanceMi) ? "<p>" + esc(st.distanceMi + " mi " + (st.bearingFromAnchor || "") + " of " + (st.anchor || "the region") + ". " + (st.setting || "")) + ".</p>" : "") +
+      (o.station && isNum(st.distanceMi) ? "<p>" + esc(st.distanceMi + " mi " + (st.bearingFromAnchor || "") + " of " + (st.anchor || "the region") + ". " + (st.setting || "")) + ".</p>" : "") +
       "<p>Marked stale after " + esc(o.staleAfterMin || 30) + " minutes without a new reading; hidden after 6 hours.</p>" +
       '<p class="src-links">' + (o.sourceUrl ? '<a href="' + esc(o.sourceUrl) + '" target="_blank" rel="noopener">NOAA water levels page</a>' : "") +
       (o.dataUrl ? ' · <a href="' + esc(o.dataUrl) + '" target="_blank" rel="noopener">Raw data</a>' : "") + "</p></div></details>";
@@ -649,6 +649,7 @@
     }
     el.innerHTML = head("Marine forecast", null, "forecast") +
       '<p class="mf-zone"><b>' + esc(m.zone) + "</b> · " + esc(m.zoneName) + "</p>" +
+      (m.zoneNote ? '<p class="mf-note">' + esc(m.zoneNote) + "</p>" : "") +
       '<div class="mf-periods">' + (m.periods || []).slice(0, 2).map(function (p) {
         return '<div class="mf-p"><div class="mf-name">' + esc(p.name) + '</div><p class="mf-text">' + esc(p.text) + "</p></div>";
       }).join("") + "</div>" +

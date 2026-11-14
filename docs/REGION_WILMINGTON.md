@@ -184,3 +184,18 @@ Surf City) is Crystal Coast.
    are the ocean pier and the island, or should one wind tile suffice?
 5. Accept AMZ250 as the marine tile with a short caption that the official
    zone also covers the beaches toward Cape Fear and Surf City?
+
+## Ed's decisions (14 Nov 2026)
+
+Answered by Ed on 14 Nov 2026. The private preview follows these:
+
+- **Coverage:** Wrightsville Beach only, from Masonboro Inlet to Mason Inlet.
+  Figure Eight Island, downtown Wilmington and the Cape Fear River are out.
+  No river instruments are wired.
+- **Marine zone:** the official zone, AMZ250, stays. The marine tile carries a
+  short caption (`marine.zoneNote` in `data/regions.json`) saying the zone
+  runs from Surf City to Cape Fear, a larger area than Wrightsville Beach.
+- The region stays a private preview (`enabled: false`, `previewReady: true`).
+  Without the `cb_preview` cookie, `/?region=wilmington` and
+  `/api/conditions?region=wilmington` return 404 and `/api/regions` does not
+  list it. Going public needs Ed's separate approval.

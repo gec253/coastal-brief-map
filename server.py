@@ -1242,7 +1242,8 @@ class Handler(SimpleHTTPRequestHandler):
             except Exception as e:  # keep the page up if one feed misbehaves
                 sys.stderr.write("conditions failed: %s\n" % e)
                 status, payload = 502, {"ok": False, "error": "Conditions are unavailable right now."}
-            if status != 200 and self._preview_ok():
+            if self._preview_ok() and (status != 200 or conditions.is_preview_salt_region(rid)):
+                # Preview-only data is never marked publicly cacheable.
                 return self._json_private(payload, status)
             return self._send_json(payload, cache_s=60, status=status)
         if parsed.path in ("/coastal-life", "/coastal-life/", "/photos", "/photos/"):

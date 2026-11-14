@@ -611,7 +611,7 @@ def tides_block(tcfg, stations, anchor, now):
         curve_sid = obs_sid
     meta = stations.get(sid) or {}
     info = station_info(sid, meta, anchor)
-    if not hilo:
+    if not hilo or not curve:
         return {"status": "unavailable", "kind": "predicted", "station": info}
     try:
         events = [{"t": local_epoch_ms(p["t"]), "v": round(float(p["v"]), 2), "type": p.get("type")} for p in hilo]
@@ -696,6 +696,8 @@ def marine_block(mcfg):
     periods = props.get("periods") or []
     base = {"kind": "forecast", "zone": zone, "zoneName": mcfg.get("zoneName"), "office": mcfg.get("office"),
             "sourceUrl": "https://forecast.weather.gov/shmrn.php?mz=%s" % zone.lower()}
+    if mcfg.get("zoneNote"):
+        base["zoneNote"] = mcfg["zoneNote"]
     if not periods:
         base["status"] = "unavailable"
         return base

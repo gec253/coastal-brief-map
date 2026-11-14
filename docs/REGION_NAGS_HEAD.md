@@ -178,3 +178,29 @@ point that returns **NCZ203**, not a pier or sound point.
    labeled 44095 seas-only backup?
 7. Accept AMZ150 as the marine tile, with a caption that the official zone
    also covers Duck and north to Currituck Beach Light?
+
+## Ed's decisions (14 Nov 2026)
+
+Answered by Ed on 14 Nov 2026. The private preview follows these:
+
+- **Coverage:** Kitty Hawk and Kill Devil Hills, south through Nags Head to
+  Oregon Inlet. Duck/Corolla is a later region.
+- **Wind:** Duck Pier (8651370) wind is shown and labeled as Duck. There is no
+  wind sensor at Nags Head. If Duck has no usable report, the wind tile can
+  fall back to Oregon Inlet Marina (8652587), and the tile then names that
+  station and its sound-side setting; it is never shown as Nags Head. Oregon
+  Inlet Marina also stays on the separate, sound-side-labeled harbor wind tile.
+- **Tides:** high and low predictions are Jennette's Pier (8652226). The
+  observed water level is Duck Pier (8651370), the NOAA reference station for
+  those predictions, and the tile says so (`tide.observedNote`). Because
+  8652226 is a subordinate station with no 6-minute curve, the graph uses
+  Duck's 6-minute predictions and the tile's source note says that too.
+- **Inshore water temperature:** stays unavailable. No ocean-pier sensor
+  exists nearby; Oregon Inlet Marina is sound-side water and is not used.
+- **Marine zone:** the official zone, AMZ150, stays. The marine tile carries a
+  short caption (`marine.zoneNote`) saying the zone runs from Currituck Beach
+  Light to Oregon Inlet, a larger area than Kitty Hawk to Oregon Inlet.
+- The region stays a private preview (`enabled: false`, `previewReady: true`).
+  Without the `cb_preview` cookie, `/?region=nags-head` and
+  `/api/conditions?region=nags-head` return 404 and `/api/regions` does not
+  list it. Going public needs Ed's separate approval.
