@@ -120,20 +120,52 @@ def load_regions() -> dict:
         return {"regions": [], "stations": {}}
 
 
-def _servable(r: dict) -> bool:
-    """Enabled saltwater regions only, for the coastal dashboard and /api/conditions.
-    Freshwater regions are served on /lake and /api/freshwater, not here."""
-    return bool(r.get("enabled")) and not r.get("draft") and (r.get("waterType") or "saltwater") == "saltwater"
+def _is_salt(r: dict) -> bool:
+    return (r.get("waterType") or "saltwater") == "saltwater"
+
+
+def _servable(r: dict, preview: bool = False) -> bool:
+    """Saltwater regions for the coastal dashboard and /api/conditions.
+
+    Public regions are enabled and not draft. A region that is not yet public
+    can be served to a preview-cookie browser when previewReady is true.
+    Freshwater regions are served on /lake and /api/freshwater, not here.
+    The default (preview=False) is unchanged, so the Morning Brief keeps
+    iterating only the public saltwater regions.
+    """
+    if not _is_salt(r) or r.get("draft"):
+        return False
+    if r.get("enabled"):
+        return True
+    return bool(preview) and bool(r.get("previewReady"))
+
+
+def is_preview_salt_region(region_id: str | None) -> bool:
+    """True if this id is a built, not-yet-public saltwater region."""
+    if not region_id:
+        return False
+    for r in (load_regions().get("regions") or []):
+        if r.get("id") == region_id:
+            return _servable(r, preview=True) and not r.get("enabled")
+    return False
 
 
 def public_regions() -> dict:
+    """Regions the public homepage and /api/regions may list."""
+    return listed_regions(preview=False)
+
+
+def listed_regions(preview: bool = False) -> dict:
     cfg = load_regions()
     out = []
     for r in cfg.get("regions") or []:
-        if not _servable(r):
+        if not _servable(r, preview=preview):
             continue
-        out.append({"id": r["id"], "name": r["name"], "area": r.get("area"), "map": r.get("map"),
-                    "waterType": r.get("waterType") or "saltwater"})
+        item = {"id": r["id"], "name": r["name"], "area": r.get("area"), "map": r.get("map"),
+                "waterType": r.get("waterType") or "saltwater"}
+        if preview and not r.get("enabled"):
+            item["preview"] = True
+        out.append(item)
     return {"ok": True, "default": cfg.get("default"), "regions": out}
 
 
@@ -562,31 +594,53 @@ def observed_water_level(sid, curve_pts, now):
 
 def tides_block(tcfg, stations, anchor, now):
     sid = tcfg["station"]
+    obs_sid = tcfg.get("observedStation") or sid
     today = now.astimezone(ET).date()
     b = et_ymd(today - timedelta(days=1))
     e = et_ymd(today + timedelta(days=2))
     hilo = tide_preds(sid, b, e, "hilo")
     # Yesterday through tomorrow so the graph window (about 9 h back to 21 h ahead) is always covered.
-    curve = tide_preds(sid, b, et_ymd(today + timedelta(days=1)), "6")
+    curve_end = et_ymd(today + timedelta(days=1))
+    curve = tide_preds(sid, b, curve_end, "6")
+    curve_sid = sid
+    # Subordinate stations (e.g. Jennette's Pier 8652226) publish official
+    # high/low predictions only, not a 6-minute curve. Use the observed
+    # reference station's 6-minute predictions for the graph, and say so.
+    if not curve and obs_sid != sid:
+        curve = tide_preds(obs_sid, b, curve_end, "6")
+        curve_sid = obs_sid
     meta = stations.get(sid) or {}
     info = station_info(sid, meta, anchor)
-    if not hilo or not curve:
+    if not hilo:
         return {"status": "unavailable", "kind": "predicted", "station": info}
     try:
         events = [{"t": local_epoch_ms(p["t"]), "v": round(float(p["v"]), 2), "type": p.get("type")} for p in hilo]
-        pts = [[local_epoch_ms(p["t"]), round(float(p["v"]), 3)] for p in curve]
+        pts = [[local_epoch_ms(p["t"]), round(float(p["v"]), 3)] for p in (curve or [])]
     except (KeyError, ValueError, TypeError):
         return {"status": "unavailable", "kind": "predicted", "station": info}
     now_ms = now.timestamp() * 1000
     full = pts
     pts = [p for p in pts if now_ms - 9.5 * 3600e3 <= p[0] <= now_ms + 21.5 * 3600e3]
     try:
-        observed = observed_water_level(sid, full, now)
+        observed = observed_water_level(obs_sid, full, now)
     except Exception:
         observed = {"kind": "observed", "status": "unavailable"}
-    return {"status": "ok", "kind": "predicted", "station": info, "datum": "MLLW", "units": "ft",
-            "events": events, "curve": pts, "interval": "6 min", "observed": observed,
-            "sourceUrl": "https://tidesandcurrents.noaa.gov/noaatidepredictions.html?id=%s" % sid}
+    if obs_sid != sid:
+        observed["station"] = station_info(obs_sid, stations.get(obs_sid) or {}, anchor)
+        if tcfg.get("observedNote"):
+            observed["note"] = tcfg["observedNote"]
+    out = {"status": "ok", "kind": "predicted", "station": info, "datum": "MLLW", "units": "ft",
+           "events": events, "curve": pts, "interval": "6 min" if curve else None, "observed": observed,
+           "sourceUrl": "https://tidesandcurrents.noaa.gov/noaatidepredictions.html?id=%s" % sid}
+    if curve_sid != sid:
+        out["curveStation"] = station_info(curve_sid, stations.get(curve_sid) or {}, anchor)
+        out["curveNote"] = (
+            "NOAA publishes high and low tide predictions at %s, but not a 6-minute curve. "
+            "The graph and 'predicted now' values use 6-minute predictions from %s."
+            % (info.get("name") or sid, (stations.get(curve_sid) or {}).get("name") or curve_sid)
+        )
+        out["interval"] = "6 min, from %s" % ((stations.get(curve_sid) or {}).get("name") or curve_sid)
+    return out
 
 
 # ---------- NWS forecast, marine, alerts ----------
@@ -672,10 +726,20 @@ def alerts_block(zones):
 
 # ---------- assemble ----------
 
-def assemble(region_id: str | None) -> tuple[int, dict]:
+def assemble(region_id: str | None, preview: bool = False) -> tuple[int, dict]:
     cfg = load_regions()
-    regions = {r["id"]: r for r in cfg.get("regions") or [] if _servable(r)}
-    rid = region_id if region_id in regions else cfg.get("default")
+    regions = {r["id"]: r for r in cfg.get("regions") or [] if _servable(r, preview=preview)}
+    if region_id:
+        if region_id in regions:
+            rid = region_id
+        elif is_preview_salt_region(region_id) and not preview:
+            # A known private preview, requested without the cookie: 404, do not
+            # silently fall back to the public default.
+            return 404, {"ok": False, "error": "Unknown region."}
+        else:
+            rid = cfg.get("default")
+    else:
+        rid = cfg.get("default")
     if rid not in regions:
         return 404, {"ok": False, "error": "Unknown region."}
     with _ASM_LOCK:

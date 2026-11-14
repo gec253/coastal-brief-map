@@ -443,7 +443,7 @@
       '<ol class="tide-list">' + next.slice(0, 4).map(function (e) {
         return '<li class="' + (e.type === "H" ? "is-high" : "is-low") + '"><span class="tl-k">' + (e.type === "H" ? "High" : "Low") + '</span><span class="tl-t">' + esc(etTime(e.t)) + '</span><span class="tl-v">' + fmt(e.v, 1) + " ft</span></li>";
       }).join("") + "</ol>" +
-      '<div class="inst-foot">' + predCaption(t) + obsCaption(t.observed, t.station) + "</div>";
+      '<div class="inst-foot">' + predCaption(t) + obsCaption(t.observed, (t.observed && t.observed.station) || t.station) + "</div>";
     drawTideChart(t);
   }
   function obsStrip(o) {
@@ -467,6 +467,8 @@
       esc(o.status === "unavailable" ? (o.lastReport ? "last report " + etTime(o.lastReport) : "no recent report") : etTime(o.time)) + "</span></summary>" +
       '<div class="src-body"><p>Measured water level at ' + esc(st.name || "the tide station") + " (" + esc(st.id || "") + "), NOAA CO-OPS, every 6 minutes, in feet above MLLW, the same datum as the predictions. " +
       "These are preliminary readings that NOAA has not yet verified. The difference is observed minus predicted at the same minute; wind, pressure, and river flow cause it.</p>" +
+      (o.note ? "<p>" + esc(o.note) + "</p>" : "") +
+      (isNum(st.distanceMi) ? "<p>" + esc(st.distanceMi + " mi " + (st.bearingFromAnchor || "") + " of " + (st.anchor || "the region") + ". " + (st.setting || "")) + ".</p>" : "") +
       "<p>Marked stale after " + esc(o.staleAfterMin || 30) + " minutes without a new reading; hidden after 6 hours.</p>" +
       '<p class="src-links">' + (o.sourceUrl ? '<a href="' + esc(o.sourceUrl) + '" target="_blank" rel="noopener">NOAA water levels page</a>' : "") +
       (o.dataUrl ? ' · <a href="' + esc(o.dataUrl) + '" target="_blank" rel="noopener">Raw data</a>' : "") + "</p></div></details>";
@@ -477,6 +479,7 @@
     return '<details class="src"><summary><span class="src-id">' + esc(st.id) + '</span><span class="src-name">' + esc(st.name) + '</span><span class="src-time">Predicted · MLLW</span></summary>' +
       '<div class="src-body"><p class="src-title"><b>' + esc(st.name) + "</b> (" + esc(st.id) + ")</p><p>" + esc(st.network || "") + " · " + esc(st.agency || "") + "</p>" +
       (isNum(st.distanceMi) ? "<p>" + esc(st.distanceMi + " mi " + (st.bearingFromAnchor || "") + " of " + st.anchor + ". " + (st.setting || "")) + ".</p>" : "") +
+      (t.curveNote ? "<p>" + esc(t.curveNote) + "</p>" : "") +
       "<p>Astronomical tide predictions at 6-minute steps, in feet above mean lower low water (MLLW). These are predictions, not measured water levels; wind and pressure can push the real tide higher or lower. Times are Eastern.</p>" +
       '<p class="src-links">' + (t.sourceUrl ? '<a href="' + esc(t.sourceUrl) + '" target="_blank" rel="noopener">NOAA prediction page</a>' : "") + "</p></div></details>";
   }
@@ -843,6 +846,14 @@
     });
     const t = d.tides || {}, f = d.forecast || {}, m = d.marine || {};
     html += "<tr><td>Tide</td><td>" + kindTag("predicted") + "</td><td>" + esc((t.station || {}).name || "—") + " (" + esc((t.station || {}).id || "") + ")</td><td>" + (isNum((t.station || {}).distanceMi) ? esc(t.station.distanceMi + " mi " + t.station.bearingFromAnchor + " of " + t.station.anchor) : "") + "</td><td>NOAA CO-OPS predictions" + (t.observed && t.observed.status !== "unavailable" ? " and observed water level (preliminary)" : "") + "</td></tr>";
+    if (t.curveStation && t.curveStation.id && t.station && t.curveStation.id !== t.station.id) {
+      const cs = t.curveStation;
+      html += "<tr><td>Tide curve</td><td>" + kindTag("predicted") + "</td><td>" + esc(cs.name || "—") + " (" + esc(cs.id || "") + ")</td><td>" + (isNum(cs.distanceMi) ? esc(cs.distanceMi + " mi " + cs.bearingFromAnchor + " of " + cs.anchor) : "") + "</td><td>NOAA CO-OPS 6-minute predictions" + (t.curveNote ? " · " + esc(t.curveNote) : "") + "</td></tr>";
+    }
+    if (t.observed && t.observed.station && t.observed.station.id && t.station && t.observed.station.id !== t.station.id) {
+      const os = t.observed.station;
+      html += "<tr><td>Observed water level</td><td>" + kindTag("observed") + "</td><td>" + esc(os.name || "—") + " (" + esc(os.id || "") + ")</td><td>" + (isNum(os.distanceMi) ? esc(os.distanceMi + " mi " + os.bearingFromAnchor + " of " + os.anchor) : "") + "</td><td>NOAA CO-OPS observed water level (preliminary)" + (t.observed.note ? " · " + esc(t.observed.note) : "") + "</td></tr>";
+    }
     html += "<tr><td>Marine forecast</td><td>" + kindTag("forecast") + "</td><td>NWS zone " + esc(m.zone || "") + "</td><td>" + esc(m.zoneName || "") + "</td><td>" + (m.updated ? "Issued " + esc(etTime(m.updated)) : "—") + "</td></tr>";
     html += "<tr><td>7-day forecast</td><td>" + kindTag("forecast") + "</td><td>" + esc(f.office || "NWS") + "</td><td>" + esc(f.label || "") + " point forecast</td><td>" + (f.updated ? "Updated " + esc(etTime(f.updated)) : "—") + "</td></tr>";
     html += "</tbody></table>";

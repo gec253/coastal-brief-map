@@ -1,7 +1,7 @@
 {
   "version": 1,
   "default": "crystal-coast",
-  "notes": "Region config for the Conditions at a Glance dashboard. Only regions with enabled=true appear in the selector. Each reading lists sources in order of preference; the server uses the first one with a fresh report and says which one it used. Station choices were checked against live NDBC, CO-OPS, and NWS data on 12 Nov 2026.",
+  "notes": "Region config for the Conditions at a Glance dashboard. Only regions with enabled=true appear in the selector. Each reading lists sources in order of preference; the server uses the first one with a fresh report and says which one it used. Station choices were checked against live NDBC, CO-OPS, and NWS data on 12 Nov 2026. Wilmington and Nags Head private-preview sources were checked against live NDBC, CO-OPS, and NWS data on 13 Nov 2026.",
   "waterTypes": {
     "saltwater": {
       "label": "Saltwater",
@@ -160,13 +160,93 @@
       "lon": -75.6225,
       "setting": "Frisco airport, on land",
       "url": "https://forecast.weather.gov/data/obhistory/KHSE.html"
+    },
+    "8658163": {
+      "name": "Wrightsville Beach, Johnnie Mercer's Pier",
+      "network": "NOAA tide and weather station",
+      "agency": "NOAA CO-OPS (Tides & Currents)",
+      "type": "coops",
+      "lat": 34.2133,
+      "lon": -77.7867,
+      "setting": "Ocean pier at Wrightsville Beach",
+      "url": "https://tidesandcurrents.noaa.gov/stationhome.html?id=8658163"
+    },
+    "41110": {
+      "name": "Masonboro Inlet (CDIP 150)",
+      "network": "Directional wave buoy",
+      "agency": "NOAA NDBC / CORMP / Scripps CDIP",
+      "type": "ndbc",
+      "lat": 34.144,
+      "lon": -77.715,
+      "setting": "Nearshore waverider off Masonboro Inlet, south of Wrightsville Beach",
+      "url": "https://www.ndbc.noaa.gov/station_page.php?station=41110"
+    },
+    "MBNN7": {
+      "name": "Masonboro Island, north end",
+      "network": "NDBC / CORMP C-MAN station",
+      "agency": "NOAA NDBC / UNCW CORMP",
+      "type": "ndbc",
+      "lat": 34.171,
+      "lon": -77.824,
+      "setting": "Fixed station on the north end of Masonboro Island, just south of Masonboro Inlet",
+      "url": "https://www.ndbc.noaa.gov/station_page.php?station=mbnn7"
+    },
+    "8652226": {
+      "name": "Jennette's Pier (ocean)",
+      "network": "NOAA tide predictions (subordinate station)",
+      "agency": "NOAA CO-OPS (Tides & Currents)",
+      "type": "coops",
+      "lat": 35.91,
+      "lon": -75.5917,
+      "setting": "Ocean tide predictions at Jennette's Pier, referenced to Duck Pier",
+      "url": "https://tidesandcurrents.noaa.gov/noaatidepredictions.html?id=8652226"
+    },
+    "8651370": {
+      "name": "Duck Pier",
+      "network": "NOAA tide and weather station",
+      "agency": "NOAA CO-OPS (Tides & Currents)",
+      "type": "coops",
+      "lat": 36.1833,
+      "lon": -75.7467,
+      "setting": "Ocean pier at Duck, north of Nags Head",
+      "url": "https://tidesandcurrents.noaa.gov/stationhome.html?id=8651370"
+    },
+    "8652587": {
+      "name": "Oregon Inlet Marina (sound side)",
+      "network": "NOAA tide and weather station",
+      "agency": "NOAA CO-OPS (Tides & Currents)",
+      "type": "coops",
+      "lat": 35.7957,
+      "lon": -75.5482,
+      "setting": "Marina on the sound side of Oregon Inlet, not the ocean beach",
+      "url": "https://tidesandcurrents.noaa.gov/stationhome.html?id=8652587"
+    },
+    "44086": {
+      "name": "Nags Head offshore (CDIP 243)",
+      "network": "Directional wave buoy",
+      "agency": "NOAA NDBC / UNC Coastal Studies Institute",
+      "type": "ndbc",
+      "lat": 36.001,
+      "lon": -75.421,
+      "setting": "Offshore waverider east of Nags Head",
+      "url": "https://www.ndbc.noaa.gov/station_page.php?station=44086"
+    },
+    "44095": {
+      "name": "Oregon Inlet offshore (CDIP 192)",
+      "network": "Directional wave buoy",
+      "agency": "NOAA NDBC / UNC Coastal Studies Institute",
+      "type": "ndbc",
+      "lat": 35.75,
+      "lon": -75.33,
+      "setting": "Offshore waverider east of Oregon Inlet",
+      "url": "https://www.ndbc.noaa.gov/station_page.php?station=44095"
     }
   },
   "regions": [
     {
       "id": "crystal-coast",
       "enabled": true,
-      "name": "Morehead City · Beaufort",
+      "name": "Morehead City \u00b7 Beaufort",
       "area": "Crystal Coast, North Carolina",
       "anchor": {
         "label": "Beaufort Inlet",
@@ -379,7 +459,7 @@
     {
       "id": "atlantic-beach",
       "enabled": false,
-      "name": "Atlantic Beach · Emerald Isle",
+      "name": "Atlantic Beach \u00b7 Emerald Isle",
       "area": "Bogue Banks",
       "status": "planned: needs a verified Bogue Inlet tide station and nearshore wind source",
       "waterType": "saltwater"
@@ -395,7 +475,7 @@
     {
       "id": "new-bern",
       "enabled": false,
-      "name": "New Bern · Neuse River",
+      "name": "New Bern \u00b7 Neuse River",
       "area": "Neuse River",
       "status": "planned: needs river wind and water-level sources (AMZ137)",
       "waterType": "saltwater"
@@ -403,10 +483,220 @@
     {
       "id": "wilmington",
       "enabled": false,
-      "name": "Wilmington · Wrightsville Beach",
-      "area": "Cape Fear coast",
-      "status": "planned: 41037 and 41038 were stale on 12 Nov 2026",
-      "waterType": "saltwater"
+      "draft": false,
+      "previewReady": true,
+      "name": "Wilmington \u00b7 Wrightsville Beach",
+      "area": "Wrightsville Beach, North Carolina",
+      "anchor": {
+        "label": "Johnnie Mercer's Pier",
+        "lat": 34.213,
+        "lon": -77.786
+      },
+      "map": {
+        "center": [
+          34.21,
+          -77.79
+        ],
+        "zoom": 10
+      },
+      "readings": {
+        "wind": {
+          "kind": "observed",
+          "role": "Wind at Johnnie Mercer's Pier",
+          "sources": [
+            "8658163",
+            "MBNN7"
+          ]
+        },
+        "seas": {
+          "kind": "observed",
+          "role": "Nearshore seas, Masonboro Inlet",
+          "sources": [
+            "41110"
+          ]
+        },
+        "swell": {
+          "kind": "observed",
+          "role": "Swell split from the wave spectrum",
+          "sources": [
+            "41110"
+          ]
+        },
+        "waterTemp": {
+          "kind": "observed",
+          "role": "Ocean pier water at Wrightsville Beach",
+          "sources": [
+            "8658163"
+          ]
+        },
+        "waterTempOffshore": {
+          "kind": "observed",
+          "role": "Nearshore surface water, Masonboro Inlet",
+          "sources": [
+            "41110"
+          ]
+        },
+        "airTemp": {
+          "kind": "observed",
+          "role": "Air at Wrightsville Beach",
+          "sources": [
+            "8658163",
+            "MBNN7"
+          ]
+        },
+        "pressure": {
+          "kind": "observed",
+          "role": "Barometer at Wrightsville Beach",
+          "sources": [
+            "8658163",
+            "MBNN7"
+          ]
+        },
+        "harborWind": {
+          "kind": "observed",
+          "role": "Pier wind at Wrightsville Beach",
+          "sources": [
+            "8658163"
+          ]
+        }
+      },
+      "tide": {
+        "station": "8658163",
+        "name": "Wrightsville Beach, Johnnie Mercer's Pier",
+        "datum": "MLLW"
+      },
+      "forecast": {
+        "label": "Wrightsville Beach",
+        "lat": 34.208,
+        "lon": -77.796,
+        "gridId": "ILM",
+        "gridX": 95,
+        "gridY": 75,
+        "office": "NWS Wilmington (ILM)"
+      },
+      "marine": {
+        "zone": "AMZ250",
+        "zoneName": "Coastal waters from Surf City to Cape Fear NC out 20 nm",
+        "office": "NWS Wilmington (ILM)"
+      },
+      "alertZones": [
+        "AMZ250",
+        "NCZ108"
+      ],
+      "waterType": "saltwater",
+      "notes": "Private preview. Covers Wrightsville Beach from Masonboro Inlet to Mason Inlet. Not downtown Wilmington. 41038 is not used as a wind backup."
+    },
+    {
+      "id": "nags-head",
+      "enabled": false,
+      "draft": false,
+      "previewReady": true,
+      "name": "Nags Head \u00b7 Outer Banks",
+      "area": "Kitty Hawk to Oregon Inlet, Outer Banks",
+      "anchor": {
+        "label": "Jennette's Pier",
+        "lat": 35.912,
+        "lon": -75.587
+      },
+      "map": {
+        "center": [
+          35.91,
+          -75.59
+        ],
+        "zoom": 10
+      },
+      "readings": {
+        "wind": {
+          "kind": "observed",
+          "role": "Duck Pier",
+          "sources": [
+            "8651370",
+            "8652587"
+          ]
+        },
+        "seas": {
+          "kind": "observed",
+          "role": "Offshore seas, Nags Head",
+          "sources": [
+            "44086",
+            "44095"
+          ],
+          "note": "If the Nags Head buoy has no usable report, combined seas may come from the Oregon Inlet offshore buoy, labeled as such. That station is not used for swell or offshore water temperature."
+        },
+        "swell": {
+          "kind": "observed",
+          "role": "Swell split from the wave spectrum",
+          "sources": [
+            "44086"
+          ],
+          "note": "Oregon Inlet offshore (44095) is not used as a swell substitute; the swell split can differ from the Nags Head buoy."
+        },
+        "waterTemp": {
+          "kind": "observed",
+          "role": "Inshore ocean water",
+          "sources": [],
+          "note": "No ocean-pier water-temperature sensor at Nags Head. Duck Pier does not publish water temperature. Oregon Inlet Marina is sound-side water and is not used."
+        },
+        "waterTempOffshore": {
+          "kind": "observed",
+          "role": "Offshore surface water, Nags Head",
+          "sources": [
+            "44086"
+          ],
+          "note": "Oregon Inlet offshore (44095) is not used as a substitute."
+        },
+        "airTemp": {
+          "kind": "observed",
+          "role": "Air at Duck Pier",
+          "sources": [
+            "8651370",
+            "8652587"
+          ]
+        },
+        "pressure": {
+          "kind": "observed",
+          "role": "Barometer at Duck Pier",
+          "sources": [
+            "8651370",
+            "8652587"
+          ]
+        },
+        "harborWind": {
+          "kind": "observed",
+          "role": "Oregon Inlet Marina (sound side)",
+          "sources": [
+            "8652587"
+          ]
+        }
+      },
+      "tide": {
+        "station": "8652226",
+        "name": "Jennette's Pier (ocean)",
+        "datum": "MLLW",
+        "observedStation": "8651370",
+        "observedNote": "Observed water level is from Duck Pier, the official NOAA reference for these Jennette's Pier predictions. It is not a gauge at the pier."
+      },
+      "forecast": {
+        "label": "Nags Head",
+        "lat": 35.895,
+        "lon": -75.59,
+        "gridId": "MHX",
+        "gridX": 92,
+        "gridY": 116,
+        "office": "NWS Newport/Morehead City (MHX)"
+      },
+      "marine": {
+        "zone": "AMZ150",
+        "zoneName": "S of Currituck Beach Light NC to Oregon Inlet NC out to 20 NM",
+        "office": "NWS Newport/Morehead City (MHX)"
+      },
+      "alertZones": [
+        "AMZ150",
+        "NCZ203",
+        "AMZ231"
+      ],
+      "waterType": "saltwater",
+      "notes": "Private preview. Kitty Hawk, Kill Devil Hills and Nags Head, south to Oregon Inlet. Wind, observed tide and some air readings come from Duck Pier or Oregon Inlet and are labeled as such. Inshore ocean water temperature is unavailable."
     },
     {
       "id": "falls-lake",
@@ -416,7 +706,7 @@
       "waterType": "freshwater",
       "instrumentSet": "freshwater-lake",
       "name": "Falls Lake",
-      "area": "Neuse River basin · Wake, Durham & Granville counties",
+      "area": "Neuse River basin \u00b7 Wake, Durham & Granville counties",
       "anchor": {
         "label": "Falls Lake Dam (USGS 02087182)",
         "lat": 35.9411,
@@ -644,7 +934,7 @@
       "waterType": "freshwater",
       "instrumentSet": "freshwater-lake",
       "name": "Jordan Lake",
-      "area": "Cape Fear basin · Chatham & Wake counties",
+      "area": "Cape Fear basin \u00b7 Chatham & Wake counties",
       "anchor": {
         "label": "B. Everett Jordan Dam (USGS 02098197)",
         "lat": 35.6547,

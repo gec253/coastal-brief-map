@@ -1078,9 +1078,11 @@ import freshwater  # noqa: E402
 import brief  # noqa: E402
 
 # ---------------------------------------------------------------- private preview access
-# /preview?key=<PREVIEW_KEY> sets an HttpOnly cookie that unlocks the flagged previews (/lake, /lab/wind,
-# /lab/tiles, /brief) in that browser only. The key lives only in the PREVIEW_KEY env var on Render; the
-# cookie holds an HMAC of it, so rotating the key locks every browser out. Without the key set, /preview is 404.
+# /preview?key=<PREVIEW_KEY> sets an HttpOnly cookie that unlocks the flagged previews (/lab/wind,
+# /lab/tiles, and the not-yet-public saltwater dashboards) in that browser only. The key lives only in
+# the PREVIEW_KEY env var on Render; the cookie holds an HMAC of it, so rotating the key locks every
+# browser out. Without the key set, /preview is 404. Public freshwater and Morning Brief pages do not
+# need the cookie.
 PREVIEW_COOKIE = "cb_preview"
 PREVIEW_DAYS = 60
 
@@ -1106,7 +1108,9 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 .pv a.card b{display:block;font-size:1.05rem}.pv a.card span{font-size:.86rem;color:var(--d-ink-2)}
 .pv .badge{display:inline-block;font:700 .7rem/1.6 var(--f-ui);letter-spacing:.1em;text-transform:uppercase;color:#fff;background:#8c2f23;padding:2px 8px;border-radius:3px}</style></head>
 <body><main class="pv"><span class="badge">Private preview · this browser only</span><h1>Previews</h1>
-<p>These pages are unlocked for this browser for %d days. The wind and tile labs still return “not found” to the public. The Morning Brief and freshwater pages are public.</p>
+<p>These pages are unlocked for this browser for %d days. The wind and tile labs, and the Wilmington and Nags Head dashboards, still return “not found” to the public. The Morning Brief and freshwater pages are public.</p>
+<a class="card" href="/?region=wilmington"><b>Wrightsville Beach</b><span>Private preview: wind, seas, water temperature and tides at Wrightsville Beach</span></a>
+<a class="card" href="/?region=nags-head"><b>Nags Head</b><span>Private preview: Nags Head / northern Outer Banks. Distant stations are labeled with where they actually are.</span></a>
 <a class="card" href="/lake"><b>Falls Lake</b><span>Freshwater dashboard: lake level vs guide curve, dam release, inflows, rain, river gauges</span></a>
 <a class="card" href="/lake?region=jordan-lake"><b>Jordan Lake</b><span>Pool vs 216.0 ft guide curve, release plus local runoff, Haw inflow</span></a>
 <a class="card" href="/lake?region=neuse-river"><b>Neuse River</b><span>Falls Dam to Goldsboro: stage, flow and NWS flood stages (Smithfield is stage only)</span></a>
@@ -1196,6 +1200,11 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_header("Content-Length", "0")
                 self.end_headers()
                 return
+            # Not-yet-public saltwater regions: same cookie as /preview. Public 404s.
+            if conditions.is_preview_salt_region(rid):
+                if not self._preview_ok():
+                    return self.send_error(404, "not found")
+                return self._send_private(ROOT / "index.html", "text/html; charset=utf-8")
         if parsed.path == "/api/brief/wake":
             # Daily wake-up ping (GitHub Actions, 5:16 AM ET). Builds today's briefs if missing; returns no
             # brief content, so it publishes nothing. Idempotent: at most one build per region per day.
@@ -1221,14 +1230,20 @@ class Handler(SimpleHTTPRequestHandler):
             status, payload = handle_geocode(parsed.query)
             return self._send_json(payload, cache_s=300, status=status)
         if parsed.path == "/api/regions":
-            return self._send_json(conditions.public_regions(), cache_s=300)
+            # Public clients always see the current public saltwater list.
+            # A preview-cookie browser also gets the not-yet-public regions, so
+            # the dashboard dropdown can open them. The public list is unchanged.
+            pv = self._preview_ok()
+            return self._send_json(conditions.listed_regions(preview=pv), cache_s=0 if pv else 300)
         if parsed.path == "/api/conditions":
             rid = (parse_qs(parsed.query or "").get("region") or [""])[0].strip()
             try:
-                status, payload = conditions.assemble(rid or None)
+                status, payload = conditions.assemble(rid or None, preview=self._preview_ok())
             except Exception as e:  # keep the page up if one feed misbehaves
                 sys.stderr.write("conditions failed: %s\n" % e)
                 status, payload = 502, {"ok": False, "error": "Conditions are unavailable right now."}
+            if status != 200 and self._preview_ok():
+                return self._json_private(payload, status)
             return self._send_json(payload, cache_s=60, status=status)
         if parsed.path in ("/coastal-life", "/coastal-life/", "/photos", "/photos/"):
             return self._send_file(ROOT / "catch-wall.html", "text/html; charset=utf-8")
