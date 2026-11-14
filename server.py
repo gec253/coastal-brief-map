@@ -1460,6 +1460,189 @@ def _home_preview_html(home: str, shot: bool = False, photo_id: str | None = Non
     return data
 
 
+IDENTITY_DIR = ROOT / "preview" / "identity"
+_IDENTITY_COND_END = b'    </section>\n\n    <section class="panel tide-panel" id="tide-search"'
+_IDENTITY_MOTTO_NEEDLE = (
+    b'        <span class="mast-sheen"></span>\n      </div>\n    </div>\n  </div>\n</header>'
+)
+_IDENTITY_MOTTO_HTML = (
+    b'        <span class="mast-sheen"></span>\n      </div>\n'
+    b'      <p class="mast-motto">Know the Water. Live the Coast.</p>\n'
+    b'    </div>\n  </div>\n</header>'
+)
+_IDENTITY_DOCK = """<div id="identity-preview-dock" class="id-preview-dock" hidden>
+  <span class="pv-lab">Private preview</span>
+  <span>Chartroom Folio</span>
+  <a href="/preview">Hub</a>
+  <button type="button" id="mast-replay">Replay wave</button>
+</div>
+<script>
+(function(){
+  var dock = document.getElementById("identity-preview-dock");
+  if (!dock) return;
+  dock.hidden = false;
+  var btn = document.getElementById("mast-replay");
+  if (!btn) return;
+  btn.addEventListener("click", function(){
+    var c = document.documentElement.getAttribute("data-concept") || "a";
+    var key = "cb-mast-reveal-" + c;
+    try { sessionStorage.removeItem(key); } catch (e) {}
+    var html = document.documentElement;
+    html.classList.remove("mast-play");
+    void html.offsetWidth;
+    html.classList.add("mast-play");
+    document.querySelectorAll(".wave-swell, .wave-settle, .mast-sheen").forEach(function(el){
+      var prev = el.style.animation;
+      el.style.animation = "none";
+      void el.offsetWidth;
+      el.style.animation = prev;
+    });
+  });
+})();
+</script>
+"""
+
+
+def _folio_photo_html(photo: dict) -> bytes:
+    """Slim credited strip for the identity preview. Lazy-loaded; never the LCP."""
+    src = str(photo.get("src") or ("/preview/home/photos/" + str(photo.get("id") or "")))
+    src = src.replace("/preview/home/photos/", "/featured/")
+    widths = [int(w) for w in (photo.get("widths") or [800, 1280]) if int(w) > 0]
+    if 800 not in widths:
+        widths = [800] + widths
+
+    def srcset(ext: str) -> str:
+        return ", ".join("%s-w%s.%s %sw" % (src, w, ext, w) for w in widths)
+
+    alt = html.escape(str(photo.get("alt") or ""), quote=True)
+    credit_line = html.escape(str(photo.get("credit_line") or photo.get("credit") or "Photograph"))
+    source_url = html.escape(str(photo.get("source_url") or ""), quote=True)
+    kicker = html.escape(str(photo.get("kicker") or ""))
+    title = html.escape(str(photo.get("title") or ""))
+    focal = html.escape(str(photo.get("focal") or "50% 50%"), quote=True)
+    iw = int(photo.get("width") or 1600)
+    ih = int(photo.get("height") or 1067)
+    sizes = "(min-width: 761px) 42vw, 100vw"
+    fallback = "%s-w800.webp" % src
+    markup = """<section class="folio-photo" aria-label="Featured photograph">
+  <div class="folio-photo-frame">
+    <picture>
+      <source type="image/avif" srcset="%s" sizes="%s">
+      <source type="image/webp" srcset="%s" sizes="%s">
+      <img src="%s" alt="%s" width="%d" height="%d" loading="lazy" decoding="async" style="object-position:%s">
+    </picture>
+  </div>
+  <div class="folio-photo-copy">
+    <p class="folio-photo-kicker">%s</p>
+    <p class="folio-photo-title">%s</p>
+    <p class="folio-photo-credit"><a href="%s" rel="noopener noreferrer">%s</a></p>
+  </div>
+</section>
+""" % (srcset("avif"), sizes, srcset("webp"), sizes, fallback, alt, iw, ih, focal, kicker, title, source_url, credit_line)
+    return markup.encode("utf-8")
+
+
+def _folio_rail_html() -> bytes:
+    """One editorial card system. Links only to existing pages; salt and fresh equally."""
+    return """<section class="folio-rail" aria-labelledby="folio-rail-h">
+  <p class="folio-rail-kicker">From the rivers to the sounds to the sea</p>
+  <h2 class="folio-rail-title" id="folio-rail-h">Life on the water</h2>
+  <ul class="folio-cards">
+    <li>
+      <a class="folio-card" href="/catch-wall">
+        <p class="folio-card-k">Catch Wall</p>
+        <p class="folio-card-title">Catches from the coast</p>
+        <p class="folio-card-dek">Community photos from saltwater days on the line.</p>
+      </a>
+    </li>
+    <li>
+      <a class="folio-card" href="/coastal-life">
+        <p class="folio-card-k">Coastal Life</p>
+        <p class="folio-card-title">Life along the water</p>
+        <p class="folio-card-dek">Moments from the inlets, sounds, and beaches.</p>
+      </a>
+    </li>
+    <li>
+      <a class="folio-card" href="/lake">
+        <p class="folio-card-k">Rivers and lakes</p>
+        <p class="folio-card-title">Falls Lake and the Neuse</p>
+        <p class="folio-card-dek">Lake level, dam release, and river stage — the same care as the coast.</p>
+      </a>
+    </li>
+    <li>
+      <a class="folio-card" href="/brief?region=crystal-coast" id="folio-brief">
+        <p class="folio-card-k">Morning Brief</p>
+        <p class="folio-card-title">Today’s briefing</p>
+        <p class="folio-card-dek">The daily read for saltwater and freshwater regions.</p>
+      </a>
+    </li>
+  </ul>
+  <p class="folio-rail-note">Techniques, local features, and food will use this same card.</p>
+</section>
+""".encode("utf-8")
+
+
+def _identity_preview_html(region_id: str | None = None, photo_id: str | None = None, shot: bool = False) -> bytes:
+    """Cookie-gated Chartroom Folio homepage. Public / stays on _public_home_html."""
+    src = (ROOT / "index.html").read_bytes()
+    header = (MASTHEAD_DIR / "header.html").read_bytes().strip()
+    start = src.find(b'<header class="site"')
+    mid = src.find(_MASTHEAD_META)
+    if start < 0 or mid < 0 or mid < start:
+        raise RuntimeError("identity preview: unexpected index.html shape")
+    data = src[:start] + header + b"\n\n    " + src[mid:]
+    data = data.replace(
+        b'<html lang="en" data-tiles="v2">',
+        b'<html lang="en" data-tiles="v2" data-preview data-identity-sprint data-concept="a">',
+        1,
+    )
+    css_inject = _preview_style_tag(IDENTITY_DIR / "identity.css")
+    css_inject += b'  <meta name="robots" content="noindex, nofollow">\n  ' + _MASTHEAD_PLAY
+    # Preload the wordmark face so the nameplate is the LCP without a swap.
+    css_inject += (
+        b'  <link rel="preload" href="/fonts/fraunces-var.woff2" as="font" '
+        b'type="font/woff2" crossorigin>\n'
+    )
+    needle = b'  <link rel="stylesheet" href="styles.css">\n'
+    if needle not in data:
+        raise RuntimeError("identity preview: stylesheet link missing")
+    data = data.replace(needle, needle + css_inject, 1)
+    if b'class="mast-motto"' not in data:
+        if _IDENTITY_MOTTO_NEEDLE not in data:
+            raise RuntimeError("identity preview: mast-wave close missing")
+        data = data.replace(_IDENTITY_MOTTO_NEEDLE, _IDENTITY_MOTTO_HTML, 1)
+    data = data.replace(
+        b'<p class="eyebrow">Live marine instruments</p>',
+        b'<p class="eyebrow">Today\xe2\x80\x99s conditions</p>',
+        1,
+    )
+    data = data.replace(
+        b'<div class="map-placeholder skeleton" id="map-placeholder">Scroll to load the map\xe2\x80\xa6</div>',
+        b'<div class="map-placeholder skeleton" id="map-placeholder">Map will load when you scroll here.</div>',
+        1,
+    )
+    for a, b in (
+        (b'href="styles.css"', b'href="/styles.css"'),
+        (b'src="region-nav.js"', b'src="/region-nav.js"'),
+        (b'src="dashboard.js"', b'src="/dashboard.js"'),
+        (b'src="app.js"', b'src="/app.js"'),
+        (b'src="coast-strip.js"', b'src="/coast-strip.js"'),
+    ):
+        data = data.replace(a, b)
+    data = _apply_preview_dateline(_apply_chrome(data))
+    pv = bool(region_id and conditions.is_preview_salt_region(region_id))
+    data = homepage_boot.inject(data, region_id, preview=pv)
+    photo = _featured_photo(photo_id)
+    strip = _folio_photo_html(photo) + b"\n    " + _folio_rail_html() + b"\n\n"
+    mid = data.find(_IDENTITY_COND_END)
+    if mid < 0:
+        raise RuntimeError("identity preview: conditions/tide boundary missing")
+    data = data[:mid] + b"    " + strip + data[mid:]
+    if not shot:
+        data = data.replace(b"</body>", _IDENTITY_DOCK.encode("utf-8") + b"\n</body>", 1)
+    return data
+
+
 # /catch-wall, /coastal-life and /photos share catch-wall.html. Give each its own
 # share title and URL by swapping only these three tags; the page body is unchanged.
 _SHARE_META = {
@@ -1576,6 +1759,7 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 <a class="card" href="/lab/tiles"><b>Tile designs</b><span>The instrument tile prototype</span></a>
 <a class="card" href="/preview/masthead?c=c"><b>Masthead concepts</b><span>Three directions for a cinematic gold wave-to-masthead reveal (A editorial, B nautical, C hybrid). Replay from the bar at the bottom.</span></a>
 <a class="card" href="/preview/home"><b>Homepage (Ed's pick)</b><span>Classic Coastal Editorial masthead (A) with the Modern Coastal Magazine layout and the Bodie Island sunrise. Compare Cinematic and the other mastheads from the bar at the bottom.</span></a>
+<a class="card" href="/preview/identity"><b>Chartroom Folio</b><span>Visual identity sprint: stronger nameplate, conditions as one instrument panel, a slim credited photo strip after the readings, and one editorial card for saltwater and freshwater.</span></a>
 <a class="card" href="/catch-wall"><b>Catch Wall photo submissions</b><span>Private test: the Share form and the review page work in this browser, even while public uploads stay off. Photos you send wait in the pending queue until you approve them.</span></a>
 <a class="card" href="/preview/photos-check"><b>Photo setup check</b><span>A private status report: storage, image tools, and the pending queue. It never shows keys.</span></a>
 <p><a href="/preview?lock=1">Lock this browser again</a></p></main></body></html>""" % PREVIEW_DAYS
@@ -1684,6 +1868,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self._masthead_preview_route(parsed)
         if parsed.path == "/preview/home" or parsed.path == "/preview/home.css" or parsed.path.startswith("/preview/home/photos/"):
             return self._home_preview_route(parsed)
+        if parsed.path == "/preview/identity" or parsed.path == "/preview/identity.css":
+            return self._identity_preview_route(parsed)
         # /?region=falls-lake (etc.) should open the lake page, not break the saltwater dashboard.
         if parsed.path in ("/", "/index.html"):
             rid = (parse_qs(parsed.query).get("region") or [""])[0].strip()
@@ -1917,6 +2103,25 @@ class Handler(SimpleHTTPRequestHandler):
             data = _home_preview_html(home, shot=shot, photo_id=photo_id, mast=mast)
         except Exception as e:
             sys.stderr.write("home preview failed: %s\n" % e)
+            return self.send_error(500, "preview failed")
+        return self._send_private(None, "text/html; charset=utf-8", data)
+
+    def _identity_preview_route(self, parsed):
+        if not self._preview_ok():
+            return self.send_error(404, "not found")
+        if parsed.path == "/preview/identity.css":
+            css = IDENTITY_DIR / "identity.css"
+            if not css.is_file():
+                return self.send_error(404, "not found")
+            return self._send_private(css, "text/css; charset=utf-8")
+        q = parse_qs(parsed.query or "")
+        photo_id = (q.get("photo") or [""])[0].strip() or None
+        region_id = (q.get("region") or [""])[0].strip() or None
+        shot = (q.get("shot") or [""])[0] == "1"
+        try:
+            data = _identity_preview_html(region_id, photo_id=photo_id, shot=shot)
+        except Exception as e:
+            sys.stderr.write("identity preview failed: %s\n" % e)
             return self.send_error(500, "preview failed")
         return self._send_private(None, "text/html; charset=utf-8", data)
 

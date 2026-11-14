@@ -1,0 +1,401 @@
+/* Chartroom Folio — private /preview/identity only.
+   Scoped to html[data-identity-sprint] so public pages are untouched. */
+
+html[data-identity-sprint] {
+  --folio-radius: 12px;
+  --folio-radius-sm: 8px;
+  --folio-edge: rgba(11, 42, 61, 0.14);
+  --folio-brass: var(--id-brass, #C4A36A);
+  --folio-lift: inset 0 1px 0 rgba(255, 255, 255, 0.72), 0 8px 24px -16px rgba(11, 42, 61, 0.28);
+  --folio-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='120'%3E%3Cg fill='none' stroke='%230B2A3D' stroke-opacity='.045'%3E%3Cpath d='M0 24c40-8 80 8 120 0s80-8 120 0'/%3E%3Cpath d='M0 60c40-6 80 6 120 0s80-6 120 0'/%3E%3Cpath d='M0 96c40-8 80 8 120 0s80-8 120 0'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+html[data-identity-sprint][data-theme="dark"] {
+  --folio-edge: rgba(228, 216, 196, 0.14);
+  --folio-lift: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 10px 24px -14px rgba(0, 0, 0, 0.55);
+  --folio-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='120'%3E%3Cg fill='none' stroke='%23E8DCC8' stroke-opacity='.05'%3E%3Cpath d='M0 24c40-8 80 8 120 0s80-8 120 0'/%3E%3Cpath d='M0 60c40-6 80 6 120 0s80-6 120 0'/%3E%3Cpath d='M0 96c40-8 80 8 120 0s80-8 120 0'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* ---- 1. Nameplate: tighter rhythm, one NC kicker, motto on the brass rule ---- */
+html[data-identity-sprint] .masthead { padding: 4px 0 0; }
+html[data-identity-sprint] .mast-top .mast-kicker { display: none; }
+html[data-identity-sprint] .mast-nameplate { padding: 0; }
+html[data-identity-sprint][data-concept="a"] .mast-kicker-center { margin-bottom: 2px; }
+html[data-identity-sprint][data-concept="a"] .mast-mission { margin-top: 4px; }
+html[data-identity-sprint][data-concept="a"] .mast-wave,
+html[data-identity-sprint][data-concept="a"] .mast-wave-svg {
+  margin-top: 4px;
+  height: 16px;
+}
+html[data-identity-sprint] .mast-motto {
+  margin: 4px auto 6px;
+  max-width: 36rem;
+  height: 1.2em;
+  font-family: var(--f-ui);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--id-ivory-2, #D4C6AE);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Wave intro stays the approved A rule-draw (public CSS). Isolate leftover B/C. */
+html[data-identity-sprint]:not([data-concept="b"]):not([data-concept="c"]) .wave-glint { display: none; }
+
+/* ---- 2. Conditions as one chartroom panel; glance visible at every width ---- */
+html[data-identity-sprint] .meta-row {
+  margin: 8px 0 0;
+}
+html[data-identity-sprint] #conditions.dash {
+  margin-top: 10px;
+  padding: 14px 14px 12px;
+  border: 1px solid var(--folio-edge);
+  border-radius: var(--folio-radius);
+  box-shadow: var(--folio-lift);
+  background-color: var(--d-panel);
+  background-image: var(--folio-grain);
+  background-size: 240px 120px;
+  background-repeat: repeat;
+}
+html[data-identity-sprint] #conditions .dash-head {
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--folio-brass);
+  box-shadow: none;
+}
+html[data-identity-sprint] #conditions .eyebrow {
+  color: var(--copper-ink, #8E4F2A);
+  letter-spacing: 0.14em;
+}
+html[data-identity-sprint][data-theme="dark"] #conditions .eyebrow {
+  color: var(--copper-lt, #C98657);
+}
+html[data-identity-sprint] #conditions .dash-sub { display: block; }
+
+/* Editorial coast-strip is replaced by the folio rail below the instruments. */
+html[data-identity-sprint] #conditions .coast-strip { display: none; }
+
+html[data-identity-sprint] .glance-strip:not([hidden]) {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+html[data-identity-sprint] .gs-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-height: 72px;
+  padding: 9px 12px 8px;
+  border-radius: var(--folio-radius-sm);
+  background: var(--d-inst);
+  border: 1px solid var(--folio-edge);
+  color: var(--d-ink);
+  text-decoration: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+html[data-identity-sprint] .gs-cell:focus-visible {
+  outline: 3px solid var(--seaglass);
+  outline-offset: 2px;
+}
+html[data-identity-sprint] .gs-k {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--d-ink-2);
+}
+html[data-identity-sprint] .gs-v {
+  font-family: var(--f-num);
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+html[data-identity-sprint] .gs-s {
+  font-size: 0.88rem;
+  color: var(--d-ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (min-width: 761px) {
+  html[data-identity-sprint] .glance-strip:not([hidden]) {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  html[data-identity-sprint] #conditions.dash { padding: 18px 20px 16px; }
+}
+
+/* ---- 3. Shared dimension on instrument tiles and later panels ---- */
+html[data-identity-sprint] .inst {
+  border-radius: var(--folio-radius);
+  border-color: var(--folio-edge);
+  box-shadow: var(--folio-lift);
+}
+html[data-identity-sprint] .tag-observed,
+html[data-identity-sprint] .tag-forecast,
+html[data-identity-sprint] .tag-predicted {
+  border-radius: 999px;
+}
+html[data-identity-sprint] #tide-search,
+html[data-identity-sprint] #forecast,
+html[data-identity-sprint] #map-section {
+  border: 1px solid var(--folio-edge);
+  border-radius: var(--folio-radius);
+  box-shadow: var(--folio-lift);
+}
+
+/* ---- 4. Slim credited photo strip AFTER the conditions panel ---- */
+html[data-identity-sprint] .folio-photo {
+  margin: 22px 0 0;
+  padding: 0;
+  border: 1px solid var(--folio-edge);
+  border-radius: var(--folio-radius);
+  overflow: hidden;
+  background: var(--atlantic-deep, #071C29);
+  color: var(--id-ivory, #F3E6D0);
+  box-shadow: var(--folio-lift);
+}
+html[data-identity-sprint] .folio-photo-frame {
+  margin: 0;
+  aspect-ratio: 2.4 / 1;
+  max-height: 168px;
+  overflow: hidden;
+  background: var(--atlantic-deep, #071C29);
+}
+html[data-identity-sprint] .folio-photo-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+html[data-identity-sprint] .folio-photo-copy {
+  padding: 10px 14px 12px;
+}
+html[data-identity-sprint] .folio-photo-kicker {
+  margin: 0 0 2px;
+  font-family: var(--f-ui);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--id-ivory-2, #D4C6AE);
+}
+html[data-identity-sprint] .folio-photo-title {
+  margin: 0 0 4px;
+  font-family: var(--f-display);
+  font-weight: 500;
+  font-style: italic;
+  font-size: 1.02rem;
+  line-height: 1.25;
+  color: var(--id-ivory, #F3E6D0);
+}
+html[data-identity-sprint] .folio-photo-credit,
+html[data-identity-sprint] .folio-photo-credit a {
+  margin: 0;
+  font-family: var(--f-ui);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--id-ivory-2, #D4C6AE);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+html[data-identity-sprint] .folio-photo-credit a:focus-visible {
+  outline: 3px solid var(--folio-brass);
+  outline-offset: 2px;
+}
+@media (min-width: 761px) {
+  html[data-identity-sprint] .folio-photo {
+    display: grid;
+    grid-template-columns: minmax(280px, 42%) 1fr;
+    align-items: stretch;
+  }
+  html[data-identity-sprint] .folio-photo-frame {
+    max-height: none;
+    aspect-ratio: auto;
+    min-height: 160px;
+    height: 100%;
+  }
+  html[data-identity-sprint] .folio-photo-copy {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 16px 20px;
+  }
+}
+
+/* ---- 5. One editorial folio card (salt and fresh equally) ---- */
+html[data-identity-sprint] .folio-rail {
+  margin: 22px 0 0;
+  padding: 4px 0 0;
+}
+html[data-identity-sprint] .folio-rail-kicker {
+  margin: 0 0 2px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--copper-ink, #8E4F2A);
+}
+html[data-identity-sprint][data-theme="dark"] .folio-rail-kicker { color: var(--copper-lt, #C98657); }
+html[data-identity-sprint] .folio-rail-title {
+  margin: 0 0 12px;
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: 1.45rem;
+  line-height: 1.15;
+  color: var(--d-ink);
+}
+html[data-identity-sprint] .folio-cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+html[data-identity-sprint] .folio-card {
+  display: block;
+  height: 100%;
+  padding: 14px 14px 16px;
+  border: 1px solid var(--folio-edge);
+  border-radius: var(--folio-radius);
+  background: var(--d-inst);
+  box-shadow: var(--folio-lift);
+  color: var(--d-ink);
+  text-decoration: none;
+}
+html[data-identity-sprint] .folio-card:hover {
+  border-color: rgba(11, 42, 61, 0.28);
+}
+html[data-identity-sprint] .folio-card:focus-visible {
+  outline: 3px solid var(--seaglass);
+  outline-offset: 2px;
+}
+html[data-identity-sprint] .folio-card-k {
+  margin: 0 0 4px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--copper-ink, #8E4F2A);
+}
+html[data-identity-sprint][data-theme="dark"] .folio-card-k { color: var(--copper-lt, #C98657); }
+html[data-identity-sprint] .folio-card-title {
+  margin: 0 0 6px;
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: 1.12rem;
+  line-height: 1.2;
+  color: var(--d-ink);
+}
+html[data-identity-sprint] .folio-card-dek {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  color: var(--d-ink-2);
+}
+html[data-identity-sprint] .folio-rail-note {
+  margin: 12px 0 0;
+  font-size: 0.82rem;
+  color: var(--d-ink-2);
+}
+@media (min-width: 761px) {
+  html[data-identity-sprint] .folio-cards { grid-template-columns: repeat(4, 1fr); gap: 12px; }
+}
+
+/* ---- 6. Map chrome: same type, reserved loading field, clearer legend ---- */
+html[data-identity-sprint] #map-section,
+html[data-identity-sprint] .map-chip,
+html[data-identity-sprint] .map-more,
+html[data-identity-sprint] .map-status,
+html[data-identity-sprint] .leaflet-container {
+  font-family: var(--f-ui);
+}
+html[data-identity-sprint] .map-chip {
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  border-radius: var(--folio-radius-sm);
+}
+html[data-identity-sprint] .map-shell {
+  height: 460px;
+  border: 1px solid var(--folio-edge);
+  border-radius: var(--folio-radius);
+  background: var(--d-inst-2, #F7F2E8);
+}
+html[data-identity-sprint] .map-placeholder {
+  background:
+    var(--folio-grain),
+    linear-gradient(180deg, var(--d-inst) 0%, var(--d-inst-2) 100%);
+  background-size: 240px 120px, auto;
+  color: var(--d-ink-2);
+  font-size: 0.92rem;
+  letter-spacing: 0.02em;
+}
+html[data-identity-sprint][data-theme="dark"] .map-shell,
+html[data-identity-sprint][data-theme="dark"] .map-placeholder {
+  background-color: #13202a;
+}
+
+/* ---- 7. Motion: no heavy effects above the instruments; honor reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  html[data-identity-sprint] .gs-cell,
+  html[data-identity-sprint] .folio-card,
+  html[data-identity-sprint] .inst {
+    transition: none;
+  }
+}
+
+/* Preview dock (hidden in ?shot=1 captures). */
+html[data-identity-sprint] .id-preview-dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  padding: 8px 14px;
+  background: var(--atlantic-deep, #071C29);
+  color: var(--id-ivory, #F3E6D0);
+  font-size: 0.82rem;
+  border-top: 1px solid rgba(196, 163, 106, 0.45);
+}
+html[data-identity-sprint] .id-preview-dock a,
+html[data-identity-sprint] .id-preview-dock button {
+  color: inherit;
+  background: transparent;
+  border: 1px solid rgba(243, 230, 208, 0.4);
+  border-radius: 8px;
+  min-height: 36px;
+  padding: 4px 10px;
+  font: 700 0.78rem/1 var(--f-ui);
+  text-decoration: none;
+  cursor: pointer;
+}
+html[data-identity-sprint] .id-preview-dock a:focus-visible,
+html[data-identity-sprint] .id-preview-dock button:focus-visible {
+  outline: 3px solid var(--folio-brass);
+  outline-offset: 2px;
+}
+html[data-identity-sprint] .id-preview-dock .pv-lab {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--folio-brass);
+}
+
+/* Keep both region pickers. Public styles hide the in-card picker on
+   html[data-preview][data-concept]:not([data-final]); this preview is not a comparison. */
+html[data-identity-sprint][data-preview][data-concept] .dash-controls .region-pick {
+  display: inline-flex;
+}
