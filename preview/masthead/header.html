@@ -1,0 +1,44 @@
+<header class="site" data-identity data-concept-mast>
+  <div class="masthead" id="masthead">
+    <div class="wrap mast-top">
+      <p class="mast-dateline" id="mast-dateline"><!--dateline--><time>Eastern Time</time><!--/dateline--></p>
+      <p class="mast-kicker">North Carolina</p>
+      <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
+    </div>
+    <div class="wrap mast-nameplate">
+      <p class="mast-kicker mast-kicker-center">North Carolina</p>
+      <h1><a class="site-title" href="/"><span class="wordmark">The Coastal Brief</span></a></h1>
+      <p class="mast-mission">From the rivers to the sounds to the sea</p>
+      <div class="mast-wave" aria-hidden="true">
+        <svg class="mast-wave-svg" viewBox="0 0 1200 36" preserveAspectRatio="none" focusable="false">
+          <path class="wave-swell" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"
+            d="M0 20 C 140 20, 220 8, 360 14 S 560 30, 720 18 S 960 8, 1200 20"/>
+          <path class="wave-settle" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+            d="M0 20 L1200 20"/>
+          <circle class="wave-glint" r="2.4" cx="0" cy="20" fill="currentColor"/>
+        </svg>
+        <span class="mast-sheen"></span>
+      </div>
+    </div>
+  </div>
+</header>
+<div class="sticky-sentinel" id="sticky-sentinel" aria-hidden="true"></div>
+<div class="compact-bar mast-nav" id="compact-bar">
+  <div class="wrap compact-inner mast-nav-inner">
+    <a class="mast-mono" href="/"><span aria-hidden="true">CB</span><span class="visually-hidden">The Coastal Brief</span></a>
+    <div class="region-nav" id="region-nav" data-region-nav>
+      <button type="button" class="rn-btn" id="rn-btn" aria-expanded="false" aria-haspopup="listbox" aria-controls="rn-menu" title="Morehead City · Beaufort" aria-label="Morehead City · Beaufort">
+        <span class="rn-k">Region</span>
+        <span class="rn-name" id="rn-name">Morehead City</span>
+        <span class="rn-chev" aria-hidden="true"></span>
+      </button>
+      <div class="rn-menu" id="rn-menu" role="listbox" tabindex="-1" hidden aria-labelledby="rn-btn"></div>
+    </div>
+    <nav class="site-nav" aria-label="Site">
+      <a href="/" aria-current="page">Conditions</a>
+      <a href="/catch-wall">Catch Wall</a>
+      <a href="/coastal-life">Coastal Life</a>
+      <!--brief-nav--><a href="/brief?region=crystal-coast" id="nav-brief">Morning Brief</a><!--/brief-nav-->
+    </nav>
+  </div>
+</div>

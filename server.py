@@ -233,7 +233,7 @@ def cache_get_any(url: str) -> tuple[int, str, bytes] | None:
 # docs, and test fixtures are not.
 _STATIC_EXT = {".html", ".css", ".js", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".ico",
                ".woff2", ".json", ".txt", ".xml", ".webmanifest", ".map"}
-_STATIC_DENY_PREFIX = ("/.", "/admin", "/branding/og-masthead.html", "/branding/render-og-masthead.", "/wind-lab.", "/lake.", "/tiles-lab.", "/docs/", "/tests/", "/scripts/", "/__pycache__/", "/requirements")
+_STATIC_DENY_PREFIX = ("/.", "/admin", "/preview/", "/branding/og-masthead.html", "/branding/render-og-masthead.", "/wind-lab.", "/lake.", "/tiles-lab.", "/docs/", "/tests/", "/scripts/", "/__pycache__/", "/requirements")
 
 
 def _static_allowed(path: str) -> bool:
@@ -1115,6 +1115,98 @@ def _apply_chrome(data: bytes) -> bytes:
     return _apply_dateline(_apply_brief_nav(data))
 
 
+# Private masthead concepts. Public pages never include this markup or CSS.
+MASTHEAD_CONCEPTS = ("a", "b", "c")
+MASTHEAD_DIR = ROOT / "preview" / "masthead"
+_MASTHEAD_META = b'<div class="wrap">\n      <div class="meta-row">'
+_MASTHEAD_PLAY = b"""<script>
+(function(){
+  var c = document.documentElement.getAttribute("data-concept") || "c";
+  var key = "cb-mast-reveal-" + c;
+  var force = /(?:\\?|&)play=1(?:&|$)/.test(location.search || "");
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduce) return;
+  try {
+    if (force || !sessionStorage.getItem(key)) {
+      document.documentElement.classList.add("mast-play");
+      if (!force) sessionStorage.setItem(key, "1");
+    }
+  } catch (e) {}
+})();
+</script>
+"""
+_MASTHEAD_DOCK = """<div id="mast-preview-dock" class="mast-preview-dock" hidden>
+  <span class="pv-lab">Private preview</span>
+  <a href="/preview/masthead?c=a" data-c="a">A Editorial</a>
+  <a href="/preview/masthead?c=b" data-c="b">B Nautical</a>
+  <a href="/preview/masthead?c=c" data-c="c">C Hybrid</a>
+  <button type="button" id="mast-replay">Replay</button>
+</div>
+<script>
+(function(){
+  var dock = document.getElementById("mast-preview-dock");
+  if (!dock) return;
+  dock.hidden = false;
+  var c = document.documentElement.getAttribute("data-concept") || "c";
+  var on = dock.querySelector('a[data-c="'+c+'"]');
+  if (on) on.className += " is-on";
+  var btn = document.getElementById("mast-replay");
+  if (!btn) return;
+  btn.addEventListener("click", function(){
+    var key = "cb-mast-reveal-" + c;
+    try { sessionStorage.removeItem(key); } catch (e) {}
+    var html = document.documentElement;
+    html.classList.remove("mast-play");
+    void html.offsetWidth;
+    html.classList.add("mast-play");
+    document.querySelectorAll(".wave-swell, .wave-settle, .wave-glint, .mast-sheen").forEach(function(el){
+      var prev = el.style.animation;
+      el.style.animation = "none";
+      void el.offsetWidth;
+      el.style.animation = prev;
+    });
+  });
+})();
+</script>
+"""
+
+
+def _masthead_preview_html(concept: str, shot: bool = False) -> bytes:
+    """Homepage with a concept masthead swapped in. Public index.html is not modified."""
+    if concept not in MASTHEAD_CONCEPTS:
+        concept = "c"
+    src = (ROOT / "index.html").read_bytes()
+    header = (MASTHEAD_DIR / "header.html").read_bytes().strip()
+    start = src.find(b'<header class="site"')
+    mid = src.find(_MASTHEAD_META)
+    if start < 0 or mid < 0 or mid < start:
+        raise RuntimeError("masthead preview: unexpected index.html shape")
+    data = src[:start] + header + b"\n\n    " + src[mid:]
+    attrs = b' data-concept="%s"' % concept.encode("ascii")
+    if shot:
+        attrs += b" data-shot"
+    data = data.replace(b'<html lang="en" data-tiles="v2">', b'<html lang="en" data-tiles="v2"' + attrs + b">", 1)
+    inject = b'  <link rel="stylesheet" href="/preview/masthead.css">\n  <meta name="robots" content="noindex, nofollow">\n  ' + _MASTHEAD_PLAY
+    needle = b'  <link rel="stylesheet" href="styles.css">\n'
+    if needle not in data:
+        raise RuntimeError("masthead preview: stylesheet link missing")
+    data = data.replace(needle, needle + inject, 1)
+    if not shot:
+        data = data.replace(b"</body>", _MASTHEAD_DOCK.encode("utf-8") + b"\n</body>", 1)
+    # Page is served from /preview/masthead, so homepage-relative assets must be rooted.
+    for a, b in (
+        (b'href="styles.css"', b'href="/styles.css"'),
+        (b'src="region-nav.js"', b'src="/region-nav.js"'),
+        (b'src="dashboard.js"', b'src="/dashboard.js"'),
+        (b'src="app.js"', b'src="/app.js"'),
+        (b'src="coast-strip.js"', b'src="/coast-strip.js"'),
+    ):
+        data = data.replace(a, b)
+    return _apply_chrome(data)
+
+
+
+
 # /catch-wall, /coastal-life and /photos share catch-wall.html. Give each its own
 # share title and URL by swapping only these three tags; the page body is unchanged.
 _SHARE_META = {
@@ -1187,7 +1279,7 @@ def sitemap_body() -> bytes:
 
 # ---------------------------------------------------------------- private preview access
 # /preview?key=<PREVIEW_KEY> sets an HttpOnly cookie that unlocks the flagged previews (/lab/wind,
-# /lab/tiles, and the not-yet-public saltwater dashboards) in that browser only. The key lives only in
+# /lab/tiles, /preview/masthead, and the not-yet-public saltwater dashboards) in that browser only. The key lives only in
 # the PREVIEW_KEY env var on Render; the cookie holds an HMAC of it, so rotating the key locks every
 # browser out. Without the key set, /preview is 404. Public freshwater and Morning Brief pages do not
 # need the cookie.
@@ -1227,6 +1319,7 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 <a class="card" href="/brief?region=falls-lake"><b>Morning Brief · Falls Lake</b><span>Freshwater version</span></a>
 <a class="card" href="/lab/wind"><b>Wind flow</b><span>Animated model wind (NOAA GFS forecast)</span></a>
 <a class="card" href="/lab/tiles"><b>Tile designs</b><span>The instrument tile prototype</span></a>
+<a class="card" href="/preview/masthead?c=c"><b>Masthead concepts</b><span>Three directions for a cinematic gold wave-to-masthead reveal (A editorial, B nautical, C hybrid). Replay from the bar at the bottom.</span></a>
 <p><a href="/preview?lock=1">Lock this browser again</a></p></main></body></html>""" % PREVIEW_DAYS
 
 conditions.install(cache_get, cache_get_any, cache_put_ttl, lambda url: fetch_url(url, tries=2))
@@ -1302,6 +1395,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self._send_bytes(sitemap_body(), "application/xml; charset=utf-8", cache_s=300)
         if parsed.path == "/preview":
             return self._preview_route(parsed)
+        if parsed.path == "/preview/masthead" or parsed.path == "/preview/masthead.css":
+            return self._masthead_preview_route(parsed)
         # /?region=falls-lake (etc.) should open the lake page, not break the saltwater dashboard.
         if parsed.path in ("/", "/index.html"):
             rid = (parse_qs(parsed.query).get("region") or [""])[0].strip()
@@ -1474,6 +1569,27 @@ class Handler(SimpleHTTPRequestHandler):
             return False
         host = (self.headers.get("X-Forwarded-Host") or self.headers.get("Host") or "").lower()
         return urlparse(origin).netloc.lower() == host
+
+
+    def _masthead_preview_route(self, parsed):
+        if not self._preview_ok():
+            return self.send_error(404, "not found")
+        if parsed.path == "/preview/masthead.css":
+            css = MASTHEAD_DIR / "masthead.css"
+            if not css.is_file():
+                return self.send_error(404, "not found")
+            return self._send_private(css, "text/css; charset=utf-8")
+        q = parse_qs(parsed.query or "")
+        concept = (q.get("c") or ["c"])[0].strip().lower()
+        if concept not in MASTHEAD_CONCEPTS:
+            concept = "c"
+        shot = (q.get("shot") or [""])[0] == "1"
+        try:
+            data = _masthead_preview_html(concept, shot=shot)
+        except Exception as e:
+            sys.stderr.write("masthead preview failed: %s\n" % e)
+            return self.send_error(500, "preview failed")
+        return self._send_private(None, "text/html; charset=utf-8", data)
 
     def _send_private(self, path: Path, ctype: str, data: bytes | None = None, status: int = 200, extra=None, robots: str = "noindex, nofollow"):
         if data is None:
