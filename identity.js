@@ -1,36 +1,10 @@
-/* Newspaper masthead helpers: ET dateline, region line from the region
-   list, sticky folio bar (IntersectionObserver, no in-flow height change),
-   and a picker bind on pages that do not run dashboard.js. */
+/* Picker bind for pages that do not run dashboard.js (lake, catch-wall).
+   The homepage is bound by dashboard.js. Dateline is server-rendered.
+   The folio is CSS position:sticky — no scroll listener. */
 (function (global) {
   "use strict";
   var STORE = "coastalBrief.region";
-
   function $(id) { return document.getElementById(id); }
-
-  function fillDateline() {
-    var el = $("mast-dateline");
-    if (!el) return;
-    try {
-      var fmt = new Intl.DateTimeFormat("en-US", {
-        weekday: "long", month: "long", day: "numeric", year: "numeric",
-        timeZone: "America/New_York"
-      });
-      var label = fmt.format(new Date()) + " · Eastern Time";
-      var t = el.querySelector("time") || el;
-      t.textContent = label;
-      if (t.tagName === "TIME") {
-        var parts = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-        t.setAttribute("datetime", parts);
-      }
-    } catch (e) {}
-  }
-
-  function recordFor(id) {
-    var nav = global.CoastalRegionNav;
-    if (nav && typeof nav.find === "function") return nav.find(id);
-    return null;
-  }
-
   function currentId() {
     try {
       var q = new URLSearchParams(location.search).get("region");
@@ -42,9 +16,8 @@
       return "crystal-coast";
     }
   }
-
   function setRegion(id, rec) {
-    rec = rec || recordFor(id) || { id: id, name: id };
+    rec = rec || (global.CoastalRegionNav && CoastalRegionNav.find && CoastalRegionNav.find(id)) || { id: id, name: id };
     var line = $("mast-region-line");
     if (line) {
       var bits = [];
@@ -54,27 +27,15 @@
       line.textContent = text;
       line.hidden = !text;
     }
-    if (document.documentElement && rec.waterType) {
-      document.documentElement.setAttribute("data-water", rec.waterType);
+    if (rec.waterType) {
+      try { document.documentElement.setAttribute("data-water", rec.waterType); } catch (e) {}
     }
   }
-
-  function watchSticky() {
-    var bar = $("compact-bar");
-    var sen = $("sticky-sentinel");
-    if (!bar || !sen || !("IntersectionObserver" in global)) return;
-    var io = new IntersectionObserver(function (entries) {
-      var e = entries[0];
-      bar.classList.toggle("is-stuck", !!(e && !e.isIntersecting));
-    }, { root: null, threshold: 0 });
-    io.observe(sen);
-  }
-
   function bindPickerIfNeeded() {
     var root = document.querySelector("[data-region-nav]");
     var nav = global.CoastalRegionNav;
     if (!root || !nav || root._rnSet) return;
-    if ($("region-select")) return; // dashboard.js binds the homepage picker
+    if ($("region-select")) return;
     var cfg = (typeof nav.defaultCatalog === "function") ? nav.defaultCatalog() : { regions: [], freshwater: [] };
     var id = currentId();
     nav.bind(root, cfg, {
@@ -90,22 +51,13 @@
           if (path !== "/lake" || (location.search || "").indexOf(rid) === -1) location.href = href;
           return;
         }
-        if (path === "/lake") {
-          location.href = "/?region=" + encodeURIComponent(rid);
-        }
+        if (path === "/lake") location.href = "/?region=" + encodeURIComponent(rid);
       }
     });
     setRegion(id);
     if (global.CoastalBriefLink) CoastalBriefLink.sync(id);
   }
-
-  fillDateline();
-  watchSticky();
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", bindPickerIfNeeded);
-  } else {
-    bindPickerIfNeeded();
-  }
-
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bindPickerIfNeeded);
+  else bindPickerIfNeeded();
   global.CoastalIdentity = { setRegion: setRegion, currentId: currentId };
 })(window);

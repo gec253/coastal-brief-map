@@ -196,10 +196,24 @@
     if (sel && sel.value !== id && Array.prototype.some.call(sel.options, function (o) { return o.value === id; })) {
       sel.value = id;
     }
+    var rec = find(id);
+    var line = $("mast-region-line");
+    if (line) {
+      var bits = [];
+      if (rec && rec.name) bits.push(rec.name);
+      if (rec && rec.area) bits.push(rec.area);
+      var text = bits.join(" · ");
+      line.textContent = text;
+      line.hidden = !text;
+    }
+    if (rec && rec.waterType) {
+      try { document.documentElement.setAttribute("data-water", rec.waterType); } catch (e) {}
+    }
     if (global.CoastalIdentity && typeof global.CoastalIdentity.setRegion === "function") {
-      global.CoastalIdentity.setRegion(id, find(id));
+      global.CoastalIdentity.setRegion(id, rec);
     }
   }
+
 
   global.CoastalRegionNav = {
     bind: bind,
