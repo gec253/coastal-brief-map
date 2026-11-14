@@ -11,8 +11,7 @@
     "freshwater": {
       "label": "Freshwater",
       "blurb": "Lakes, rivers, and reservoirs",
-      "instrumentSet": "freshwater-lake",
-      "comingSoon": true
+      "instrumentSet": "freshwater-lake"
     }
   },
   "instrumentSets": {
@@ -49,8 +48,7 @@
         "alerts",
         "access",
         "regulations"
-      ],
-      "status": "planned, not built"
+      ]
     },
     "freshwater-river": {
       "readings": [
@@ -68,8 +66,7 @@
         "alerts",
         "access",
         "regulations"
-      ],
-      "status": "planned, not built"
+      ]
     }
   },
   "stations": {

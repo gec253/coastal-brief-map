@@ -35,7 +35,7 @@ when live. Flows below Falls Dam are **regulated**.
 | Flood stages / river forecasts | NWS NWPS | NEUN7, CLYN7, SMFN7, GLDN7, KINN7 (see thresholds below) | official category stages (and forecast series where issued) | ft | official NWS thresholds / forecast | follows USGS for observed; forecast cadence as above |
 | Water temperature | — | No active USGS IV 00010 on the Neuse main stem (see below) | — | — | show unavailable; do not borrow the Falls Lake dam sensor | — |
 
-The draft `neuse-river` region in `regions.json` currently runs Falls Dam–Goldsboro
+The `neuse-river` region in `regions.json` currently runs Falls Dam–Goldsboro
 and does not list Kinston. Kinston is a live, official main-stem gauge and is included
 here because it was on the verification list.
 
@@ -69,7 +69,7 @@ Official pages:
 | Release at the dam (old gauge) | USGS | **02098198 Haw R below B. Everett Jordan Dam nr Moncure, NC. 35.64944, −79.06556 — discontinued.** IV flow ended 29 Sep 2010; IV stage ended 29 Sep 2016. | 00060, 00065 | — | **do not use** | dead |
 | Nearest live flow below the dam | USGS IV + NWPS | 02098206 / HRMN7 Haw River near Moncure, NC. 35.63222, −79.06000. About 1.6 mi below the dam, above the Deep River confluence. | 00060, 00065 | cfs, ft | observed; **dam release plus local runoff**, not the official gate outflow. NWPS flood cats are estimated (action/minor 16, moderate 18; major not set). No NWPS forecast. | 15-minute class IV (see freshness) |
 | Flood stages on the lake | NWS NWPS | NHPN7 (USGS 02098197) | action 240, minor 240, moderate 241, major 242 | ft, on the **pool elevation** scale (top of flood-control pool in `BEJPERT.TXT` is 240.0 ft msl) | official NWS thresholds; observed only, no lake-level forecast | follows USGS |
-| Alerts | NWS API | draft zone NCZ040; or a point at the dam (35.6547, −79.0683) | — | — | official | — |
+| Alerts | NWS API | zone NCZ040; or a point at the dam (35.6547, −79.0683) | — | — | official | — |
 
 USACE project and recreation landing page (link-only context):
 `https://www.saw.usace.army.mil/Locations/District-Lakes-and-Dams/B-Everett-Jordan/`.
@@ -77,7 +77,7 @@ USACE project and recreation landing page (link-only context):
 Bynum (02096960 / BYNN7) is a valid official Haw River gauge, but it is **above**
 Jordan Lake (NWPS lists it as upstream of NHPN7). It is an inflow candidate, not a
 "at or below the dam" source. The below-dam gauge Scout listed, 02098198, is real
-but no longer reports. The draft `jordan-lake` region already uses 02098206 / HRMN7
+but no longer reports. The `jordan-lake` region uses 02098206 / HRMN7
 for that reason.
 
 ## Datums
@@ -138,11 +138,11 @@ returned 37 sites in North Carolina. In the Neuse and Tar-Pamlico accounting uni
 
 - **Neuse main stem: no active IV water-temperature gauge.** Clayton, Smithfield,
   Goldsboro, Kinston, and below Falls Dam have only historical discrete (qw) 00010
-  samples, not a live sensor. The draft `neuse-river` note in `regions.json` is correct.
+  samples, not a live sensor. The `neuse-river` note in `regions.json` is correct.
 - **Tar River: no active IV water-temperature gauge** on the Tar itself (no Tar River,
   Tarboro, or similar IV 00010 site in the list).
 - The only active IV 00010 in HUC 030202 (Neuse) is **02087182 Falls Lake above dam**
-  — a lake sensor, already used on the Falls Lake preview. Do not reuse it as Neuse
+  — a lake sensor, already used on the Falls Lake page. Do not reuse it as Neuse
   River water temperature.
 - The only active IV 00010 in HUC 030201 (Tar-Pamlico) is **0208458893 Lake
   Mattamuskeet**, a coastal lake, not the Tar River.
@@ -162,12 +162,12 @@ Jordan Lake dam (02098197) and the Haw gauges checked here also have no IV 00010
 3. **02096960 / BYNN7 is inflow (Haw at Bynum), not a dam or tailwater gauge.**
 4. **Smithfield is stage-only at USGS.** A naive IV fetch still returns a 1991
    discharge. NWPS may show a secondary flow; do not present that as USGS.
-5. **Kinston is live but not in the draft `neuse-river` region** (that draft stops
+5. **Kinston is live but not in the `neuse-river` region** (that region stops
    at Goldsboro). Add it only if the product is meant to continue downstream; its
    NWPS forecast is not year-round.
 6. **Point rainfall** at 02098197 is one sensor at the dam.
 7. USGS IV values are provisional (P) and can be revised. Downstream Neuse flows
-   are regulated by Falls Dam and should be marked as such, same as the Falls preview.
+   are regulated by Falls Dam and should be marked as such, same as the Falls Lake page.
 8. `BEJPERT.TXT` lists two different "bottom of conservation pool" elevations (150.0
    in the storage table, 202.0 in the event table). That does not affect the 216.0
    guide curve. Do not invent a low-pool line from those figures without a USACE read.

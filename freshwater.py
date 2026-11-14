@@ -455,7 +455,7 @@ def assemble(rid):
     if lake_out is not None and lake:
         lake_out = _attach_nwps(lake, lake_out, nw)
 
-    payload = {"ok": True, "private": True, "generatedAt": now.isoformat(),
+    payload = {"ok": True, "generatedAt": now.isoformat(),
                "region": {k: r.get(k) for k in ("id", "name", "area", "anchor", "waterType", "instrumentSet")},
                "lake": lake_out, "waterTemp": water, "rain": rain, "release": release,
                "inflows": inflow_out, "river": river_out,

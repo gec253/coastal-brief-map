@@ -70,6 +70,17 @@ class ConfigShape(unittest.TestCase):
             self.assertFalse(r.get("draft"), rid)
             self.assertEqual(r.get("waterType"), "freshwater")
 
+    def test_freshwater_metadata_is_not_marked_coming_soon(self):
+        # leftover public-launch cleanup: these keys must not linger now that
+        # the three freshwater views are built and public.
+        import json
+        from pathlib import Path
+        cfg = json.loads(Path(__file__).resolve().parents[1].joinpath("data/regions.json").read_text())
+        self.assertNotIn("comingSoon", cfg["waterTypes"]["freshwater"])
+        for key in ("freshwater-lake", "freshwater-river"):
+            self.assertNotIn("status", cfg["instrumentSets"][key], key)
+            self.assertNotEqual((cfg["instrumentSets"][key].get("status") or "").lower(), "planned, not built")
+
     def test_jordan_gauges_and_guide_curve(self):
         j = self.regs["jordan-lake"]
         self.assertEqual(j["instrumentSet"], "freshwater-lake")
@@ -168,6 +179,7 @@ class AssembleJordanNeuse(unittest.TestCase):
         status, body = self._assemble("jordan-lake", iv7=iv7, ivq=ivq, names=names)
         self.assertEqual(status, 200)
         self.assertTrue(body["ok"])
+        self.assertNotIn("private", body)
         self.assertEqual(body["region"]["id"], "jordan-lake")
         self.assertEqual(body["lake"]["datum"], "NGVD29")
         self.assertEqual(body["lake"]["guideCurveFt"], 216.0)
@@ -197,6 +209,7 @@ class AssembleJordanNeuse(unittest.TestCase):
         }
         status, body = self._assemble("neuse-river", ivq=ivq)
         self.assertEqual(status, 200)
+        self.assertNotIn("private", body)
         self.assertIsNone(body["lake"])
         self.assertEqual(body["waterTemp"]["status"], "unavailable")
         self.assertIn("No active USGS water-temperature sensor", body["waterTemp"]["note"])
@@ -251,6 +264,7 @@ class AssembleJordanNeuse(unittest.TestCase):
         }
         status, body = self._assemble("falls-lake", iv7=iv7, ivq=ivq)
         self.assertEqual(status, 200)
+        self.assertNotIn("private", body)
         self.assertEqual(body["region"]["id"], "falls-lake")
         self.assertEqual(body["lake"]["guideCurveFt"], 251.5)
         self.assertEqual(body["lake"]["vsGuideFt"], round(245.07 - 251.5, 2))
@@ -351,6 +365,9 @@ class GatingHttp(unittest.TestCase):
             status, body, _ = self._req("/api/freshwater?region=jordan-lake")
             self.assertEqual(status, 200)
             self.assertIn(b"jordan-lake", body)
+            import json as _json
+            payload = _json.loads(body)
+            self.assertNotIn("private", payload)
             status, _, _ = self._req("/api/freshwater?region=falls-lake")
             self.assertEqual(status, 200)
             status, _, _ = self._req("/api/freshwater?region=neuse-river")

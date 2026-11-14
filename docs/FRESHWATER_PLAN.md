@@ -8,27 +8,34 @@ on `/lake?region=` unless `FRESHWATER_ENABLED` is `0`/`false`/`off`. The coastal
 Sources below were checked live on **13 Nov 2026, about 7 AM ET**. Numbers are quoted
 only to show the feeds work; they are not shown on the site.
 
-## 1. What changed in the code (groundwork only)
+## 1. What changed in the code (original groundwork; now superseded)
 
-- **`data/regions.json`** gains:
+The bullets below are the 13 Nov 2026 groundwork notes. They are kept as a record.
+Since then, Falls Lake, Jordan Lake and the Neuse River are public on `/lake?region=`,
+the homepage picker links those three pages, and the `comingSoon` / "planned, not built"
+markers have been removed from `data/regions.json`.
+
+- **`data/regions.json`** gained:
   - `waterTypes`: `saltwater` (Ocean, inlets, and sounds) and `freshwater` (Lakes,
-    rivers, and reservoirs, `comingSoon: true`).
+    rivers, and reservoirs).
   - `instrumentSets`:
-    - `coastal`: what the dashboard shows today.
+    - `coastal`: what the coastal dashboard shows.
     - `freshwater-lake`: lake elevation vs normal pool, water temperature, air
       temperature, wind, 24 h rain, forecast and QPF, alerts, access, regulations.
     - `freshwater-river`: streamflow with a percentile for the day, gage height, water
       temperature, rain, NWPS river forecast, forecast and QPF, alerts, access,
       regulations.
-  - `"waterType": "saltwater"` on every existing region.
-  - One **draft, disabled** region, `falls-lake`, built only from sources verified below.
-- **`/api/regions`** now includes `waterType`. The region picker groups regions under
-  "Saltwater", with a disabled "Freshwater: Lakes and rivers: coming soon" entry.
+  - `"waterType": "saltwater"` on every existing coastal region.
+  - A `falls-lake` region, later joined by `jordan-lake` and `neuse-river`. All three
+    are now `enabled: true` / `draft: false` and assembled when `previewReady` is set.
+- **`/api/regions`** includes `waterType` for saltwater regions (the coastal dashboard
+  still serves saltwater only). Freshwater options in the homepage picker link to
+  `/lake?region=`.
 - **Photos** have a water type (Saltwater or Freshwater) next to the category. Galleries
   filter with `?water=salt|fresh`, and the admin can change it. See
   PHOTO_UPLOADS_SETUP.md for the SQL.
-- The home strip adds one line: "From the rivers to the sounds to the sea. Freshwater
-  lakes and rivers are coming soon."
+- The home strip reads: "From the rivers to the sounds to the sea. Falls Lake, Jordan
+  Lake and the Neuse River are in the region list."
 
 ## 2. Structure (proposed)
 
