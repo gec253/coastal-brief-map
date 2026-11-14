@@ -420,36 +420,41 @@
     const prev = events.filter(function (e) { return e.t <= now; }).pop();
     const n0 = next[0];
     const curve = t.curve || [];
-    const nowH = interp(curve, now);
+    const hasCurve = curve.length >= 10;
+    const nowH = hasCurve ? interp(curve, now) : null;
     const rising = n0 ? n0.type === "H" : null;
     const mins = n0 ? Math.round((n0.t - now) / 60000) : null;
     const inTxt = mins == null ? "" : (mins >= 60 ? Math.floor(mins / 60) + " h " + (mins % 60) + " min" : mins + " min");
-    el.innerHTML = head("Tide", null, t.observed && t.observed.status !== "unavailable" ? "pred-obs" : "predicted") +
+    const hasObs = t.observed && t.observed.status !== "unavailable";
+    el.innerHTML = head("Tide", null, hasObs ? "pred-obs" : "predicted") +
       '<div class="tide-top">' +
       '<div class="tide-next">' + (n0
         ? '<div class="tide-next-k">Next ' + (n0.type === "H" ? "high" : "low") + "</div>" +
           '<div class="big-read"><span class="big-num">' + esc(clock(n0.t).replace(/\s?(AM|PM)/, "")) + '</span><span class="big-unit">' + esc(/PM/.test(clock(n0.t)) ? "PM" : "AM") + ' ET</span></div>' +
           '<div class="big-label">' + fmt(n0.v, 1) + " ft · in " + esc(inTxt) + "</div>"
         : '<div class="big-label">No upcoming tide in the prediction window.</div>') + "</div>" +
-      '<div class="tide-state">' + (isNum(nowH) ? '<div class="ts-row"><span class="ts-k">Predicted now</span><span class="ts-v">' + fmt(nowH, 1) + " ft</span></div>" +
-        '<div class="ts-row"><span class="ts-k">Trend</span><span class="ts-v">' + (rising == null ? "—" : rising ? "Rising ↑" : "Falling ↓") + "</span></div>" : "") +
+      '<div class="tide-state">' + (isNum(nowH) ? '<div class="ts-row"><span class="ts-k">Predicted now</span><span class="ts-v">' + fmt(nowH, 1) + " ft</span></div>" : "") +
+        (rising == null ? "" : '<div class="ts-row"><span class="ts-k">Trend</span><span class="ts-v">' + (rising ? "Rising ↑" : "Falling ↓") + "</span></div>") +
         (prev ? '<div class="ts-row"><span class="ts-k">Last ' + (prev.type === "H" ? "high" : "low") + '</span><span class="ts-v">' + esc(etTime(prev.t, false)) + "</span></div>" : "") +
       "</div></div>" +
       obsStrip(t.observed) +
-      '<div class="tide-legend" aria-hidden="true"><span class="lg lg-pred"><i></i>Predicted tide</span>' +
-      (t.observed && t.observed.status !== "unavailable" ? '<span class="lg lg-obs"><i></i>Observed water level</span>' : "") +
-      '<span class="lg lg-now"><i></i>Now</span></div>' +
-      '<div class="tide-chart" id="tide-chart"></div>' +
+      (hasCurve
+        ? '<div class="tide-legend" aria-hidden="true"><span class="lg lg-pred"><i></i>Predicted tide</span>' +
+          (hasObs ? '<span class="lg lg-obs"><i></i>Observed water level</span>' : "") +
+          '<span class="lg lg-now"><i></i>Now</span></div>' +
+          '<div class="tide-chart" id="tide-chart"></div>'
+        : '<p class="fine tide-hilo-note">' + esc(t.note || "NOAA publishes official high and low predictions here, but not a 6-minute curve. There is no local water-level gauge.") + "</p>") +
       '<ol class="tide-list">' + next.slice(0, 4).map(function (e) {
         return '<li class="' + (e.type === "H" ? "is-high" : "is-low") + '"><span class="tl-k">' + (e.type === "H" ? "High" : "Low") + '</span><span class="tl-t">' + esc(etTime(e.t)) + '</span><span class="tl-v">' + fmt(e.v, 1) + " ft</span></li>";
       }).join("") + "</ol>" +
       '<div class="inst-foot">' + predCaption(t) + obsCaption(t.observed, (t.observed && t.observed.station) || t.station) + "</div>";
-    drawTideChart(t);
+    if (hasCurve) drawTideChart(t);
   }
   function obsStrip(o) {
-    if (!o || o.status === "unavailable") {
+    if (!o) return "";
+    if (o.status === "unavailable") {
       return '<div class="tide-obs is-off"><div class="to-cell"><span class="ts-k">Observed water level</span><span class="to-v num-off">—</span>' +
-        '<span class="to-s">' + (o && o.lastReport ? "Not reporting since " + esc(etTime(o.lastReport)) : "Not reporting right now") + "</span></div></div>";
+        '<span class="to-s">' + (o.lastReport ? "Not reporting since " + esc(etTime(o.lastReport)) : "Not reporting right now") + "</span></div></div>";
     }
     const L = o.latest || {};
     const d = L.diff;
@@ -480,7 +485,10 @@
       '<div class="src-body"><p class="src-title"><b>' + esc(st.name) + "</b> (" + esc(st.id) + ")</p><p>" + esc(st.network || "") + " · " + esc(st.agency || "") + "</p>" +
       (isNum(st.distanceMi) ? "<p>" + esc(st.distanceMi + " mi " + (st.bearingFromAnchor || "") + " of " + st.anchor + ". " + (st.setting || "")) + ".</p>" : "") +
       (t.curveNote ? "<p>" + esc(t.curveNote) + "</p>" : "") +
-      "<p>Astronomical tide predictions at 6-minute steps, in feet above mean lower low water (MLLW). These are predictions, not measured water levels; wind and pressure can push the real tide higher or lower. Times are Eastern.</p>" +
+      (t.note && !t.curveNote ? "<p>" + esc(t.note) + "</p>" : "") +
+      "<p>" + (t.curve && t.curve.length
+        ? "Astronomical tide predictions at 6-minute steps, in feet above mean lower low water (MLLW). These are predictions, not measured water levels; wind and pressure can push the real tide higher or lower. Times are Eastern."
+        : "Official NOAA high and low tide predictions, in feet above mean lower low water (MLLW). These are predictions, not measured water levels. NOAA does not publish a 6-minute curve or a water-level gauge at this station. Times are Eastern.") + "</p>" +
       '<p class="src-links">' + (t.sourceUrl ? '<a href="' + esc(t.sourceUrl) + '" target="_blank" rel="noopener">NOAA prediction page</a>' : "") + "</p></div></details>";
   }
   function interp(curve, t) {
@@ -628,6 +636,8 @@
   function renderHarbor(r) {
     const el = $("i-harbor");
     if (!el) return;
+    if (!r) { el.innerHTML = ""; el.hidden = true; return; }
+    el.hidden = false;
     const v = val(r);
     stateClass(el, r);
     el.innerHTML = '<div class="harbor-row">' +
@@ -891,6 +901,7 @@
     ];
     let html = '<table><thead><tr><th>Reading</th><th>Type</th><th>Station</th><th>Where</th><th>Time</th></tr></thead><tbody>';
     rows.forEach(function (row) {
+      if (row[1] == null) return;
       const r = row[1] || {};
       const st = r.station || {};
       html += "<tr><td>" + esc(row[0]) + "</td><td>" + kindTag(r.kind || "observed") + "</td><td>" + (st.url ? '<a href="' + esc(st.url) + '" target="_blank" rel="noopener">' : "") + esc(st.name || "—") + " (" + esc(st.id || "—") + ")" + (st.url ? "</a>" : "") +

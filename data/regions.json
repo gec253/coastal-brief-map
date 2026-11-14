@@ -240,6 +240,16 @@
       "lon": -75.33,
       "setting": "Offshore waverider east of Oregon Inlet",
       "url": "https://www.ndbc.noaa.gov/station_page.php?station=44095"
+    },
+    "TEC2837": {
+      "name": "Bogue Inlet",
+      "network": "NOAA tide predictions (subordinate station)",
+      "agency": "NOAA CO-OPS (Tides & Currents)",
+      "type": "coops",
+      "lat": 34.65,
+      "lon": -77.1,
+      "setting": "Ocean / inlet at the west end of Emerald Isle. Official high and low predictions only; no 6-minute curve and no water-level gauge.",
+      "url": "https://tidesandcurrents.noaa.gov/noaatidepredictions.html?id=TEC2837"
     }
   },
   "regions": [
@@ -705,6 +715,109 @@
       ],
       "waterType": "saltwater",
       "notes": "Private preview. Kitty Hawk, Kill Devil Hills and Nags Head, south to Oregon Inlet. Wind, observed tide and some air readings come from Duck Pier or Oregon Inlet and are labeled as such. Inshore ocean water temperature is unavailable."
+    },
+    {
+      "id": "emerald-isle",
+      "enabled": false,
+      "draft": false,
+      "previewReady": true,
+      "name": "Emerald Isle",
+      "area": "Bogue Inlet to the east town line, Emerald Isle",
+      "anchor": {
+        "label": "Bogue Inlet",
+        "lat": 34.65,
+        "lon": -77.1
+      },
+      "map": {
+        "center": [
+          34.65,
+          -77.1
+        ],
+        "zoom": 11
+      },
+      "readings": {
+        "wind": {
+          "kind": "observed",
+          "role": "Onslow Bay buoy, ~32 mi offshore",
+          "stationLabel": "Onslow Bay buoy, ~32 mi offshore",
+          "sources": [
+            "41064"
+          ],
+          "note": "There is no wind sensor at Emerald Isle or Bogue Inlet. This is the Onslow Bay Outer weather buoy, about 32 miles offshore. Cape Lookout and Bogue Field are not used."
+        },
+        "seas": {
+          "kind": "observed",
+          "role": "Offshore seas, Onslow Bay",
+          "sources": [
+            "41159"
+          ]
+        },
+        "swell": {
+          "kind": "observed",
+          "role": "Swell split from the wave spectrum",
+          "sources": [
+            "41159"
+          ]
+        },
+        "waterTemp": {
+          "kind": "observed",
+          "role": "Inshore ocean water",
+          "sources": [],
+          "note": "No ocean-pier water-temperature sensor at Emerald Isle or Bogue Inlet. Beaufort harbor water is not used."
+        },
+        "waterTempOffshore": {
+          "kind": "observed",
+          "role": "Offshore surface water, Onslow Bay",
+          "sources": [
+            "41159"
+          ]
+        },
+        "airTemp": {
+          "kind": "observed",
+          "role": "Air at the Onslow Bay buoy",
+          "stationLabel": "Onslow Bay buoy, ~32 mi offshore",
+          "sources": [
+            "41064"
+          ]
+        },
+        "pressure": {
+          "kind": "observed",
+          "role": "Barometer at the Onslow Bay buoy",
+          "stationLabel": "Onslow Bay buoy, ~32 mi offshore",
+          "sources": [
+            "41064"
+          ]
+        }
+      },
+      "tide": {
+        "station": "TEC2837",
+        "name": "Bogue Inlet",
+        "datum": "MLLW",
+        "curve": false,
+        "observed": false,
+        "note": "NOAA publishes official high and low tide predictions at Bogue Inlet, but not a 6-minute curve or a local water-level gauge. The Swansboro bridge curve and Beaufort observed water level are not used."
+      },
+      "forecast": {
+        "label": "Emerald Isle",
+        "lat": 34.655,
+        "lon": -77.09,
+        "gridId": "MHX",
+        "gridX": 46,
+        "gridY": 54,
+        "office": "NWS Newport/Morehead City (MHX)"
+      },
+      "marine": {
+        "zone": "AMZ158",
+        "zoneName": "S of Cape Lookout NC to Surf City NC out to 20 NM",
+        "office": "NWS Newport/Morehead City (MHX)",
+        "zoneNote": "AMZ158 runs from Cape Lookout to Surf City, a larger area than Emerald Isle."
+      },
+      "alertZones": [
+        "AMZ158",
+        "NCZ195"
+      ],
+      "waterType": "saltwater",
+      "notes": "Private preview. Town of Emerald Isle only, from Bogue Inlet to the east town line. Not Swansboro, Cedar Point or Cape Carteret. Wind, seas and offshore temperature come from the Onslow Bay Outer buoys, about 32 miles offshore, and are labeled as such. Inshore water temperature is unavailable. Tide predictions are official highs and lows at Bogue Inlet; there is no 6-minute curve and no local observed water level."
     },
     {
       "id": "falls-lake",

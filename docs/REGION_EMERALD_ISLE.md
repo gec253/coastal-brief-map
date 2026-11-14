@@ -266,3 +266,27 @@ Crystal Coast's core shore into a west-island page.
 8. What happens to the disabled `atlantic-beach` stub — leave Atlantic
    Beach / Pine Knoll Shores for a later page, or retire the combined
    name?
+
+## Phase 2 defaults (14 Nov 2026)
+
+Set for the private preview on 14 Nov 2026. Config-driven; later review can change them.
+
+- **Coverage:** Town of Emerald Isle only, from Bogue Inlet to the east town line.
+  Swansboro, Cedar Point and Cape Carteret are out. No NCZ199.
+- **Alerts:** AMZ158 and NCZ195. Land forecast point 34.655 N, 77.090 W, MHX grid
+  46, 54. Anchor is TEC2837 Bogue Inlet.
+- **Tide:** official highs and lows from TEC2837, labeled as predictions. No
+  6-minute curve and no observed water level. The Swansboro bridge curve and
+  Beaufort observed level are not used.
+- **Ocean wind:** 41064 only, labeled "Onslow Bay buoy, ~32 mi offshore", with
+  that station's existing 130-minute stale window. KNJM and CLKN7 are not used.
+- **Inshore water temperature:** unavailable. Beaufort harbor water is not used.
+- **Seas, swell and offshore temperature:** 41159 only (swell from `.spec`),
+  labeled with its distance. No backup.
+- **Marine zone:** the official zone, AMZ158, with a short caption that the
+  zone runs from Cape Lookout to Surf City, a larger area than Emerald Isle.
+- The existing `atlantic-beach` stub stays disabled and untouched.
+- The region stays a private preview (`enabled: false`, `previewReady: true`).
+  Without the `cb_preview` cookie, `/?region=emerald-isle` and
+  `/api/conditions?region=emerald-isle` return 404 and `/api/regions` does not
+  list it. Going public needs Ed's separate approval.

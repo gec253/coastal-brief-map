@@ -514,6 +514,9 @@ def build(kind, spec, res, stations, anchor, status, tried):
         "values": res["values"], "raw": res.get("raw"), "rawUnits": res.get("rawUnits"),
         "dataUrl": res.get("url"), "tried": tried,
     }
+    if spec.get("stationLabel"):
+        out["station"] = dict(out["station"])
+        out["station"]["name"] = spec["stationLabel"]
     if spec.get("note"):
         out["note"] = spec["note"]
     return out
@@ -596,6 +599,11 @@ def observed_water_level(sid, curve_pts, now):
 
 def tides_block(tcfg, stations, anchor, now):
     sid = tcfg["station"]
+    # curve/observed default on, so existing regions keep a 6-minute graph and
+    # an observed level. A region may set either to false (Emerald Isle: official
+    # highs and lows only, no Swansboro curve, no Beaufort gauge).
+    want_curve = tcfg.get("curve", True)
+    want_obs = tcfg.get("observed", True)
     obs_sid = tcfg.get("observedStation") or sid
     today = now.astimezone(ET).date()
     b = et_ymd(today - timedelta(days=1))
@@ -603,17 +611,19 @@ def tides_block(tcfg, stations, anchor, now):
     hilo = tide_preds(sid, b, e, "hilo")
     # Yesterday through tomorrow so the graph window (about 9 h back to 21 h ahead) is always covered.
     curve_end = et_ymd(today + timedelta(days=1))
-    curve = tide_preds(sid, b, curve_end, "6")
+    curve = None
     curve_sid = sid
-    # Subordinate stations (e.g. Jennette's Pier 8652226) publish official
-    # high/low predictions only, not a 6-minute curve. Use the observed
-    # reference station's 6-minute predictions for the graph, and say so.
-    if not curve and obs_sid != sid:
-        curve = tide_preds(obs_sid, b, curve_end, "6")
-        curve_sid = obs_sid
+    if want_curve:
+        curve = tide_preds(sid, b, curve_end, "6")
+        # Subordinate stations (e.g. Jennette's Pier 8652226) publish official
+        # high/low predictions only, not a 6-minute curve. Use the observed
+        # reference station's 6-minute predictions for the graph, and say so.
+        if not curve and obs_sid != sid:
+            curve = tide_preds(obs_sid, b, curve_end, "6")
+            curve_sid = obs_sid
     meta = stations.get(sid) or {}
     info = station_info(sid, meta, anchor)
-    if not hilo or not curve:
+    if not hilo or (want_curve and not curve):
         return {"status": "unavailable", "kind": "predicted", "station": info}
     try:
         events = [{"t": local_epoch_ms(p["t"]), "v": round(float(p["v"]), 2), "type": p.get("type")} for p in hilo]
@@ -623,18 +633,24 @@ def tides_block(tcfg, stations, anchor, now):
     now_ms = now.timestamp() * 1000
     full = pts
     pts = [p for p in pts if now_ms - 9.5 * 3600e3 <= p[0] <= now_ms + 21.5 * 3600e3]
-    try:
-        observed = observed_water_level(obs_sid, full, now)
-    except Exception:
-        observed = {"kind": "observed", "status": "unavailable"}
-    if obs_sid != sid:
-        observed["station"] = station_info(obs_sid, stations.get(obs_sid) or {}, anchor)
-        if tcfg.get("observedNote"):
-            observed["note"] = tcfg["observedNote"]
+    observed = None
+    if want_obs:
+        try:
+            observed = observed_water_level(obs_sid, full, now)
+        except Exception:
+            observed = {"kind": "observed", "status": "unavailable"}
+        if obs_sid != sid:
+            observed["station"] = station_info(obs_sid, stations.get(obs_sid) or {}, anchor)
+            if tcfg.get("observedNote"):
+                observed["note"] = tcfg["observedNote"]
     out = {"status": "ok", "kind": "predicted", "station": info, "datum": "MLLW", "units": "ft",
-           "events": events, "curve": pts, "interval": "6 min" if curve else None, "observed": observed,
+           "events": events, "curve": pts, "interval": "6 min" if curve else "highs and lows only",
            "sourceUrl": "https://tidesandcurrents.noaa.gov/noaatidepredictions.html?id=%s" % sid}
-    if curve_sid != sid:
+    if want_obs:
+        out["observed"] = observed
+    if tcfg.get("note"):
+        out["note"] = tcfg["note"]
+    if curve and curve_sid != sid:
         out["curveStation"] = station_info(curve_sid, stations.get(curve_sid) or {}, anchor)
         out["curveNote"] = (
             "NOAA publishes high and low tide predictions at %s, but not a 6-minute curve. "
