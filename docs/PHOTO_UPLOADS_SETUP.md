@@ -1,5 +1,11 @@
 # Photo submissions: setup guide
 
+Product spec (Ed's 14 Nov 2026 decisions, including the 10 MB cap, the
+anonymous toggle, and no CAPTCHA at launch): `docs/CATCH_WALL_UPLOAD.md`.
+This guide is the ops checklist for storage, keys, and turning the flag
+on. Follow the product spec if the two ever disagree; do not flip the
+flag or create a Supabase project until Ed approves those steps.
+
 Status: **built and deployed, switched off.** `PHOTO_UPLOADS_ENABLED` is not set in
 production, so `/api/photos/submit`, `/admin`, and every `/api/admin/*` route answer
 404 without reading a request body, and the galleries say "Photo sharing opens soon".
