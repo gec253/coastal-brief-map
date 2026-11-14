@@ -12,15 +12,15 @@
   <meta property="og:description" content="Fishing, surfing, and boating conditions for the North Carolina coast: wind, waves, water temperature, tides, and radar.">
   <meta property="og:url" content="https://thecoastalbrief.com/">
   <meta property="og:type" content="website">
-  <meta property="og:image" content="https://thecoastalbrief.com/branding/og-preview.png">
+  <meta property="og:image" content="https://thecoastalbrief.com/branding/og-masthead.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Coastal Brief wordmark over a breaking teal wave on a navy background, with the line North Carolina fishing, surfing, and boating conditions.">
+  <meta property="og:image:alt" content="The Coastal Brief nameplate in ivory serif on deep navy, with a faint North Carolina nautical-chart texture and the line From the rivers to the sounds to the sea.">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="The Coastal Brief — Know the Water. Live the Coast.">
   <meta name="twitter:description" content="Fishing, surfing, and boating conditions for the North Carolina coast: wind, waves, water temperature, tides, and radar.">
-  <meta name="twitter:image" content="https://thecoastalbrief.com/branding/og-preview.png">
-  <meta name="twitter:image:alt" content="Coastal Brief wordmark over a breaking teal wave on a navy background, with the line North Carolina fishing, surfing, and boating conditions.">
+  <meta name="twitter:image" content="https://thecoastalbrief.com/branding/og-masthead.jpg">
+  <meta name="twitter:image:alt" content="The Coastal Brief nameplate in ivory serif on deep navy, with a faint North Carolina nautical-chart texture and the line From the rivers to the sounds to the sea.">
   <script>
     (function () {
       try {
@@ -40,27 +40,53 @@
     <a class="skip" href="#tide-search">Skip to tide search</a>
     <a class="skip" href="#map-section">Skip to map</a>
   </nav>
-  <header class="site">
-    <div class="wrap header-row">
-      <div class="brand">
-        <h1><a class="site-title" href="/"><svg class="crest" viewBox="0 0 64 40" aria-hidden="true" focusable="false"><path class="crest-sea" d="M0 30 C10 18 18 16 28 22 S48 34 64 20 L64 40 L0 40 Z"/><path class="crest-arc" d="M14 15 C26 4 46 4 58 14 L55 17 C44 9 28 9 17 18 Z"/><path class="crest-in" d="M24 15 C32 9 44 9 52 14 L50 16.5 C42 12 33 12 26 16.8 Z"/></svg><span class="wordmark">The Coastal Brief</span></a></h1>
-        <p class="tagline tl-main">Know the Water. Live the Coast.</p>
-        <p class="tagline tl-sub">North Carolina Marine Conditions, Fishing &amp; Coastal Life</p>
-        <nav class="site-nav" aria-label="Site">
+  <header class="site" data-identity>
+    <div class="masthead" id="masthead">
+      <div class="wrap mast-folio">
+        <p class="mast-dateline" id="mast-dateline"><!--dateline--><time>Eastern Time</time><!--/dateline--></p>
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
+      </div>
+      <div class="wrap mast-nameplate">
+        <div class="mast-rule" aria-hidden="true"></div>
+        <h1><a class="site-title" href="/"><span class="wordmark">The Coastal Brief</span></a></h1>
+        <div class="mast-rule mast-rule-double" aria-hidden="true"></div>
+      </div>
+      <div class="wrap mast-meta">
+        <p class="mast-region" id="mast-region-line">Morehead City · Beaufort · Crystal Coast, North Carolina</p>
+        <p class="mast-mission">From the rivers to the sounds to the sea</p>
+        <p class="mast-reach">Corolla to Sunset Beach, inland rivers and lakes to offshore waters</p>
+      </div>
+      <div class="wrap">
+          <nav class="site-nav" aria-label="Site">
           <a href="/" aria-current="page">Conditions</a>
           <a href="/catch-wall">Catch Wall</a>
           <a href="/coastal-life">Coastal Life</a>
         </nav>
       </div>
-      <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
+    </div>  </header>
+    <div class="sticky-sentinel" id="sticky-sentinel" aria-hidden="true"></div>
+    <div class="compact-bar" id="compact-bar">
+      <div class="wrap compact-inner">
+        <a class="compact-name" href="/"><span class="wordmark">The Coastal Brief</span></a>
+        <div class="region-nav" id="region-nav" data-region-nav>
+          <button type="button" class="rn-btn" id="rn-btn" aria-expanded="false" aria-haspopup="listbox" aria-controls="rn-menu" title="Morehead City · Beaufort" aria-label="Morehead City · Beaufort">
+            <span class="rn-k">Region</span>
+            <span class="rn-name" id="rn-name">Morehead City</span>
+            <span class="rn-chev" aria-hidden="true"></span>
+          </button>
+          <div class="rn-menu" id="rn-menu" role="listbox" tabindex="-1" hidden aria-labelledby="rn-btn"></div>
+        </div>
+        <!--brief-nav--><a href="/brief?region=crystal-coast" id="nav-brief">Morning Brief</a><!--/brief-nav-->
+      </div>
     </div>
+
     <div class="wrap">
       <div class="meta-row">
         <span class="badge" id="freshness-badge">Loading readings…</span>
         <span class="loc" id="loc-line">Morehead City · Beaufort · Crystal Coast, North Carolina. Location is not requested from your browser.</span>
       </div>
     </div>
-  </header>
+
 
   <main class="wrap">
     <section class="panel glance dash is-booting" id="conditions" aria-labelledby="glance-h">
@@ -232,6 +258,8 @@
   </div>
 
   <!-- Leaflet JS/CSS are injected by app.js only after the map section enters view. -->
+  <script src="region-nav.js" defer></script>
+  <script src="/brief-link.js" defer></script>
   <script src="dashboard.js" defer></script>
   <script src="app.js" defer></script>
   <script src="coast-strip.js" defer></script>

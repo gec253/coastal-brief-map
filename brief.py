@@ -818,14 +818,15 @@ def page(b: dict, include_fresh: bool = False, public: bool = False, ads_on: boo
 <meta property="og:description" content="%(desc)s">
 <meta property="og:url" content="%(og_url)s">
 <meta property="og:type" content="article">
-<meta property="og:image" content="https://thecoastalbrief.com/branding/og-preview.png">
+<meta property="og:image" content="https://thecoastalbrief.com/branding/og-masthead.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Coastal Brief wordmark over a breaking teal wave on a navy background, with the line North Carolina fishing, surfing, and boating conditions.">
+<meta property="og:image:alt" content="The Coastal Brief nameplate in ivory serif on deep navy, with a faint North Carolina nautical-chart texture and the line From the rivers to the sounds to the sea.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="%(og_title)s">
 <meta name="twitter:description" content="%(desc)s">
-<meta name="twitter:image" content="https://thecoastalbrief.com/branding/og-preview.png">
+<meta name="twitter:image" content="https://thecoastalbrief.com/branding/og-masthead.jpg">
+<meta name="twitter:image:alt" content="The Coastal Brief nameplate in ivory serif on deep navy, with a faint North Carolina nautical-chart texture and the line From the rivers to the sounds to the sea.">
 <link rel="icon" href="/branding/favicon.svg" type="image/svg+xml">
 <link rel="preload" href="/fonts/source-sans-3-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/barlow-condensed-600.woff2" as="font" type="font/woff2" crossorigin>

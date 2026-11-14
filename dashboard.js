@@ -1001,6 +1001,8 @@
     }
     const sel = $("region-select");
     if (sel && sel.value !== id) sel.value = id;
+    if (window.CoastalRegionNav) CoastalRegionNav.setCurrent(id);
+    if (window.CoastalBriefLink) CoastalBriefLink.sync(id);
     const tc = $("tide-chart");
     if (tc) delete tc.dataset.revealed;
     load(id, false);
@@ -1020,7 +1022,9 @@
     fetch("/api/regions").then(function (r) { return r.json(); }).then(function (cfg) {
       state.regions = (cfg && cfg.regions) || [];
       if (!state.regions.length) throw new Error("no regions");
-      // Saltwater regions stay on this dashboard. Freshwater options go to /lake?region=.
+      // Saltwater regions stay on this dashboard. Freshwater options go to
+      // /lake?region=, same as the compact select on main. The header picker
+      // is bound to that same list (not /api/regions, which stays saltwater).
       let urlRegion = null;
       try { urlRegion = new URLSearchParams(location.search).get("region"); } catch (e) {}
       if (isFreshwater(urlRegion)) {
@@ -1040,7 +1044,21 @@
         }
         setRegion(sel.value, true);
       });
-      setRegion(pickInitial(cfg.default), false);
+      var initial = pickInitial(cfg.default);
+      if (window.CoastalRegionNav) {
+        var navCfg = Object.assign({}, cfg, {
+          line: (cfg && cfg.line) || "From the rivers to the sounds to the sea",
+          freshwater: FRESHWATER.map(function (r) {
+            return { id: r.id, name: r.name, waterType: "freshwater", available: true, comingSoon: false, href: "/lake?region=" + r.id };
+          })
+        });
+        CoastalRegionNav.bind(document.getElementById("region-nav"), navCfg, {
+          currentId: initial,
+          onSelect: function (id) { setRegion(id, true); }
+        });
+      }
+      setRegion(initial, false);
+
     }).catch(function () { showError("Could not load the region list."); });
     let rt = null;
     window.addEventListener("resize", function () {

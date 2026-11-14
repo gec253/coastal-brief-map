@@ -21,6 +21,7 @@ import sys
 import threading
 import time
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -1077,6 +1078,43 @@ import windgrid  # noqa: E402
 import freshwater  # noqa: E402
 import brief  # noqa: E402
 
+# Header "Morning Brief" link is in the HTML behind this marker. When the kill
+# switch is on (MORNING_BRIEF_ENABLED=0/false/off), strip it so the nav never
+# points at a 404. The brief is on by default, so public pages keep the link.
+_BRIEF_NAV_RE = re.compile(br"<!--brief-nav-->.*?<!--/brief-nav-->", re.S)
+
+def _apply_brief_nav(data: bytes) -> bytes:
+    if brief.flag_on():
+        return data
+    return _BRIEF_NAV_RE.sub(b"", data, count=1)
+
+
+_DATELINE_RE = re.compile(br"<!--dateline-->.*?<!--/dateline-->", re.S)
+
+
+def _dateline_html() -> bytes:
+    """Publication dateline in America/New_York, reserved in the masthead."""
+    now = datetime.now(ZoneInfo("America/New_York"))
+    label = "%s, %s %d, %d · Eastern Time" % (
+        now.strftime("%A"),
+        now.strftime("%B"),
+        now.day,
+        now.year,
+    )
+    iso = now.date().isoformat()
+    return b'<time datetime="%s">%s</time>' % (iso.encode("ascii"), html.escape(label).encode("utf-8"))
+
+
+def _apply_dateline(data: bytes) -> bytes:
+    if b"<!--dateline-->" not in data:
+        return data
+    return _DATELINE_RE.sub(_dateline_html(), data, count=1)
+
+
+def _apply_chrome(data: bytes) -> bytes:
+    return _apply_dateline(_apply_brief_nav(data))
+
+
 # ---------------------------------------------------------------- private preview access
 # /preview?key=<PREVIEW_KEY> sets an HttpOnly cookie that unlocks the flagged previews (/lab/wind,
 # /lab/tiles, and the not-yet-public saltwater dashboards) in that browser only. The key lives only in
@@ -1204,7 +1242,10 @@ class Handler(SimpleHTTPRequestHandler):
             if conditions.is_preview_salt_region(rid):
                 if not self._preview_ok():
                     return self.send_error(404, "not found")
-                return self._send_private(ROOT / "index.html", "text/html; charset=utf-8")
+                data = _apply_chrome((ROOT / "index.html").read_bytes())
+                data = data.replace(b'name="robots" content="index, follow"', b'name="robots" content="noindex, nofollow"')
+                return self._send_private(None, "text/html; charset=utf-8", data)
+            return self._send_html(ROOT / "index.html")
         if parsed.path == "/api/brief/wake":
             # Daily wake-up ping (GitHub Actions, 5:16 AM ET). Builds today's briefs if missing; returns no
             # brief content, so it publishes nothing. Idempotent: at most one build per region per day.
@@ -1213,7 +1254,7 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.send_error(404, "not found")
             return self._json_private(brief.wake(include_fresh=freshwater.flag_on() or bool(_preview_secret())))
         if parsed.path in ("/catch-wall", "/catch-wall/"):
-            return self._send_file(ROOT / "catch-wall.html", "text/html; charset=utf-8")
+            return self._send_html(ROOT / "catch-wall.html")
         if parsed.path == "/api/health":
             return self._send_json({"ok": True})
         if parsed.path == "/api/snapshot":
@@ -1247,7 +1288,7 @@ class Handler(SimpleHTTPRequestHandler):
                 return self._json_private(payload, status)
             return self._send_json(payload, cache_s=60, status=status)
         if parsed.path in ("/coastal-life", "/coastal-life/", "/photos", "/photos/"):
-            return self._send_file(ROOT / "catch-wall.html", "text/html; charset=utf-8")
+            return self._send_html(ROOT / "catch-wall.html")
         if parsed.path == "/api/photos/config":
             return self._send_json(photos.public_config(), cache_s=60)
         if parsed.path == "/api/photos":
@@ -1270,7 +1311,7 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.send_error(404, "not found")
             robots = "index, follow" if public else "noindex, nofollow"
             if parsed.path == "/lake":
-                data = (ROOT / "lake.html").read_bytes()
+                data = _apply_chrome((ROOT / "lake.html").read_bytes())
                 if not public:
                     data = data.replace(
                         b'name="robots" content="index, follow"',
@@ -1285,7 +1326,7 @@ class Handler(SimpleHTTPRequestHandler):
         if parsed.path in ("/brief", "/api/brief"):
             # Saltwater Morning Brief is on by default. MORNING_BRIEF_ENABLED=0/false/off is the
             # kill switch. The Falls Lake brief is public when freshwater is also on (the default).
-            # Not linked from the homepage or header.
+            # Linked from the site header when this flag is on (stripped when it is off).
             pv = self._preview_ok()
             if not (brief.flag_on() or pv):
                 return self.send_error(404, "not found")
@@ -1454,6 +1495,16 @@ class Handler(SimpleHTTPRequestHandler):
             return self._json_private({"ok": True}, 200, photos.session_cookie("", clear=True))
         status, payload = photos.admin_action(body)
         return self._json_private(payload, status)
+
+    def _send_html(self, path: Path):
+        if not path.is_file():
+            return self.send_error(404, "file not found")
+        data = _apply_chrome(path.read_bytes())
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
 
     def _send_file(self, path: Path, ctype: str):
         if not path.is_file():
