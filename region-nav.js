@@ -7,6 +7,36 @@
   "use strict";
   var LINE = "From the rivers to the sounds to the sea";
 
+
+  var SALT_DEFAULT = [
+    { id: "crystal-coast", name: "Morehead City · Beaufort", area: "Crystal Coast, North Carolina", waterType: "saltwater" },
+    { id: "hatteras", name: "Hatteras Island", area: "Cape Hatteras, Outer Banks", waterType: "saltwater" }
+  ];
+  var FRESH_DEFAULT = [
+    { id: "falls-lake", name: "Falls Lake", waterType: "freshwater", href: "/lake?region=falls-lake" },
+    { id: "jordan-lake", name: "Jordan Lake", waterType: "freshwater", href: "/lake?region=jordan-lake" },
+    { id: "neuse-river", name: "Neuse River", waterType: "freshwater", href: "/lake?region=neuse-river" }
+  ];
+  var lastCfg = null;
+
+  function defaultCatalog() {
+    return {
+      regions: SALT_DEFAULT.slice(),
+      freshwater: FRESH_DEFAULT.slice(),
+      line: LINE
+    };
+  }
+
+  function find(id, cfg) {
+    cfg = cfg || lastCfg || defaultCatalog();
+    var lists = (cfg.regions || []).concat(cfg.freshwater || []);
+    for (var i = 0; i < lists.length; i++) {
+      if (lists[i] && lists[i].id === id) return lists[i];
+    }
+    return null;
+  }
+
+
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
       return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c];
@@ -60,6 +90,7 @@
   function bind(root, cfg, opts) {
     if (!root) return;
     opts = opts || {};
+    lastCfg = cfg || lastCfg;
     var btn = root.querySelector(".rn-btn") || $("rn-btn");
     var menu = root.querySelector(".rn-menu") || $("rn-menu");
     var nameEl = root.querySelector(".rn-name") || $("rn-name");
@@ -165,7 +196,16 @@
     if (sel && sel.value !== id && Array.prototype.some.call(sel.options, function (o) { return o.value === id; })) {
       sel.value = id;
     }
+    if (global.CoastalIdentity && typeof global.CoastalIdentity.setRegion === "function") {
+      global.CoastalIdentity.setRegion(id, find(id));
+    }
   }
 
-  global.CoastalRegionNav = { bind: bind, setCurrent: setCurrent, LINE: LINE };
+  global.CoastalRegionNav = {
+    bind: bind,
+    setCurrent: setCurrent,
+    defaultCatalog: defaultCatalog,
+    find: find,
+    LINE: LINE
+  };
 })(window);

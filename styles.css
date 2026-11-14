@@ -1,9 +1,15 @@
 /* Self-hosted fonts (SIL Open Font License 1.1; license texts in /fonts/OFL-*.txt). Latin subset files as distributed by Google Fonts. */
-@font-face{font-family:"Barlow Condensed";font-style:normal;font-weight:500;font-display:swap;src:url("/fonts/barlow-condensed-500.woff2") format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
-@font-face{font-family:"Barlow Condensed";font-style:normal;font-weight:600;font-display:swap;src:url("/fonts/barlow-condensed-600.woff2") format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
-@font-face{font-family:"Fraunces";font-style:normal;font-weight:500 600;font-display:swap;src:url("/fonts/fraunces-var.woff2") format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
-@font-face{font-family:"Fraunces";font-style:italic;font-weight:500;font-display:swap;src:url("/fonts/fraunces-italic-var.woff2") format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
-@font-face{font-family:"Source Sans 3";font-style:normal;font-weight:400 700;font-display:swap;src:url("/fonts/source-sans-3-var.woff2") format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:"Barlow Condensed";font-style:normal;font-weight:500;font-display:optional;src:url("/fonts/barlow-condensed-500.woff2") format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:"Barlow Condensed";font-style:normal;font-weight:600;font-display:optional;src:url("/fonts/barlow-condensed-600.woff2") format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:"Fraunces";font-style:normal;font-weight:500 600;font-display:optional;src:url("/fonts/fraunces-var.woff2") format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:"Fraunces";font-style:italic;font-weight:500;font-display:optional;src:url("/fonts/fraunces-italic-var.woff2") format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:"Source Sans 3";font-style:normal;font-weight:400 700;font-display:optional;src:url("/fonts/source-sans-3-var.woff2") format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+
+/* Metric-adjusted fallbacks: swap can proceed without shifting the masthead or tiles. */
+@font-face{font-family:"Fraunces Fallback";src:local("Georgia"),local("Times New Roman");size-adjust:97.5%;ascent-override:92%;descent-override:22%;line-gap-override:0%;}
+@font-face{font-family:"Source Sans 3 Fallback";src:local("Arial"),local("Helvetica");size-adjust:104.8%;ascent-override:93%;descent-override:24%;line-gap-override:0%;}
+@font-face{font-family:"Barlow Condensed Fallback";src:local("Arial Narrow"),local("Arial");size-adjust:90%;ascent-override:94%;descent-override:22%;line-gap-override:0%;}
+
 :root {
   --navy: #0B2A3D;
   --teal: #5BA8A0;
@@ -822,9 +828,13 @@ a.site-title:focus {
   --oyster-2: #EDE5D6;
   --copper: #A9633A;
   --copper-lt: #C98657;
-  --f-display: "Fraunces", Georgia, "Times New Roman", serif;
-  --f-ui: "Source Sans 3", "Segoe UI", Helvetica, Arial, sans-serif;
-  --f-num: "Barlow Condensed", "Source Sans 3", "Arial Narrow", sans-serif;
+  --f-display: "Fraunces", "Fraunces Fallback", Georgia, "Times New Roman", serif;
+  --f-ui: "Source Sans 3", "Source Sans 3 Fallback", "Segoe UI", Helvetica, Arial, sans-serif;
+  --f-num: "Barlow Condensed", "Barlow Condensed Fallback", "Arial Narrow", sans-serif;
+  --pamlico: #2F6A62;
+  --marsh: #6E7F45;
+  --dock: #7A5C43;
+  --sunrise: #C9932E;
   /* dashboard surfaces (day) */
   --d-panel: #FBF8F2;
   --d-inst: #FFFFFF;
@@ -892,7 +902,7 @@ a.site-title { display: inline-flex; align-items: center; gap: 10px; }
 .meta-row .loc { color: rgba(246, 241, 231, 0.86); }
 .badge { background: #1F6E66; letter-spacing: 0.02em; }
 .badge.amber { background: var(--copper); }
-.theme-toggle { min-height: 40px; }
+.theme-toggle { min-height: 44px; }
 @media (max-width: 700px) {
   header.site h1 { font-size: 1.4rem; }
   .crest { width: 38px; height: 24px; }
@@ -2219,3 +2229,365 @@ body.no-scroll { overflow: hidden; }
 @media (max-width: 355px) {
   .site-nav { gap: 2px 5px; font-size: 0.72rem; }
 }
+
+
+/* Identity: restrained rules on instrument titles (no size or label changes). */
+:root[data-tiles="v2"] .inst-h { position: relative; }
+:root[data-tiles="v2"] .inst-h::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -2px;
+  height: 1px;
+  background: var(--d-edge);
+  pointer-events: none;
+}
+
+
+/* =====================================================================
+   Visual identity prototype — newspaper masthead + sticky folio bar.
+   Paper chrome, typographic nameplate, thin double rules. The compact
+   bar is always in flow (reserved height) and position:sticky, so the
+   masthead can scroll away without changing in-flow height or CLS.
+   ===================================================================== */
+header.site[data-identity] {
+  background: var(--oyster, #F6F1E7);
+  color: var(--atlantic, #0B2A3D);
+  padding: 0;
+  border-bottom: none;
+  box-shadow: none;
+  /* cancel the chart-line ornament from the navy header */
+  background-image: none;
+}
+[data-theme="dark"] header.site[data-identity] {
+  background: var(--atlantic-deep, #071C29);
+  color: var(--oyster, #F6F1E7);
+}
+[data-water="freshwater"] header.site[data-identity] {
+  background: #F3F0E8;
+}
+[data-theme="dark"][data-water="freshwater"] header.site[data-identity] {
+  background: #1B2118;
+  color: #F3EEE3;
+}
+
+.masthead { padding: 8px 0 10px; }
+.mast-folio {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+}
+.mast-dateline {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 1.2em;
+  line-height: 1.2;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--d-ink-2, #3E5868);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+[data-theme="dark"] .mast-dateline { color: var(--d-ink-2, #B9C9CF); }
+.mast-dateline time { font: inherit; letter-spacing: inherit; text-transform: inherit; }
+
+.mast-nameplate { text-align: center; padding: 6px 0 4px; }
+.mast-nameplate h1 {
+  margin: 0;
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: clamp(1.85rem, 7vw, 3.4rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-variation-settings: "opsz" 144, "SOFT" 20, "WONK" 0.4;
+  color: inherit;
+}
+header.site[data-identity] h1 {
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: clamp(1.85rem, 7vw, 3.4rem);
+  letter-spacing: -0.02em;
+  color: inherit;
+}
+header.site[data-identity] a.site-title {
+  display: inline-block;
+  color: inherit;
+  text-decoration: none;
+  min-height: 44px;
+  padding: 4px 0;
+}
+header.site[data-identity] .wordmark {
+  font-family: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  text-transform: none;
+  color: inherit;
+}
+header.site[data-identity] a.site-title:focus-visible {
+  outline: 3px solid var(--seaglass);
+  outline-offset: 4px;
+}
+
+.mast-rule {
+  height: 3px;
+  margin: 0 auto;
+  max-width: 100%;
+  border-top: 2px solid var(--atlantic, #0B2A3D);
+  border-bottom: 1px solid var(--atlantic, #0B2A3D);
+  background: transparent;
+}
+.mast-rule-double { margin-top: 6px; }
+[data-theme="dark"] .mast-rule {
+  border-top-color: var(--oyster, #F6F1E7);
+  border-bottom-color: var(--oyster, #F6F1E7);
+}
+[data-water="freshwater"] .mast-rule { border-color: #4A5C3A; }
+[data-theme="dark"][data-water="freshwater"] .mast-rule { border-color: #B7C89A; }
+
+.mast-meta {
+  text-align: center;
+  padding: 6px 0 2px;
+}
+.mast-region, .mast-mission, .mast-reach {
+  margin: 0 auto;
+  max-width: 46rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mast-region {
+  height: 1.3em;
+  line-height: 1.3;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  color: var(--atlantic, #0B2A3D);
+}
+.mast-mission {
+  height: 1.35em;
+  line-height: 1.35;
+  margin-top: 2px;
+  font-family: var(--f-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: var(--d-ink-2, #3E5868);
+  white-space: nowrap;
+}
+.mast-reach {
+  margin-top: 2px;
+  max-height: 2.6em;
+  line-height: 1.3;
+  font-size: 0.78rem;
+  letter-spacing: 0.01em;
+  color: var(--d-ink-2, #3E5868);
+}
+@media (max-width: 760px) {
+  .mast-reach { display: none; }
+  .masthead { padding: 6px 0 8px; }
+}
+@media (min-width: 761px) {
+  .mast-reach {
+    display: block;
+    height: 1.3em;
+    max-height: 1.3em;
+    white-space: nowrap;
+  }
+}
+[data-theme="dark"] .mast-region { color: var(--oyster, #F6F1E7); }
+[data-theme="dark"] .mast-mission,
+[data-theme="dark"] .mast-reach { color: var(--d-ink-2, #B9C9CF); }
+
+header.site[data-identity] .site-nav {
+  margin: 8px 0 0;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 2px 16px;
+  font-size: 0.82rem;
+}
+header.site[data-identity] .site-nav a {
+  color: var(--atlantic, #0B2A3D);
+  border-bottom-color: transparent;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  padding: 0;
+}
+header.site[data-identity] .site-nav a[aria-current="page"] {
+  color: var(--atlantic, #0B2A3D);
+  border-bottom-color: var(--sunrise, #C9932E);
+}
+[data-theme="dark"] header.site[data-identity] .site-nav a,
+[data-theme="dark"] header.site[data-identity] .site-nav a[aria-current="page"] {
+  color: var(--oyster, #F6F1E7);
+}
+
+header.site[data-identity] .theme-toggle {
+  margin: 0;
+  min-height: 44px;
+  min-width: 44px;
+  color: var(--atlantic, #0B2A3D);
+  border-color: rgba(11, 42, 61, 0.45);
+}
+[data-theme="dark"] header.site[data-identity] .theme-toggle {
+  color: var(--oyster, #F6F1E7);
+  border-color: rgba(246, 241, 231, 0.55);
+}
+header.site[data-identity] .theme-toggle:focus-visible {
+  outline: 3px solid var(--seaglass);
+  outline-offset: 2px;
+}
+
+/* Reserved-height sticky folio: always in flow. Shadow only when stuck. */
+.sticky-sentinel { height: 0; overflow: hidden; pointer-events: none; }
+.compact-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  min-height: 52px;
+  background: var(--oyster, #F6F1E7);
+  border-top: 2px solid var(--atlantic, #0B2A3D);
+  border-bottom: 1px solid var(--atlantic, #0B2A3D);
+}
+[data-theme="dark"] .compact-bar {
+  background: var(--atlantic-deep, #071C29);
+  border-top-color: var(--oyster, #F6F1E7);
+  border-bottom-color: var(--oyster, #F6F1E7);
+}
+[data-water="freshwater"] .compact-bar { border-color: #4A5C3A; background: #F3F0E8; }
+[data-theme="dark"][data-water="freshwater"] .compact-bar { border-color: #B7C89A; background: #1B2118; }
+.compact-bar.is-stuck {
+  box-shadow: 0 6px 16px -12px rgba(11, 42, 61, 0.45);
+}
+[data-theme="dark"] .compact-bar.is-stuck {
+  box-shadow: 0 6px 16px -10px rgba(0, 0, 0, 0.65);
+}
+@media (prefers-reduced-motion: reduce) {
+  .compact-bar { transition: none; }
+}
+
+.compact-inner {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px 10px;
+  min-height: 52px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.compact-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 11rem;
+  color: inherit;
+  text-decoration: none;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.compact-name .wordmark {
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: 0.92rem;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  text-transform: none;
+  color: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.compact-name:focus-visible {
+  outline: 3px solid var(--seaglass);
+  outline-offset: 2px;
+}
+
+/* Picker lives in the folio: long names ellipsize; menu scrolls for more regions. */
+.compact-bar .region-nav {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+}
+.compact-bar .rn-k {
+  color: #0B2A3D;
+}
+.compact-bar .rn-btn {
+  width: 100%;
+  max-width: 100%;
+  color: inherit;
+  border-color: rgba(11, 42, 61, 0.35);
+  background: rgba(255, 255, 255, 0.4);
+  justify-content: flex-start;
+}
+[data-theme="dark"] .compact-bar .rn-btn {
+  border-color: rgba(246, 241, 231, 0.4);
+  background: rgba(7, 28, 41, 0.35);
+  color: var(--oyster, #F6F1E7);
+}
+[data-theme="dark"] .compact-bar .rn-k {
+  color: #C5D0D4;
+}
+.compact-bar .rn-name { color: inherit; }
+.compact-bar .rn-name {
+  min-width: 0;
+  flex: 1 1 auto;
+  max-width: none;
+}
+.compact-bar .rn-menu {
+  right: 0;
+  left: 0;
+  width: auto;
+}
+.compact-bar #nav-brief {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 8px;
+  color: inherit;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+}
+.compact-bar #nav-brief:hover,
+.compact-bar #nav-brief:focus-visible {
+  border-bottom-color: var(--sunrise, #C9932E);
+  outline: none;
+}
+.compact-bar #nav-brief:focus-visible {
+  outline: 3px solid var(--seaglass);
+  outline-offset: 2px;
+}
+@media (max-width: 430px) {
+  .compact-name { max-width: 7.6rem; }
+  .compact-name .wordmark { font-size: 0.8rem; }
+  .compact-bar #nav-brief { font-size: 0.72rem; padding: 0 4px; }
+  .compact-inner { gap: 6px; }
+  header.site[data-identity] .site-nav { gap: 2px 10px; font-size: 0.76rem; }
+}
+
+header.site[data-identity] .meta-row {
+  color: var(--d-ink-2, #3E5868);
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+[data-theme="dark"] header.site[data-identity] .meta-row { color: var(--d-ink-2, #B9C9CF); }
+header.site[data-identity] .meta-row .loc { color: inherit; }
+

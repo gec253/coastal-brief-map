@@ -21,6 +21,7 @@ import sys
 import threading
 import time
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.error import HTTPError, URLError
@@ -1088,6 +1089,32 @@ def _apply_brief_nav(data: bytes) -> bytes:
     return _BRIEF_NAV_RE.sub(b"", data, count=1)
 
 
+_DATELINE_RE = re.compile(br"<!--dateline-->.*?<!--/dateline-->", re.S)
+
+
+def _dateline_html() -> bytes:
+    """Publication dateline in America/New_York, reserved in the masthead."""
+    now = datetime.now(ZoneInfo("America/New_York"))
+    label = "%s, %s %d, %d · Eastern Time" % (
+        now.strftime("%A"),
+        now.strftime("%B"),
+        now.day,
+        now.year,
+    )
+    iso = now.date().isoformat()
+    return b'<time datetime="%s">%s</time>' % (iso.encode("ascii"), html.escape(label).encode("utf-8"))
+
+
+def _apply_dateline(data: bytes) -> bytes:
+    if b"<!--dateline-->" not in data:
+        return data
+    return _DATELINE_RE.sub(_dateline_html(), data, count=1)
+
+
+def _apply_chrome(data: bytes) -> bytes:
+    return _apply_dateline(_apply_brief_nav(data))
+
+
 # ---------------------------------------------------------------- private preview access
 # /preview?key=<PREVIEW_KEY> sets an HttpOnly cookie that unlocks the flagged previews (/lake, /lab/wind,
 # /lab/tiles, /brief) in that browser only. The key lives only in the PREVIEW_KEY env var on Render; the
@@ -1266,7 +1293,7 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.send_error(404, "not found")
             robots = "index, follow" if public else "noindex, nofollow"
             if parsed.path == "/lake":
-                data = _apply_brief_nav((ROOT / "lake.html").read_bytes())
+                data = _apply_chrome((ROOT / "lake.html").read_bytes())
                 if not public:
                     data = data.replace(
                         b'name="robots" content="index, follow"',
@@ -1454,7 +1481,7 @@ class Handler(SimpleHTTPRequestHandler):
     def _send_html(self, path: Path):
         if not path.is_file():
             return self.send_error(404, "file not found")
-        data = _apply_brief_nav(path.read_bytes())
+        data = _apply_chrome(path.read_bytes())
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))

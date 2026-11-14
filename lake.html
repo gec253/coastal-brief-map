@@ -6,6 +6,8 @@
   <meta name="robots" content="index, follow">
   <title>Falls Lake · The Coastal Brief</title>
   <script>(function(){var r=new URLSearchParams(location.search).get("region")||"falls-lake";var n={ "falls-lake":"Falls Lake","jordan-lake":"Jordan Lake","neuse-river":"Neuse River" }[r]||"Freshwater";document.title=n+" · The Coastal Brief";})();</script>
+  <link rel="preload" href="/fonts/fraunces-var.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/source-sans-3-var.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/styles.css">
   <meta name="theme-color" content="#0B2A3D">
   <link rel="icon" href="/branding/favicon.svg" type="image/svg+xml">
@@ -80,23 +82,50 @@
   </style>
 </head>
 <body>
-  <header class="site">
-    <div class="wrap header-row">
-      <div class="brand">
-        <h1><a class="site-title" href="/"><svg class="crest" viewBox="0 0 64 40" aria-hidden="true" focusable="false"><path class="crest-sea" d="M0 30 C10 18 18 16 28 22 S48 34 64 20 L64 40 L0 40 Z"/><path class="crest-arc" d="M14 15 C26 4 46 4 58 14 L55 17 C44 9 28 9 17 18 Z"/><path class="crest-in" d="M24 15 C32 9 44 9 52 14 L50 16.5 C42 12 33 12 26 16.8 Z"/></svg><span class="wordmark">The Coastal Brief</span></a></h1>
-        <p class="tagline tl-main">Know the Water. Live the Coast.</p>
-        <p class="tagline tl-sub">From the rivers to the sounds to the sea</p>
-        <nav class="site-nav" aria-label="Site">
+  <header class="site" data-identity>
+    <div class="masthead" id="masthead">
+      <div class="wrap mast-folio">
+        <p class="mast-dateline" id="mast-dateline"><!--dateline--><time>Eastern Time</time><!--/dateline--></p>
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
+      </div>
+      <div class="wrap mast-nameplate">
+        <div class="mast-rule" aria-hidden="true"></div>
+        <h1><a class="site-title" href="/"><span class="wordmark">The Coastal Brief</span></a></h1>
+        <div class="mast-rule mast-rule-double" aria-hidden="true"></div>
+      </div>
+      <div class="wrap mast-meta">
+        <p class="mast-region" id="mast-region-line">Morehead City · Beaufort · Crystal Coast, North Carolina</p>
+        <p class="mast-mission">From the rivers to the sounds to the sea</p>
+        <p class="mast-reach">Corolla to Sunset Beach, inland rivers and lakes to offshore waters</p>
+      </div>
+      <div class="wrap">
+          <nav class="site-nav" aria-label="Site">
           <a href="/">Conditions</a>
           <a href="/catch-wall">Catch Wall</a>
           <a href="/coastal-life">Coastal Life</a>
-          <!--brief-nav--><a href="/brief?region=crystal-coast" id="nav-brief">Morning Brief</a><!--/brief-nav-->
         </nav>
       </div>
-      <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
+    </div>  </header>
+    <div class="sticky-sentinel" id="sticky-sentinel" aria-hidden="true"></div>
+    <div class="compact-bar" id="compact-bar">
+      <div class="wrap compact-inner">
+        <a class="compact-name" href="/"><span class="wordmark">The Coastal Brief</span></a>
+        <div class="region-nav" id="region-nav" data-region-nav>
+          <button type="button" class="rn-btn" id="rn-btn" aria-expanded="false" aria-haspopup="listbox" aria-controls="rn-menu">
+            <span class="rn-k">Region</span>
+            <span class="rn-name" id="rn-name">Morehead City · Beaufort</span>
+            <span class="rn-chev" aria-hidden="true"></span>
+          </button>
+          <div class="rn-menu" id="rn-menu" role="listbox" tabindex="-1" hidden aria-labelledby="rn-btn"></div>
+        </div>
+        <!--brief-nav--><a href="/brief?region=crystal-coast" id="nav-brief">Morning Brief</a><!--/brief-nav-->
+      </div>
     </div>
-    <div class="wrap"><div class="meta-row"><span class="badge" id="fw-badge">Loading readings…</span><span class="loc">Lakes and rivers</span></div></div>
-  </header>
+
+    <div class="wrap">
+      <div class="meta-row"><span class="badge" id="fw-badge">Loading readings…</span><span class="loc">Lakes and rivers</span></div>
+    </div>
+
 
   <main class="wrap">
     <section class="panel glance dash" aria-labelledby="fw-h">
@@ -160,7 +189,9 @@
       <p id="fw-footer-note">Not boating or safety advice. Lake levels change; always check official sources before going out.</p>
     </div>
   </footer>
+  <script src="/region-nav.js" defer></script>
   <script src="/brief-link.js" defer></script>
+  <script src="/identity.js" defer></script>
   <script src="/lake.js" defer></script>
 </body>
 </html>
