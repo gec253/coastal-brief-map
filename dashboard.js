@@ -989,6 +989,7 @@
     }
     const sel = $("region-select");
     if (sel && sel.value !== id) sel.value = id;
+    if (window.CoastalBriefLink) CoastalBriefLink.sync(id);
     const tc = $("tide-chart");
     if (tc) delete tc.dataset.revealed;
     load(id, false);

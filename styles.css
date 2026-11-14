@@ -2030,3 +2030,31 @@ body.no-scroll { overflow: hidden; }
 /* Copper text meets WCAG AA on every tile background (tiles v2 and v1): text uses --copper-ink
    (#8E4F2A light, #D99A6C dark); copper lines, needles and dots keep the brighter accent. */
 .tide-chart .tn-t, [data-theme="dark"] .tide-chart .tn-t, .mc-n, [data-theme="dark"] .dial .dial-card.is-n { fill: var(--copper-ink); }
+
+/* Morning Brief header link: one reserved nowrap row so a fourth item cannot
+   wrap or shift the header at 390/768/1280. 44px targets. Same oyster-on-navy
+   as the rest of the site nav (AA on both themes; the header stays navy). */
+.site-nav {
+  flex-wrap: nowrap;
+  align-items: center;
+  min-height: 44px;
+}
+.site-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  .site-nav { gap: 2px 8px; font-size: 0.8rem; }
+}
+@media (max-width: 430px) {
+  .site-nav { gap: 2px 8px; font-size: 0.8rem; letter-spacing: 0; }
+  .site-nav a { letter-spacing: 0; }
+}
+@media (max-width: 390px) {
+  .site-nav { gap: 2px 6px; font-size: 0.76rem; }
+}
+@media (max-width: 355px) {
+  .site-nav { gap: 2px 5px; font-size: 0.72rem; }
+}
