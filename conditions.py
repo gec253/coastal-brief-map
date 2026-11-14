@@ -163,6 +163,8 @@ def listed_regions(preview: bool = False) -> dict:
             continue
         item = {"id": r["id"], "name": r["name"], "area": r.get("area"), "map": r.get("map"),
                 "waterType": r.get("waterType") or "saltwater"}
+        if r.get("short"):
+            item["short"] = r["short"]
         if preview and not r.get("enabled"):
             item["preview"] = True
         out.append(item)

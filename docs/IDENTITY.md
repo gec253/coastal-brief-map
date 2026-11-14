@@ -56,3 +56,16 @@ On the `design/og-image` branch only. The public file `branding/og-preview.png` 
 A 1200×630 card at `branding/og-masthead.jpg` (JPEG quality 90, under 300 KB) uses the same navy, ivory, and brass as the masthead, with a separate higher-resolution crop of the Lookout Bight inset (`branding/og-masthead-chart.webp`, 2400×1260). That crop is smoothed and contrast-crushed, with a soft center vignette, so it reads as a faint texture and the nameplate stays dominant — it is not the 13.2 KB site-masthead webp, which pixelated when enlarged to this size. “THE COASTAL BRIEF” is set in the existing SIL OFL Fraunces, with the mission line “From the rivers to the sounds to the sea.” Type, vector rules, and the public-domain chart only. Important type sits in a centered 630×630 safe area so 1.91:1 and square-ish crops (iMessage, Facebook, X `summary_large_image`, LinkedIn) still read.
 
 Reproduce with `node branding/render-og-masthead.js` from `branding/og-masthead.html`. Public pages (`/`, `/catch-wall`, `/coastal-life`, `/photos`, `/brief?region=…`, `/lake?region=…`) point `og:image` and `twitter:image` at `https://thecoastalbrief.com/branding/og-masthead.jpg` and include width, height, and alt.
+
+## Ed's decisions (14 Nov 2026)
+
+1. **No chart texture on phones.** The masthead chart (`branding/masthead-chart.webp`) is set only inside
+   `@media (min-width: 761px)` in `styles.css` and `brief.css`, so phones never fetch the file.
+2. **Short region names:** the compact folio uses an explicit `short` field from `data/regions.json` when a
+   region has one (passed through `/api/regions`), otherwise the place name before " · ".
+3. The "Corolla to Sunset Beach" reach line stays hidden below 761px.
+4. Type-only nameplate. No crest or mark.
+5. The OG card's chart stays as it is.
+6. `/catch-wall`, `/coastal-life` and `/photos` share `catch-wall.html`; the server swaps only their
+   `og:title`, `og:url` and `twitter:title` (`_apply_share_meta` in `server.py`). Page content is unchanged.
+   The `<title>` and canonical link are unchanged.

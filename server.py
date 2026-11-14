@@ -233,7 +233,7 @@ def cache_get_any(url: str) -> tuple[int, str, bytes] | None:
 # docs, and test fixtures are not.
 _STATIC_EXT = {".html", ".css", ".js", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".ico",
                ".woff2", ".json", ".txt", ".xml", ".webmanifest", ".map"}
-_STATIC_DENY_PREFIX = ("/.", "/admin", "/wind-lab.", "/lake.", "/tiles-lab.", "/docs/", "/tests/", "/scripts/", "/__pycache__/", "/requirements")
+_STATIC_DENY_PREFIX = ("/.", "/admin", "/branding/og-masthead.html", "/branding/render-og-masthead.", "/wind-lab.", "/lake.", "/tiles-lab.", "/docs/", "/tests/", "/scripts/", "/__pycache__/", "/requirements")
 
 
 def _static_allowed(path: str) -> bool:
@@ -1115,6 +1115,30 @@ def _apply_chrome(data: bytes) -> bytes:
     return _apply_dateline(_apply_brief_nav(data))
 
 
+# /catch-wall, /coastal-life and /photos share catch-wall.html. Give each its own
+# share title and URL by swapping only these three tags; the page body is unchanged.
+_SHARE_META = {
+    "catch-wall": ("Catch Wall \u2014 The Coastal Brief", "https://thecoastalbrief.com/catch-wall"),
+    "coastal-life": ("Coastal Life \u2014 The Coastal Brief", "https://thecoastalbrief.com/coastal-life"),
+    "photos": ("Photos \u2014 Catch Wall &amp; Coastal Life \u2014 The Coastal Brief", "https://thecoastalbrief.com/photos"),
+}
+_OG_TITLE_RE = re.compile(br'(<meta property="og:title" content=")[^"]*(")')
+_OG_URL_RE = re.compile(br'(<meta property="og:url" content=")[^"]*(")')
+_TW_TITLE_RE = re.compile(br'(<meta name="twitter:title" content=")[^"]*(")')
+
+
+def _apply_share_meta(data: bytes, page: str) -> bytes:
+    meta = _SHARE_META.get(page)
+    if not meta:
+        return data
+    title = meta[0].encode("utf-8")
+    url = meta[1].encode("ascii")
+    data = _OG_TITLE_RE.sub(lambda m: m.group(1) + title + m.group(2), data, count=1)
+    data = _TW_TITLE_RE.sub(lambda m: m.group(1) + title + m.group(2), data, count=1)
+    data = _OG_URL_RE.sub(lambda m: m.group(1) + url + m.group(2), data, count=1)
+    return data
+
+
 # ---------------------------------------------------------------- private preview access
 # /preview?key=<PREVIEW_KEY> sets an HttpOnly cookie that unlocks the flagged previews (/lab/wind,
 # /lab/tiles, and the not-yet-public saltwater dashboards) in that browser only. The key lives only in
@@ -1254,7 +1278,7 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.send_error(404, "not found")
             return self._json_private(brief.wake(include_fresh=freshwater.flag_on() or bool(_preview_secret())))
         if parsed.path in ("/catch-wall", "/catch-wall/"):
-            return self._send_html(ROOT / "catch-wall.html")
+            return self._send_html(ROOT / "catch-wall.html", share="catch-wall")
         if parsed.path == "/api/health":
             return self._send_json({"ok": True})
         if parsed.path == "/api/snapshot":
@@ -1288,7 +1312,7 @@ class Handler(SimpleHTTPRequestHandler):
                 return self._json_private(payload, status)
             return self._send_json(payload, cache_s=60, status=status)
         if parsed.path in ("/coastal-life", "/coastal-life/", "/photos", "/photos/"):
-            return self._send_html(ROOT / "catch-wall.html")
+            return self._send_html(ROOT / "catch-wall.html", share=parsed.path.strip("/"))
         if parsed.path == "/api/photos/config":
             return self._send_json(photos.public_config(), cache_s=60)
         if parsed.path == "/api/photos":
@@ -1496,10 +1520,12 @@ class Handler(SimpleHTTPRequestHandler):
         status, payload = photos.admin_action(body)
         return self._json_private(payload, status)
 
-    def _send_html(self, path: Path):
+    def _send_html(self, path: Path, share: str | None = None):
         if not path.is_file():
             return self.send_error(404, "file not found")
         data = _apply_chrome(path.read_bytes())
+        if share:
+            data = _apply_share_meta(data, share)
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))

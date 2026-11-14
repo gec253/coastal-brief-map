@@ -92,17 +92,22 @@ a { color: inherit; }
   top: 0;
   z-index: 40;
   background-color: #071C29;
-  background-image:
-    linear-gradient(rgba(7, 28, 41, 0.84), rgba(7, 28, 41, 0.84)),
-    url("/branding/masthead-chart.webp");
-  background-size: auto, cover;
-  background-position: 0 0, 70% 40%;
-  background-repeat: no-repeat;
   color: #F3E6D0;
   border-bottom: 1px solid #C4A36A;
   box-shadow: 0 6px 16px -12px rgba(0,0,0,0.55);
 }
 .mb-top-row { position: relative; z-index: 1; }
+/* Chart texture on tablet and desktop only; phones never fetch it. */
+@media (min-width: 761px) {
+  .mb-top {
+    background-image:
+      linear-gradient(rgba(7, 28, 41, 0.84), rgba(7, 28, 41, 0.84)),
+      url("/branding/masthead-chart.webp");
+    background-size: auto, cover;
+    background-position: 0 0, 70% 40%;
+    background-repeat: no-repeat;
+  }
+}
 [data-water="freshwater"] .mb-top {
   background-color: #071C29;
   border-bottom-color: #C4A36A;

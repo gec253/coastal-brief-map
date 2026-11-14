@@ -99,3 +99,40 @@ class OgMastheadMeta(unittest.TestCase):
             data = r.read()
         self.assertGreater(len(data), 10000)
         self.assertLess(len(data), 300 * 1024)
+
+    def test_photo_pages_have_their_own_share_title_and_url(self):
+        want = {
+            "/catch-wall": ("Catch Wall \u2014 The Coastal Brief", "https://thecoastalbrief.com/catch-wall"),
+            "/coastal-life": ("Coastal Life \u2014 The Coastal Brief", "https://thecoastalbrief.com/coastal-life"),
+            "/photos": ("Photos \u2014 Catch Wall &amp; Coastal Life \u2014 The Coastal Brief", "https://thecoastalbrief.com/photos"),
+        }
+        bodies = {}
+        for path, (title, url) in want.items():
+            status, body = self._get(path)
+            self.assertEqual(status, 200, path)
+            self.assertIn('property="og:title" content="%s"' % title, body, path)
+            self.assertIn('name="twitter:title" content="%s"' % title, body, path)
+            self.assertIn('property="og:url" content="%s"' % url, body, path)
+            # Only the head tags differ; the page body is the same file.
+            bodies[path] = body.split("</head>", 1)[1]
+        self.assertEqual(len(set(bodies.values())), 1)
+
+    def test_og_render_sources_are_not_served(self):
+        for path in ("/branding/og-masthead.html", "/branding/render-og-masthead.js"):
+            status, _ = self._get(path)
+            self.assertEqual(status, 404, path)
+
+
+class ChartTextureNotOnPhones(unittest.TestCase):
+    def test_chart_texture_only_inside_min_width_media_query(self):
+        import re
+        for name in ("styles.css", "brief.css"):
+            css = re.sub(r"/\*.*?\*/", "", (ROOT / name).read_text(), flags=re.S)
+            self.assertIn("masthead-chart.webp", css, name)
+            for m in re.finditer(r"masthead-chart\.webp", css):
+                before = css[: m.start()]
+                opened = before.rfind("@media (min-width: 761px)")
+                self.assertNotEqual(opened, -1, name)
+                # every brace opened after the media query is still open at the url
+                depth = before[opened:].count("{") - before[opened:].count("}")
+                self.assertGreaterEqual(depth, 2, name)

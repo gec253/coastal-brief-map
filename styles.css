@@ -2266,14 +2266,18 @@ header.site[data-identity],
   box-shadow: none;
   contain: layout style;
 }
-header.site[data-identity]::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background: url("/branding/masthead-chart.webp") 70% 40% / cover no-repeat;
-  opacity: 0.16;
+/* Chart texture: tablet and desktop only. Inside a media query so phones never
+   fetch masthead-chart.webp (Ed, 14 Nov 2026: no chart texture on phones). */
+@media (min-width: 761px) {
+  header.site[data-identity]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: url("/branding/masthead-chart.webp") 70% 40% / cover no-repeat;
+    opacity: 0.16;
+  }
 }
 header.site[data-identity] > * { position: relative; z-index: 1; }
 
