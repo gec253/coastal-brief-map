@@ -107,8 +107,10 @@ class BriefPublicHTTP(unittest.TestCase):
     def test_homepage_unchanged_200(self):
         status, body, _ = self._get("/")
         self.assertEqual(status, 200)
-        self.assertNotIn('href="/brief', body)
         self.assertNotIn("private preview", body.lower())
+        # Header Morning Brief link is part of the public homepage (see test_brief_nav).
+        self.assertIn('id="nav-brief"', body)
+        self.assertIn('href="/brief?region=crystal-coast"', body)
 
     def test_lake_dashboard_is_200_with_no_flags(self):
         status, body, _ = self._get("/lake")
