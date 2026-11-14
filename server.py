@@ -1260,41 +1260,8 @@ def _masthead_preview_html(concept: str, shot: bool = False, dock: str | None = 
 
 
 def _public_home_html(region_id: str | None = None, preview: bool = False) -> bytes:
-    """Public homepage: masthead A, magazine photo band, pinned Bodie sunrise, first-paint conditions."""
-    src = (ROOT / "index.html").read_bytes()
-    header = (MASTHEAD_DIR / "header.html").read_bytes().strip()
-    start = src.find(b'<header class="site"')
-    mid = src.find(_MASTHEAD_META)
-    if start < 0 or mid < 0 or mid < start:
-        raise RuntimeError("public home: unexpected index.html shape")
-    data = src[:start] + header + b"\n\n    " + src[mid:]
-    data = data.replace(
-        b'<html lang="en" data-tiles="v2">',
-        b'<html lang="en" data-tiles="v2" data-concept="a" data-home="magazine">',
-        1,
-    )
-    needle = b'  <link rel="stylesheet" href="styles.css">\n'
-    if needle not in data:
-        raise RuntimeError("public home: stylesheet link missing")
-    data = data.replace(needle, needle + b"  " + _MASTHEAD_PLAY, 1)
-    photo = _featured_photo()
-    band = _home_photo_band_html("magazine", photo, public=True)
-    mid = data.find(_MASTHEAD_META)
-    if mid < 0:
-        raise RuntimeError("public home: meta-row missing")
-    data = data[:mid] + band + b"\n    " + data[mid:]
-    src_base = str(photo.get("src") or "").replace("/preview/home/photos/", "/featured/")
-    preload = (
-        "  <link rel=\"preload\" as=\"image\" type=\"image/avif\" href=\"%s-w800.avif\" "
-        "imagesrcset=\"%s-w800.avif 800w, %s-w1280.avif 1280w\" "
-        "imagesizes=\"(min-width: 900px) 58vw, 100vw\" fetchpriority=\"high\">\n"
-        % (src_base, src_base, src_base)
-    ).encode("ascii")
-    font_pre = b'  <link rel="preload" href="/fonts/source-sans-3-var.woff2"'
-    if font_pre in data:
-        data = data.replace(font_pre, preload + font_pre, 1)
-    data = _apply_preview_dateline(_apply_chrome(data))
-    return homepage_boot.inject(data, region_id, preview=preview)
+    """Public homepage: Chartroom Folio (masthead A, conditions first, credited photo, rail)."""
+    return _folio_home_html(region_id, gated=False, assemble_preview=preview)
 
 
 # Private photo-led homepage concepts. Final = Magazine layout on masthead A.
@@ -1582,34 +1549,42 @@ def _folio_rail_html() -> bytes:
 """.encode("utf-8")
 
 
-def _identity_preview_html(region_id: str | None = None, photo_id: str | None = None, shot: bool = False) -> bytes:
-    """Cookie-gated Chartroom Folio homepage. Public / stays on _public_home_html."""
+def _folio_home_html(
+    region_id: str | None = None,
+    *,
+    gated: bool = False,
+    photo_id: str | None = None,
+    shot: bool = False,
+    assemble_preview: bool = False,
+) -> bytes:
+    """Chartroom Folio homepage, shared by public / and cookie-gated /preview/identity."""
     src = (ROOT / "index.html").read_bytes()
     header = (MASTHEAD_DIR / "header.html").read_bytes().strip()
     start = src.find(b'<header class="site"')
     mid = src.find(_MASTHEAD_META)
     if start < 0 or mid < 0 or mid < start:
-        raise RuntimeError("identity preview: unexpected index.html shape")
+        raise RuntimeError("folio home: unexpected index.html shape")
     data = src[:start] + header + b"\n\n    " + src[mid:]
-    data = data.replace(
-        b'<html lang="en" data-tiles="v2">',
-        b'<html lang="en" data-tiles="v2" data-preview data-identity-sprint data-concept="a">',
-        1,
-    )
-    css_inject = _preview_style_tag(IDENTITY_DIR / "identity.css")
-    css_inject += b'  <meta name="robots" content="noindex, nofollow">\n  ' + _MASTHEAD_PLAY
-    # Preload the wordmark face so the nameplate is the LCP without a swap.
-    css_inject += (
+    attrs = b'<html lang="en" data-tiles="v2" data-concept="a" data-home="folio">'
+    if gated:
+        attrs = b'<html lang="en" data-tiles="v2" data-preview data-concept="a" data-home="folio">'
+    data = data.replace(b'<html lang="en" data-tiles="v2">', attrs, 1)
+    inject = b""
+    if gated:
+        inject += b'  <meta name="robots" content="noindex, nofollow">\n'
+    inject += b"  " + _MASTHEAD_PLAY
+    # Preload the wordmark face so the nameplate is ready without a swap.
+    inject += (
         b'  <link rel="preload" href="/fonts/fraunces-var.woff2" as="font" '
         b'type="font/woff2" crossorigin>\n'
     )
     needle = b'  <link rel="stylesheet" href="styles.css">\n'
     if needle not in data:
-        raise RuntimeError("identity preview: stylesheet link missing")
-    data = data.replace(needle, needle + css_inject, 1)
+        raise RuntimeError("folio home: stylesheet link missing")
+    data = data.replace(needle, needle + inject, 1)
     if b'class="mast-motto"' not in data:
         if _IDENTITY_MOTTO_NEEDLE not in data:
-            raise RuntimeError("identity preview: mast-wave close missing")
+            raise RuntimeError("folio home: mast-wave close missing")
         data = data.replace(_IDENTITY_MOTTO_NEEDLE, _IDENTITY_MOTTO_HTML, 1)
     data = data.replace(
         b'<p class="eyebrow">Live marine instruments</p>',
@@ -1621,26 +1596,34 @@ def _identity_preview_html(region_id: str | None = None, photo_id: str | None = 
         b'<div class="map-placeholder skeleton" id="map-placeholder">Map will load when you scroll here.</div>',
         1,
     )
-    for a, b in (
-        (b'href="styles.css"', b'href="/styles.css"'),
-        (b'src="region-nav.js"', b'src="/region-nav.js"'),
-        (b'src="dashboard.js"', b'src="/dashboard.js"'),
-        (b'src="app.js"', b'src="/app.js"'),
-        (b'src="coast-strip.js"', b'src="/coast-strip.js"'),
-    ):
-        data = data.replace(a, b)
+    if gated:
+        for a, b in (
+            (b'href="styles.css"', b'href="/styles.css"'),
+            (b'src="region-nav.js"', b'src="/region-nav.js"'),
+            (b'src="dashboard.js"', b'src="/dashboard.js"'),
+            (b'src="app.js"', b'src="/app.js"'),
+            (b'src="coast-strip.js"', b'src="/coast-strip.js"'),
+        ):
+            data = data.replace(a, b)
     data = _apply_preview_dateline(_apply_chrome(data))
-    pv = bool(region_id and conditions.is_preview_salt_region(region_id))
-    data = homepage_boot.inject(data, region_id, preview=pv)
+    data = homepage_boot.inject(data, region_id, preview=assemble_preview)
     photo = _featured_photo(photo_id)
     strip = _folio_photo_html(photo) + b"\n    " + _folio_rail_html() + b"\n\n"
     mid = data.find(_IDENTITY_COND_END)
     if mid < 0:
-        raise RuntimeError("identity preview: conditions/tide boundary missing")
+        raise RuntimeError("folio home: conditions/tide boundary missing")
     data = data[:mid] + b"    " + strip + data[mid:]
-    if not shot:
+    if gated and not shot:
         data = data.replace(b"</body>", _IDENTITY_DOCK.encode("utf-8") + b"\n</body>", 1)
     return data
+
+
+def _identity_preview_html(region_id: str | None = None, photo_id: str | None = None, shot: bool = False) -> bytes:
+    """Cookie-gated Chartroom Folio homepage. Same design as public /."""
+    pv = bool(region_id and conditions.is_preview_salt_region(region_id))
+    return _folio_home_html(
+        region_id, gated=True, photo_id=photo_id, shot=shot, assemble_preview=pv
+    )
 
 
 # /catch-wall, /coastal-life and /photos share catch-wall.html. Give each its own
