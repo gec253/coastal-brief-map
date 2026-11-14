@@ -48,3 +48,11 @@ Deep navy, warm ivory, restrained brass, with Atlantic / Pamlico / marsh / dock 
 ## What was not changed
 
 `brief.py` build logic, `.github/`, Morning Brief automation, data labels (including seas vs swell and observed vs forecast), `/api/regions` (saltwater-only), and the public OG image file are untouched.
+
+## Open Graph card
+
+On the `design/og-image` branch only. The public file `branding/og-preview.png` is not replaced.
+
+A 1200×630 card at `branding/og-masthead.jpg` (JPEG quality 90, under 300 KB) uses the same navy, ivory, brass, and NOAA Chart 11545 texture as the masthead. “THE COASTAL BRIEF” is set in the existing SIL OFL Fraunces, with the mission line “From the rivers to the sounds to the sea.” Type, vector rules, and the public-domain chart only. Important type sits in a centered 630×630 safe area so 1.91:1 and square-ish crops (iMessage, Facebook, X `summary_large_image`, LinkedIn) still read.
+
+Reproduce with `node branding/render-og-masthead.js` from `branding/og-masthead.html`. Public pages (`/`, `/catch-wall`, `/coastal-life`, `/photos`, `/brief?region=…`, `/lake?region=…`) point `og:image` and `twitter:image` at `https://thecoastalbrief.com/branding/og-masthead.jpg` and include width, height, and alt.
