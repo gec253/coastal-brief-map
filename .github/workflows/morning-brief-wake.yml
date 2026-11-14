@@ -1,45 +1,95 @@
-# Wakes the Render service at 5:16 AM Eastern so the Morning Brief is built by 5:30.
-# GitHub cron runs in UTC, so there is one schedule for EST (10:16 UTC) and one for EDT (09:16 UTC);
-# the guard skips whichever one lands at the wrong local hour. The endpoint only builds today's briefs
-# if they are missing and returns no brief content, so this publishes nothing. Free (public repo).
+# Morning Brief automation (Crystal Coast + Hatteras), unattended, published by 5:30 AM Eastern.
+# Authorized by Ed for Nov 14-20, 2026 (ET). After AUTO_UNTIL every run skips, and the server stops
+# building new briefs on its own (brief.AUTO_PUBLISH_UNTIL). Extending needs Ed's OK: change both dates.
+#
+# GitHub cron is UTC and often runs 5-30+ minutes late, so there are early and late triggers for both
+# EST and EDT. The guard uses America/New_York local time and skips whichever triggers fall outside
+# 4:30-6:59 AM ET. An early run keeps the Render service awake (light /api/health pings) so the in-app
+# 5:15 build runs, calls /api/brief/wake after 5:16, verifies each region, then archives the briefs to
+# the brief-archive branch (never main, so no deploy). Later runs are idempotent backups: the server
+# builds each region at most once per day and a wake before 5:15 builds nothing.
+# See docs/MORNING_BRIEF_AUTOMATION.md.
 name: Morning Brief wake-up
 on:
   schedule:
-    - cron: "16 9 * * *"
-    - cron: "16 10 * * *"
+    - cron: "35 8 * * *"   # 4:35 AM EDT (3:35 EST: skipped)
+    - cron: "50 8 * * *"   # 4:50 AM EDT (3:50 EST: skipped)
+    - cron: "16 9 * * *"   # 5:16 AM EDT backup (4:16 EST: skipped)
+    - cron: "35 9 * * *"   # 4:35 AM EST (5:35 EDT: backup)
+    - cron: "50 9 * * *"   # 4:50 AM EST (5:50 EDT: backup)
+    - cron: "16 10 * * *"  # 5:16 AM EST backup (6:16 EDT: backup)
   workflow_dispatch: {}
 permissions: {}
+concurrency:
+  group: morning-brief
+  cancel-in-progress: false
+env:
+  SITE: https://thecoastalbrief.com
+  REGIONS: crystal-coast hatteras
+  EXTRA_REGIONS: falls-lake
+  AUTO_UNTIL: ${{ vars.MORNING_BRIEF_AUTO_UNTIL || '2026-11-20' }}
 jobs:
-  wake:
+  brief:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 75
+    permissions:
+      contents: read
+    outputs:
+      go: ${{ steps.guard.outputs.go }}
     steps:
-      - name: Ping only between 5:00 and 6:59 AM Eastern (manual runs always ping)
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/scripts
+          persist-credentials: false
+      - name: Guard (Eastern time window and authorization end date)
         id: guard
-        run: |
-          h=$(TZ=America/New_York date +%H)
-          echo "Eastern time now: $(TZ=America/New_York date '+%Y-%m-%d %H:%M %Z')"
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$h" = "05" ] || [ "$h" = "06" ]; then
-            echo "go=1" >> "$GITHUB_OUTPUT"
-          else
-            echo "Skipping: this schedule is for the other half of the DST year."
-          fi
-      - name: Wake the site and start the brief build
+        env:
+          EVENT: ${{ github.event_name }}
+        run: python3 .github/scripts/morning_brief.py guard
+      - name: Keep the site awake, then wake the brief build after 5:16 AM ET
         if: steps.guard.outputs.go == '1'
+        timeout-minutes: 65
+        run: python3 .github/scripts/morning_brief.py run
+      - name: Verify each region (both are checked before the job can fail)
+        if: steps.guard.outputs.go == '1'
+        timeout-minutes: 15
+        run: python3 .github/scripts/morning_brief.py verify
+  archive:
+    needs: brief
+    if: always() && needs.brief.outputs.go == '1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/scripts
+      - name: Save today's published briefs to the brief-archive branch
         run: |
-          # The first request can take about a minute while a sleeping free instance starts.
-          ping() {
-            for i in 1 2 3 4 5; do
-              code=$(curl -sS -o body.txt -w '%{http_code}' --max-time 120 https://thecoastalbrief.com/api/brief/wake || echo 000)
-              echo "attempt $i: HTTP $code $(cat body.txt 2>/dev/null)"
-              case "$code" in
-                200) return 0 ;;
-                404) echo "Brief is not enabled on the server yet (needs PREVIEW_KEY or MORNING_BRIEF_ENABLED on Render)."; return 0 ;;
-              esac
-              sleep 20
-            done
-            return 1
-          }
-          ping
-          sleep 45
-          ping
+          set -euo pipefail
+          cp .github/scripts/morning_brief.py "$RUNNER_TEMP/morning_brief.py"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git sparse-checkout disable
+          if git ls-remote --exit-code --heads origin brief-archive >/dev/null; then
+            git fetch --depth 1 origin brief-archive
+            git checkout -q -B brief-archive FETCH_HEAD
+          else
+            git checkout -q --orphan brief-archive
+            git rm -rqf . || true
+            printf '# Morning Brief archive\n\nPublished briefs, one JSON per region per day. Written by the Morning Brief workflow. Not deployed.\n' > README.md
+          fi
+          python3 "$RUNNER_TEMP/morning_brief.py" archive .
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nothing new to archive."
+            exit 0
+          fi
+          git commit -q -m "Archive Morning Briefs $(TZ=America/New_York date +%Y-%m-%d)"
+          for i in 1 2 3; do
+            if git push -q origin HEAD:brief-archive; then echo "Archived."; exit 0; fi
+            sleep 10
+            git fetch --depth 1 origin brief-archive && git rebase -q FETCH_HEAD || true
+          done
+          echo "::warning::Could not push the archive; the briefs are still live on the site."

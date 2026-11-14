@@ -55,6 +55,10 @@ restart, next-day upstream failure (stale notice), empty store plus failure (503
 scheduler firing at a patched time (both regions written with reason "scheduled").
 
 ## Wake-up ping (approved 13 Nov 2026: option B)
+
+> Superseded for Nov 14–20, 2026 by the unattended automation: see `docs/MORNING_BRIEF_AUTOMATION.md`
+> (earlier triggers, keep-alive, validation, verification, archive, window end).
+
 - `GET /api/brief/wake` builds today's brief for each region that does not have one yet, in the background,
   and returns only `{"ok", "issueDate", "building"}`. It publishes nothing itself; the public `/brief` pages
   are what readers see. It runs when the brief is on (the default) **or** `PREVIEW_KEY` is set, so a preview

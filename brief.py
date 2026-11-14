@@ -7,9 +7,19 @@ Never includes market data. The Captain's take is produced by fixed
 rules from the numbers in the brief; nothing is invented.
 
 Schedule: an in-process thread prepares every enabled region at 05:15 ET and retries failed sections
-until 05:30 ET. If the service was asleep, the first request after 05:15 builds the brief on demand
-(and says so). Briefs are kept in memory and in cache/briefs/ (ephemeral on Render: a restart loses them,
-and the next request rebuilds the current one, labeled as rebuilt).
+until 05:30 ET. A GitHub Actions workflow keeps the service awake from about 4:35 AM ET, calls
+/api/brief/wake after 05:15, verifies both saltwater briefs, and archives them to the brief-archive
+branch (see docs/MORNING_BRIEF_AUTOMATION.md). If the service was asleep, the first request after 05:15
+builds the brief on demand (and says so). Briefs are kept in memory and in cache/briefs/ (ephemeral on
+Render); after a restart the latest archived copy is used before anything is rebuilt.
+
+Every new brief is validated before it is stored or shown (region, location, issue date, timestamp,
+marine zone, forecast age, core readings). A brief that fails a critical check is never published;
+the last valid brief is shown with its date and a notice, or an unavailable message.
+
+Automatic publication is authorized through AUTO_PUBLISH_UNTIL (ET calendar date; override with the
+MORNING_BRIEF_AUTO_UNTIL env var). After that date no new briefs are built, by the schedule, the wake
+endpoint, or page views; the last published brief stays up, clearly dated, with a paused notice.
 """
 from __future__ import annotations
 
@@ -19,6 +29,7 @@ import os
 import re
 import threading
 import time
+import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -30,9 +41,41 @@ ROOT = Path(__file__).resolve().parent
 STORE = ROOT / "cache" / "briefs"
 PREP = (5, 15)
 PUBLISH_BY = (5, 30)
+# Ed authorized unattended publication for Nov 14-20, 2026 (ET). Extend only with his OK: change this
+# date (and AUTO_UNTIL in .github/workflows/morning-brief-wake.yml), or set MORNING_BRIEF_AUTO_UNTIL.
+AUTO_PUBLISH_UNTIL = "2026-11-20"
+MAX_FORECAST_AGE_H = 24  # an NWS marine or point forecast older than this is not used
+ARCHIVE_URL = "https://raw.githubusercontent.com/gec253/coastal-brief-map/brief-archive/latest/%s.json"
 _lock = threading.Lock()
 _mem: dict[str, dict] = {}
+_rlocks: dict[str, threading.Lock] = {}
+_last_error: dict[str, dict] = {}
+_arch_cache: dict[str, tuple[float, dict | None]] = {}
 _thread = None
+
+
+class BriefInvalid(RuntimeError):
+    """A new brief failed a critical check and must not be published."""
+
+    def __init__(self, errors):
+        super().__init__("; ".join(errors))
+        self.errors = list(errors)
+
+
+def auto_until() -> str:
+    v = (os.environ.get("MORNING_BRIEF_AUTO_UNTIL") or "").strip()
+    return v if re.fullmatch(r"\d{4}-\d{2}-\d{2}", v) else AUTO_PUBLISH_UNTIL
+
+
+def auto_active(now: datetime | None = None) -> bool:
+    """True while new briefs may be built without Ed: the ET calendar date is on or before auto_until()."""
+    now = now or datetime.now(timezone.utc)
+    return _et(now).strftime("%Y-%m-%d") <= auto_until()
+
+
+def _region_lock(rid: str) -> threading.Lock:
+    with _lock:
+        return _rlocks.setdefault(rid, threading.Lock())
 
 
 def flag_on() -> bool:
@@ -110,6 +153,20 @@ def build_salt(rid: str, now: datetime) -> dict:
     ok = lambda k: R.get(k, {}).get("status") == "ok"
     items, fresh, take, missing = [], [], [], []
 
+    def miss(name, r):
+        # Never substitute: a stale or absent reading is listed as not used, with its last time if known.
+        if r and r.get("status") == "stale" and r.get("time"):
+            missing.append("%s (stale: last report %s, not used)" % (name, _t(r["time"])))
+        else:
+            missing.append(name)
+
+    def fc_age_h(block):
+        try:
+            u = datetime.fromisoformat(str(block.get("updated")).replace("Z", "+00:00"))
+            return (now - u).total_seconds() / 3600, u
+        except (TypeError, ValueError):
+            return None, None
+
     def fr(label, r):
         if r and r.get("time"):
             age = r.get("ageMin")
@@ -137,7 +194,7 @@ def build_salt(rid: str, now: datetime) -> dict:
             pres_tr = _trend(w["station"]["id"], "PRES", now)
         items.append(("Wind", line + "."))
     else:
-        missing.append("wind")
+        miss("wind", R.get("wind"))
     if ok("seas"):
         s = R["seas"]; v = s["values"]; fr("Seas", s)
         seas_tr = _trend(s["station"]["id"], "WVHT", now, conditions.M_TO_FT)
@@ -147,10 +204,14 @@ def build_salt(rid: str, now: datetime) -> dict:
             line += "; %s from %.1f ft %d h earlier" % ("building" if dlt > 0.5 else "easing" if dlt < -0.5 else "little changed", seas_tr["then"], seas_tr["hours"])
         items.append(("Seas", line + "."))
     else:
-        missing.append("seas")
+        miss("seas", R.get("seas"))
     if ok("swell"):
         sw = R["swell"]["values"]
         items.append(("Swell", "%.1f ft at %.0f s from the %s (split from the buoy spectrum)." % (sw["heightFt"], sw["periodS"], sw["dirCompass"])))
+    elif "swell" in R:
+        miss("swell", R["swell"])
+    if "pressure" in R and not ok("pressure"):
+        miss("pressure", R["pressure"])
     if ok("pressure"):
         p = R["pressure"]; fr("Barometer", p)
         line = "%.2f inHg, %s" % (p["values"]["inHg"], p["values"]["trend"])
@@ -158,20 +219,33 @@ def build_salt(rid: str, now: datetime) -> dict:
             line += ", %s hPa over %d h at %s" % (_dir_word(pres_tr["now"] - pres_tr["then"], "", "up", "down", "steady", 0.4), pres_tr["hours"], pres_tr["station"])
         items.append(("Pressure", line + "."))
     mar = d.get("marine") or {}
-    if mar.get("status") == "ok" and mar.get("periods"):
+    mar_age, mar_upd = fc_age_h(mar)
+    if mar.get("status") == "ok" and mar.get("periods") and mar_age is not None and mar_age > MAX_FORECAST_AGE_H:
+        missing.append("marine forecast (stale: NWS issued %s, not used)" % _t(mar_upd))
+        mar = {**mar, "status": "stale"}
+    elif mar.get("status") == "ok" and mar.get("periods"):
         first = re.split(r"(?<=\.)\s", mar["periods"][0]["text"].strip())[0]
         items.append(("Marine forecast", "%s: %s (NWS %s)" % (mar["periods"][0]["name"], first, mar.get("zone"))))
     else:
         missing.append("marine forecast")
     fc = d.get("forecast") or {}
-    if fc.get("status") == "ok" and fc.get("periods"):
+    fc_age, fc_upd = fc_age_h(fc)
+    if fc.get("status") == "ok" and fc.get("periods") and fc_age is not None and fc_age > MAX_FORECAST_AGE_H:
+        missing.append("rain forecast (stale: NWS issued %s, not used)" % _t(fc_upd))
+    elif fc.get("status") != "ok" or not fc.get("periods"):
+        missing.append("rain forecast")
+    else:
         ps = fc["periods"][:2]
         rain = max(p.get("pop") or 0 for p in ps)
         items.append(("Rain", "%d%% chance through tonight; %s, high %s°F." % (rain, ps[0]["short"].lower(), ps[0]["tempF"])))
     t = d.get("tides") or {}
+    if t.get("status") != "ok":
+        missing.append("tides")
     if t.get("status") == "ok":
         day = _et(now).date()
         evs = [e for e in t["events"] if datetime.fromtimestamp(e["t"] / 1000, timezone.utc).astimezone(ET).date() == day]
+        if not evs:
+            missing.append("tides")
         if evs:
             items.append(("Tides", ", ".join("%s %s (%.1f ft)" % ("high" if e["type"] == "H" else "low", _t(datetime.fromtimestamp(e["t"] / 1000, timezone.utc)), e["v"]) for e in evs) + " at %s, MLLW." % t["station"]["name"]))
         ob = t.get("observed") or {}
@@ -183,6 +257,8 @@ def build_salt(rid: str, now: datetime) -> dict:
         if ok("waterTempOffshore"):
             line += ", %.0f°F offshore (buoy %s)" % (R["waterTempOffshore"]["values"]["f"], R["waterTempOffshore"]["station"]["id"])
         items.append(("Water temp", line + "."))
+    else:
+        miss("water temp", R.get("waterTemp"))
 
     # ---- Captain's take: fixed rules over the numbers above ----
     if al.get("status") == "ok" and al["items"]:
@@ -211,6 +287,8 @@ def build_salt(rid: str, now: datetime) -> dict:
     if not take:
         take.append("No advisories and no big overnight changes in the readings.")
     return {"region": d["region"], "waterType": "saltwater", "items": items, "freshness": fresh, "take": take[:4], "missing": missing,
+            "marineZone": (d.get("marine") or {}).get("zone"), "marineUpdated": (d.get("marine") or {}).get("updated"),
+            "forecastUpdated": fc.get("updated"),
             "sources": "NOAA NDBC, NOAA CO-OPS, NWS (api.weather.gov)"}
 
 
@@ -231,6 +309,8 @@ def build_fresh(rid: str, now: datetime) -> dict:
     rel = d.get("release") or {}
     if rel.get("flowCfs"):
         items.append(("Dam release", "%d cfs below Falls Dam (regulated)%s." % (round(rel["flowCfs"]["value"]), ", " + rel["band"]["label"].lower() if rel.get("band") else "")))
+    else:
+        missing.append("dam release")
     inf = [i for i in d.get("inflows") or [] if i.get("flowCfs")]
     if inf:
         items.append(("Inflows", "; ".join("%s %s cfs%s" % (i["label"], ("%.1f" % i["flowCfs"]["value"]).rstrip("0").rstrip("."), ", " + i["band"]["label"].lower() if i.get("band") else "") for i in inf) + "."))
@@ -238,6 +318,8 @@ def build_fresh(rid: str, now: datetime) -> dict:
     if wt.get("status") == "ok":
         fresh.append({"label": "Water temp", "time": _t(wt["time"]), "station": wt["usgs"], "stale": wt.get("stale")})
         items.append(("Water temp", "%.0f°F at the dam sensor." % wt["f"]))
+    else:
+        missing.append("water temp")
     rn = d.get("rain") or {}
     if rn.get("status") == "ok":
         q = rn.get("qpf") or {}
@@ -245,6 +327,8 @@ def build_fresh(rid: str, now: datetime) -> dict:
     fc = d.get("forecast") or {}
     if fc.get("status") == "ok" and fc.get("periods"):
         p = fc["periods"][0]; items.append(("Weather", "%s, high %s°F, wind %s %s." % (p["short"], p["tempF"], p["windDir"], p["windMph"])))
+    else:
+        missing.append("weather forecast")
     if L.get("vsGuideFt") is not None and L["vsGuideFt"] <= -3:
         take.append("The lake is %.1f ft below its guide curve, so more shoreline is exposed than usual; check NCWRC ramp notices before launching." % abs(L["vsGuideFt"]))
     if rel.get("band") and rel["band"].get("key") in ("record-low", "much-below"):
@@ -257,21 +341,105 @@ def build_fresh(rid: str, now: datetime) -> dict:
             "sources": "USGS, USACE Wilmington District, NWS"}
 
 
+# ------------------------------------------------------------------ validate
+SALT_CORE = ("Advisories", "Wind", "Seas", "Marine forecast", "Tides", "Water temp")
+FRESH_CORE = ("Lake level", "Dam release", "Water temp", "Weather")
+
+
+def _region_cfg(rid: str, fw: bool) -> dict | None:
+    try:
+        if fw:
+            import freshwater
+            return freshwater.regions().get(rid)
+        return next((r for r in conditions.load_regions().get("regions") or [] if r.get("id") == rid), None)
+    except Exception:
+        return None
+
+
+def validate(b: dict, rid: str, now: datetime) -> tuple[list[str], dict]:
+    """Critical checks before a new brief may be published. Returns (errors, summary).
+
+    Any error means the brief is not stored or shown. Individual missing or stale readings are not
+    errors; they are listed in b["missing"] and shown as not available."""
+    errs: list[str] = []
+    fw = b.get("waterType") == "freshwater"
+    cfg = _region_cfg(rid, fw)
+    reg = b.get("region") or {}
+    if not cfg:
+        errs.append("region %s is not configured" % rid)
+    else:
+        if b.get("regionId") != rid or reg.get("id") != rid:
+            errs.append("region id mismatch (%s)" % reg.get("id"))
+        if reg.get("name") != cfg.get("name"):
+            errs.append("region name does not match the configuration")
+        if cfg.get("anchor") and reg.get("anchor") != cfg.get("anchor"):
+            errs.append("location does not match the configuration")
+        if not fw:
+            zone = (cfg.get("marine") or {}).get("zone")
+            if b.get("marineZone") != zone:
+                errs.append("marine zone %s is not the configured zone %s" % (b.get("marineZone"), zone))
+    if b.get("issueDate") != _issue_date(now):
+        errs.append("issue date %s is not today's (%s)" % (b.get("issueDate"), _issue_date(now)))
+    try:
+        issued = datetime.fromisoformat(str(b.get("issuedAt")))
+        if issued.tzinfo is None or abs((issued - now).total_seconds()) > 600:
+            errs.append("issue timestamp is not current")
+    except ValueError:
+        errs.append("issue timestamp is missing or invalid")
+    labels = {k for k, _ in b.get("items") or []}
+    core = FRESH_CORE if fw else SALT_CORE
+    missing_core = [c for c in core if c not in labels or (c == "Advisories" and "advisories" in (b.get("missing") or []))]
+    if not fw and "Marine forecast" not in labels and "Rain" not in labels:
+        errs.append("no NWS forecast at all")
+    if len(missing_core) * 2 > len(core):
+        errs.append("most core readings are missing (%s)" % ", ".join(missing_core).lower())
+    summary = {"status": "failed" if errs else ("partial" if b.get("missing") else "ok"),
+               "checkedAt": now.isoformat(), "missingCore": [c.lower() for c in missing_core],
+               "checks": ["region", "location", "issue date", "timestamp"] + ([] if fw else ["marine zone", "forecast age"]) + ["core readings"]}
+    return errs, summary
+
+
 # ------------------------------------------------------------------ build, store, serve
-def build(rid: str, reason: str, now: datetime | None = None) -> dict:
+def compose(rid: str, reason: str, now: datetime | None = None) -> dict:
+    """Build and validate a brief without storing it. Raises BriefInvalid on a critical failure."""
     now = now or datetime.now(timezone.utc)
     fw = rid in ("falls-lake", "neuse-river", "jordan-lake")
     body = build_fresh(rid, now) if fw else build_salt(rid, now)
     words = len(" ".join([v for _, v in body["items"]] + body["take"]).split())
     b = {"ok": True, "regionId": rid, "issueDate": _issue_date(now), "issuedAt": now.isoformat(), "issuedEt": _et(now).strftime("%a %b %-d, %-I:%M %p ET"),
          "reason": reason, "words": words, **body}
+    errs, summary = validate(b, rid, now)
+    if errs:
+        raise BriefInvalid(errs)
+    b["validation"] = summary
+    return b
+
+
+def _save(rid: str, b: dict) -> None:
     with _lock:
         _mem[rid] = b
+        _last_error.pop(rid, None)
     try:
         STORE.mkdir(parents=True, exist_ok=True)
         (STORE / ("%s.json" % rid)).write_text(json.dumps(b))
     except OSError:
         pass
+
+
+def _fail(rid: str, now: datetime, e: Exception) -> None:
+    with _lock:
+        _last_error[rid] = {"at": now.isoformat(), "error": "; ".join(getattr(e, "errors", None) or [str(e) or type(e).__name__])}
+
+
+def build(rid: str, reason: str, now: datetime | None = None) -> dict:
+    """Compose, validate, and store a brief. Raises if it cannot be built or fails validation."""
+    now = now or datetime.now(timezone.utc)
+    try:
+        b = compose(rid, reason, now)
+    except Exception as e:
+        _fail(rid, now, e)
+        raise
+    _save(rid, b)
     return b
 
 
@@ -288,23 +456,83 @@ def _stored(rid: str):
         return None
 
 
-def wake(include_fresh: bool = False) -> dict:
-    """Build today's brief for every region that lacks one, in the background. Returns no brief content."""
-    now = datetime.now(timezone.utc)
+def _archived(rid: str):
+    """Latest brief the workflow archived to the brief-archive branch, for use after a restart.
+
+    Read-only, short timeout, cached 10 minutes. Off when MORNING_BRIEF_ARCHIVE_URL is set to empty."""
+    url = os.environ.get("MORNING_BRIEF_ARCHIVE_URL", ARCHIVE_URL)
+    if not url:
+        return None
+    hit = _arch_cache.get(rid)
+    if hit and time.time() - hit[0] < 600:
+        return hit[1]
+    b = None
+    try:
+        req = urllib.request.Request(url % rid if "%s" in url else url, headers={"User-Agent": "TheCoastalBrief/1.0"})
+        with urllib.request.urlopen(req, timeout=6) as r:
+            cand = json.loads(r.read(500_000).decode("utf-8"))
+        if (isinstance(cand, dict) and cand.get("ok") is True and cand.get("regionId") == rid and not cand.get("staleNotice")
+                and re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(cand.get("issueDate"))) and isinstance(cand.get("items"), list)
+                and isinstance(cand.get("issuedEt"), str)):
+            b = cand
+    except Exception:
+        b = None
+    _arch_cache[rid] = (time.time(), b)
+    return b
+
+
+def _previous(rid: str):
+    return _stored(rid) or _archived(rid)
+
+
+def _ensure(rid: str, reason: str, now: datetime, want: str) -> dict:
+    """Build today's brief once per region per day: concurrent callers wait, then reuse it."""
+    with _region_lock(rid):
+        b = _stored(rid)
+        if b and b.get("issueDate") == want:
+            return b
+        return build(rid, reason, now)
+
+
+def status(include_fresh: bool = False, now: datetime | None = None) -> dict:
+    now = now or datetime.now(timezone.utc)
+    want = _issue_date(now)
+    out = {}
+    for rid in enabled_regions(include_fresh):
+        b = _stored(rid) or {}
+        out[rid] = {"today": b.get("issueDate") == want, "issuedAt": b.get("issuedAt"), "reason": b.get("reason"),
+                    "validation": (b.get("validation") or {}).get("status"), "lastError": (_last_error.get(rid) or {}).get("error")}
+    return out
+
+
+def wake(include_fresh: bool = False, now: datetime | None = None, background: bool = True) -> dict:
+    """Build today's brief for every region that lacks one, in the background. Returns no brief content.
+
+    Before 05:15 ET it builds nothing (it only wakes the service); after the authorized window it
+    builds nothing. Each region is built independently, so one failure never blocks another."""
+    now = now or datetime.now(timezone.utc)
     want = _issue_date(now)
     e = _et(now)
+    base = {"ok": True, "issueDate": want, "autoUntil": auto_until(), "nowEt": e.strftime("%Y-%m-%d %H:%M %Z")}
+    if (e.hour, e.minute) < PREP:
+        return {**base, "building": 0, "waiting": "before 5:15 AM ET; nothing is built yet", "regions": status(include_fresh, now)}
+    if not auto_active(now):
+        return {**base, "building": 0, "paused": "automatic publication ended after %s" % auto_until(), "regions": status(include_fresh, now)}
     on_time = PREP <= (e.hour, e.minute) <= (PUBLISH_BY[0], PUBLISH_BY[1] + 15)
     todo = [rid for rid in enabled_regions(include_fresh) if not ((_stored(rid) or {}).get("issueDate") == want)]
 
     def run():
         for rid in todo:
             try:
-                build(rid, "scheduled" if on_time else "on-request")
+                _ensure(rid, "scheduled" if on_time else "on-request", datetime.now(timezone.utc) if background else now, want)
             except Exception:
-                pass
+                pass  # recorded in _last_error; the next region still runs
     if todo:
-        threading.Thread(target=run, name="brief-wake", daemon=True).start()
-    return {"ok": True, "issueDate": want, "building": len(todo)}
+        if background:
+            threading.Thread(target=run, name="brief-wake", daemon=True).start()
+        else:
+            run()
+    return {**base, "building": len(todo), "regions": status(include_fresh, now)}
 
 
 def get(rid: str, now: datetime | None = None, include_fresh: bool | None = None) -> tuple[int, dict]:
@@ -315,34 +543,84 @@ def get(rid: str, now: datetime | None = None, include_fresh: bool | None = None
     b = _stored(rid)
     if b and b.get("issueDate") == want:
         return 200, b
+    if b is None:
+        a = _archived(rid)
+        if a and a.get("issueDate") == want:  # today's brief, published before a restart
+            with _lock:
+                _mem.setdefault(rid, a)
+            return 200, a
+    if not auto_active(now):
+        # Window over: never build a new brief. Keep the last one up, clearly dated.
+        prev = _previous(rid)
+        note = "Automatic Morning Brief publication is paused (the authorized period ended %s). " % datetime.strptime(auto_until(), "%Y-%m-%d").strftime("%b %-d, %Y")
+        if prev:
+            return 200, {**prev, "current": False, "staleNotice": note + "This is the last published brief, from %s." % prev.get("issuedEt")}
+        return 503, {"ok": False, "error": note + "Live readings are on the conditions page."}
     # Scheduled build missing (service asleep or restarted): build now and say so.
     try:
-        return 200, build(rid, "on-request" if b is None or b.get("issueDate") != want else "rebuilt", now)
-    except Exception:
-        if b:
-            return 200, {**b, "staleNotice": "Today's brief could not be built; this is the brief from %s." % b["issuedEt"]}
+        return 200, _ensure(rid, "on-request", now, want)
+    except Exception as e:
+        prev = _previous(rid)
+        why = "it did not pass the data checks" if isinstance(e, BriefInvalid) else "the data sources did not respond"
+        if prev:
+            return 200, {**prev, "current": False, "staleNotice": "Today's brief could not be published because %s. This is not today's brief; it is the brief from %s." % (why, prev.get("issuedEt"))}
         return 503, {"ok": False, "error": "The morning brief is unavailable right now. Live readings are on the conditions page."}
+
+
+def run_window(now_fn=lambda: datetime.now(timezone.utc), sleep_fn=time.sleep, regions_fn=None) -> dict:
+    """05:15-05:30 ET: build every region, retrying ones with missing sections every 3 minutes.
+
+    Regions are independent: an exception in one is recorded and the others continue. A retry only
+    replaces an earlier brief from today when it has no more missing sections."""
+    regions_fn = regions_fn or enabled_regions
+    results: dict[str, str] = {}
+    if not auto_active(now_fn()):
+        return results
+    deadline = _et(now_fn()).replace(hour=PUBLISH_BY[0], minute=PUBLISH_BY[1], second=0, microsecond=0)
+    try:
+        want = _issue_date(now_fn())
+        # Skip regions that already have a complete brief for today (built by a wake or page view).
+        pending = [rid for rid in regions_fn()
+                   if not ((_stored(rid) or {}).get("issueDate") == want and not (_stored(rid) or {}).get("missing"))]
+    except Exception:
+        return results
+    while pending and _et(now_fn()) < deadline:
+        for rid in list(pending):
+            now = now_fn()
+            try:
+                with _region_lock(rid):
+                    new = compose(rid, "scheduled", now)
+                    old = _stored(rid)
+                    if old and old.get("issueDate") == new["issueDate"] and len(old.get("missing") or []) < len(new.get("missing") or []):
+                        new = old  # keep the more complete brief
+                    else:
+                        _save(rid, new)
+                results[rid] = "ok"
+                if not new.get("missing"):
+                    pending.remove(rid)
+            except Exception as e:
+                _fail(rid, now, e)
+                results.setdefault(rid, "failed")
+        if pending:
+            sleep_fn(180)
+    return results
 
 
 def _scheduler():
     while True:
-        e = datetime.now(ET)
-        nxt = e.replace(hour=PREP[0], minute=PREP[1], second=0, microsecond=0)
-        if nxt <= e:
-            nxt += timedelta(days=1)
-        time.sleep(max(5, (nxt - e).total_seconds()))
-        deadline = datetime.now(ET).replace(hour=PUBLISH_BY[0], minute=PUBLISH_BY[1])
-        pending = enabled_regions()
-        while pending and datetime.now(ET) < deadline:
-            for rid in list(pending):
-                try:
-                    b = build(rid, "scheduled")
-                    if not b["missing"]:
-                        pending.remove(rid)
-                except Exception:
-                    pass
-            if pending:
-                time.sleep(180)
+        try:
+            e = datetime.now(ET)
+            if not (PREP <= (e.hour, e.minute) < PUBLISH_BY):  # started inside the window: run now
+                nxt = e.replace(hour=PREP[0], minute=PREP[1], second=0, microsecond=0)
+                if nxt <= e:
+                    nxt += timedelta(days=1)
+                time.sleep(max(5, (nxt - e).total_seconds()))
+            run_window()
+            e = datetime.now(ET)
+            end = e.replace(hour=PUBLISH_BY[0], minute=PUBLISH_BY[1], second=0, microsecond=0)
+            time.sleep(max(60, (end - e).total_seconds() + 60))  # once per day, never a rebuild loop
+        except Exception:
+            time.sleep(60)
 
 
 def start_scheduler():
