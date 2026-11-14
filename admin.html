@@ -66,7 +66,7 @@
 (function () {
   "use strict";
   const $ = (id) => document.getElementById(id);
-  let csrf = "", status = "pending";
+  let csrf = "", status = "pending", regions = [];
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   function api(path, body) {
     const opt = body ? { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf }, body: JSON.stringify(body), credentials: "same-origin" } : { credentials: "same-origin" };
@@ -97,6 +97,7 @@
     api("/api/admin/list?status=" + status).then(function (r) {
       if (r._status === 401) { showLogin(); return; }
       if (!r.ok) { $("ad-status").textContent = r.error || "Could not load."; return; }
+      if (r.regions) regions = r.regions;
       $("ad-status").textContent = r.items.length ? r.items.length + " " + LABEL[status] : "Nothing " + LABEL[status] + ".";
       $("ad-list").innerHTML = r.items.map(card).join("");
     });
@@ -112,9 +113,17 @@
       const fw = it.water_type === "freshwater";
       h += '<label>Water<select name="water_type"><option value="saltwater"' + (fw ? "" : " selected") + '>Saltwater</option><option value="freshwater"' + (fw ? " selected" : "") + ">Freshwater</option></select></label>";
       h += '<label class="ad-species"' + (it.category === "fishing" ? "" : " hidden") + '>Species<input type="text" name="species" maxlength="60" value="' + esc(it.species) + '"></label>';
+      let ropts = '<option value="">No region chosen</option>';
+      regions.forEach(function (r) {
+        ropts += '<option value="' + esc(r.id) + '"' + (it.region_id === r.id ? " selected" : "") + ">" + esc(r.name) + "</option>";
+      });
+      ropts += '<option value="other"' + (it.region_id === "other" ? " selected" : "") + ">Other / not listed</option>";
+      h += '<label>Region<select name="region_id">' + ropts + "</select></label>";
       h += '<label>Location<input type="text" name="location" maxlength="60" value="' + esc(it.location) + '"></label>';
+      h += '<label>Date taken<input type="date" name="taken_on" value="' + esc((it.taken_on || "").slice(0, 10)) + '"></label>';
       h += '<label>Caption<textarea name="caption" maxlength="280" rows="2">' + esc(it.caption) + "</textarea></label>";
       h += '<label>Name shown<input type="text" name="display_name" maxlength="40" value="' + esc(it.display_name) + '"></label>';
+      h += '<label class="ad-feat"><input type="checkbox" name="anonymous"' + (it.anonymous ? " checked" : "") + "> Hide name on the public site</label>";
       if (it.status === "approved") h += '<label class="ad-feat"><input type="checkbox" name="featured"' + (it.featured ? " checked" : "") + "> Feature on the home page</label>";
       h += '<div class="ad-row"><button type="button" data-act="edit">Save changes</button></div>';
       if (it.status === "pending") h += '<div class="ad-row"><button type="button" class="ok" data-act="approve">Approve and publish</button><button type="button" class="bad" data-act="reject">Reject</button></div>';
@@ -138,9 +147,11 @@
     const body = { id: li.dataset.id, action: act };
     if (act === "edit" || act === "approve") {
       // Save edits first so an approval publishes the corrected text.
-      li.querySelectorAll("input[type=text], textarea, select").forEach((f) => body[f.name] = f.value);
+      li.querySelectorAll("input[type=text], input[type=date], textarea, select").forEach((f) => body[f.name] = f.value);
       const fe = li.querySelector("input[name=featured]");
       if (fe) body.featured = fe.checked;
+      const an = li.querySelector("input[name=anonymous]");
+      if (an) body.anonymous = an.checked;
     }
     b.disabled = true;
     const step = act === "approve" ? api("/api/admin/action", Object.assign({}, body, { action: "edit" })).then((r) => r.ok ? api("/api/admin/action", { id: body.id, action: "approve" }) : r) : api("/api/admin/action", body);

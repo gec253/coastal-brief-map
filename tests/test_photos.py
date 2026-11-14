@@ -9,6 +9,8 @@ import os
 import shutil
 import sys
 import tempfile
+import threading
+from http.client import HTTPConnection
 import unittest
 from pathlib import Path
 
@@ -60,7 +62,7 @@ def multipart(fields, file_bytes=None, filename="x.jpg", ctype="image/jpeg"):
     return "multipart/form-data; boundary=" + bd, out
 
 
-GOOD = {"category": "fishing", "water_type": "saltwater", "consent": "yes", "cf-turnstile-response": "local-test-pass",
+GOOD = {"category": "fishing", "water_type": "saltwater", "consent": "yes", "age": "yes",
         "species": "Red drum", "location": "Cape Lookout", "caption": "Test fixture", "display_name": "Tester"}
 
 
@@ -78,7 +80,11 @@ class PhotoPipeline(unittest.TestCase):
             ct, body = multipart(GOOD, jpeg_with_gps())
             self.assertEqual(photos.handle_submit(ct, body, "1.1.1.1")[0], 404)
             self.assertFalse(photos.public_config()["uploads"])
+            self.assertFalse(photos.public_config()["public"])
             self.assertFalse(photos.admin_configured())
+            self.assertTrue(photos.admin_ready())
+            self.assertTrue(photos.uploads_available(preview=True))
+            self.assertEqual(photos.handle_submit(ct, body, "1.1.1.1", preview=True)[0], 200)
         finally:
             os.environ["PHOTO_UPLOADS_ENABLED"] = "1"
 
@@ -92,11 +98,14 @@ class PhotoPipeline(unittest.TestCase):
             os.environ.pop("RENDER")
             photos._backend = None
 
-    def test_real_backend_needs_turnstile(self):
+    def test_real_backend_without_turnstile_is_active(self):
         os.environ.update({"PHOTO_BACKEND": "supabase", "SUPABASE_URL": "https://example.supabase.co", "SUPABASE_SERVICE_ROLE_KEY": "k"})
+        os.environ.pop("TURNSTILE_SECRET_KEY", None)
+        os.environ.pop("TURNSTILE_SITE_KEY", None)
         photos._backend = None
         try:
-            self.assertFalse(photos.uploads_active())          # no Turnstile keys
+            self.assertTrue(photos.uploads_active())           # Turnstile is optional
+            self.assertFalse(photos.turnstile_required())
             self.assertFalse(photos.verify_turnstile("local-test-pass", "1.1.1.1"))
         finally:
             os.environ["PHOTO_BACKEND"] = "fake"
@@ -141,18 +150,47 @@ class PhotoPipeline(unittest.TestCase):
             photos.MAX_PIXELS = old
 
     def test_submit_validation(self):
-        for drop, code in (("consent", 400), ("category", 400), ("water_type", 400), ("cf-turnstile-response", 400)):
+        cases = (("consent", 400), ("age", 400), ("category", 400), ("water_type", 400), ("display_name", 400))
+        for i, (drop, code) in enumerate(cases):
             f = dict(GOOD); f.pop(drop)
             ct, body = multipart(f, jpeg_with_gps())
-            self.assertEqual(photos.handle_submit(ct, body, "2.2.2.2")[0], code, drop)
+            self.assertEqual(photos.handle_submit(ct, body, "2.2.2.%s" % (10 + i))[0], code, drop)
         ct, body = multipart(dict(GOOD, website="spam"), jpeg_with_gps())
-        self.assertEqual(photos.handle_submit(ct, body, "2.2.2.2")[0], 400)
+        self.assertEqual(photos.handle_submit(ct, body, "2.2.3.1")[0], 400)
         ct, body = multipart(GOOD, None)
-        self.assertEqual(photos.handle_submit(ct, body, "2.2.2.3")[0], 400)
+        self.assertEqual(photos.handle_submit(ct, body, "2.2.3.2")[0], 400)
+        ct, body = multipart(dict(GOOD, taken_on="2099-01-01"), jpeg_with_gps())
+        self.assertEqual(photos.handle_submit(ct, body, "2.2.3.3")[0], 400)
+        ct, body = multipart(dict(GOOD, region="not-a-region"), jpeg_with_gps())
+        self.assertEqual(photos.handle_submit(ct, body, "2.2.3.4")[0], 400)
+
+    def test_anonymous_hides_public_name(self):
+        ct, body = multipart(dict(GOOD, anonymous="yes", display_name="Pat", taken_on="2024-06-15", region="crystal-coast"), jpeg_with_gps())
+        st, res = photos.handle_submit(ct, body, "8.8.8.8")
+        self.assertEqual(st, 200, res)
+        b = photos.backend()
+        row = [r for r in b.select(status="pending") if r["ip_hash"] == photos.ip_hash("8.8.8.8")][0]
+        self.assertEqual(row["display_name"], "Pat")
+        self.assertTrue(row["anonymous"])
+        self.assertEqual(row["taken_on"], "2024-06-15")
+        self.assertEqual(row["region_id"], "crystal-coast")
+        self.assertFalse([p for p in photos.public_photos("all")["photos"] if p["id"] == row["id"]])
+        photos.admin_action(__import__("json").dumps({"id": row["id"], "action": "approve"}).encode())
+        pub = [p for p in photos.public_photos("catch")["photos"] if p["id"] == row["id"]][0]
+        self.assertEqual(pub["name"], "")
+        self.assertEqual(pub["takenOn"], "2024-06-15")
+        self.assertIn("Morehead", pub["region"])
+        photos.admin_action(__import__("json").dumps({"id": row["id"], "action": "remove"}).encode())
 
     def test_rate_limit(self):
         ct, body = multipart(dict(GOOD, category="life"), jpeg_with_gps(800, 600, 1))
         codes = [photos.handle_submit(ct, body, "3.3.3.3")[0] for _ in range(6)]
+        self.assertEqual(codes[:5], [200] * 5)
+        self.assertEqual(codes[5], 429)
+
+    def test_session_rate_limit(self):
+        ct, body = multipart(dict(GOOD, category="life"), jpeg_with_gps(800, 600, 1))
+        codes = [photos.handle_submit(ct, body, "9.9.9.%s" % i, session_id="sess-test-token-aaaa")[0] for i in range(6)]
         self.assertEqual(codes[:5], [200] * 5)
         self.assertEqual(codes[5], 429)
 
@@ -215,6 +253,127 @@ class PhotoPipeline(unittest.TestCase):
     def test_text_cleaning(self):
         self.assertEqual(photos.clean_text("  a\x00b \n\n c  ", "caption"), "ab c")
         self.assertEqual(len(photos.clean_text("x" * 999, "species")), 60)
+
+
+
+class PhotoUploadGate(unittest.TestCase):
+    """Flag off stays hidden to the public; the preview cookie unlocks a private test."""
+    KEY = "preview-test-key-24-chars-ok"
+
+    @classmethod
+    def setUpClass(cls):
+        import server
+        cls.server = server
+        os.environ["PREVIEW_KEY"] = cls.KEY
+        cls.httpd = server.ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
+        cls.thread = threading.Thread(target=cls.httpd.serve_forever, daemon=True)
+        cls.thread.start()
+        cls.host, cls.port = cls.httpd.server_address
+        cls.origin = "http://127.0.0.1:%s" % cls.port
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.httpd.shutdown()
+        cls.httpd.server_close()
+        os.environ.pop("PREVIEW_KEY", None)
+
+    def setUp(self):
+        photos.LIMITS = photos.RateLimiter()
+        os.environ["PHOTO_UPLOADS_ENABLED"] = "0"
+        photos._backend = None
+
+    def tearDown(self):
+        os.environ["PHOTO_UPLOADS_ENABLED"] = "1"
+        photos._backend = None
+
+    def _cookie(self):
+        return "%s=%s" % (self.server.PREVIEW_COOKIE, self.server._preview_cookie_value(self.KEY))
+
+    def _req(self, method, path, body=None, headers=None, cookie=None):
+        h = dict(headers or {})
+        if cookie:
+            prior = h.get("Cookie")
+            h["Cookie"] = (prior + "; " + cookie) if prior else cookie
+        conn = HTTPConnection("127.0.0.1", self.port, timeout=8)
+        conn.request(method, path, body=body, headers=h)
+        resp = conn.getresponse()
+        data = resp.read()
+        hdrs = {k.lower(): v for k, v in resp.getheaders()}
+        conn.close()
+        return resp.status, data, hdrs
+
+    def test_public_is_404_when_flag_off(self):
+        st, body, _ = self._req("GET", "/api/photos/config")
+        self.assertEqual(st, 200)
+        cfg = json.loads(body)
+        self.assertFalse(cfg["uploads"])
+        self.assertFalse(cfg.get("public"))
+        ct, raw = multipart(GOOD, jpeg_with_gps())
+        st, body, _ = self._req(
+            "POST", "/api/photos/submit", body=raw,
+            headers={"Content-Type": ct, "Origin": self.origin},
+        )
+        self.assertEqual(st, 404)
+        st, _, _ = self._req("GET", "/admin")
+        self.assertEqual(st, 404)
+        st, _, _ = self._req("GET", "/preview/photos-check")
+        self.assertEqual(st, 404)
+        st, _, _ = self._req("GET", "/preview/photos-check", cookie="cb_preview=deadbeef")
+        self.assertEqual(st, 404)
+
+    def test_preview_cookie_unlocks_submit_admin_and_check(self):
+        ck = self._cookie()
+        st, body, hdrs = self._req("GET", "/api/photos/config", cookie=ck)
+        self.assertEqual(st, 200)
+        self.assertIn("noindex", hdrs.get("x-robots-tag", ""))
+        self.assertIn("no-store", hdrs.get("cache-control", ""))
+        cfg = json.loads(body)
+        self.assertTrue(cfg["uploads"])
+        self.assertFalse(cfg["public"])
+        self.assertEqual(cfg["maxBytes"], 10 * 1024 * 1024)
+        self.assertFalse(cfg.get("turnstileSiteKey"))
+
+        ct, raw = multipart(GOOD, jpeg_with_gps())
+        st, body, hdrs = self._req(
+            "POST", "/api/photos/submit", body=raw,
+            headers={"Content-Type": ct, "Origin": self.origin, "Cookie": ck},
+        )
+        self.assertEqual(st, 200, body)
+        res = json.loads(body)
+        self.assertTrue(res["ok"])
+        self.assertEqual(res["status"], "pending")
+        self.assertIn("cb_submit=", hdrs.get("set-cookie", ""))
+
+        st, page, hdrs = self._req("GET", "/admin", cookie=ck)
+        self.assertEqual(st, 200)
+        self.assertIn("noindex", hdrs.get("x-robots-tag", ""))
+        self.assertIn(b"Photo review", page)
+
+        st, body, hdrs = self._req("GET", "/preview/photos-check", cookie=ck)
+        self.assertEqual(st, 200)
+        self.assertIn("noindex", hdrs.get("x-robots-tag", ""))
+        self.assertIn("no-store", hdrs.get("cache-control", ""))
+        report = json.loads(body)
+        for key in ("pillow", "pillowHeif", "backendConfigured", "tableReachable",
+                    "pendingRoundTrip", "pendingBucketPrivate", "approvedBucketPublic",
+                    "adminConfigured", "pendingCount"):
+            self.assertIn(key, report)
+        blob = json.dumps(report).lower()
+        self.assertNotIn("sb_secret", blob)
+        self.assertNotIn("service_role", blob)
+        self.assertNotIn("scrypt$", blob)
+        self.assertTrue(report["backendConfigured"])
+        self.assertEqual(report["backend"], "fake")
+        self.assertTrue(report["tableReachable"])
+        self.assertGreaterEqual(report["pendingCount"], 1)
+        self.assertTrue(report["adminConfigured"])
+        self.assertFalse(report["uploadsFlag"])
+
+    def test_catch_wall_hides_share_button_in_markup(self):
+        st, body, _ = self._req("GET", "/catch-wall")
+        self.assertEqual(st, 200)
+        self.assertIn(b'id="share-open" hidden', body)
+        self.assertIn(b"Photo sharing opens soon", body)
 
 
 if __name__ == "__main__":

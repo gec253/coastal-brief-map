@@ -92,10 +92,10 @@ class MastheadPreview(unittest.TestCase):
     def _cookie(self):
         return "%s=%s" % (self.server.PREVIEW_COOKIE, self.server._preview_cookie_value(self.KEY))
 
-    # Homepage speed-trim files are allowed to differ from origin/main.
+    # Homepage speed-trim files, and the Catch Wall form, may differ from origin/main.
     PUBLIC_FILES_LOCKED = tuple(
         rel for rel in PUBLIC_FILES
-        if rel not in ("index.html", "dashboard.js", "app.js", "styles.css")
+        if rel not in ("index.html", "dashboard.js", "app.js", "styles.css", "catch-wall.html")
     )
 
     def test_public_files_match_origin_main(self):
@@ -134,7 +134,8 @@ class MastheadPreview(unittest.TestCase):
 
     def test_preview_404_without_key_or_cookie(self):
         for path in ("/preview/masthead", "/preview/masthead?c=a", "/preview/masthead.css",
-                     "/preview/home", "/preview/home?c=cinematic", "/preview/home.css"):
+                     "/preview/home", "/preview/home?c=cinematic", "/preview/home.css",
+                     "/preview/photos-check"):
             status, _, _ = self._req(path)
             self.assertEqual(status, 404, path)
             status, _, _ = self._req(path, env={"PREVIEW_KEY": self.KEY})

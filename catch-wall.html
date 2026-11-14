@@ -141,24 +141,32 @@
         <label><input type="radio" name="water_type" value="saltwater" required> Saltwater</label>
         <label><input type="radio" name="water_type" value="freshwater"> Freshwater</label>
       </fieldset>
-      <input type="file" class="sh-file-input" id="sh-photo" name="photo" accept="image/*,.heic,.heif" required>
-      <label class="sh-file" for="sh-photo">
+      <input type="file" class="sh-file-input" id="sh-photo" name="photo" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" required>
+      <label class="sh-file" id="sh-drop" for="sh-photo">
         <span class="sh-file-btn">Choose a photo</span>
-        <span class="sh-file-hint">Camera, photo library, or a file. JPEG, PNG, WebP, or HEIC, up to 15 MB.</span>
+        <span class="sh-file-hint">Tap to pick from your camera or photo library, or drop a file here. JPEG, PNG, WebP, or iPhone HEIC, up to 10 MB.</span>
       </label>
       <div class="sh-preview" id="sh-preview" hidden><img id="sh-preview-img" alt="Preview of the photo you chose"><p id="sh-preview-name"></p></div>
-      <label for="sh-name">Your name as shown <span class="opt">optional</span></label>
-      <input type="text" id="sh-name" name="display_name" maxlength="40" autocomplete="nickname">
+      <label for="sh-name">Your name</label>
+      <input type="text" id="sh-name" name="display_name" maxlength="40" autocomplete="nickname" required>
+      <label class="sh-consent sh-anon"><input type="checkbox" name="anonymous" value="yes" id="sh-anon"> Share this photo anonymously. Your name is still sent for review, but it will not appear on the site.</label>
       <div id="sh-species-wrap">
         <label for="sh-species">Species <span class="opt">optional</span></label>
         <input type="text" id="sh-species" name="species" maxlength="60" placeholder="e.g. Red drum, largemouth bass">
       </div>
+      <label for="sh-region">Region <span class="opt">optional</span></label>
+      <select id="sh-region" name="region">
+        <option value="">Optional — choose a region</option>
+      </select>
       <label for="sh-loc">General location <span class="opt">optional</span></label>
       <input type="text" id="sh-loc" name="location" maxlength="60" placeholder="e.g. Cape Lookout, Falls Lake, New River">
+      <label for="sh-taken">Date the photo was taken <span class="opt">optional</span></label>
+      <input type="date" id="sh-taken" name="taken_on" autocomplete="off">
       <label for="sh-cap">Caption <span class="opt">optional</span></label>
       <textarea id="sh-cap" name="caption" maxlength="280" rows="3"></textarea>
       <div class="sh-hp" aria-hidden="true"><label for="sh-web">Leave this empty</label><input type="text" id="sh-web" name="website" tabindex="-1" autocomplete="off"></div>
       <label class="sh-consent"><input type="checkbox" name="consent" value="yes" required> I took this photo or have permission to share it, and I give The Coastal Brief permission to display it on this site.</label>
+      <label class="sh-consent"><input type="checkbox" name="age" value="yes" required> I am 13 or older, or I have a parent or guardian's permission to share a photo.</label>
       <div class="sh-turnstile" id="sh-turnstile"></div>
       <p class="sh-error" id="sh-error" role="alert"></p>
       <button type="submit" class="btn-share" id="sh-submit">Send for review</button>

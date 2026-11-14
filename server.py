@@ -1576,6 +1576,8 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 <a class="card" href="/lab/tiles"><b>Tile designs</b><span>The instrument tile prototype</span></a>
 <a class="card" href="/preview/masthead?c=c"><b>Masthead concepts</b><span>Three directions for a cinematic gold wave-to-masthead reveal (A editorial, B nautical, C hybrid). Replay from the bar at the bottom.</span></a>
 <a class="card" href="/preview/home"><b>Homepage (Ed's pick)</b><span>Classic Coastal Editorial masthead (A) with the Modern Coastal Magazine layout and the Bodie Island sunrise. Compare Cinematic and the other mastheads from the bar at the bottom.</span></a>
+<a class="card" href="/catch-wall"><b>Catch Wall photo submissions</b><span>Private test: the Share form and the review page work in this browser, even while public uploads stay off. Photos you send wait in the pending queue until you approve them.</span></a>
+<a class="card" href="/preview/photos-check"><b>Photo setup check</b><span>A private status report: storage, image tools, and the pending queue. It never shows keys.</span></a>
 <p><a href="/preview?lock=1">Lock this browser again</a></p></main></body></html>""" % PREVIEW_DAYS
 
 conditions.install(cache_get, cache_get_any, cache_put_ttl, lambda url: fetch_url(url, tries=2))
@@ -1664,6 +1666,10 @@ class Handler(SimpleHTTPRequestHandler):
             return self._send_file(path, ctype)
         if parsed.path == "/preview":
             return self._preview_route(parsed)
+        if parsed.path == "/preview/photos-check":
+            if not self._preview_ok():
+                return self.send_error(404, "not found")
+            return self._json_private(photos.diagnostics())
         if parsed.path == "/preview/masthead" or parsed.path == "/preview/masthead.css":
             return self._masthead_preview_route(parsed)
         if parsed.path == "/preview/home" or parsed.path == "/preview/home.css" or parsed.path.startswith("/preview/home/photos/"):
@@ -1733,14 +1739,18 @@ class Handler(SimpleHTTPRequestHandler):
         if parsed.path in ("/coastal-life", "/coastal-life/", "/photos", "/photos/"):
             return self._send_html(ROOT / "catch-wall.html", share=parsed.path.strip("/"))
         if parsed.path == "/api/photos/config":
-            return self._send_json(photos.public_config(), cache_s=60)
+            pv = self._preview_ok()
+            cfg = photos.public_config(preview=pv)
+            if pv:
+                return self._json_private(cfg)
+            return self._send_json(cfg, cache_s=60)
         if parsed.path == "/api/photos":
             q = parse_qs(parsed.query or "")
             view = (q.get("view") or ["all"])[0]
             feat = (q.get("featured") or [""])[0] == "1"
             return self._send_json(photos.public_photos(view, feat), cache_s=60)
         if parsed.path in ("/admin", "/admin/"):
-            if not photos.admin_configured():
+            if not photos.admin_available(self._preview_ok()):
                 return self.send_error(404, "not found")
             return self._send_private(ROOT / "admin.html", "text/html; charset=utf-8")
         if parsed.path.startswith("/api/admin/"):
@@ -1922,10 +1932,11 @@ class Handler(SimpleHTTPRequestHandler):
 
     def _admin_get(self, parsed):
         csrf = photos.read_session(self.headers.get("Cookie", ""))
-        if parsed.path == "/api/admin/session" and photos.admin_configured() and not csrf:
+        admin_on = photos.admin_available(self._preview_ok())
+        if parsed.path == "/api/admin/session" and admin_on and not csrf:
             return self._json_private({"ok": False})
-        if not photos.admin_configured() or not csrf:
-            return self._json_private({"ok": False, "error": "Sign in first."}, 401 if photos.admin_configured() else 404)
+        if not admin_on or not csrf:
+            return self._json_private({"ok": False, "error": "Sign in first."}, 401 if admin_on else 404)
         if parsed.path == "/api/admin/list":
             status = (parse_qs(parsed.query or "").get("status") or ["pending"])[0]
             try:
@@ -1964,9 +1975,10 @@ class Handler(SimpleHTTPRequestHandler):
         if parsed.path not in routes:
             return self._json_private({"ok": False, "error": "Not found."}, 404)
         # Flag off (or not configured): refuse before reading any body.
-        if parsed.path == "/api/photos/submit" and not photos.uploads_active():
+        pv = self._preview_ok()
+        if parsed.path == "/api/photos/submit" and not photos.uploads_available(pv):
             return self._json_private({"ok": False, "error": "Not found."}, 404)
-        if parsed.path != "/api/photos/submit" and not photos.admin_configured():
+        if parsed.path != "/api/photos/submit" and not photos.admin_available(pv):
             return self._json_private({"ok": False, "error": "Not found."}, 404)
         if not self._same_origin():
             return self._json_private({"ok": False, "error": "Cross-site request refused."}, 403)
@@ -1977,12 +1989,16 @@ class Handler(SimpleHTTPRequestHandler):
         cap = photos.MAX_BYTES + 256 * 1024 if parsed.path == "/api/photos/submit" else 64 * 1024
         if length < 0 or length > cap:
             self.close_connection = True
-            return self._json_private({"ok": False, "error": "That file is larger than 15 MB."}, 413)
+            return self._json_private({"ok": False, "error": "That file is larger than 10 MB."}, 413)
         body = self.rfile.read(length) if length else b""
         ip = self._client_ip()
         if parsed.path == "/api/photos/submit":
-            status, payload = photos.handle_submit(self.headers.get("Content-Type", ""), body, ip)
-            return self._json_private(payload, status)
+            sid = photos.read_submit_session(self.headers.get("Cookie", "")) or photos.new_submit_session()
+            status, payload = photos.handle_submit(
+                self.headers.get("Content-Type", ""), body, ip,
+                preview=self._preview_ok(), session_id=sid,
+            )
+            return self._json_private(payload, status, photos.submit_cookie(sid))
         if parsed.path == "/api/admin/login":
             status, payload, cookie = photos.admin_login(body, ip)
             return self._json_private(payload, status, cookie)

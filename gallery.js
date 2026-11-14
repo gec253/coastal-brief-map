@@ -46,8 +46,17 @@
 
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
 
+  function formatTaken(v) {
+    const m = String(v || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!m) return "";
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+    if (isNaN(d.getTime())) return "";
+    return d.getUTCDate() + " " + months[d.getUTCMonth()] + " " + d.getUTCFullYear();
+  }
   function credit(p) {
-    const what = [p.species, p.location].filter(Boolean).join(" · ");
+    const place = p.location || p.region || "";
+    const what = [p.species, place, formatTaken(p.takenOn)].filter(Boolean).join(" · ");
     return { what: what, who: p.name ? "Photo: " + p.name : "" };
   }
   function altText(p) {
@@ -245,6 +254,7 @@
     const wt = $("share-form").querySelector("input[name=water_type][value='" + (water === "fresh" ? "freshwater" : "saltwater") + "']");
     if (wt && water !== "all" && !$("share-form").querySelector("input[name=water_type]:checked")) wt.checked = true;
     syncSpecies();
+    fillRegions();
     loadTurnstile();
     if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
     document.body.classList.add("no-scroll");
@@ -260,21 +270,67 @@
     $("sh-species-wrap").hidden = !(c && c.value === "fishing");
   }
   $("share-form").querySelectorAll("input[name=category]").forEach((r) => r.addEventListener("change", syncSpecies));
+  function fillRegions() {
+    const sel = $("sh-region");
+    if (!sel || sel.dataset.filled) return;
+    const regions = config.regions || [];
+    regions.forEach(function (r) {
+      const o = document.createElement("option");
+      o.value = r.id;
+      o.textContent = r.name;
+      sel.appendChild(o);
+    });
+    const other = document.createElement("option");
+    other.value = "other";
+    other.textContent = "Other / not listed";
+    sel.appendChild(other);
+    sel.dataset.filled = "1";
+  }
   let previewUrl = null;
-  $("sh-photo").addEventListener("change", function () {
-    const f = this.files && this.files[0];
+  function showPickedFile(f, input) {
     const box = $("sh-preview"), img = $("sh-preview-img");
     if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = null; }
     $("sh-error").textContent = "";
-    if (!f) { box.hidden = true; return; }
-    if (f.size > (config.maxBytes || 15728640)) { $("sh-error").textContent = "That file is larger than 15 MB. Please choose a smaller photo."; this.value = ""; box.hidden = true; return; }
+    if (!f) { box.hidden = true; return false; }
+    const cap = config.maxBytes || 10485760;
+    if (f.size > cap) {
+      $("sh-error").textContent = "That file is larger than 10 MB. Please choose a smaller photo.";
+      if (input) input.value = "";
+      box.hidden = true;
+      return false;
+    }
     $("sh-preview-name").textContent = f.name + " · " + (f.size / 1048576).toFixed(1) + " MB";
     previewUrl = URL.createObjectURL(f);
     img.hidden = false;
     img.onerror = function () { img.hidden = true; }; // e.g. HEIC outside Safari: name still shown
     img.src = previewUrl;
     box.hidden = false;
+    return true;
+  }
+  $("sh-photo").addEventListener("change", function () {
+    showPickedFile(this.files && this.files[0], this);
   });
+  (function () {
+    const drop = $("sh-drop");
+    if (!drop) return;
+    ["dragenter", "dragover"].forEach(function (ev) {
+      drop.addEventListener(ev, function (e) { e.preventDefault(); e.stopPropagation(); drop.classList.add("is-drop"); });
+    });
+    ["dragleave", "drop"].forEach(function (ev) {
+      drop.addEventListener(ev, function (e) { e.preventDefault(); e.stopPropagation(); drop.classList.remove("is-drop"); });
+    });
+    drop.addEventListener("drop", function (e) {
+      const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (!f) return;
+      const input = $("sh-photo");
+      try {
+        const dt = new DataTransfer();
+        dt.items.add(f);
+        input.files = dt.files;
+      } catch (err) {}
+      showPickedFile(f, input);
+    });
+  })();
   $("share-form").addEventListener("submit", function (e) {
     e.preventDefault();
     const form = e.currentTarget, err = $("sh-error"), btn = $("sh-submit");
@@ -282,9 +338,14 @@
     if (!form.querySelector("input[name=category]:checked")) { err.textContent = "Please choose Fishing or Coastal Life."; return; }
     if (!form.querySelector("input[name=water_type]:checked")) { err.textContent = "Please choose Saltwater or Freshwater."; return; }
     if (!$("sh-photo").files.length) { err.textContent = "Please choose a photo."; $("sh-photo").focus(); return; }
-    if (!form.consent.checked) { err.textContent = "Please confirm you own the photo or have permission to share it."; form.consent.focus(); return; }
+    if (!$("sh-name").value.trim()) { err.textContent = "Please enter your name."; $("sh-name").focus(); return; }
+    if (!form.consent.checked) { err.textContent = "Please confirm you took the photo or have permission to share it."; form.consent.focus(); return; }
+    if (!form.age.checked) { err.textContent = "Please confirm you are 13 or older, or have a parent or guardian's permission."; form.age.focus(); return; }
     const fd = new FormData(form);
-    if (!config.turnstileSiteKey) fd.set("cf-turnstile-response", "local-test-pass"); // local fake backend only; real servers require Turnstile
+    if (config.turnstileSiteKey && !fd.get("cf-turnstile-response")) {
+      err.textContent = "Please complete the spam check and try again.";
+      return;
+    }
     btn.disabled = true; btn.textContent = "Sending…";
     fetch("/api/photos/submit", { method: "POST", body: fd, credentials: "same-origin" })
       .then((r) => r.json().catch(() => ({ ok: false, error: "The server did not answer clearly. Please try again." })))

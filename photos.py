@@ -1,8 +1,10 @@
 """Community photo submissions (Catch Wall + Coastal Life), behind a feature flag.
 
-Everything here is OFF unless PHOTO_UPLOADS_ENABLED=1 *and* a storage backend is
-configured. With the flag off, no endpoint in this module accepts input: the
-submit and admin routes return 404 and /api/photos/config reports uploads off.
+Public submissions are OFF unless PHOTO_UPLOADS_ENABLED=1 *and* a storage
+backend is configured. With the flag off, the public still sees 404s and no
+Share button. A browser with the private preview cookie can submit and review
+photos anyway (private test mode), as long as storage and admin secrets are set.
+Cloudflare Turnstile is optional: it is used only when both keys are set.
 
 Storage: Supabase Storage (private "pending" bucket, public "approved" bucket)
 plus a Postgres table, reached with plain HTTPS (urllib); no SDK. The
@@ -29,12 +31,14 @@ import time
 import uuid
 from email.parser import BytesParser
 from email.policy import HTTP
+from datetime import date, datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
-MAX_BYTES = 15 * 1024 * 1024          # upload size cap (about 15 MB)
+MAX_BYTES = 10 * 1024 * 1024          # upload size cap (about 10 MB)
 MAX_PIXELS = 50_000_000               # decompression-bomb cap (50 MP; iPhone 48 MP fits)
 MIN_SIDE = 320                        # reject tiny images
 SIZES = (400, 800, 1600)              # WebP widths for srcset
@@ -42,9 +46,12 @@ THUMB = 240                           # admin/thumbnail width
 CATEGORIES = ("fishing", "life")
 WATER_TYPES = ("saltwater", "freshwater")
 STATUSES = ("pending", "approved", "rejected", "removed")
-TEXT_LIMITS = {"display_name": 40, "species": 60, "location": 60, "caption": 280}
+TEXT_LIMITS = {"display_name": 40, "species": 60, "location": 60, "caption": 280, "region_id": 40}
 SESSION_COOKIE = "cb_admin"
 SESSION_TTL = 8 * 3600
+SUBMIT_COOKIE = "cb_submit"
+SUBMIT_TTL = 30 * 24 * 3600
+REGION_OTHER = "other"
 
 
 def _env(name: str, default: str = "") -> str:
@@ -130,6 +137,39 @@ class SupabaseBackend:
         self._req("PATCH", "/rest/v1/%s?id=eq.%s" % (self.table, quote(row_id)), json.dumps(fields).encode(),
                   {"Content-Type": "application/json", "Prefer": "return=minimal"})
 
+    def count(self, status=None):
+        q = {"select": "id"}
+        if status:
+            q["status"] = "eq." + status
+        h = {"apikey": self._key, "Prefer": "count=exact", "Range": "0-0"}
+        if self._key.startswith("eyJ"):
+            h["Authorization"] = "Bearer " + self._key
+        req = Request(self.url + "/rest/v1/%s?%s" % (self.table, urlencode(q)), method="GET", headers=h)
+        try:
+            with urlopen(req, timeout=20) as r:
+                cr = r.headers.get("Content-Range") or r.headers.get("content-range") or ""
+        except HTTPError as e:
+            cr = e.headers.get("Content-Range") or e.headers.get("content-range") or "" if e.headers else ""
+            if e.code not in (200, 206, 416) and not cr:
+                detail = e.read()[:200].decode("utf-8", "replace")
+                raise StorageError("count %s -> %s %s" % (self.table, e.code, detail))
+        except URLError as e:
+            raise StorageError("count %s -> %s" % (self.table, e.reason))
+        # Content-Range: 0-0/123 or */123
+        if "/" in cr:
+            try:
+                return int(cr.rsplit("/", 1)[1])
+            except ValueError:
+                pass
+        return len(self.select(status=status, limit=500))
+
+    def bucket_public(self, bucket):
+        try:
+            body = self._req("GET", "/storage/v1/bucket/%s" % quote(bucket))[1]
+            return bool(json.loads(body or b"{}").get("public"))
+        except (StorageError, ValueError):
+            return None
+
 
 class FakeBackend:
     """Local test double: same interface, files in PHOTO_FAKE_DIR. Never on Render."""
@@ -198,6 +238,12 @@ class FakeBackend:
                     r.update(fields)
             self.db.write_text(json.dumps(rows))
 
+    def count(self, status=None):
+        return len(self.select(status=status, limit=10000))
+
+    def bucket_public(self, bucket):
+        return bucket == self.approved
+
 
 _backend = None
 _backend_lock = threading.Lock()
@@ -236,24 +282,73 @@ def pillow_ok() -> bool:
     return _PIL_OK
 
 
-def uploads_active() -> bool:
-    """Public submissions are accepted only when every safeguard is configured."""
-    b = backend()
-    if not flag_on() or not b or not pillow_ok():
-        return False
-    if b.name == "fake":
-        return True  # local testing only (FakeBackend refuses to run on Render)
+def storage_ready() -> bool:
+    """Storage backend and Pillow are available. Does not look at the public flag."""
+    return bool(backend()) and pillow_ok()
+
+
+def turnstile_required() -> bool:
     return bool(_env("TURNSTILE_SECRET_KEY") and turnstile_site_key())
 
 
+def uploads_active() -> bool:
+    """Public submissions (no preview cookie needed). Turnstile is not required."""
+    return flag_on() and storage_ready()
+
+
+def uploads_available(preview: bool = False) -> bool:
+    """Submissions are accepted if the public flag is on, or this is a preview-cookie request."""
+    return storage_ready() and (flag_on() or preview)
+
+
+def admin_ready() -> bool:
+    """Admin secrets and storage are set. The flag or preview cookie still gates the routes."""
+    return bool(backend()) and bool(_env("PHOTO_ADMIN_PASSWORD_HASH")) and len(_env("PHOTO_SESSION_SECRET")) >= 32
+
+
 def admin_configured() -> bool:
-    return flag_on() and bool(backend()) and bool(_env("PHOTO_ADMIN_PASSWORD_HASH")) and len(_env("PHOTO_SESSION_SECRET")) >= 32
+    """Public admin page (no preview cookie needed)."""
+    return flag_on() and admin_ready()
 
 
-def public_config() -> dict:
-    on = uploads_active()
-    return {"uploads": on, "turnstileSiteKey": turnstile_site_key() if on else "",
-            "maxBytes": MAX_BYTES, "categories": list(CATEGORIES), "waterTypes": list(WATER_TYPES)}
+def admin_available(preview: bool = False) -> bool:
+    return admin_ready() and (flag_on() or preview)
+
+
+def region_choices() -> list:
+    path = Path(__file__).resolve().parent / "data" / "regions.json"
+    try:
+        data = json.loads(path.read_text())
+    except Exception:
+        return []
+    out = []
+    for r in data.get("regions") or []:
+        rid = str(r.get("id") or "").strip()
+        name = str(r.get("name") or "").strip()
+        if rid and name:
+            out.append({"id": rid, "name": name})
+    return out
+
+
+def region_ids() -> set:
+    return {r["id"] for r in region_choices()}
+
+
+def region_name(rid: str) -> str:
+    if not rid or rid == REGION_OTHER:
+        return ""
+    for r in region_choices():
+        if r["id"] == rid:
+            return r["name"]
+    return ""
+
+
+def public_config(preview: bool = False) -> dict:
+    on = uploads_available(preview)
+    return {"uploads": on, "public": uploads_active(),
+            "turnstileSiteKey": turnstile_site_key() if (on and turnstile_required()) else "",
+            "maxBytes": MAX_BYTES, "categories": list(CATEGORIES), "waterTypes": list(WATER_TYPES),
+            "regions": region_choices()}
 
 
 # ---------------------------------------------------------------- rate limits
@@ -349,7 +444,7 @@ def process_image(data: bytes) -> dict:
     """Validate and re-encode. Returns {'w','h','files':{name: bytes}}.
     Output is rebuilt from pixels only, so EXIF/GPS/XMP never survive."""
     if len(data) > MAX_BYTES:
-        raise ImageRejected("That file is larger than 15 MB.")
+        raise ImageRejected("That file is larger than 10 MB.")
     kind = sniff(data)
     if not kind:
         raise ImageRejected("That file is not a JPEG, PNG, WebP, or HEIC photo.")
@@ -411,12 +506,53 @@ def clean_text(value, field):
     return v[: TEXT_LIMITS[field]]
 
 
+def clean_date(value):
+    v = str(value or "").strip()
+    if not v:
+        return None
+    m = re.fullmatch(r"(\d{4})-(\d{2})-(\d{2})", v)
+    if not m:
+        raise ValueError("Please enter a valid date.")
+    try:
+        dt = date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+    except ValueError:
+        raise ValueError("Please enter a valid date.")
+    today = datetime.now(ZoneInfo("America/New_York")).date()
+    if dt > today:
+        raise ValueError("That date is in the future.")
+    if dt < date(1950, 1, 1):
+        raise ValueError("Please enter a date from 1950 or later.")
+    return v
+
+
+def read_submit_session(cookie_header: str) -> str | None:
+    for part in (cookie_header or "").split(";"):
+        k, _, v = part.strip().partition("=")
+        if k == SUBMIT_COOKIE and re.fullmatch(r"[A-Za-z0-9_-]{16,64}", v or ""):
+            return v
+    return None
+
+
+def new_submit_session() -> str:
+    return secrets.token_urlsafe(18)
+
+
+def submit_cookie(value: str, clear: bool = False) -> str:
+    secure = "" if (backend() and backend().name == "fake") else " Secure;"
+    if clear:
+        return "%s=; Path=/; Max-Age=0; HttpOnly;%s SameSite=Strict" % (SUBMIT_COOKIE, secure)
+    return "%s=%s; Path=/; Max-Age=%d; HttpOnly;%s SameSite=Strict" % (SUBMIT_COOKIE, value, SUBMIT_TTL, secure)
+
+
 # ---------------------------------------------------------------- submissions
-def handle_submit(content_type: str, body: bytes, ip: str):
+def handle_submit(content_type: str, body: bytes, ip: str, preview: bool = False, session_id: str = ""):
     """Returns (status, payload)."""
-    if not uploads_active():
+    if not uploads_available(preview):
         return 404, {"ok": False, "error": "Not found."}
+    sid = session_id or new_submit_session()
     if not LIMITS.allow("sub-h:" + ip, 5, 3600) or not LIMITS.allow("sub-d:" + ip, 15, 86400):
+        return 429, {"ok": False, "error": "Too many submissions from this connection. Please try again later."}
+    if not LIMITS.allow("sub-hs:" + sid, 5, 3600) or not LIMITS.allow("sub-ds:" + sid, 15, 86400):
         return 429, {"ok": False, "error": "Too many submissions from this connection. Please try again later."}
     if not LIMITS.allow("sub-global", 300, 86400):
         return 503, {"ok": False, "error": "Submissions are paused for today. Please try again tomorrow."}
@@ -427,15 +563,28 @@ def handle_submit(content_type: str, body: bytes, ip: str):
     if form.get("website"):  # honeypot field, hidden from people
         return 400, {"ok": False, "error": "Could not accept that submission."}
     if form.get("consent") not in ("yes", "on", "true", "1"):
-        return 400, {"ok": False, "error": "Please confirm you own the photo or have permission to share it."}
+        return 400, {"ok": False, "error": "Please confirm you took the photo or have permission to share it."}
+    if form.get("age") not in ("yes", "on", "true", "1"):
+        return 400, {"ok": False, "error": "Please confirm you are 13 or older, or have a parent or guardian's permission."}
     category = (form.get("category") or "").strip().lower()
     if category not in CATEGORIES:
         return 400, {"ok": False, "error": "Please choose Fishing or Coastal Life."}
     water = (form.get("water_type") or "").strip().lower()
     if water not in WATER_TYPES:
         return 400, {"ok": False, "error": "Please choose Saltwater or Freshwater."}
-    if not verify_turnstile(form.get("cf-turnstile-response", ""), ip):
+    if turnstile_required() and not verify_turnstile(form.get("cf-turnstile-response", ""), ip):
         return 400, {"ok": False, "error": "The spam check did not pass. Please try again."}
+    display_name = clean_text(form.get("display_name"), "display_name")
+    if not display_name:
+        return 400, {"ok": False, "error": "Please enter your name."}
+    anonymous = form.get("anonymous") in ("yes", "on", "true", "1")
+    region = clean_text(form.get("region") or form.get("region_id"), "region_id")
+    if region and region not in region_ids() and region != REGION_OTHER:
+        return 400, {"ok": False, "error": "Please choose a region from the list, or Other."}
+    try:
+        taken_on = clean_date(form.get("taken_on") or form.get("takenOn"))
+    except ValueError as e:
+        return 400, {"ok": False, "error": str(e)}
     if "_file" not in form or not form["_file"][1]:
         return 400, {"ok": False, "error": "Please choose a photo."}
     try:
@@ -449,9 +598,12 @@ def handle_submit(content_type: str, body: bytes, ip: str):
             b.put(b.pending, "%s/%s.webp" % (pid, name), blob, "image/webp")
         b.insert({
             "id": pid, "status": "pending", "category": category, "water_type": water,
-            "display_name": clean_text(form.get("display_name"), "display_name") or None,
+            "display_name": display_name,
+            "anonymous": anonymous,
             "species": (clean_text(form.get("species"), "species") or None) if category == "fishing" else None,
             "location": clean_text(form.get("location"), "location") or None,
+            "region_id": region or None,
+            "taken_on": taken_on,
             "caption": clean_text(form.get("caption"), "caption") or None,
             "width": img["w"], "height": img["h"], "featured": False,
             "consent_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -476,8 +628,12 @@ def _public_row(r, b):
         "w": r.get("width"), "h": r.get("height"),
         "src": {str(s): b.public_url(key(s)) for s in SIZES},
         "thumb": b.public_url(key("thumb")),
-        "name": r.get("display_name") or "", "species": r.get("species") or "",
-        "location": r.get("location") or "", "caption": r.get("caption") or "",
+        "name": "" if r.get("anonymous") else (r.get("display_name") or ""),
+        "species": r.get("species") or "",
+        "location": r.get("location") or "",
+        "region": region_name(r.get("region_id") or ""),
+        "takenOn": r.get("taken_on") or "",
+        "caption": r.get("caption") or "",
         "featured": bool(r.get("featured")),
     }
 
@@ -539,7 +695,7 @@ def make_session() -> tuple[str, str]:
 
 def read_session(cookie_header: str):
     """Returns the CSRF token for a valid session, else None."""
-    if not admin_configured():
+    if not admin_ready():
         return None
     for part in (cookie_header or "").split(";"):
         k, _, v = part.strip().partition("=")
@@ -558,7 +714,7 @@ def session_cookie(value: str, clear: bool = False) -> str:
 
 
 def admin_login(body: bytes, ip: str):
-    if not admin_configured():
+    if not admin_ready():
         return 404, {"ok": False}, None
     if not LIMITS.allow("login:" + ip, 6, 900):
         return 429, {"ok": False, "error": "Too many attempts. Wait 15 minutes."}, None
@@ -579,8 +735,11 @@ def admin_list(status: str):
     rows = b.select(status=status, limit=200)
     out = []
     for r in rows:
-        item = {k: r.get(k) for k in ("id", "status", "category", "water_type", "display_name", "species", "location",
-                                      "caption", "width", "height", "featured", "created_at", "reviewed_at")}
+        item = {k: r.get(k) for k in ("id", "status", "category", "water_type", "display_name", "anonymous",
+                                      "species", "location", "region_id", "taken_on", "caption", "width", "height",
+                                      "featured", "created_at", "reviewed_at")}
+        item["anonymous"] = bool(r.get("anonymous"))
+        item["region_name"] = region_name(r.get("region_id") or "")
         if r.get("status") == "approved":
             item["thumb"] = b.public_url("%s/thumb.webp" % r["id"])
             item["preview"] = b.public_url("%s/800.webp" % r["id"])
@@ -588,7 +747,7 @@ def admin_list(status: str):
             item["thumb"] = "/api/admin/image/%s/thumb" % r["id"]
             item["preview"] = "/api/admin/image/%s/800" % r["id"]
         out.append(item)
-    return {"ok": True, "status": status, "items": out}
+    return {"ok": True, "status": status, "items": out, "regions": region_choices()}
 
 
 _ID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
@@ -637,10 +796,24 @@ def admin_action(body: bytes):
             for f in ("caption", "species", "display_name", "location"):
                 if f in req:
                     fields[f] = clean_text(req[f], f) or None
+            if "anonymous" in req:
+                fields["anonymous"] = bool(req["anonymous"])
+            if "region_id" in req or "region" in req:
+                region = clean_text(req.get("region_id", req.get("region")), "region_id")
+                if region and region not in region_ids() and region != REGION_OTHER:
+                    return 400, {"ok": False, "error": "Bad region."}
+                fields["region_id"] = region or None
+            if "taken_on" in req or "takenOn" in req:
+                try:
+                    fields["taken_on"] = clean_date(req.get("taken_on", req.get("takenOn")))
+                except ValueError as e:
+                    return 400, {"ok": False, "error": str(e)}
             if fields.get("category", row.get("category")) != "fishing":
                 fields["species"] = None
             if "featured" in req:
                 fields["featured"] = bool(req["featured"]) and row.get("status") == "approved"
+            if "display_name" in fields and not fields["display_name"]:
+                return 400, {"ok": False, "error": "Please enter a name."}
             b.update(pid, fields)
         elif action == "approve":
             if row.get("status") != "pending":
@@ -669,6 +842,76 @@ def admin_action(body: bytes):
     return 200, {"ok": True}
 
 
+def _pillow_heif_ok() -> bool:
+    try:
+        import pillow_heif  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
+def diagnostics() -> dict:
+    """Status for the private /preview/photos-check route. Never includes keys or secrets."""
+    b = backend()
+    out = {
+        "ok": False,
+        "pillow": pillow_ok(),
+        "pillowHeif": _pillow_heif_ok(),
+        "backendConfigured": bool(b),
+        "backend": b.name if b else None,
+        "tableReachable": False,
+        "pendingRoundTrip": False,
+        "pendingBucketPrivate": None,
+        "approvedBucketPublic": None,
+        "adminConfigured": admin_ready(),
+        "uploadsFlag": flag_on(),
+        "pendingCount": 0,
+    }
+    if not b:
+        return out
+    try:
+        b.select(limit=1)
+        out["tableReachable"] = True
+        out["pendingCount"] = int(b.count(status="pending"))
+    except (StorageError, TypeError, ValueError):
+        return out
+    try:
+        out["approvedBucketPublic"] = b.bucket_public(b.approved)
+    except StorageError:
+        out["approvedBucketPublic"] = None
+    key = "_selftest/%s.webp" % uuid.uuid4()
+    try:
+        b.put(b.pending, key, b"selftest", "image/webp")
+        ok = b.get(b.pending, key) == b"selftest"
+        public_refused = None
+        if b.name == "supabase":
+            try:
+                url = "%s/storage/v1/object/public/%s/%s" % (b.url, b.pending, quote(key))
+                with urlopen(Request(url), timeout=10) as r:
+                    public_refused = False
+                    _ = r.status
+            except HTTPError as e:
+                public_refused = e.code in (400, 401, 403, 404)
+            except URLError:
+                public_refused = None
+        else:
+            public_refused = True
+        b.delete(b.pending, [key])
+        out["pendingRoundTrip"] = bool(ok)
+        out["pendingBucketPrivate"] = public_refused
+    except StorageError:
+        try:
+            b.delete(b.pending, [key])
+        except Exception:
+            pass
+    out["ok"] = bool(
+        out["pillow"] and out["backendConfigured"] and out["tableReachable"]
+        and out["pendingRoundTrip"] and out["pendingBucketPrivate"]
+        and out["approvedBucketPublic"] and out["adminConfigured"]
+    )
+    return out
+
+
 if __name__ == "__main__":
     import getpass
     import sys
@@ -686,7 +929,7 @@ if __name__ == "__main__":
         b = backend()
         print("flag PHOTO_UPLOADS_ENABLED:", "on" if flag_on() else "off")
         print("backend:", b.name if b else "NOT CONFIGURED (SUPABASE_URL / SUPABASE_SECRET_KEY)")
-        print("turnstile keys:", "set" if (_env("TURNSTILE_SITE_KEY") and _env("TURNSTILE_SECRET_KEY")) else "MISSING")
+        print("turnstile keys:", "set (optional; used only when both are set)" if (_env("TURNSTILE_SITE_KEY") and _env("TURNSTILE_SECRET_KEY")) else "not set (optional)")
         print("admin password hash:", "set" if _env("PHOTO_ADMIN_PASSWORD_HASH").startswith("scrypt$") else "MISSING")
         print("session secret:", "set" if len(_env("PHOTO_SESSION_SECRET")) >= 32 else "MISSING or too short")
         try:
@@ -710,6 +953,6 @@ if __name__ == "__main__":
                     print("pending bucket is private: public URL refused (%s)" % e.code)
             except StorageError as e:
                 print("storage error:", str(e)[:200])
-        print("uploads active:", uploads_active(), "| admin page:", admin_configured())
+        print("uploads flag:", "on" if flag_on() else "off", "| uploads active (public):", uploads_active(), "| admin ready:", admin_ready())
     else:
         print("usage: python photos.py hash | secret | check")
