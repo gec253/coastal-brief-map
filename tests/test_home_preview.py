@@ -90,6 +90,7 @@ class HomePreview(unittest.TestCase):
         for path in (
             "/preview/home",
             "/preview/home?c=cinematic",
+            "/preview/home?c=final",
             "/preview/home.css",
             "/preview/home/photos/bodie-sunrise-w800.webp",
         ):
@@ -120,7 +121,8 @@ class HomePreview(unittest.TestCase):
             self.assertIn(b"type=\"image/avif\"", body)
             self.assertIn(b"type=\"image/webp\"", body)
             self.assertIn(b"home-photo-credit", body)
-            self.assertIn(b'href="/preview/home.css"', body)
+            self.assertIn(b'id="preview-css"', body)
+            self.assertNotIn(b'href="/preview/home.css"', body)
             # Instruments stay in the page immediately after the band.
             band_at = body.find(b"home-photo-band")
             cond_at = body.find(b'id="conditions"')
@@ -139,7 +141,7 @@ class HomePreview(unittest.TestCase):
         self.assertIn(b"bodie-sunrise-w800", body)
         self.assertIn(b"Sunrise at the Bodie Island Lighthouse", body)
         self.assertIn(b"data-shot", body)
-        self.assertNotIn(b"mast-preview-dock", body)
+        self.assertNotIn(b'id="mast-preview-dock"', body)
         # Photo asset with cookie.
         status, data, hdrs = self._req("/preview/home/photos/bodie-sunrise-w800.webp", env=env, cookie=ck)
         self.assertEqual(status, 200)
@@ -156,11 +158,41 @@ class HomePreview(unittest.TestCase):
         status, _, _ = self._req("/preview/home/photos/not-a-real-photo-w800.webp", env=env, cookie=ck)
         self.assertEqual(status, 404)
 
-    def test_day_pick_is_stable(self):
+    def test_pinned_photo_is_the_default(self):
         a = self.server._featured_photo()
         b = self.server._featured_photo()
+        self.assertEqual(a["id"], "bodie-sunrise")
         self.assertEqual(a["id"], b["id"])
         forced = self.server._featured_photo("lookout-night")
         self.assertEqual(forced["id"], "lookout-night")
         unknown = self.server._featured_photo("not-real")
-        self.assertEqual(unknown["id"], a["id"])
+        self.assertEqual(unknown["id"], "bodie-sunrise")
+
+    def test_final_is_default_home_on_masthead_a(self):
+        env = {"PREVIEW_KEY": self.KEY}
+        ck = self._cookie()
+        for path in ("/preview/home", "/preview/home?c=final", "/preview/home?c=final&shot=1"):
+            status, body, hdrs = self._req(path, env=env, cookie=ck)
+            self.assertEqual(status, 200, path)
+            self.assertEqual(hdrs.get("cache-control"), "no-store")
+            self.assertIn("noindex", hdrs.get("x-robots-tag", ""))
+            self.assertIn(b'data-concept="a"', body)
+            self.assertIn(b'data-home="magazine"', body)
+            self.assertIn(b" data-final", body)
+            self.assertIn(b"bodie-sunrise-w800", body)
+            self.assertIn(b"Sunrise at the Bodie Island Lighthouse", body)
+            self.assertIn(b'id="preview-css"', body)
+            self.assertNotIn(b'href="/preview/masthead.css"', body)
+            self.assertNotIn(b'href="/preview/home.css"', body)
+            self.assertIn(b'id="region-select"', body)
+            self.assertIn(b"region-pick", body)
+            # Final keeps the in-card picker; the hide rule excludes [data-final].
+            self.assertIn(b":not([data-final])", body)
+            self.assertIn(b'id="conditions"', body)
+            self.assertIn(b'id="region-nav"', body)
+            self.assertIn(b'id="nav-brief"', body)
+            if "shot=1" in path:
+                self.assertIn(b"data-shot", body)
+                self.assertNotIn(b'id="mast-preview-dock"', body)
+            else:
+                self.assertIn(b"mast-preview-dock", body)
