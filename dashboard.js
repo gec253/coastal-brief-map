@@ -629,7 +629,7 @@
     el.innerHTML = head("Barometer", r) +
       '<div class="baro-row">' + baroSvg(v.inHg) + '<div><div class="mid-read"><span class="mid-num">' + numSpan("pr", v.inHg, 2) + '</span><span class="mid-unit">inHg</span></div>' +
       '<div class="mid-label">' + (isNum(v.hPa) ? fmt(v.hPa, 1) + " hPa" : "") + "</div>" +
-      '<div class="trend trend-' + esc(v.trend || "none") + '">' + (v.trend ? arrow + " " + esc(v.trend[0].toUpperCase() + v.trend.slice(1)) + (isNum(v.change3hHPa) ? " · " + (v.change3hHPa > 0 ? "+" : "") + fmt(v.change3hHPa, 1) + " hPa / 3 h" : "") : "Trend not available") + "</div></div></div>" +
+      (v.trend ? '<div class="trend trend-' + esc(v.trend) + '">' + arrow + " " + esc(v.trend[0].toUpperCase() + v.trend.slice(1)) + (isNum(v.change3hHPa) ? " · " + (v.change3hHPa > 0 ? "+" : "") + fmt(v.change3hHPa, 1) + " hPa / 3 h" : "") + "</div>" : "") + "</div></div>" +
       '<div class="inst-foot">' + srcCaption(r, { note: (v.trendBasis ? "Trend: " + v.trendBasis + ". Rising or falling means a change of 1 hPa or more in 3 hours. " : "") + "Converted from hPa (× 0.02953)." }) + "</div>";
     tweenAll(el);
   }

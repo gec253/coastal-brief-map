@@ -593,11 +593,19 @@ class EmeraldIsleConfig(unittest.TestCase):
         self.assertEqual(rd["swell"]["sources"], ["41159"])
         self.assertEqual(rd["waterTempOffshore"]["sources"], ["41159"])
         self.assertEqual(rd["waterTemp"]["sources"], [])
-        for kind in rd.values():
-            srcs = kind.get("sources") or []
+        self.assertEqual(rd["airTemp"]["sources"], ["KNJM"])
+        self.assertNotIn("41064", rd["airTemp"]["sources"])
+        self.assertEqual(rd["airTemp"]["stationLabel"], "Bogue Field, ~5 mi")
+        self.assertTrue(rd["airTemp"].get("unavailableWhenStale"))
+        self.assertEqual(self.stations["KNJM"]["type"], "nws")
+        self.assertEqual(self.stations["KNJM"]["staleAfterMin"], 150)
+        self.assertEqual(rd["pressure"]["sources"], ["41064"])
+        for kind, spec in rd.items():
+            srcs = spec.get("sources") or []
             self.assertNotIn("8656483", srcs, kind)
             self.assertNotIn("8656613", srcs, kind)
-            self.assertNotIn("KNJM", srcs, kind)
+            if kind != "airTemp":
+                self.assertNotIn("KNJM", srcs, kind)
 
     def test_distant_buoy_labels_and_41064_stale_window(self):
         self.assertEqual(self.stations["41064"]["staleAfterMin"], 130)
@@ -605,10 +613,13 @@ class EmeraldIsleConfig(unittest.TestCase):
         self.assertEqual(self.r["readings"]["wind"]["stationLabel"], "Onslow Bay buoy, ~32 mi offshore")
         wind_st = conditions.station_info("41064", self.stations["41064"], self.r["anchor"])
         seas_st = conditions.station_info("41159", self.stations["41159"], self.r["anchor"])
+        air_st = conditions.station_info("KNJM", self.stations["KNJM"], self.r["anchor"])
         self.assertGreaterEqual(wind_st["distanceMi"], 30)
         self.assertLessEqual(wind_st["distanceMi"], 34)
         self.assertGreaterEqual(seas_st["distanceMi"], 30)
         self.assertLessEqual(seas_st["distanceMi"], 34)
+        self.assertEqual(air_st["distanceMi"], 5)
+        self.assertEqual(conditions.stale_after_min("airTemp", "KNJM", self.stations), 150)
         # Shared station names are unchanged for Crystal Coast.
         cc = self.regions["crystal-coast"]
         self.assertEqual(cc["readings"]["wind"]["sources"], ["CLKN7", "41064"])
@@ -665,6 +676,106 @@ class EmeraldIsleFallbacks(unittest.TestCase):
             out = self._resolve(kind, {"41159": None, "41064": report(10, temp_values(21.2))})
             self.assertEqual(out["status"], "unavailable", kind)
             self.assertEqual([t["id"] for t in out["tried"]], ["41159"])
+
+    def test_air_temp_uses_knjm_label_and_ignores_buoy(self):
+        out = self._resolve("airTemp", {
+            "KNJM": report(40, temp_values(3.9)),
+            "41064": report(10, temp_values(11.3)),
+        })
+        self.assertEqual(out["status"], "ok")
+        self.assertEqual(out["station"]["id"], "KNJM")
+        self.assertEqual(out["station"]["name"], "Bogue Field, ~5 mi")
+        self.assertEqual(out["staleAfterMin"], 150)
+        self.assertEqual(out["values"]["c"], 3.9)
+        self.assertEqual([t["id"] for t in out.get("tried") or []], [])
+
+    def test_air_temp_stale_or_missing_is_unavailable_without_buoy_fallback(self):
+        # Inside the 150-minute window a KNJM report is still ok.
+        out = self._resolve("airTemp", {"KNJM": report(140, temp_values(3.9))})
+        self.assertEqual(out["status"], "ok")
+        self.assertEqual(out["staleAfterMin"], 150)
+        # Past the window: unavailable, not dimmed-stale, and 41064 is ignored.
+        out = self._resolve("airTemp", {
+            "KNJM": report(160, temp_values(3.9)),
+            "41064": report(10, temp_values(11.3)),
+        })
+        self.assertEqual(out["status"], "unavailable")
+        self.assertNotIn("values", out)
+        self.assertEqual(out["station"]["id"], "KNJM")
+        self.assertTrue(out.get("lastReport"))
+        self.assertEqual([t["id"] for t in out["tried"]], ["KNJM"])
+        # No report at all, even if the buoy has air temp.
+        out = self._resolve("airTemp", {"KNJM": None, "41064": report(10, temp_values(11.3))})
+        self.assertEqual(out["status"], "unavailable")
+        self.assertNotIn("values", out)
+        self.assertEqual([t["id"] for t in out["tried"]], ["KNJM"])
+
+    def test_other_regions_air_temp_can_still_show_stale(self):
+        # unavailableWhenStale is Emerald Isle only; Crystal Coast still dims.
+        cfg = conditions.load_regions()
+        cc = next(r for r in cfg["regions"] if r["id"] == "crystal-coast")
+        def fake_fetch(k, sid, stations):
+            return report(100, temp_values(8.0)) if sid == "8656483" else None
+        with patch.object(conditions, "fetch_one", side_effect=fake_fetch):
+            out = conditions.resolve_reading(
+                "airTemp", cc["readings"]["airTemp"], cfg["stations"], cc["anchor"], NOW
+            )
+        self.assertEqual(out["status"], "stale")
+        self.assertEqual(out["station"]["id"], "8656483")
+
+
+class EmeraldIslePressure(unittest.TestCase):
+    def _ndbc(self, rows):
+        with patch.object(conditions, "ndbc_rows", return_value=(rows, "https://example.test/41064.txt")):
+            return conditions.ndbc_reading("pressure", "41064")
+
+    def _row(self, age_min, pres, ptdy="MM"):
+        dt = NOW - timedelta(minutes=age_min)
+        return {
+            "YY": "%04d" % dt.year, "MM": "%02d" % dt.month, "DD": "%02d" % dt.day,
+            "hh": "%02d" % dt.hour, "mm": "%02d" % dt.minute,
+            "PRES": pres, "PTDY": ptdy, "_dt": dt,
+        }
+
+    def test_no_trend_when_ptdy_missing_even_with_older_pres(self):
+        # 41064 often has hourly PRES but no PTDY. Do not invent a 3-hour change.
+        out = self._ndbc([
+            self._row(20, "1014.4", "MM"),
+            self._row(80, "1013.0", "MM"),
+            self._row(200, "1011.0", "MM"),
+        ])
+        self.assertEqual(out["values"]["hPa"], 1014.4)
+        self.assertIsNone(out["values"]["change3hHPa"])
+        self.assertIsNone(out["values"]["trend"])
+        self.assertIsNone(out["values"]["trendBasis"])
+        self.assertIsNone(out["raw"]["PTDY_hPa"])
+
+    def test_official_ptdy_still_yields_a_trend(self):
+        out = self._ndbc([
+            self._row(15, "1014.4", "1.5"),
+            self._row(75, "1013.0", "MM"),
+        ])
+        self.assertEqual(out["values"]["change3hHPa"], 1.5)
+        self.assertEqual(out["values"]["trend"], "rising")
+        self.assertEqual(out["values"]["trendBasis"], "NDBC 3-hour tendency (PTDY)")
+
+    def test_coops_pressure_trend_unchanged_with_enough_points(self):
+        t_last = NOW - timedelta(minutes=6)
+        t_3h = t_last - timedelta(hours=3)
+        rows = [
+            {"t": t_3h.strftime("%Y-%m-%d %H:%M"), "v": "1012.0"},
+            {"t": t_last.strftime("%Y-%m-%d %H:%M"), "v": "1014.2"},
+        ]
+        with patch.object(conditions, "coops_data", return_value=(rows, "https://example.test/coops")):
+            out = conditions.coops_reading("pressure", "8656483")
+        self.assertEqual(out["values"]["hPa"], 1014.2)
+        self.assertEqual(out["values"]["change3hHPa"], 2.2)
+        self.assertEqual(out["values"]["trend"], "rising")
+
+    def test_pressure_ui_hides_trend_when_missing(self):
+        src = Path(__file__).resolve().parents[1].joinpath("dashboard.js").read_text()
+        self.assertNotIn("Trend not available", src)
+        self.assertIn("v.trend ?", src)
 
 
 class EmeraldIsleTides(unittest.TestCase):

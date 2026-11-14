@@ -273,13 +273,31 @@ Set for the private preview on 14 Nov 2026. Config-driven; later review can chan
 
 - **Coverage:** Town of Emerald Isle only, from Bogue Inlet to the east town line.
   Swansboro, Cedar Point and Cape Carteret are out. No NCZ199.
-- **Alerts:** AMZ158 and NCZ195. Land forecast point 34.655 N, 77.090 W, MHX grid
-  46, 54. Anchor is TEC2837 Bogue Inlet.
+- **Alerts:** AMZ158 and NCZ195 only. NCZ199 (Coastal Onslow) is not in this
+  region's alert list; it comes in when Swansboro is added. Land forecast point
+  34.655 N, 77.090 W, MHX grid 46, 54. Anchor is TEC2837 Bogue Inlet.
 - **Tide:** official highs and lows from TEC2837, labeled as predictions. No
-  6-minute curve and no observed water level. The Swansboro bridge curve and
-  Beaufort observed level are not used.
+  6-minute curve and no observed water level. TEC2837 is a subordinate
+  prediction station; its published reference, 8654400 Cape Hatteras Fishing
+  Pier, has no live water-level gauge, so there is no official observed
+  reference. The Swansboro bridge curve and Beaufort observed level are not used.
 - **Ocean wind:** 41064 only, labeled "Onslow Bay buoy, ~32 mi offshore", with
-  that station's existing 130-minute stale window. KNJM and CLKN7 are not used.
+  that station's existing 130-minute stale window. KNJM and CLKN7 are not used
+  for wind.
+- **Air temperature:** KNJM (Bogue Field ASOS) only, labeled "Bogue Field, ~5 mi",
+  via the existing NWS observations path
+  (`api.weather.gov/stations/KNJM/observations/latest`). KNJM reports roughly
+  hourly but skips hours (this morning's recent set had 2-hour, 3-hour, and one
+  4-hour gap). A 150-minute stale window covers one missed hour (~120 min
+  between reports) plus a short posting lag; two missed hours (~180 min) and
+  longer gaps show as unavailable. If the reading is stale or missing, the tile
+  is unavailable. The Onslow Bay buoy (41064) is never used as an air-temp
+  fallback.
+- **Pressure:** 41064, labeled as the Onslow Bay buoy. The 3-hour trend is shown
+  only from NDBC's official PTDY (or, in other regions, from a real 3-hour
+  change at that station). If PTDY is missing, the trend is hidden; it is never
+  computed or extrapolated from the hourly PRES series. 41064's recent file had
+  no PTDY values.
 - **Inshore water temperature:** unavailable. Beaufort harbor water is not used.
 - **Seas, swell and offshore temperature:** 41159 only (swell from `.spec`),
   labeled with its distance. No backup.

@@ -250,6 +250,17 @@
       "lon": -77.1,
       "setting": "Ocean / inlet at the west end of Emerald Isle. Official high and low predictions only; no 6-minute curve and no water-level gauge.",
       "url": "https://tidesandcurrents.noaa.gov/noaatidepredictions.html?id=TEC2837"
+    },
+    "KNJM": {
+      "name": "Bogue Field Marine Corps Auxiliary Field",
+      "network": "NWS airport weather station (ASOS)",
+      "agency": "National Weather Service",
+      "type": "nws",
+      "lat": 34.69403,
+      "lon": -77.02945,
+      "setting": "Sound-side airfield north of Bogue Sound, about 5 miles northeast of Bogue Inlet",
+      "url": "https://forecast.weather.gov/data/obhistory/KNJM.html",
+      "staleAfterMin": 150
     }
   },
   "regions": [
@@ -774,11 +785,13 @@
         },
         "airTemp": {
           "kind": "observed",
-          "role": "Air at the Onslow Bay buoy",
-          "stationLabel": "Onslow Bay buoy, ~32 mi offshore",
+          "role": "Air at Bogue Field, ~5 mi",
+          "stationLabel": "Bogue Field, ~5 mi",
           "sources": [
-            "41064"
-          ]
+            "KNJM"
+          ],
+          "unavailableWhenStale": true,
+          "note": "There is no air-temperature sensor on the beach at Emerald Isle. This is the ASOS at Bogue Field, about 5 miles northeast on the sound side. The Onslow Bay buoy is not used for air temperature."
         },
         "pressure": {
           "kind": "observed",
@@ -795,7 +808,7 @@
         "datum": "MLLW",
         "curve": false,
         "observed": false,
-        "note": "NOAA publishes official high and low tide predictions at Bogue Inlet, but not a 6-minute curve or a local water-level gauge. The Swansboro bridge curve and Beaufort observed water level are not used."
+        "note": "NOAA publishes official high and low tide predictions at Bogue Inlet, but not a 6-minute curve or a local water-level gauge. TEC2837 is a subordinate prediction station; its published reference, 8654400 Cape Hatteras Fishing Pier, has no live water-level gauge, so there is no official observed reference. The Swansboro bridge curve and Beaufort observed water level are not used."
       },
       "forecast": {
         "label": "Emerald Isle",
@@ -817,7 +830,7 @@
         "NCZ195"
       ],
       "waterType": "saltwater",
-      "notes": "Private preview. Town of Emerald Isle only, from Bogue Inlet to the east town line. Not Swansboro, Cedar Point or Cape Carteret. Wind, seas and offshore temperature come from the Onslow Bay Outer buoys, about 32 miles offshore, and are labeled as such. Inshore water temperature is unavailable. Tide predictions are official highs and lows at Bogue Inlet; there is no 6-minute curve and no local observed water level."
+      "notes": "Private preview. Town of Emerald Isle only, from Bogue Inlet to the east town line. Not Swansboro, Cedar Point or Cape Carteret; alerts are AMZ158 and NCZ195 only (NCZ199 comes in when Swansboro is added). Wind, seas and offshore temperature come from the Onslow Bay Outer buoys, about 32 miles offshore, and are labeled as such. Air temperature is the Bogue Field ASOS, about 5 miles northeast; the offshore buoy is not used for air. Inshore water temperature is unavailable. Tide predictions are official highs and lows at Bogue Inlet, a subordinate station whose reference has no live water-level gauge; there is no 6-minute curve and no local observed water level."
     },
     {
       "id": "falls-lake",

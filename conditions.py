@@ -487,6 +487,10 @@ def resolve_reading(kind, spec, stations, anchor, now):
         tried.append({"id": sid, "result": "last report " + (("%d min" % round(age_min)) if age_min < 180 else ("%d h" % round(age_min / 60)) if age_min < 2880 else ("%d days" % round(age_min / 1440))) + " old"})
         candidates.append(res)
     usable = [c for c in candidates if c["_age"] <= MAX_AGE_H * 60]
+    # Some readings (Emerald Isle air temp) would rather go unavailable than
+    # sit in the dimmed "stale" state once they miss the window.
+    if spec.get("unavailableWhenStale"):
+        usable = []
     if usable:
         return build(kind, spec, usable[0], stations, anchor, "stale", tried)
     out = {"kind": spec.get("kind", "observed"), "role": spec.get("role"), "status": "unavailable",
