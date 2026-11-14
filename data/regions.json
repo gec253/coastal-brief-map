@@ -544,31 +544,60 @@
         ],
         "zoom": 9
       },
-      "notes": "DRAFT CONFIG ONLY, not rendered yet. Gauges checked live 13 Nov 2026.",
+      "notes": "PRIVATE PREVIEW. Served only when FRESHWATER_ENABLED=1 (never in production). Sources checked live 13 Nov 2026; see docs/NEUSE_JORDAN_SOURCES.md. Falls Dam to Goldsboro (Kinston is not in this region). Smithfield is stage only. No active USGS water-temperature sensor on the main stem.",
       "river": [
         {
           "usgs": "02087183",
           "nwps": "NEUN7",
           "label": "Neuse River below Falls Dam",
-          "flow": true
+          "flow": true,
+          "regulated": true,
+          "floodStages": {
+            "action": 5,
+            "minor": 6,
+            "moderate": 7,
+            "major": 8
+          }
         },
         {
           "usgs": "02087500",
           "nwps": "CLYN7",
           "label": "Neuse River near Clayton",
-          "flow": true
+          "flow": true,
+          "regulated": true,
+          "floodStages": {
+            "action": 8,
+            "minor": 9,
+            "moderate": 13,
+            "major": 16
+          }
         },
         {
           "usgs": "02087570",
           "nwps": "SMFN7",
           "label": "Neuse River at Smithfield",
-          "flow": false
+          "flow": false,
+          "flowNote": "USGS stopped publishing discharge here; stage only.",
+          "regulated": true,
+          "floodStages": {
+            "action": 14,
+            "minor": 15,
+            "moderate": 18,
+            "major": 20
+          }
         },
         {
           "usgs": "02089000",
           "nwps": "GLDN7",
           "label": "Neuse River near Goldsboro",
-          "flow": true
+          "flow": true,
+          "regulated": true,
+          "floodStages": {
+            "action": 17,
+            "minor": 18,
+            "moderate": 20,
+            "major": 24
+          }
         }
       ],
       "waterTemp": {
@@ -586,6 +615,29 @@
       },
       "alertZones": [
         "NCZ042"
+      ],
+      "previewReady": true,
+      "alertPoint": [
+        35.6472,
+        -78.4053
+      ],
+      "links": [
+        {
+          "label": "NCWRC boating access areas (ramps)",
+          "url": "https://www.ncwildlife.gov/boating/boating-access-areas"
+        },
+        {
+          "label": "NCWRC fishing regulations",
+          "url": "https://www.ncwildlife.gov/hunt/fishing-hunting-trapping-regulations"
+        },
+        {
+          "label": "USGS Neuse River near Clayton",
+          "url": "https://waterdata.usgs.gov/monitoring-location/02087500/"
+        },
+        {
+          "label": "NWS NWPS river forecasts",
+          "url": "https://water.noaa.gov/"
+        }
       ]
     },
     {
@@ -608,7 +660,7 @@
         ],
         "zoom": 11
       },
-      "notes": "DRAFT CONFIG ONLY, not rendered yet. Checked live 13 Nov 2026. No USGS water temperature at the dam. The old release gauge 02098198 (Haw River below Jordan Dam) stopped reporting in 2010 (flow) and 2016 (stage), so Haw River near Moncure 02098206 (about 1.6 mi below the dam, above the Deep River confluence) is the nearest live flow: dam release plus a little local runoff, labelled as such.",
+      "notes": "PRIVATE PREVIEW. Served only when FRESHWATER_ENABLED=1 (never in production). Sources checked live 13 Nov 2026; see docs/NEUSE_JORDAN_SOURCES.md. No USGS water temperature at the dam. Haw River near Moncure 02098206 is release plus local runoff, not official gate outflow. Do not use discontinued 02098198.",
       "lake": {
         "usgs": "02098197",
         "nwps": "NHPN7",
@@ -618,12 +670,27 @@
         "guideCurveFt": 216.0,
         "guideCurveDatum": "NGVD29 (USACE ft-msl)",
         "guideCurveSource": "https://epec.saw.usace.army.mil/dsslake.txt",
-        "guideCurveChecked": "2026-11-13"
+        "guideCurveChecked": "2026-11-13",
+        "guideCurveNote": "USACE Wilmington District: top of conservation pool / guide curve is 216.0 ft each day of the year.",
+        "usacePage": "https://epec.saw.usace.army.mil/jord.htm",
+        "floodStages": {
+          "action": 240,
+          "minor": 240,
+          "moderate": 241,
+          "major": 242
+        }
       },
       "release": {
         "usgs": "02098206",
         "nwps": "HRMN7",
-        "label": "Haw River near Moncure"
+        "label": "Haw River near Moncure (release plus local runoff)",
+        "tileTitle": "Release plus local runoff",
+        "note": "Dam release plus local runoff, not the official gate outflow. About 1.6 miles below the dam, above the Deep River confluence.",
+        "floodStages": {
+          "action": 16,
+          "minor": 16,
+          "moderate": 18
+        }
       },
       "forecast": {
         "label": "Jordan Lake Dam",
@@ -636,6 +703,46 @@
       },
       "alertZones": [
         "NCZ040"
+      ],
+      "previewReady": true,
+      "waterTemp": {
+        "status": "none",
+        "note": "No USGS water-temperature sensor at Jordan Lake dam (02098197)."
+      },
+      "inflows": [
+        {
+          "usgs": "02096960",
+          "nwps": "BYNN7",
+          "label": "Haw River near Bynum (inflow above the lake)",
+          "floodStages": {
+            "action": 10,
+            "minor": 11,
+            "moderate": 15,
+            "major": 17
+          }
+        }
+      ],
+      "alertPoint": [
+        35.6547,
+        -79.0683
+      ],
+      "links": [
+        {
+          "label": "NCWRC boating access areas (ramps)",
+          "url": "https://www.ncwildlife.gov/boating/boating-access-areas"
+        },
+        {
+          "label": "NCWRC fishing regulations",
+          "url": "https://www.ncwildlife.gov/hunt/fishing-hunting-trapping-regulations"
+        },
+        {
+          "label": "USACE B. Everett Jordan Lake",
+          "url": "https://www.saw.usace.army.mil/Locations/District-Lakes-and-Dams/B-Everett-Jordan/"
+        },
+        {
+          "label": "USACE Jordan Lake water management",
+          "url": "https://epec.saw.usace.army.mil/jord.htm"
+        }
       ]
     }
   ]

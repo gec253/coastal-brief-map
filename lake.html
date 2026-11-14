@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <title>Falls Lake (private preview) · The Coastal Brief</title>
+  <script>(function(){var r=new URLSearchParams(location.search).get("region")||"falls-lake";var n={ "falls-lake":"Falls Lake","jordan-lake":"Jordan Lake","neuse-river":"Neuse River" }[r]||"Freshwater";document.title=n+" (private preview) · The Coastal Brief";})();</script>
   <link rel="stylesheet" href="/styles.css">
   <meta name="theme-color" content="#0B2A3D">
   <link rel="icon" href="/branding/favicon.svg" type="image/svg+xml">
@@ -69,6 +70,8 @@
     .fw-src th { color: var(--d-ink); font-weight: 700; }
     .fw-src a { color: var(--d-accent); }
     .fw-unavail { color: var(--d-ink-2); font-style: italic; }
+    /* author display rules would otherwise override the hidden attribute */
+    [hidden] { display: none !important; }
     @media (max-width: 760px) { .fw-src thead { display: none; } .fw-src tr, .fw-src td { display: block; } .fw-src td { border: 0; padding: 1px 0; } .fw-src tr { padding: 8px 0; border-bottom: 1px solid var(--d-edge-2); } .fw-big { font-size: 3.1rem; }   }
   </style>
 </head>
@@ -95,7 +98,7 @@
       <div class="dash-head">
         <div class="dash-title">
           <p class="fw-preview">Freshwater · private preview</p>
-          <p class="eyebrow">Live lake instruments</p>
+          <p class="eyebrow" id="fw-eyebrow">Live lake instruments</p>
           <h2 id="fw-h">Falls Lake</h2>
           <p class="dash-sub" id="fw-sub">Neuse River basin · Wake, Durham &amp; Granville counties</p>
         </div>
@@ -108,20 +111,24 @@
       </div>
       <div class="dash-alert is-clear is-pending" id="fw-alert" role="status" style="min-height:var(--rh-al)"><div class="al-item"><span class="al-dot"></span><span class="al-ev">Checking NWS alerts…</span><span class="al-meta">Watches, warnings, and advisories at the dam.</span></div></div>
 
-      <div class="fw-grid">
+      <div class="fw-grid" id="fw-grid">
         <article class="inst fw-hero is-loading" id="fw-lake" data-title="Lake level"></article>
         <article class="inst fw-tile is-loading" id="fw-temp" data-title="Water temp"></article>
         <article class="inst fw-tile is-loading" id="fw-release" data-title="Release below dam"></article>
         <article class="inst fw-tile is-loading" id="fw-rain" data-title="Rain"></article>
       </div>
 
-      <h3 class="fw-sec">Neuse River below the lake</h3>
+      <div id="fw-river-sec">
+      <h3 class="fw-sec" id="fw-river-h">Neuse River below the lake</h3>
       <div class="fw-gauges three" id="fw-river"><div class="inst fw-g is-loading"></div><div class="inst fw-g is-loading"></div><div class="inst fw-g is-loading"></div></div>
+      </div>
 
-      <h3 class="fw-sec">Main inflows</h3>
+      <div id="fw-inflows-sec">
+      <h3 class="fw-sec" id="fw-inflows-h">Main inflows</h3>
       <div class="fw-gauges" id="fw-inflows"><div class="inst fw-g is-loading"></div><div class="inst fw-g is-loading"></div></div>
+      </div>
 
-      <h3 class="fw-sec">NWS forecast at the dam</h3>
+      <h3 class="fw-sec" id="fw-fc-h">NWS forecast at the dam</h3>
       <div class="fw-fc" id="fw-fc"><div></div><div></div><div></div><div></div></div>
       <p class="fine" id="fw-fc-meta"></p>
 
@@ -139,7 +146,7 @@
   <footer class="site">
     <div class="wrap">
       <p>Data: U.S. Geological Survey (provisional, subject to revision); U.S. Army Corps of Engineers, Wilmington District (guide curve); National Weather Service (forecasts, alerts, QPF) and the National Water Prediction Service (river forecasts). Not affiliated with or endorsed by these agencies.</p>
-      <p>Not boating or safety advice. Lake levels change; always check official sources before going out.</p>
+      <p id="fw-footer-note">Not boating or safety advice. Lake levels change; always check official sources before going out.</p>
     </div>
   </footer>
   <script src="/lake.js" defer></script>

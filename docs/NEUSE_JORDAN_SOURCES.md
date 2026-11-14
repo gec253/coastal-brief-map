@@ -1,9 +1,11 @@
 # Neuse River and Jordan Lake: sources, stations and limitations
 
-Draft config only. `neuse-river` and `jordan-lake` in `data/regions.json` are
-`enabled: false`, not `previewReady`, and are never assembled (`freshwater.assemble()`
-refuses them). This note is a source survey for a future build, in the same form as
-`docs/FALLS_LAKE_SOURCES.md`. It is not a change to working (Falls Lake preview) sources.
+Private preview, same gate as Falls Lake. `/lake?region=jordan-lake`,
+`/lake?region=neuse-river` and `/api/freshwater?region=` return 404 unless
+`FRESHWATER_ENABLED=1` (or a preview cookie) is set. Both regions stay
+`enabled: false` / `draft: true` and `previewReady: true`. Falls Lake is unchanged.
+This note is the source survey used to build those views, in the same form as
+`docs/FALLS_LAKE_SOURCES.md`.
 
 Official checks, 13 Nov 2026 (ET, America/New_York, currently EST). USGS site service
 and instantaneous values (IV), NWS NWPS `api.water.noaa.gov/nwps/v1/gauges/{LID}`,
@@ -90,7 +92,7 @@ for that reason.
 - NWPS NHPN7 flood stages are on the lake elevation scale, far above the 216.0 guide
   curve (action/minor 240). Do not compare them to river stages at Moncure or Bynum.
 
-## Freshness rules (recommended; not built yet)
+## Freshness rules
 
 Mirror Falls Lake:
 

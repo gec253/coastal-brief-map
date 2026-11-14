@@ -1,6 +1,7 @@
-/* The Coastal Brief: private Falls Lake preview (FRESHWATER_ENABLED only).
-   Renders /api/freshwater. Every number shows its source and time; missing or
-   stale readings are said out loud, never filled in. */
+/* The Coastal Brief: private freshwater preview (FRESHWATER_ENABLED only).
+   Renders /api/freshwater for Falls Lake, Jordan Lake and the Neuse River.
+   Every number shows its source and time; missing or stale readings are said
+   out loud, never filled in. */
 (function () {
   "use strict";
   const $ = (id) => document.getElementById(id);
@@ -10,12 +11,14 @@
   const when = (t) => (t ? tfmt.format(new Date(t)) + " ET" : "");
   const signed = (v, d) => (v > 0 ? "+" : v < 0 ? "−" : "±") + Math.abs(v).toFixed(d);
   const cfs = (v) => (v >= 100 ? Math.round(v).toLocaleString("en-US") : v.toFixed(1));
+  const hide = (id) => { const el = $(id); if (el) { el.hidden = true; el.style.display = "none"; } };
+  const floodOf = (s) => (s && s.nwps && s.nwps.floodStages) || (s && s.floodStages) || {};
 
   // theme toggle, same storage key as the main site
   function setTheme(t, save) {
     document.documentElement.setAttribute("data-theme", t);
     const b = $("theme-toggle");
-    if (b) { b.textContent = t === "dark" ? "Light mode" : "Dark mode"; b.setAttribute("aria-pressed", String(t === "dark")); b.setAttribute("aria-label", t === "dark" ? "Switch to light mode" : "Switch to dark mode"); }
+    if (b) { b.textContent = t === "dark" ? "Light mode" : "Dark mode"; b.setAttribute("aria-pressed", String(t === "dark")); b.setAttribute("aria-label", t === "dark" ? "Switch to dark mode" : "Switch to light mode"); }
     if (save) try { localStorage.setItem("coastalBrief.theme", t); } catch (e) {}
   }
   setTheme(document.documentElement.getAttribute("data-theme") || "light", false);
@@ -26,7 +29,7 @@
   const foot = (id, name, time, url, extra) =>
     '<div class="inst-foot"><details class="src"><summary><span class="src-id">' + esc(id) + '</span><span class="src-name">' + esc(name) + '</span><span class="src-time">' + esc(time) + "</span></summary>" +
     '<div class="src-body">' + (extra || "") + (url ? '<p class="src-links"><a href="' + esc(url) + '" target="_blank" rel="noopener">Open the official page</a></p>' : "") + "</div></details></div>";
-  function fill(id, html) { const el = $(id); el.classList.remove("is-loading"); el.innerHTML = html; }
+  function fill(id, html) { const el = $(id); if (!el) return; el.classList.remove("is-loading"); el.innerHTML = html; }
   const unavailable = (msg) => '<p class="fw-unavail">' + esc(msg) + "</p>";
   const staleNote = (r) => (r && r.stale ? '<p class="fw-note"><strong>Stale:</strong> last report ' + esc(when(r.time)) + ".</p>" : "");
 
@@ -60,11 +63,13 @@
   }
 
   function renderLake(L) {
+    if (!L) { hide("fw-lake"); return; }
+    const site = L.siteName || ("USGS " + L.usgs);
     const e = L.elevation;
-    if (!e) { fill("fw-lake", head("Lake level", "observed") + unavailable("USGS lake elevation is not available right now.") + foot("USGS " + L.usgs, "Falls Lake above dam", "", L.url)); return; }
+    if (!e) { fill("fw-lake", head("Lake level", "observed") + unavailable("USGS lake elevation is not available right now.") + foot("USGS " + L.usgs, site, "", L.url)); return; }
     const vs = L.vsGuideFt;
     const vsTxt = isNum(vs) ? (Math.abs(vs) < 0.05 ? "At the guide curve" : Math.abs(vs).toFixed(2) + " ft " + (vs < 0 ? "below" : "above") + " guide curve") : "";
-    const fl = L.nwps && L.nwps.floodStages || {};
+    const fl = floodOf(L);
     let h = head("Lake level", "observed") +
       '<div class="fw-big">' + e.value.toFixed(2) + "<small>ft</small></div>" +
       '<p class="fw-vs' + (vs < -1 ? " low" : "") + '">' + esc(vsTxt) + "</p>" +
@@ -76,16 +81,22 @@
       "<div><dt>Guide curve</dt><dd>" + esc(L.guideCurveFt) + " ft</dd></div>" +
       "<div><dt>NWS flood action</dt><dd>" + (isNum(fl.action) ? fl.action + " ft" : "—") + "</dd></div></dl></div>" +
       sparkSvg(L.series7d) +
-      foot("USGS " + L.usgs, L.siteName || "Falls Lake above dam", "Reported " + when(e.time), L.url,
+      foot("USGS " + L.usgs, site, "Reported " + when(e.time), L.url,
         "<p>USGS parameter 62614 (lake elevation above NGVD 1929), provisional. Guide curve " + esc(L.guideCurveFt) + " ft from USACE Wilmington District (" + esc(L.guideCurveNote || "") + ") checked " + esc(L.guideCurveChecked) + '. <a href="' + esc(L.guideCurveSource) + '" target="_blank" rel="noopener">USACE data</a>.</p>' +
         (L.nwps && L.nwps.status === "ok" ? '<p>NWS flood categories for the lake (NWPS ' + esc(L.nwps.lid) + "): action " + fl.action + ", minor " + fl.minor + ", moderate " + fl.moderate + ", major " + fl.major + " ft. NWPS publishes no forecast for the lake itself.</p>" : ""));
     fill("fw-lake", h);
   }
-  function renderTemp(w) {
-    if (!w || w.status !== "ok") { fill("fw-temp", head("Water temp", "observed") + unavailable("No current USGS water temperature at the dam.") + foot("USGS 02087182", "Falls Lake above dam", "", "")); return; }
+  function renderTemp(w, opts) {
+    if (opts && opts.hide) { hide("fw-temp"); return; }
+    const site = (w && w.usgs) ? ("USGS " + w.usgs) : "USGS";
+    const name = (w && w.usgs) ? (opts && opts.siteName) || "Dam" : "No sensor";
+    if (!w || w.status !== "ok") {
+      fill("fw-temp", head("Water temp", "observed") + unavailable(w && w.note ? w.note : "No current USGS water temperature at this location.") + foot(site, name, "", w && w.usgs ? "https://waterdata.usgs.gov/monitoring-location/" + w.usgs + "/" : ""));
+      return;
+    }
     fill("fw-temp", head("Water temp", "observed") + '<div class="fw-mid">' + w.f.toFixed(0) + "<small>°F</small></div>" +
       '<p class="fw-note">' + w.c.toFixed(1) + " °C · " + esc(w.note) + "</p>" + staleNote(w) +
-      foot("USGS " + w.usgs, "Falls Lake above dam", "Reported " + when(w.time), "https://waterdata.usgs.gov/monitoring-location/" + w.usgs + "/", "<p>USGS parameter 00010, provisional.</p>"));
+      foot("USGS " + w.usgs, name, "Reported " + when(w.time), "https://waterdata.usgs.gov/monitoring-location/" + w.usgs + "/", "<p>USGS parameter 00010, provisional.</p>"));
   }
   function bandHtml(s) {
     if (!s.band) return "";
@@ -94,11 +105,15 @@
       '<p class="fw-meta">Compared with USGS daily-mean flows for this date (' + esc(st.years || "") + "): 10th pct " + (isNum(st.p10) ? cfs(st.p10) : "—") + ", median " + (isNum(st.p50) ? cfs(st.p50) : "—") + " cfs." + (s.regulated ? " Flow here is set by dam releases." : "") + "</p>";
   }
   function renderRelease(s) {
-    if (!s || !s.flowCfs) { fill("fw-release", head("Release below dam", "observed") + unavailable("USGS flow below the dam is not available right now.")); return; }
-    fill("fw-release", head("Release below dam", "observed") + '<div class="fw-mid">' + cfs(s.flowCfs.value) + "<small>cfs</small></div>" + bandHtml(s) + staleNote(s.flowCfs) +
-      foot("USGS " + s.usgs, s.label, "Reported " + when(s.flowCfs.time), s.url, "<p>USGS discharge (00060) just below Falls Dam, provisional. USACE sets releases; this gauge shows the result.</p>"));
+    if (!s) { hide("fw-release"); return; }
+    const title = s.tileTitle || "Release below dam";
+    if (!s.flowCfs) { fill("fw-release", head(title, "observed") + unavailable("USGS flow below the dam is not available right now.")); return; }
+    const extra = s.note ? "<p>" + esc(s.note) + "</p>" : "<p>USGS discharge (00060) just below the dam, provisional. USACE sets releases; this gauge shows the result.</p>";
+    fill("fw-release", head(title, "observed") + '<div class="fw-mid">' + cfs(s.flowCfs.value) + "<small>cfs</small></div>" + bandHtml(s) + staleNote(s.flowCfs) +
+      foot("USGS " + s.usgs, s.label, "Reported " + when(s.flowCfs.time), s.url, extra));
   }
   function renderRain(r) {
+    if (!r) { hide("fw-rain"); return; }
     const q = r.qpf || {};
     let h = head("Rain", null) + '<div class="fw-two">';
     h += "<div>" + tag("observed") + '<p class="fw-k" style="margin-top:6px">Past 24 h</p><p class="fw-v">' + (isNum(r.last24In) ? r.last24In.toFixed(2) + " in" : "—") + '</p><p class="fw-k">Past 7 days</p><p class="fw-v">' + (isNum(r.last7dIn) ? r.last7dIn.toFixed(2) + " in" : "—") + "</p></div>";
@@ -109,43 +124,72 @@
     fill("fw-rain", h);
   }
   function gaugeCard(s) {
+    const fl = floodOf(s);
     let h = '<div class="inst fw-g"><h3>' + esc(s.label) + "</h3>";
-    if (s.flowCfs) h += '<div class="fw-mid">' + cfs(s.flowCfs.value) + "<small>cfs</small></div>";
-    else h += '<p class="fw-unavail">' + esc(s.flowNote || "Flow not available right now.") + "</p>";
+    if (s.stageOnly || (!s.flowCfs && s.stageFt)) {
+      if (s.stageFt) h += '<div class="fw-mid">' + s.stageFt.value.toFixed(2) + "<small>ft stage</small></div>";
+      else h += unavailable("Stage is not available from USGS right now.");
+      if (s.flowNote) h += '<p class="fw-meta">' + esc(s.flowNote) + "</p>";
+    } else if (s.flowCfs) {
+      h += '<div class="fw-mid">' + cfs(s.flowCfs.value) + "<small>cfs</small></div>";
+    } else {
+      h += '<p class="fw-unavail">' + esc(s.flowNote || "Flow not available right now.") + "</p>";
+    }
     h += bandHtml(s);
     const n = s.nwps && s.nwps.status === "ok" ? s.nwps : null;
-    h += '<p class="fw-meta">Stage ' + (s.stageFt ? s.stageFt.value.toFixed(2) + " ft" : "—") + (n && isNum(n.floodStages.minor) ? " · flood stage " + n.floodStages.minor + " ft" : "") + (s.stageFt ? " · " + esc(when(s.stageFt.time)) : "") + "</p>";
+    if (!(s.stageOnly || (!s.flowCfs && s.stageFt))) {
+      h += '<p class="fw-meta">Stage ' + (s.stageFt ? s.stageFt.value.toFixed(2) + " ft" : "—") + (isNum(fl.minor) ? " · flood stage " + fl.minor + " ft" : "") + (s.stageFt ? " · " + esc(when(s.stageFt.time)) : "") + "</p>";
+    } else {
+      h += '<p class="fw-meta">' + (isNum(fl.minor) ? "Flood stage " + fl.minor + " ft" : "Stage only") + (s.stageFt ? " · " + esc(when(s.stageFt.time)) : "") + "</p>";
+    }
     if (n && n.forecast) h += '<p class="fw-meta">' + tag("forecast") + " NWS crest " + n.forecast.crestStage.toFixed(1) + " ft " + esc(when(n.forecast.crestTime)) + (n.forecast.category && n.forecast.category !== "no_flooding" ? " · " + esc(n.forecast.category.replace("_", " ")) : " · no flooding forecast") + "</p>";
     if ((s.flowCfs && s.flowCfs.stale) || (s.stageFt && s.stageFt.stale)) h += '<p class="fw-meta"><strong>Stale reading.</strong></p>';
+    if (!s.stageFt && !s.flowCfs) h += unavailable("Not available from USGS right now.");
     h += '<p class="fw-meta"><a href="' + esc(s.url) + '" target="_blank" rel="noopener">USGS ' + esc(s.usgs) + "</a>" + (n ? ' · <a href="' + esc(n.url) + '" target="_blank" rel="noopener">NWPS ' + esc(n.lid) + "</a>" : "") + "</p></div>";
     return h;
   }
-  function renderForecast(f) {
+  function renderForecast(f, label) {
     const box = $("fw-fc");
     if (!f || f.status !== "ok") { box.innerHTML = '<div class="fw-unavail">NWS forecast unavailable.</div>'; return; }
     box.innerHTML = f.periods.slice(0, 4).map((p) => "<div><b>" + esc(p.name) + '</b><span class="t">' + (isNum(p.tempF) ? p.tempF + "°" : "") + "</span><span>" + esc(p.short) + "</span><span>" + esc((p.windDir || "") + " " + (p.windMph || "")) + "</span></div>").join("");
-    $("fw-fc-meta").innerHTML = "NWS Raleigh point forecast for the dam" + (f.updated ? ", updated " + esc(when(f.updated)) : "") + '. <a href="' + esc(f.sourceUrl) + '" target="_blank" rel="noopener">Full forecast</a>';
+    $("fw-fc-meta").innerHTML = "NWS Raleigh point forecast for " + esc(label || "this location") + (f.updated ? ", updated " + esc(when(f.updated)) : "") + '. <a href="' + esc(f.sourceUrl) + '" target="_blank" rel="noopener">Full forecast</a>';
   }
-  function renderAlerts(a) {
+  function renderAlerts(a, where) {
     const box = $("fw-alert");
     const link = '<a class="al-link" href="https://alerts.weather.gov/" target="_blank" rel="noopener">NWS alerts</a>';
+    const loc = where || "this location";
     if (!a || a.status !== "ok") { box.className = "dash-alert is-clear"; box.innerHTML = '<div class="al-item"><span class="al-dot"></span><span class="al-ev">Alerts unavailable</span><span class="al-meta">Could not check NWS alerts. See weather.gov.</span></div>' + link; return; }
-    if (!a.items.length) { box.className = "dash-alert is-clear"; box.innerHTML = '<div class="al-item"><span class="al-dot"></span><span class="al-ev">No NWS alerts right now</span><span class="al-meta">No watches, warnings, or advisories at the dam.</span></div>' + link; return; }
+    if (!a.items.length) { box.className = "dash-alert is-clear"; box.innerHTML = '<div class="al-item"><span class="al-dot"></span><span class="al-ev">No NWS alerts right now</span><span class="al-meta">No watches, warnings, or advisories at ' + esc(loc) + ".</span></div>" + link; return; }
     box.className = "dash-alert is-active";
     box.innerHTML = a.items.map((it) => '<div class="al-item"><span class="al-dot"></span><span class="al-ev">' + esc(it.event) + '</span><span class="al-meta">' + (it.ends ? "until " + esc(when(it.ends)) : "") + "</span></div>").join("") + link;
   }
   function renderSources(d) {
-    const L = d.lake, rows = [
-      ["Lake elevation", "USGS 02087182 (62614, NGVD29; 62615, NAVD88)", "Every 15 min, about 1 h delay", L.elevation ? when(L.elevation.time) : "unavailable", L.url],
-      ["Guide curve", "USACE Wilmington District, 251.5 ft every day", "Fixed in the water control plan", d.guideCheck && d.guideCheck.status === "ok" ? (d.guideCheck.matches ? "Matches the USACE page today" : "Does not match the USACE page: check") : "USACE page not reachable", L.guideCurveSource],
-      ["Water temperature", "USGS 02087182 (00010)", "Every 15 min", d.waterTemp.time ? when(d.waterTemp.time) : "unavailable", L.url],
-      ["Rain, observed", "USGS 02087182 (00045)", "15-min totals", d.rain.time ? when(d.rain.time) : "unavailable", L.url],
-      ["Rain, forecast", "NWS gridded QPF, RAH 76,65", "About hourly", d.rain.qpf && d.rain.qpf.updated ? when(d.rain.qpf.updated) : "unavailable", d.rain.qpf && d.rain.qpf.sourceUrl],
-      ["Flows and stages", "USGS 02087183, 02087500, 02087570, 02089000, 02085070, 02085500", "Every 15 min", "see each card", "https://waterdata.usgs.gov/"],
-      ["Flow percentiles", "USGS daily statistics", "Daily means for each calendar day", "", "https://waterservices.usgs.gov/docs/statistics/"],
-      ["River forecasts", "NWS NWPS (CLYN7, SMFN7, GLDN7; lake NUDN7 has no forecast)", "Issued by SERFC", "", "https://water.noaa.gov/"],
-      ["Forecast and alerts", "NWS Raleigh point forecast; alerts for the dam point", "Hourly", d.forecast && d.forecast.updated ? when(d.forecast.updated) : "", "https://www.weather.gov/rah/"],
-    ];
+    const L = d.lake, rows = [];
+    if (L) {
+      rows.push(["Lake elevation", "USGS " + L.usgs + " (62614, NGVD29; 62615, NAVD88)", "Every 15 min, about 1 h delay", L.elevation ? when(L.elevation.time) : "unavailable", L.url]);
+      rows.push(["Guide curve", "USACE Wilmington District, " + L.guideCurveFt + " ft every day", "Fixed in the water control plan", d.guideCheck && d.guideCheck.status === "ok" ? (d.guideCheck.matches ? "Matches the USACE page today" : "Does not match the USACE page: check") : "USACE page not reachable", L.guideCurveSource]);
+    }
+    if (d.waterTemp && d.region && d.region.instrumentSet === "freshwater-lake") {
+      rows.push(["Water temperature", d.waterTemp.usgs ? ("USGS " + d.waterTemp.usgs + " (00010)") : "No USGS sensor at the dam", d.waterTemp.usgs ? "Every 15 min" : "—", d.waterTemp.time ? when(d.waterTemp.time) : "unavailable", L && L.url]);
+    }
+    if (d.rain) {
+      rows.push(["Rain, observed", "USGS " + d.rain.usgs + " (00045)", "15-min totals", d.rain.time ? when(d.rain.time) : "unavailable", L && L.url]);
+      rows.push(["Rain, forecast", "NWS gridded QPF", "About hourly", d.rain.qpf && d.rain.qpf.updated ? when(d.rain.qpf.updated) : "unavailable", d.rain.qpf && d.rain.qpf.sourceUrl]);
+    }
+    const flowSites = []
+      .concat(d.release ? [d.release.usgs] : [])
+      .concat((d.river || []).map((s) => s.usgs))
+      .concat((d.inflows || []).map((s) => s.usgs));
+    if (flowSites.length) {
+      rows.push(["Flows and stages", "USGS " + flowSites.join(", "), "Every 15 min", "see each card", "https://waterdata.usgs.gov/"]);
+      rows.push(["Flow percentiles", "USGS daily statistics", "Daily means for each calendar day", "", "https://waterservices.usgs.gov/docs/statistics/"]);
+    }
+    const lids = []
+      .concat(d.release && d.release.nwps ? [d.release.nwps.lid] : [])
+      .concat((d.river || []).map((s) => s.nwps && s.nwps.lid).filter(Boolean))
+      .concat(L && L.nwps ? [L.nwps.lid] : []);
+    if (lids.length) rows.push(["River forecasts and flood stages", "NWS NWPS (" + lids.join(", ") + ")", "Issued by SERFC / NWS", "", "https://water.noaa.gov/"]);
+    rows.push(["Forecast and alerts", "NWS Raleigh point forecast; alerts for this location", "Hourly", d.forecast && d.forecast.updated ? when(d.forecast.updated) : "", "https://www.weather.gov/rah/"]);
     $("fw-sources").innerHTML = '<table class="fw-src"><thead><tr><th>Reading</th><th>Source</th><th>Updates</th><th>Latest</th></tr></thead><tbody>' +
       rows.map((r) => "<tr><td><strong>" + esc(r[0]) + "</strong></td><td>" + (r[4] ? '<a href="' + esc(r[4]) + '" target="_blank" rel="noopener">' + esc(r[1]) + "</a>" : esc(r[1])) + "</td><td>" + esc(r[2]) + "</td><td>" + esc(r[3]) + "</td></tr>").join("") + "</tbody></table>" +
       '<p class="fine">USGS data are provisional. Duke Energy lake levels are not shown (their terms do not allow republishing). Generated ' + esc(when(d.generatedAt)) + ".</p>";
@@ -154,16 +198,41 @@
   const rid = new URLSearchParams(location.search).get("region") || "falls-lake";
   fetch("/api/freshwater?region=" + encodeURIComponent(rid)).then((r) => r.json()).then(function (d) {
     if (!d.ok) throw new Error(d.error || "unavailable");
+    const isRiver = (d.region && d.region.instrumentSet) === "freshwater-river";
+    const where = isRiver ? "this reach" : "the dam";
     $("fw-h").textContent = d.region.name; $("fw-sub").textContent = d.region.area || "";
+    if ($("fw-eyebrow")) $("fw-eyebrow").textContent = isRiver ? "Live river instruments" : "Live lake instruments";
     $("fw-badge").textContent = "Updated " + tfmt.format(new Date(d.generatedAt)).replace(/^\w+ \d+, /, "") + " ET";
-    renderAlerts(d.alerts); renderLake(d.lake); renderTemp(d.waterTemp); renderRelease(d.release); renderRain(d.rain);
-    $("fw-river").innerHTML = (d.river || []).map(gaugeCard).join("") || unavailable("No river gauges configured.");
-    $("fw-inflows").innerHTML = (d.inflows || []).map(gaugeCard).join("");
-    renderForecast(d.forecast);
+    if (isRiver && $("fw-footer-note")) $("fw-footer-note").textContent = "Not boating or safety advice. Water levels change; always check official sources before going out.";
+    renderAlerts(d.alerts, where);
+    if (isRiver) {
+      hide("fw-grid");
+    } else {
+      renderLake(d.lake);
+      renderTemp(d.waterTemp, { siteName: d.lake && d.lake.siteName });
+      renderRelease(d.release);
+      renderRain(d.rain);
+    }
+    if (d.river && d.river.length) {
+      if ($("fw-river-h")) $("fw-river-h").textContent = isRiver ? "River gauges" : "Neuse River below the lake";
+      $("fw-river").innerHTML = d.river.map(gaugeCard).join("");
+      $("fw-river").classList.toggle("three", d.river.length >= 3);
+    } else {
+      hide("fw-river-sec");
+    }
+    if (d.inflows && d.inflows.length) {
+      if ($("fw-inflows-h")) $("fw-inflows-h").textContent = "Main inflows";
+      $("fw-inflows").innerHTML = d.inflows.map(gaugeCard).join("");
+    } else {
+      hide("fw-inflows-sec");
+    }
+    const fcLabel = (d.region && d.region.anchor && d.region.anchor.label) || (isRiver ? "this reach" : "the dam");
+    if ($("fw-fc-h")) $("fw-fc-h").textContent = isRiver ? "NWS forecast" : "NWS forecast at the dam";
+    renderForecast(d.forecast, fcLabel);
     $("fw-links").innerHTML = (d.links || []).map((l) => '<li><a href="' + esc(l.url) + '" target="_blank" rel="noopener">' + esc(l.label) + "</a></li>").join("");
     renderSources(d);
   }).catch(function (e) {
     $("fw-badge").textContent = "Readings unavailable"; $("fw-badge").classList.add("amber");
-    ["fw-lake", "fw-temp", "fw-release", "fw-rain"].forEach((id) => fill(id, head($(id).dataset.title, null) + unavailable("Could not load readings: " + e.message)));
+    ["fw-lake", "fw-temp", "fw-release", "fw-rain"].forEach((id) => { if ($(id)) fill(id, head($(id).dataset.title, null) + unavailable("Could not load readings: " + e.message)); });
   });
 })();

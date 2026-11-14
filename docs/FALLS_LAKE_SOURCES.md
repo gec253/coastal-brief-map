@@ -2,8 +2,7 @@
 
 Private preview only. `/lake`, `/lake.js` and `/api/freshwater` return 404 unless
 `FRESHWATER_ENABLED=1` is set in the server environment. It is **not** set on Render.
-Only regions with `"previewReady": true` in `data/regions.json` are assembled (today: `falls-lake`).
-`neuse-river` and `jordan-lake` are draft entries: `enabled: false`, not previewReady, never served.
+Only regions with `"previewReady": true` in `data/regions.json` are assembled (`falls-lake`, `jordan-lake`, `neuse-river`). All three stay `enabled: false` / `draft: true` and are 404 to the public.
 
 Code: `freshwater.py` (assembly), `lake.html` + `lake.js` (page), routes in `server.py`.
 
@@ -67,7 +66,7 @@ Links only, no data copied: NCWRC boating access areas and fishing regulations
 5. **Point measurements.** Water temperature and rain are single sensors at the dam.
 6. USGS IV values are provisional (qualifier P) and can be revised.
 
-## Draft entries (disabled, never served)
+## Other private freshwater previews
 - `neuse-river` (Falls Dam to Goldsboro): USGS 02087183/NEUN7 below Falls Dam, 02087500/CLYN7 Clayton,
   02087570/SMFN7 Smithfield (stage only), 02089000/GLDN7 Goldsboro; NWS RAH grid 84,53; zone NCZ042.
   No active USGS water-temperature sensor on the main stem (checked 13 Nov 2026), so the river view
@@ -76,4 +75,4 @@ Links only, no data copied: NCWRC boating access areas and fishing regulations
   NWS RAH grid 60,50; zone NCZ040. No USGS water temperature at the dam. The old release gauge 02098198
   stopped reporting (flow 2010, stage 2016), so Haw River near Moncure 02098206/HRMN7 (about 1.6 mi below
   the dam, above the Deep River) is the nearest live flow and must be labeled "release plus local runoff".
-- Neither has `previewReady`; `freshwater.assemble()` refuses them.
+- Both are `previewReady` and assembled behind the same flag. See `docs/NEUSE_JORDAN_SOURCES.md`.

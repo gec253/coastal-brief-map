@@ -1108,6 +1108,8 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 <body><main class="pv"><span class="badge">Private preview · this browser only</span><h1>Previews</h1>
 <p>These pages are unlocked for this browser for %d days. The public still gets “not found”, and nothing here is linked from the site.</p>
 <a class="card" href="/lake"><b>Falls Lake</b><span>Freshwater dashboard: lake level vs guide curve, dam release, inflows, rain, river gauges</span></a>
+<a class="card" href="/lake?region=jordan-lake"><b>Jordan Lake</b><span>Pool vs 216.0 ft guide curve, release plus local runoff, Haw inflow</span></a>
+<a class="card" href="/lake?region=neuse-river"><b>Neuse River</b><span>Falls Dam to Goldsboro: stage, flow and NWS flood stages (Smithfield is stage only)</span></a>
 <a class="card" href="/brief?region=crystal-coast"><b>Morning Brief · Crystal Coast</b><span>Today's brief, built from live readings</span></a>
 <a class="card" href="/brief?region=hatteras"><b>Morning Brief · Hatteras</b><span>Today's brief, built from live readings</span></a>
 <a class="card" href="/brief?region=falls-lake"><b>Morning Brief · Falls Lake</b><span>Freshwater version</span></a>

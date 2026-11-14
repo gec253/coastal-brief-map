@@ -1,16 +1,18 @@
-"""Freshwater (lake and river) conditions for the private Falls Lake preview.
+"""Freshwater (lake and river) conditions for the private preview.
 
 Off unless FRESHWATER_ENABLED=1. Production never sets it, so every route that
 uses this module returns 404 there. Only freshwater regions from
-data/regions.json are served, and they stay enabled=false/draft=true.
+data/regions.json with previewReady are served, and they stay enabled=false/draft=true.
+Falls Lake, Jordan Lake and the Neuse River (Falls Dam to Goldsboro) are preview-ready.
 
 Every value carries its source, station id and observation time. Nothing is
-estimated: if a reading is missing or stale, the payload says so.
+estimated: if a reading is missing or stale, the payload says so. Instantaneous
+values older than REJECT_H hours are dropped (so a 1991 USGS "latest" discharge
+is never shown as current).
 
 Datums: USGS 62614 is lake elevation above NGVD 1929 and 62615 above NAVD 1988.
-USACE Wilmington District reports Falls Lake in "ft-msl", which matches USGS
-62614 exactly (checked 11 Nov 2026 8 AM: USACE 245.17 = USGS 62614 245.17), so
-the guide curve (251.5 ft) is compared with 62614 only.
+USACE Wilmington District reports Falls and Jordan in "ft-msl", which matches
+USGS 62614, so each guide curve is compared with 62614 only.
 """
 from __future__ import annotations
 
@@ -31,6 +33,7 @@ TTL_NWPS = 900
 TTL_NWS = 900
 TTL_USACE = 6 * 3600
 STALE_H = 3           # a USGS reading older than this is labelled stale
+REJECT_H = 24         # older than this is treated as missing, not current
 ASSEMBLED_TTL = 300
 
 _POOL = ThreadPoolExecutor(max_workers=8)
@@ -114,12 +117,18 @@ def usgs_iv(sites, params, period="P1D"):
     return out, names
 
 
-def latest(series, now):
+def latest(series, now, max_age_h=REJECT_H):
+    """Newest point whose own timestamp is within max_age_h. Older points are
+    rejected so a decades-old USGS IV value cannot appear as a current reading.
+    Points between STALE_H and max_age_h are returned with stale=True."""
     if not series:
         return None
-    t, v = series[-1]
-    age = _age_h(t, now)
-    return {"value": v, "time": t.isoformat(), "ageH": age, "stale": age is not None and age > STALE_H}
+    for t, v in reversed(series):
+        age = _age_h(t, now)
+        if age is not None and age > max_age_h:
+            continue
+        return {"value": v, "time": t.isoformat(), "ageH": age, "stale": age is not None and age > STALE_H}
+    return None
 
 
 def change_over(series, hours):
@@ -281,14 +290,24 @@ def usace_guide_check(expected):
 
 def _flow_station(spec, iv, now, stats_day):
     site = spec["usgs"]
-    q = latest(iv.get((site, "00060")), now)
+    stage_only = spec.get("flow") is False
+    # Stage-only gauges (Smithfield) must never expose discharge, even if IV still
+    # returns a historical 00060 value.
+    q = None if stage_only else latest(iv.get((site, "00060")), now)
     h = latest(iv.get((site, "00065")), now)
     out = {"usgs": site, "label": spec.get("label"), "kind": "observed", "regulated": bool(spec.get("regulated")),
            "url": "https://waterdata.usgs.gov/monitoring-location/%s/" % site,
            "flowCfs": q, "stageFt": h}
-    if spec.get("flow") is False:
+    if spec.get("tileTitle"):
+        out["tileTitle"] = spec["tileTitle"]
+    if spec.get("note"):
+        out["note"] = spec["note"]
+    if spec.get("floodStages"):
+        out["floodStages"] = dict(spec["floodStages"])
+    if stage_only:
+        out["stageOnly"] = True
         out["flowCfs"] = None
-        out["flowNote"] = spec.get("flowNote") or "Discharge not published at this gauge."
+        out["flowNote"] = spec.get("flowNote") or "Discharge not published at this gauge. Stage only."
     if out["flowCfs"] and not out["flowCfs"]["stale"]:
         st = usgs_daily_stats(site, stats_day)
         out["stats"] = st
@@ -296,12 +315,36 @@ def _flow_station(spec, iv, now, stats_day):
     return out
 
 
+def _attach_nwps(spec, block, nw):
+    if spec.get("nwps"):
+        block["nwps"] = nw.get(spec["nwps"])
+    # Prefer live NWPS flood stages; fall back to the documented NWS values.
+    live = ((block.get("nwps") or {}).get("floodStages") if (block.get("nwps") or {}).get("status") == "ok" else None)
+    if not live or all(v is None for v in live.values()):
+        if spec.get("floodStages"):
+            if block.get("nwps"):
+                merged = dict(block["nwps"])
+                merged["floodStages"] = dict(spec["floodStages"])
+                block["nwps"] = merged
+            block.setdefault("floodStages", dict(spec["floodStages"]))
+    return block
+
+
 def assemble(rid):
     regs = regions()
     if rid not in regs:
         return 404, {"ok": False, "error": "Unknown freshwater region."}
     r = regs[rid]
-    if not r.get("previewReady") or r.get("instrumentSet") != "freshwater-lake" or not r.get("lake"):
+    inst = r.get("instrumentSet")
+    if not r.get("previewReady"):
+        return 404, {"ok": False, "error": "This freshwater view is not built yet."}
+    if inst == "freshwater-lake":
+        if not r.get("lake"):
+            return 404, {"ok": False, "error": "This freshwater view is not built yet."}
+    elif inst == "freshwater-river":
+        if not r.get("river"):
+            return 404, {"ok": False, "error": "This freshwater view is not built yet."}
+    else:
         return 404, {"ok": False, "error": "This freshwater view is not built yet."}
     with _LOCK:
         hit = _ASSEMBLED.get(rid)
@@ -309,82 +352,114 @@ def assemble(rid):
             return 200, hit[1]
     now = datetime.now(timezone.utc)
     et_today = (now - timedelta(hours=5)).date()  # stats are keyed by calendar day; ET is close enough
-    lake = r["lake"]
+    lake = r.get("lake")
     river = r.get("river") or []
     inflows = r.get("inflows") or []
     rel = r.get("release")
-    sites = [lake["usgs"]] + [s["usgs"] for s in river + inflows] + ([rel["usgs"]] if rel else [])
+    sites = [s["usgs"] for s in river + inflows] + ([rel["usgs"]] if rel else [])
+    if lake:
+        sites = [lake["usgs"]] + sites
 
-    f_iv7 = _POOL.submit(usgs_iv, [lake["usgs"]], [lake["elevNgvd29"], lake["elevNavd88"], lake.get("waterTemp", "00010"), lake.get("rain", "00045")], "P7D")
-    f_ivq = _POOL.submit(usgs_iv, sites, ["00060", "00065"], "P1D")
-    f_fc = _POOL.submit(conditions.forecast_block, r["forecast"])
-    f_qpf = _POOL.submit(qpf_block, r["forecast"], now)
-    f_al = _POOL.submit(alerts_point, *r.get("alertPoint", [r["anchor"]["lat"], r["anchor"]["lon"]]))
-    f_guide = _POOL.submit(usace_guide_check, lake["guideCurveFt"])
-    lids = [s["nwps"] for s in river + ([rel] if rel else []) if s.get("nwps")] + ([lake["nwps"]] if lake.get("nwps") else [])
+    f_iv7 = None
+    if lake:
+        lake_params = [lake["elevNgvd29"], lake["elevNavd88"]]
+        if lake.get("waterTemp"):
+            lake_params.append(lake["waterTemp"])
+        if lake.get("rain"):
+            lake_params.append(lake["rain"])
+        f_iv7 = _POOL.submit(usgs_iv, [lake["usgs"]], lake_params, "P7D")
+    f_ivq = _POOL.submit(usgs_iv, sites, ["00060", "00065"], "P1D") if sites else None
+    f_fc = _POOL.submit(conditions.forecast_block, r["forecast"]) if r.get("forecast") else None
+    f_qpf = _POOL.submit(qpf_block, r["forecast"], now) if lake and r.get("forecast") else None
+    alert_pt = r.get("alertPoint") or [r["anchor"]["lat"], r["anchor"]["lon"]]
+    f_al = _POOL.submit(alerts_point, *alert_pt)
+    f_guide = _POOL.submit(usace_guide_check, lake["guideCurveFt"]) if lake and lake.get("guideCurveFt") is not None else None
+    lids = [s["nwps"] for s in river + ([rel] if rel else []) if s.get("nwps")]
+    if lake and lake.get("nwps"):
+        lids.append(lake["nwps"])
     f_nwps = {lid: _POOL.submit(nwps, lid) for lid in lids}
 
-    iv7, names = f_iv7.result()
-    ivq, names2 = f_ivq.result()
-    names.update(names2)
-    elev_s = iv7.get((lake["usgs"], lake["elevNgvd29"]))
-    navd_s = iv7.get((lake["usgs"], lake["elevNavd88"]))
-    temp_s = iv7.get((lake["usgs"], lake.get("waterTemp", "00010")))
-    rain_s = iv7.get((lake["usgs"], lake.get("rain", "00045")))
+    names = {}
+    iv7 = {}
+    if f_iv7 is not None:
+        iv7, names = f_iv7.result()
+    ivq = {}
+    if f_ivq is not None:
+        ivq, names2 = f_ivq.result()
+        names.update(names2)
 
-    elev = latest(elev_s, now)
-    lake_out = {"kind": "observed", "usgs": lake["usgs"], "siteName": names.get(lake["usgs"]),
-                "url": "https://waterdata.usgs.gov/monitoring-location/%s/" % lake["usgs"],
-                "elevation": elev, "datum": "NGVD29", "navd88": latest(navd_s, now),
-                "guideCurveFt": lake["guideCurveFt"], "guideCurveDatum": lake["guideCurveDatum"],
-                "guideCurveSource": lake["guideCurveSource"], "guideCurveChecked": lake["guideCurveChecked"],
-                "guideCurveNote": lake.get("guideCurveNote"), "usacePage": lake.get("usacePage"),
-                "change24hFt": change_over(elev_s, 24), "change7dFt": change_over(elev_s, 24 * 7) if elev_s and len(elev_s) > 10 else None}
-    if elev:
-        lake_out["vsGuideFt"] = round(elev["value"] - lake["guideCurveFt"], 2)
-        if lake_out["navd88"]:
-            lake_out["datumOffsetFt"] = round(elev["value"] - lake_out["navd88"]["value"], 2)
-    if elev_s:
-        # hourly points for the 7-day chart
-        hourly, last_h = [], None
-        for t, v in elev_s:
-            k = t.replace(minute=0, second=0, microsecond=0)
-            if k != last_h:
-                hourly.append([t.isoformat(), v])
-                last_h = k
-        lake_out["series7d"] = hourly
-    temp = latest(temp_s, now)
-    water = {"kind": "observed", "usgs": lake["usgs"], "status": "ok" if temp else "unavailable",
-             "c": temp["value"] if temp else None, "f": round(temp["value"] * 9 / 5 + 32, 1) if temp else None,
-             "time": temp["time"] if temp else None, "stale": temp["stale"] if temp else None,
-             "note": "USGS sensor at the dam. Surface temperatures elsewhere on the lake can differ."}
+    lake_out = None
+    water = {"kind": "observed", "status": "unavailable", "c": None, "f": None, "time": None, "stale": None,
+             "note": (r.get("waterTemp") or {}).get("note") or "No active USGS water-temperature sensor at this location."}
+    rain = None
+    if lake:
+        elev_s = iv7.get((lake["usgs"], lake["elevNgvd29"]))
+        navd_s = iv7.get((lake["usgs"], lake["elevNavd88"]))
+        temp_s = iv7.get((lake["usgs"], lake["waterTemp"])) if lake.get("waterTemp") else None
+        rain_s = iv7.get((lake["usgs"], lake["rain"])) if lake.get("rain") else None
 
-    rain = {"kind": "observed", "usgs": lake["usgs"], "status": "unavailable"}
-    if rain_s:
-        t_end = rain_s[-1][0]
-        def total(h):
-            span = [v for t, v in rain_s if t > t_end - timedelta(hours=h)]
-            have_h = (t_end - rain_s[0][0]).total_seconds() / 3600
-            return round(sum(span), 2) if have_h >= h - 0.5 else None
-        rain.update(status="ok", last24In=total(24), last7dIn=total(24 * 7), time=t_end.isoformat(),
-                    stale=_age_h(t_end, now) > STALE_H, note="USGS rain gauge at Falls Lake dam (one point; rain varies across the basin).")
-    rain["qpf"] = f_qpf.result()
+        elev = latest(elev_s, now)
+        lake_out = {"kind": "observed", "usgs": lake["usgs"], "siteName": names.get(lake["usgs"]),
+                    "url": "https://waterdata.usgs.gov/monitoring-location/%s/" % lake["usgs"],
+                    "elevation": elev, "datum": "NGVD29", "navd88": latest(navd_s, now),
+                    "guideCurveFt": lake["guideCurveFt"], "guideCurveDatum": lake["guideCurveDatum"],
+                    "guideCurveSource": lake["guideCurveSource"], "guideCurveChecked": lake["guideCurveChecked"],
+                    "guideCurveNote": lake.get("guideCurveNote"), "usacePage": lake.get("usacePage"),
+                    "change24hFt": change_over(elev_s, 24) if elev else None,
+                    "change7dFt": change_over(elev_s, 24 * 7) if elev and elev_s and len(elev_s) > 10 else None}
+        if lake.get("floodStages"):
+            lake_out["floodStages"] = dict(lake["floodStages"])
+        if elev and lake.get("guideCurveFt") is not None:
+            lake_out["vsGuideFt"] = round(elev["value"] - lake["guideCurveFt"], 2)
+            if lake_out["navd88"]:
+                lake_out["datumOffsetFt"] = round(elev["value"] - lake_out["navd88"]["value"], 2)
+        if elev_s:
+            # hourly points for the 7-day chart
+            hourly, last_h = [], None
+            for t, v in elev_s:
+                k = t.replace(minute=0, second=0, microsecond=0)
+                if k != last_h:
+                    hourly.append([t.isoformat(), v])
+                    last_h = k
+            lake_out["series7d"] = hourly
+        if lake.get("waterTemp"):
+            temp = latest(temp_s, now)
+            water = {"kind": "observed", "usgs": lake["usgs"], "status": "ok" if temp else "unavailable",
+                     "c": temp["value"] if temp else None, "f": round(temp["value"] * 9 / 5 + 32, 1) if temp else None,
+                     "time": temp["time"] if temp else None, "stale": temp["stale"] if temp else None,
+                     "note": "USGS sensor at the dam. Surface temperatures elsewhere on the lake can differ."}
+        else:
+            water = {"kind": "observed", "status": "unavailable", "c": None, "f": None, "time": None, "stale": None,
+                     "note": (r.get("waterTemp") or {}).get("note") or "No USGS water-temperature sensor at the dam."}
+
+        rain = {"kind": "observed", "usgs": lake["usgs"], "status": "unavailable"}
+        if rain_s:
+            t_end = rain_s[-1][0]
+            age = _age_h(t_end, now)
+            if age is None or age <= REJECT_H:
+                def total(h):
+                    span = [v for t, v in rain_s if t > t_end - timedelta(hours=h)]
+                    have_h = (t_end - rain_s[0][0]).total_seconds() / 3600
+                    return round(sum(span), 2) if have_h >= h - 0.5 else None
+                rain.update(status="ok", last24In=total(24), last7dIn=total(24 * 7), time=t_end.isoformat(),
+                            stale=age is not None and age > STALE_H,
+                            note="USGS rain gauge at the dam (one point; rain varies across the basin).")
+        if f_qpf is not None:
+            rain["qpf"] = f_qpf.result()
 
     nw = {lid: f.result() for lid, f in f_nwps.items()}
-    def attach(spec, block):
-        if spec.get("nwps"):
-            block["nwps"] = nw.get(spec["nwps"])
-        return block
-    release = attach(rel, _flow_station(rel, ivq, now, et_today)) if rel else None
-    river_out = [attach(s, _flow_station(s, ivq, now, et_today)) for s in river]
+    release = _attach_nwps(rel, _flow_station(rel, ivq, now, et_today), nw) if rel else None
+    river_out = [_attach_nwps(s, _flow_station(s, ivq, now, et_today), nw) for s in river]
     inflow_out = [_flow_station(s, ivq, now, et_today) for s in inflows]
-    lake_out["nwps"] = nw.get(lake.get("nwps"))
+    if lake_out is not None and lake:
+        lake_out = _attach_nwps(lake, lake_out, nw)
 
     payload = {"ok": True, "private": True, "generatedAt": now.isoformat(),
-               "region": {k: r.get(k) for k in ("id", "name", "area", "anchor", "waterType")},
+               "region": {k: r.get(k) for k in ("id", "name", "area", "anchor", "waterType", "instrumentSet")},
                "lake": lake_out, "waterTemp": water, "rain": rain, "release": release,
                "inflows": inflow_out, "river": river_out,
-               "forecast": f_fc.result(), "alerts": f_al.result(), "guideCheck": f_guide.result(),
+               "forecast": f_fc.result() if f_fc is not None else {"status": "unavailable"},
+               "alerts": f_al.result(), "guideCheck": f_guide.result() if f_guide is not None else None,
                "links": r.get("links") or [], "staleRuleH": STALE_H}
     with _LOCK:
         _ASSEMBLED[rid] = (time.time(), payload)
