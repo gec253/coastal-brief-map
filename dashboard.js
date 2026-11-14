@@ -639,23 +639,49 @@
       '<div class="inst-foot">' + srcCaption(r, { note: "Wind at the harbor station is often lighter than at the cape. Reported in knots." }) + "</div>";
     tweenAll(el);
   }
+  function marineZones(m) {
+    if (!m) return [];
+    return [m].concat(m.also || []);
+  }
   function renderMarine(m) {
     const el = $("i-marine");
     el.classList.remove("is-loading", "is-off");
-    if (!m || m.status !== "ok") {
+    const zones = marineZones(m).filter(function (z) { return z && z.zone; });
+    const anyOk = zones.some(function (z) { return z.status === "ok"; });
+    if (!anyOk) {
       el.classList.add("is-off");
       el.innerHTML = head("Marine forecast", null, "forecast") + '<p class="mf-text">The NWS marine forecast is unavailable right now.</p>';
       return;
     }
-    el.innerHTML = head("Marine forecast", null, "forecast") +
-      '<p class="mf-zone"><b>' + esc(m.zone) + "</b> · " + esc(m.zoneName) + "</p>" +
-      (m.zoneNote ? '<p class="mf-note">' + esc(m.zoneNote) + "</p>" : "") +
-      '<div class="mf-periods">' + (m.periods || []).slice(0, 2).map(function (p) {
-        return '<div class="mf-p"><div class="mf-name">' + esc(p.name) + '</div><p class="mf-text">' + esc(p.text) + "</p></div>";
-      }).join("") + "</div>" +
-      '<div class="inst-foot"><details class="src"><summary><span class="src-id">' + esc(m.zone) + '</span><span class="src-name">' + esc(m.office) + '</span><span class="src-time">Issued ' + esc(etTime(m.updated)) + "</span></summary>" +
-      '<div class="src-body"><p>Official NWS coastal waters forecast for zone ' + esc(m.zone) + " (" + esc(m.zoneName) + "). Shown as written by the National Weather Service.</p>" +
-      '<p class="src-links"><a href="' + esc(m.sourceUrl) + '" target="_blank" rel="noopener">Full forecast at weather.gov</a></p></div></details></div>';
+    if (zones.length === 1) {
+      // One zone (Crystal Coast and most regions): same markup as before.
+      el.innerHTML = head("Marine forecast", null, "forecast") +
+        '<p class="mf-zone"><b>' + esc(m.zone) + "</b> · " + esc(m.zoneName) + "</p>" +
+        (m.zoneNote ? '<p class="mf-note">' + esc(m.zoneNote) + "</p>" : "") +
+        '<div class="mf-periods">' + (m.periods || []).slice(0, 2).map(function (p) {
+          return '<div class="mf-p"><div class="mf-name">' + esc(p.name) + '</div><p class="mf-text">' + esc(p.text) + "</p></div>";
+        }).join("") + "</div>" +
+        '<div class="inst-foot"><details class="src"><summary><span class="src-id">' + esc(m.zone) + '</span><span class="src-name">' + esc(m.office) + '</span><span class="src-time">Issued ' + esc(etTime(m.updated)) + "</span></summary>" +
+        '<div class="src-body"><p>Official NWS coastal waters forecast for zone ' + esc(m.zone) + " (" + esc(m.zoneName) + "). Shown as written by the National Weather Service.</p>" +
+        '<p class="src-links"><a href="' + esc(m.sourceUrl) + '" target="_blank" rel="noopener">Full forecast at weather.gov</a></p></div></details></div>';
+      return;
+    }
+    // Several zones (Hatteras: AMZ154 and AMZ152): each on its own, not merged.
+    function zoneBlock(z) {
+      if (z.status !== "ok") {
+        return '<div class="mf-block"><p class="mf-zone"><b>' + esc(z.zone) + "</b> · " + esc(z.zoneName || "") + "</p>" +
+          '<p class="mf-text">The NWS forecast for this zone is unavailable right now.</p></div>';
+      }
+      return '<div class="mf-block"><p class="mf-zone"><b>' + esc(z.zone) + "</b> · " + esc(z.zoneName || "") + "</p>" +
+        (z.zoneNote ? '<p class="mf-note">' + esc(z.zoneNote) + "</p>" : "") +
+        '<div class="mf-periods">' + (z.periods || []).slice(0, 2).map(function (p) {
+          return '<div class="mf-p"><div class="mf-name">' + esc(p.name) + '</div><p class="mf-text">' + esc(p.text) + "</p></div>";
+        }).join("") + "</div>" +
+        '<div class="inst-foot"><details class="src"><summary><span class="src-id">' + esc(z.zone) + '</span><span class="src-name">' + esc(z.office || "") + '</span><span class="src-time">Issued ' + esc(etTime(z.updated)) + "</span></summary>" +
+        '<div class="src-body"><p>Official NWS coastal waters forecast for zone ' + esc(z.zone) + " (" + esc(z.zoneName || "") + "). Shown as written by the National Weather Service. Zones are shown side by side, not merged.</p>" +
+        '<p class="src-links"><a href="' + esc(z.sourceUrl) + '" target="_blank" rel="noopener">Full forecast at weather.gov</a></p></div></details></div></div>';
+    }
+    el.innerHTML = head("Marine forecast", null, "forecast") + zones.map(zoneBlock).join("");
   }
   function renderAlerts(a, m) {
     const box = $("dash-alert");
@@ -770,7 +796,8 @@
       if (!byKey[k]) { byKey[k] = { key: k, start: p.start, day: null, night: null }; days.push(byKey[k]); }
       if (p.isDaytime) byKey[k].day = p; else byKey[k].night = p;
     });
-    const mDays = marineByDay(m, days[0] && days[0].start);
+    const zoneList = marineZones(m);
+    const zoneDays = zoneList.map(function (z) { return { z: z, days: marineByDay(z, days[0] && days[0].start) }; });
     const temps = [];
     days.forEach(function (d) { [d.day, d.night].forEach(function (p) { if (p && isNum(p.tempF)) temps.push(p.tempF); }); });
     const tMin = Math.min.apply(null, temps), tMax = Math.max.apply(null, temps);
@@ -789,12 +816,15 @@
       // temperature bar positioned on the week's range
       const a = isNum(lo) ? lo : hi, b = isNum(hi) ? hi : lo;
       const bar = isNum(a) ? '<span class="fc-bar" aria-hidden="true"><i style="left:' + (((a - tMin) / span) * 100).toFixed(1) + "%;right:" + (100 - ((b - tMin) / span) * 100).toFixed(1) + '%"></i></span>' : "";
-      const mp = mDays[d.key] || [];
-      const gist = mp.length ? marineGist(mp[0].text) : null;
-      const zone = m && m.zone ? m.zone : "marine zone";
-      const marineChip = gist && (gist.seas || gist.wind)
-        ? '<span class="fc-marine" title="From the NWS marine zone forecast for ' + esc(zone) + '"><b>Marine</b> ' + esc(gist.seas || gist.wind) + "</span>"
-        : "";
+      const marineChip = zoneDays.map(function (item) {
+        const mp = item.days[d.key] || [];
+        const gist = mp.length ? marineGist(mp[0].text) : null;
+        if (!(gist && (gist.seas || gist.wind))) return "";
+        const zone = item.z.zone || "marine zone";
+        // One zone keeps the plain "Marine" label; several zones name each zone.
+        const label = zoneDays.length > 1 ? zone : "Marine";
+        return '<span class="fc-marine" title="From the NWS marine zone forecast for ' + esc(zone) + '"><b>' + esc(label) + "</b> " + esc(gist.seas || gist.wind) + "</span>";
+      }).join("");
       const tempTxt = isNum(hi)
         ? '<span class="fc-hi" aria-label="High ' + hi + '°F">' + hi + "°</span>" + (isNum(lo) ? '<span class="fc-lo" aria-label="Low ' + lo + '°F">' + lo + "°</span>" : '<span class="fc-lo fc-na">—</span>')
         : (isNum(lo) ? '<span class="fc-k fc-lowk">Low</span><span class="fc-hi" aria-label="Low ' + lo + '°F">' + lo + "°</span>" : '<span class="fc-hi fc-na">—</span><span></span>');
@@ -804,10 +834,18 @@
         (d.day ? '<p><b>' + esc(d.day.name) + ".</b> " + esc(d.day.detail || d.day.short || "") + "</p>" : "") +
         (d.night ? '<p><b>' + esc(d.night.name) + ".</b> " + esc(d.night.detail || d.night.short || "") + "</p>" : "") +
         "</div>" +
-        (mp.length
-          ? '<div class="fc-col fc-col-m"><h3>Marine zone ' + esc(zone) + (m.zoneName ? " · " + esc(m.zoneName) : "") + "</h3>" +
-            mp.map(function (q) { return "<p><b>" + esc(q.name) + ".</b> " + esc(q.text) + "</p>"; }).join("") + "</div>"
-          : (m && m.status === "ok" ? '<div class="fc-col fc-col-m"><h3>Marine zone ' + esc(zone) + '</h3><p class="fc-na">The NWS marine zone forecast does not reach this day.</p></div>' : "")) +
+        zoneDays.map(function (item) {
+          const mp = item.days[d.key] || [];
+          const zone = item.z.zone || "marine zone";
+          if (mp.length) {
+            return '<div class="fc-col fc-col-m"><h3>Marine zone ' + esc(zone) + (item.z.zoneName ? " · " + esc(item.z.zoneName) : "") + "</h3>" +
+              mp.map(function (q) { return "<p><b>" + esc(q.name) + ".</b> " + esc(q.text) + "</p>"; }).join("") + "</div>";
+          }
+          if (item.z && item.z.status === "ok") {
+            return '<div class="fc-col fc-col-m"><h3>Marine zone ' + esc(zone) + '</h3><p class="fc-na">The NWS marine zone forecast does not reach this day.</p></div>';
+          }
+          return "";
+        }).join("") +
         "</div>";
       return '<details class="fc-day' + (d.day ? "" : " is-night") + '"' + (i === 0 && window.innerWidth > 600 ? " open" : "") + ">" +
         "<summary>" +
@@ -821,10 +859,24 @@
         "</summary>" + body + "</details>";
     }).join("");
     if (foot) {
-      foot.innerHTML = "The land forecast is for the town, not the water offshore. Marine lines come from the NWS coastal waters forecast" +
-        (m && m.zone ? " for zone " + esc(m.zone) : "") + (m && m.updated ? ", issued " + esc(etTime(m.updated)) : "") +
-        ', and cover about five days. <a href="' + esc(f.sourceUrl) + '" target="_blank" rel="noopener">Point forecast</a>' +
-        (m && m.sourceUrl ? ' · <a href="' + esc(m.sourceUrl) + '" target="_blank" rel="noopener">Marine zone forecast</a>' : "") + ".";
+      const zoneBits = zoneList.filter(function (z) { return z && z.zone; }).map(function (z) {
+        return "zone " + esc(z.zone) + (z.updated ? ", issued " + esc(etTime(z.updated)) : "");
+      });
+      const zoneLinks = zoneList.filter(function (z) { return z && z.sourceUrl; }).map(function (z) {
+        return '<a href="' + esc(z.sourceUrl) + '" target="_blank" rel="noopener">Marine ' + esc(z.zone) + "</a>";
+      });
+      if (zoneList.length > 1) {
+        foot.innerHTML = "The land forecast is for the town, not the water offshore. Marine lines come from the NWS coastal waters forecast" +
+          (zoneBits.length ? " for " + zoneBits.join(" and ") : "") +
+          ', and cover about five days. Zones are shown separately, not merged. <a href="' + esc(f.sourceUrl) + '" target="_blank" rel="noopener">Point forecast</a>' +
+          (zoneLinks.length ? " · " + zoneLinks.join(" · ") : "") + ".";
+      } else {
+        // One zone: same wording as before.
+        foot.innerHTML = "The land forecast is for the town, not the water offshore. Marine lines come from the NWS coastal waters forecast" +
+          (m && m.zone ? " for zone " + esc(m.zone) : "") + (m && m.updated ? ", issued " + esc(etTime(m.updated)) : "") +
+          ', and cover about five days. <a href="' + esc(f.sourceUrl) + '" target="_blank" rel="noopener">Point forecast</a>' +
+          (m && m.sourceUrl ? ' · <a href="' + esc(m.sourceUrl) + '" target="_blank" rel="noopener">Marine zone forecast</a>' : "") + ".";
+      }
     }
   }
 
@@ -855,7 +907,9 @@
       const os = t.observed.station;
       html += "<tr><td>Observed water level</td><td>" + kindTag("observed") + "</td><td>" + esc(os.name || "—") + " (" + esc(os.id || "") + ")</td><td>" + (isNum(os.distanceMi) ? esc(os.distanceMi + " mi " + os.bearingFromAnchor + " of " + os.anchor) : "") + "</td><td>NOAA CO-OPS observed water level (preliminary)" + (t.observed.note ? " · " + esc(t.observed.note) : "") + "</td></tr>";
     }
-    html += "<tr><td>Marine forecast</td><td>" + kindTag("forecast") + "</td><td>NWS zone " + esc(m.zone || "") + "</td><td>" + esc(m.zoneName || "") + "</td><td>" + (m.updated ? "Issued " + esc(etTime(m.updated)) : "—") + "</td></tr>";
+    marineZones(m).forEach(function (z) {
+      html += "<tr><td>Marine forecast</td><td>" + kindTag("forecast") + "</td><td>NWS zone " + esc(z.zone || "") + "</td><td>" + esc(z.zoneName || "") + "</td><td>" + (z.updated ? "Issued " + esc(etTime(z.updated)) : "—") + "</td></tr>";
+    });
     html += "<tr><td>7-day forecast</td><td>" + kindTag("forecast") + "</td><td>" + esc(f.office || "NWS") + "</td><td>" + esc(f.label || "") + " point forecast</td><td>" + (f.updated ? "Updated " + esc(etTime(f.updated)) : "—") + "</td></tr>";
     html += "</tbody></table>";
     box.innerHTML = html + '<p class="fine">' + esc(d.staleRule || "") + " Readings come from different stations, so they describe different places, from offshore buoys to shore and harbor stations. Data are from NOAA and the National Weather Service; The Coastal Brief is not affiliated with or endorsed by NOAA.</p>";

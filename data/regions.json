@@ -446,7 +446,13 @@
       "marine": {
         "zone": "AMZ154",
         "zoneName": "S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM",
-        "office": "NWS Newport/Morehead City (MHX)"
+        "office": "NWS Newport/Morehead City (MHX)",
+        "also": [
+          {
+            "zone": "AMZ152",
+            "zoneName": "S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM"
+          }
+        ]
       },
       "alertZones": [
         "AMZ154",

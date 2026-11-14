@@ -690,22 +690,40 @@ def forecast_block(fcfg):
             "sourceUrl": "https://forecast.weather.gov/MapClick.php?lat=%s&lon=%s" % (fcfg["lat"], fcfg["lon"])}
 
 
-def marine_block(mcfg):
-    zone = mcfg["zone"]
+def _marine_one(zone, zone_name, office):
     url = "https://api.weather.gov/zones/coastal/%s/forecast" % zone
     d = nws_json(url, TTL_MARINE)
     props = (d or {}).get("properties") or {}
     periods = props.get("periods") or []
-    base = {"kind": "forecast", "zone": zone, "zoneName": mcfg.get("zoneName"), "office": mcfg.get("office"),
+    base = {"kind": "forecast", "zone": zone, "zoneName": zone_name, "office": office,
             "sourceUrl": "https://forecast.weather.gov/shmrn.php?mz=%s" % zone.lower()}
-    if mcfg.get("zoneNote"):
-        base["zoneNote"] = mcfg["zoneNote"]
     if not periods:
         base["status"] = "unavailable"
         return base
     base.update(status="ok", updated=props.get("updated"),
                 periods=[{"name": p.get("name"), "text": p.get("detailedForecast")} for p in periods[:14]])
     return base
+
+
+def marine_block(mcfg):
+    """Fetch the primary marine zone, plus any additional zones in mcfg['also'].
+
+    Additional zones are returned on the primary payload as `also` and are not
+    merged into one forecast. Crystal Coast has no `also` list, so its payload
+    shape is unchanged.
+    """
+    office = mcfg.get("office")
+    primary = _marine_one(mcfg["zone"], mcfg.get("zoneName"), office)
+    if mcfg.get("zoneNote"):
+        primary["zoneNote"] = mcfg["zoneNote"]
+    also = []
+    for z in mcfg.get("also") or []:
+        if not z or not z.get("zone"):
+            continue
+        also.append(_marine_one(z["zone"], z.get("zoneName"), z.get("office") or office))
+    if also:
+        primary["also"] = also
+    return primary
 
 
 def alerts_block(zones):

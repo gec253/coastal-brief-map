@@ -226,6 +226,64 @@ class StationStaleWindow(unittest.TestCase):
         self.assertEqual(conditions.stale_after_min("wind", None, STATIONS), 75)
 
 
+
+
+class HatterasMarineZones(unittest.TestCase):
+    """Draft: AMZ152 is shown alongside AMZ154, not merged, and behind no flag."""
+
+    def setUp(self):
+        self.cfg = conditions.load_regions()
+        self.regions = {r["id"]: r for r in self.cfg.get("regions") or []}
+
+    def test_hatteras_lists_amz152_alongside_amz154(self):
+        hat = self.regions["hatteras"]
+        self.assertEqual(hat["marine"]["zone"], "AMZ154")
+        also = hat["marine"].get("also") or []
+        self.assertEqual([z["zone"] for z in also], ["AMZ152"])
+        self.assertIn("Oregon Inlet", also[0]["zoneName"])
+        self.assertIn("Cape Hatteras", also[0]["zoneName"])
+        # Not merged into one zone field, and not hidden behind a flag.
+        self.assertNotEqual(hat["marine"]["zone"], "AMZ152")
+        self.assertNotIn("flag", hat["marine"])
+
+    def test_crystal_coast_marine_is_unchanged_single_zone(self):
+        cc = self.regions["crystal-coast"]
+        self.assertEqual(cc["marine"]["zone"], "AMZ158")
+        self.assertFalse(cc["marine"].get("also"))
+
+    def test_marine_block_fetches_both_zones_and_does_not_merge(self):
+        hat = self.regions["hatteras"]
+        urls = []
+
+        def fake_nws(url, ttl):
+            urls.append(url)
+            zone = url.rsplit("/", 2)[-2]
+            return {"properties": {
+                "updated": "2026-11-13T23:00:00+00:00",
+                "periods": [{"name": "Tonight", "detailedForecast": "Seas 2 to 3 ft in %s." % zone}],
+            }}
+
+        with patch.object(conditions, "nws_json", side_effect=fake_nws):
+            out = conditions.marine_block(hat["marine"])
+        self.assertEqual(out["zone"], "AMZ154")
+        self.assertEqual(out["status"], "ok")
+        self.assertEqual(out["periods"][0]["text"], "Seas 2 to 3 ft in AMZ154.")
+        self.assertEqual(len(out.get("also") or []), 1)
+        self.assertEqual(out["also"][0]["zone"], "AMZ152")
+        self.assertEqual(out["also"][0]["status"], "ok")
+        self.assertEqual(out["also"][0]["periods"][0]["text"], "Seas 2 to 3 ft in AMZ152.")
+        self.assertEqual(urls, [
+            "https://api.weather.gov/zones/coastal/AMZ154/forecast",
+            "https://api.weather.gov/zones/coastal/AMZ152/forecast",
+        ])
+
+    def test_dashboard_js_renders_both_zones(self):
+        js = Path(__file__).resolve().parents[1].joinpath("dashboard.js").read_text()
+        self.assertIn("function marineZones(m)", js)
+        self.assertIn("m.also", js)
+        self.assertIn("Zones are shown side by side, not merged", js)
+
+
 if __name__ == "__main__":
     unittest.main()
 

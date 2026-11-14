@@ -1269,6 +1269,7 @@ a.site-title { display: inline-flex; align-items: center; gap: 10px; }
 
 /* ---------- Marine forecast ---------- */
 .mf-zone { margin: 0 0 8px; color: var(--d-ink-2); font-size: 0.95rem; }
+.mf-block + .mf-block { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--d-edge-2); }
 .mf-zone b { color: var(--d-ink); }
 .mf-periods { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .mf-name { font-family: var(--f-display); font-size: 1.15rem; font-weight: 600; color: var(--d-ink); }
