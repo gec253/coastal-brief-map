@@ -26,6 +26,8 @@
       var text = bits.join(" · ");
       line.textContent = text;
       line.hidden = !text;
+      if (text) line.setAttribute("title", text);
+      else line.removeAttribute("title");
     }
     if (rec.waterType) {
       try { document.documentElement.setAttribute("data-water", rec.waterType); } catch (e) {}

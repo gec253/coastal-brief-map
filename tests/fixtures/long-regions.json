@@ -1,0 +1,44 @@
+{
+  "comment": "Temporary fake entries for compact-folio short-name tests only. Do not add these to the live catalog.",
+  "regions": [
+    {
+      "id": "wilmington",
+      "name": "Wilmington · Wrightsville Beach",
+      "area": "Cape Fear, North Carolina",
+      "waterType": "saltwater",
+      "expectShort": "Wilmington"
+    },
+    {
+      "id": "nags-head",
+      "name": "Nags Head · Outer Banks",
+      "area": "Northern Outer Banks, North Carolina",
+      "waterType": "saltwater",
+      "expectShort": "Nags Head"
+    },
+    {
+      "id": "with-short-field",
+      "name": "A Very Long Official Place Name · Secondary",
+      "short": "Long Official",
+      "area": "Test area",
+      "waterType": "saltwater",
+      "expectShort": "Long Official"
+    }
+  ],
+  "existing": [
+    {
+      "id": "crystal-coast",
+      "name": "Morehead City · Beaufort",
+      "expectShort": "Morehead City"
+    },
+    {
+      "id": "hatteras",
+      "name": "Hatteras Island",
+      "expectShort": "Hatteras Island"
+    },
+    {
+      "id": "falls-lake",
+      "name": "Falls Lake",
+      "expectShort": "Falls Lake"
+    }
+  ]
+}

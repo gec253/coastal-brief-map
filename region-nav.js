@@ -36,6 +36,46 @@
     return null;
   }
 
+  /* Compact folio label: explicit rec.short, else the place name before " · ". */
+  function shortName(rec) {
+    if (!rec) return "";
+    if (rec.short) return rec.short;
+    var n = rec.name || "";
+    var i = n.indexOf(" · ");
+    return i > 0 ? n.slice(0, i) : n;
+  }
+
+  function fullName(rec) {
+    return (rec && rec.name) || "";
+  }
+
+  function labelButton(nameEl, btn, rec) {
+    var full = fullName(rec);
+    if (nameEl) nameEl.textContent = shortName(rec) || full;
+    if (btn) {
+      if (full) {
+        btn.setAttribute("title", full);
+        btn.setAttribute("aria-label", full);
+      } else {
+        btn.removeAttribute("title");
+        btn.removeAttribute("aria-label");
+      }
+    }
+  }
+
+  function fillMastLine(rec) {
+    var line = $("mast-region-line");
+    if (!line) return;
+    var bits = [];
+    if (rec && rec.name) bits.push(rec.name);
+    if (rec && rec.area) bits.push(rec.area);
+    var text = bits.join(" · ");
+    line.textContent = text;
+    line.hidden = !text;
+    if (text) line.setAttribute("title", text);
+    else line.removeAttribute("title");
+  }
+
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
@@ -97,14 +137,8 @@
     var lineEl = root.querySelector(".rn-line") || $("rn-line");
     if (lineEl) lineEl.textContent = cfg.line || LINE;
     var currentId = opts.currentId || null;
-    var salt = (cfg.regions || []);
-    function nameFor(id) {
-      var r = salt.filter(function (x) { return x.id === id; })[0];
-      if (r) return r.name;
-      var f = (cfg.freshwater || []).filter(function (x) { return x.id === id; })[0];
-      return f ? f.name : (nameEl ? nameEl.textContent : "");
-    }
-    if (nameEl && currentId) nameEl.textContent = nameFor(currentId);
+    function recFor(id) { return find(id, cfg); }
+    if (currentId) labelButton(nameEl, btn, recFor(currentId));
     if (menu) menu.innerHTML = menuHtml(cfg, currentId);
 
     function close() {
@@ -133,8 +167,8 @@
         if (href) location.href = href;
         return;
       }
-      if (nameEl) nameEl.textContent = nameFor(id);
-      if (typeof opts.onSelect === "function") opts.onSelect(id, { waterType: water, href: href });
+      labelButton(nameEl, btn, recFor(id));
+      if (typeof opts.onSelect === "function") opts.onSelect(id, { waterType: water, href: href, name: fullName(recFor(id)), short: shortName(recFor(id)) });
       try {
         document.dispatchEvent(new CustomEvent("coastalbrief:region", { detail: { id: id, waterType: water, href: href } }));
       } catch (e) {}
@@ -182,7 +216,7 @@
 
     root._rnSet = function (id) {
       currentId = id;
-      if (nameEl) nameEl.textContent = nameFor(id);
+      labelButton(nameEl, btn, recFor(id));
       if (menu) menu.innerHTML = menuHtml(cfg, currentId);
     };
     return root;
@@ -197,15 +231,7 @@
       sel.value = id;
     }
     var rec = find(id);
-    var line = $("mast-region-line");
-    if (line) {
-      var bits = [];
-      if (rec && rec.name) bits.push(rec.name);
-      if (rec && rec.area) bits.push(rec.area);
-      var text = bits.join(" · ");
-      line.textContent = text;
-      line.hidden = !text;
-    }
+    fillMastLine(rec);
     if (rec && rec.waterType) {
       try { document.documentElement.setAttribute("data-water", rec.waterType); } catch (e) {}
     }
@@ -220,6 +246,8 @@
     setCurrent: setCurrent,
     defaultCatalog: defaultCatalog,
     find: find,
+    shortName: shortName,
+    fullName: fullName,
     LINE: LINE
   };
 })(window);
