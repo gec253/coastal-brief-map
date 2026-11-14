@@ -1139,6 +1139,52 @@ def _apply_share_meta(data: bytes, page: str) -> bytes:
     return data
 
 
+# Public robots.txt and sitemap.xml. Flag-gated pages (Morning Brief, /lake)
+# are listed only when their public flag is on, so the sitemap never advertises
+# a 404. Jordan Lake and Neuse River have /lake?region= pages, not briefs.
+SITE_ORIGIN = "https://thecoastalbrief.com"
+
+
+def robots_body() -> bytes:
+    return (
+        "User-agent: *\n"
+        "Allow: /\n"
+        "\n"
+        "Sitemap: %s/sitemap.xml\n" % SITE_ORIGIN
+    ).encode("utf-8")
+
+
+def public_sitemap_urls() -> list[str]:
+    urls = [
+        SITE_ORIGIN + "/",
+        SITE_ORIGIN + "/catch-wall",
+        SITE_ORIGIN + "/coastal-life",
+        SITE_ORIGIN + "/photos",
+    ]
+    if brief.flag_on():
+        urls += [
+            SITE_ORIGIN + "/brief?region=crystal-coast",
+            SITE_ORIGIN + "/brief?region=hatteras",
+        ]
+        if freshwater.flag_on():
+            urls.append(SITE_ORIGIN + "/brief?region=falls-lake")
+    if freshwater.flag_on():
+        for rid in ("falls-lake", "jordan-lake", "neuse-river"):
+            urls.append(SITE_ORIGIN + "/lake?region=" + rid)
+    return urls
+
+
+def sitemap_body() -> bytes:
+    parts = [
+        '<?xml version="1.0" encoding="UTF-8"?>\n',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n',
+    ]
+    for u in public_sitemap_urls():
+        parts.append("  <url><loc>%s</loc></url>\n" % html.escape(u, quote=True))
+    parts.append("</urlset>\n")
+    return "".join(parts).encode("utf-8")
+
+
 # ---------------------------------------------------------------- private preview access
 # /preview?key=<PREVIEW_KEY> sets an HttpOnly cookie that unlocks the flagged previews (/lab/wind,
 # /lab/tiles, and the not-yet-public saltwater dashboards) in that browser only. The key lives only in
@@ -1250,6 +1296,10 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
+        if parsed.path == "/robots.txt":
+            return self._send_bytes(robots_body(), "text/plain; charset=utf-8", cache_s=300)
+        if parsed.path == "/sitemap.xml":
+            return self._send_bytes(sitemap_body(), "application/xml; charset=utf-8", cache_s=300)
         if parsed.path == "/preview":
             return self._preview_route(parsed)
         # /?region=falls-lake (etc.) should open the lake page, not break the saltwater dashboard.
@@ -1529,6 +1579,16 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _send_bytes(self, data: bytes, ctype: str, cache_s: int = 0):
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(data)))
+        if cache_s:
+            self.send_header("Cache-Control", "public, max-age=%s" % cache_s)
+            self._cache_header_sent = True
         self.end_headers()
         self.wfile.write(data)
 
