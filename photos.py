@@ -315,7 +315,7 @@ def admin_available(preview: bool = False) -> bool:
     return admin_ready() and (flag_on() or preview)
 
 
-def region_choices() -> list:
+def region_choices(include_unreleased: bool = True) -> list:
     path = Path(__file__).resolve().parent / "data" / "regions.json"
     try:
         data = json.loads(path.read_text())
@@ -325,6 +325,8 @@ def region_choices() -> list:
     for r in data.get("regions") or []:
         rid = str(r.get("id") or "").strip()
         name = str(r.get("name") or "").strip()
+        if not include_unreleased and r.get("enabled") is not True:
+            continue
         if rid and name:
             out.append({"id": rid, "name": name})
     return out
@@ -348,7 +350,7 @@ def public_config(preview: bool = False) -> dict:
     return {"uploads": on, "public": uploads_active(),
             "turnstileSiteKey": turnstile_site_key() if (on and turnstile_required()) else "",
             "maxBytes": MAX_BYTES, "categories": list(CATEGORIES), "waterTypes": list(WATER_TYPES),
-            "regions": region_choices()}
+            "regions": region_choices(include_unreleased=preview)}
 
 
 # ---------------------------------------------------------------- rate limits

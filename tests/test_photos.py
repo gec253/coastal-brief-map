@@ -378,3 +378,13 @@ class PhotoUploadGate(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PublicConfigRegions(unittest.TestCase):
+    def test_unreleased_regions_hidden_publicly(self):
+        pub = {r["id"] for r in photos.public_config(False)["regions"]}
+        pv = {r["id"] for r in photos.public_config(True)["regions"]}
+        self.assertIn("crystal-coast", pub)
+        self.assertNotIn("topsail", pub)
+        self.assertNotIn("wilmington", pub)
+        self.assertIn("topsail", pv)
