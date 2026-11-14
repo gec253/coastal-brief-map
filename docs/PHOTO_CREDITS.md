@@ -47,6 +47,6 @@ Processed derivatives (AVIF/WebP at 800, 1280, and 1920 CSS pixels where the ori
 - **Exact credit line:** Photograph: U.S. National Park Service, Cape Lookout National Seashore
 - **What / where it shows (as stated by the source):** Alt text and description: “Cape Lookout Lighthouse reflected in the water at night.” Keywords include the 150th anniversary. NPS unit: Cape Lookout National Seashore.
 
-## Rotation
+## Rotation and default
 
-The preview server picks one photograph per calendar day in America/New_York (`day-of-year modulo` the list length) so the choice is stable for the day and does not cause layout shift. `?photo=<id>` overrides the day’s pick on the private preview only, so the set can be reviewed on demand.
+The Bodie Island sunrise photograph is the default for the final homepage preview (`default` / `pinned` in `data/featured-photos.json`), which is the photo Ed chose. `?photo=<id>` still selects any photograph in the list. If no photograph is pinned and no `?photo=` is given, the server falls back to a stable per-day pick in America/New_York (`day-of-year modulo` the list length) so the choice does not cause layout shift.

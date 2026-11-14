@@ -1209,7 +1209,17 @@ _MASTHEAD_DOCK = """<div id="mast-preview-dock" class="mast-preview-dock" hidden
 """
 
 
-def _masthead_preview_html(concept: str, shot: bool = False, dock: str | None = None) -> bytes:
+
+def _preview_style_tag(*paths: Path) -> bytes:
+    """One inlined stylesheet for a private preview; avoids an extra CSS request."""
+    chunks = []
+    for path in paths:
+        chunks.append(path.read_text(encoding="utf-8"))
+    css = "\n".join(chunks)
+    return b'  <style id="preview-css">\n' + css.encode("utf-8") + b"\n  </style>\n"
+
+
+def _masthead_preview_html(concept: str, shot: bool = False, dock: str | None = None, css_files: list[Path] | None = None, extra_attrs: bytes = b"") -> bytes:
     """Homepage with a concept masthead swapped in. Public index.html is not modified."""
     if concept not in MASTHEAD_CONCEPTS:
         concept = "c"
@@ -1221,10 +1231,14 @@ def _masthead_preview_html(concept: str, shot: bool = False, dock: str | None = 
         raise RuntimeError("masthead preview: unexpected index.html shape")
     data = src[:start] + header + b"\n\n    " + src[mid:]
     attrs = b' data-concept="%s"' % concept.encode("ascii")
+    if extra_attrs:
+        attrs += extra_attrs
     if shot:
         attrs += b" data-shot"
     data = data.replace(b'<html lang="en" data-tiles="v2">', b'<html lang="en" data-tiles="v2"' + attrs + b">", 1)
-    inject = b'  <link rel="stylesheet" href="/preview/masthead.css">\n  <meta name="robots" content="noindex, nofollow">\n  ' + _MASTHEAD_PLAY
+    # Inline preview CSS so the page does not pay an extra stylesheet request (FCP).
+    inject = _preview_style_tag(*(css_files or (MASTHEAD_DIR / "masthead.css",)))
+    inject += b'  <meta name="robots" content="noindex, nofollow">\n  ' + _MASTHEAD_PLAY
     needle = b'  <link rel="stylesheet" href="styles.css">\n'
     if needle not in data:
         raise RuntimeError("masthead preview: stylesheet link missing")
@@ -1243,8 +1257,8 @@ def _masthead_preview_html(concept: str, shot: bool = False, dock: str | None = 
         data = data.replace(a, b)
     return _apply_preview_dateline(_apply_chrome(data))
 
-# Private photo-led homepage concepts, always on masthead concept C.
-HOME_CONCEPTS = ("cinematic", "magazine")
+# Private photo-led homepage concepts. Final = Magazine layout on masthead A.
+HOME_CONCEPTS = ("cinematic", "magazine", "final")
 HOME_DIR = ROOT / "preview" / "home"
 HOME_PHOTOS_DIR = HOME_DIR / "photos"
 HOME_PHOTOS_JSON = ROOT / "data" / "featured-photos.json"
@@ -1257,13 +1271,16 @@ def _load_featured_photos() -> list[dict]:
 
 
 def _featured_photo(photo_id: str | None = None) -> dict:
-    """Stable per local calendar day (America/New_York). Optional id override for the preview."""
+    """Pinned/default photograph, or a stable per-day pick. Optional id override for the preview."""
     photo_list = _load_featured_photos()
     if not photo_list:
         raise RuntimeError("featured photos list is empty")
     by_id = {p.get("id"): p for p in photo_list if p.get("id")}
     if photo_id and photo_id in by_id:
         return by_id[photo_id]
+    for item in photo_list:
+        if item.get("default") or item.get("pinned"):
+            return item
     now = datetime.now(ZoneInfo("America/New_York"))
     return photo_list[now.timetuple().tm_yday % len(photo_list)]
 
@@ -1306,24 +1323,44 @@ def _home_photo_band_html(home: str, photo: dict) -> bytes:
     return markup.encode("utf-8")
 
 
-def _home_preview_dock(home: str, photo: dict, photo_list: list[dict]) -> str:
+def _home_layout(home: str) -> str:
+    return "magazine" if home == "final" else home
+
+
+def _home_masthead(home: str, mast: str | None) -> str:
+    if mast in MASTHEAD_CONCEPTS:
+        return mast
+    return "a" if home == "final" else "c"
+
+
+def _home_preview_dock(home: str, photo: dict, photo_list: list[dict], mast: str) -> str:
     pid = html.escape(str(photo.get("id") or ""), quote=True)
-    links = []
-    for c, label in (("cinematic", "Cinematic"), ("magazine", "Magazine")):
-        on = ' class="is-on"' if c == home else ""
-        links.append('<a href="/preview/home?c=%s&photo=%s"%s>%s</a>' % (c, pid, on, label))
+    views = (
+        ("final", "Final", "/preview/home?c=final&photo=%s" % pid),
+        ("cinematic", "Cinematic", "/preview/home?c=cinematic&photo=%s" % pid),
+        ("magazine", "Magazine (C)", "/preview/home?c=magazine&photo=%s" % pid),
+    )
+    view_links = []
+    for key, label, href in views:
+        on = ' class="is-on"' if key == home else ""
+        view_links.append('<a href="%s"%s>%s</a>' % (href, on, label))
+    mast_links = []
+    for key, label in (("a", "Masthead A"), ("b", "Masthead B"), ("c", "Masthead C")):
+        mast_links.append('<a href="/preview/masthead?c=%s">%s</a>' % (key, label))
     photo_links = []
     for item in photo_list:
         item_id = str(item.get("id") or "")
         on = ' class="is-on"' if item_id == photo.get("id") else ""
         label = html.escape(str(item.get("title") or item_id))
-        photo_links.append('<a href="/preview/home?c=%s&photo=%s"%s>%s</a>' % (home, html.escape(item_id, quote=True), on, label))
+        href = "/preview/home?c=%s&m=%s&photo=%s" % (home, mast, html.escape(item_id, quote=True))
+        photo_links.append('<a href="%s"%s>%s</a>' % (href, on, label))
     return """<div id="mast-preview-dock" class="mast-preview-dock" hidden>
   <span class="pv-lab">Private preview</span>
   %s
   <span class="pv-sep" aria-hidden="true">·</span>
   %s
-  <a href="/preview/masthead?c=c">Masthead C</a>
+  <span class="pv-sep" aria-hidden="true">·</span>
+  %s
   <button type="button" id="mast-replay">Replay</button>
 </div>
 <script>
@@ -1331,7 +1368,7 @@ def _home_preview_dock(home: str, photo: dict, photo_list: list[dict]) -> str:
   var dock = document.getElementById("mast-preview-dock");
   if (!dock) return;
   dock.hidden = false;
-  var c = document.documentElement.getAttribute("data-concept") || "c";
+  var c = document.documentElement.getAttribute("data-concept") || "a";
   var btn = document.getElementById("mast-replay");
   if (!btn) return;
   btn.addEventListener("click", function(){
@@ -1350,36 +1387,34 @@ def _home_preview_dock(home: str, photo: dict, photo_list: list[dict]) -> str:
   });
 })();
 </script>
-""" % ("\n  ".join(links), "\n  ".join(photo_links))
+""" % ("\n  ".join(view_links), "\n  ".join(photo_links), "\n  ".join(mast_links))
 
 
-def _home_preview_html(home: str, shot: bool = False, photo_id: str | None = None) -> bytes:
-    """Homepage with masthead C plus a photo-led band. Public index.html is not modified."""
+def _home_preview_html(home: str, shot: bool = False, photo_id: str | None = None, mast: str | None = None) -> bytes:
+    """Homepage photo preview. Final = Magazine layout on masthead A with the pinned photo. Public index.html is not modified."""
     if home not in HOME_CONCEPTS:
-        home = "cinematic"
+        home = "final"
+    layout = _home_layout(home)
+    mast = _home_masthead(home, mast)
     photo_list = _load_featured_photos()
     photo = _featured_photo(photo_id)
-    dock = None if shot else _home_preview_dock(home, photo, photo_list)
-    data = _masthead_preview_html("c", shot=shot, dock=dock)
-    data = data.replace(b'data-concept="c"', b'data-concept="c" data-home="%s"' % home.encode("ascii"), 1)
-    css = b'<link rel="stylesheet" href="/preview/masthead.css">'
-    if css not in data:
-        raise RuntimeError("home preview: masthead stylesheet missing")
-    data = data.replace(
-        css,
-        css + b'\n  <link rel="stylesheet" href="/preview/home.css">',
-        1,
+    dock = None if shot else _home_preview_dock(home, photo, photo_list, mast)
+    extra = b' data-home="%s"' % layout.encode("ascii")
+    if home == "final":
+        extra += b" data-final"
+    data = _masthead_preview_html(
+        mast,
+        shot=shot,
+        dock=dock,
+        css_files=[MASTHEAD_DIR / "masthead.css", HOME_DIR / "home.css"],
+        extra_attrs=extra,
     )
-    band = _home_photo_band_html(home, photo)
+    band = _home_photo_band_html(layout, photo)
     mid = data.find(_MASTHEAD_META)
     if mid < 0:
         raise RuntimeError("home preview: unexpected index.html shape")
     data = data[:mid] + band + b"\n    " + data[mid:]
     return data
-
-
-
-
 
 
 # /catch-wall, /coastal-life and /photos share catch-wall.html. Give each its own
@@ -1496,7 +1531,7 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 <a class="card" href="/lab/wind"><b>Wind flow</b><span>Animated model wind (NOAA GFS forecast)</span></a>
 <a class="card" href="/lab/tiles"><b>Tile designs</b><span>The instrument tile prototype</span></a>
 <a class="card" href="/preview/masthead?c=c"><b>Masthead concepts</b><span>Three directions for a cinematic gold wave-to-masthead reveal (A editorial, B nautical, C hybrid). Replay from the bar at the bottom.</span></a>
-<a class="card" href="/preview/home?c=cinematic"><b>Homepage photo concepts</b><span>Two directions on masthead C: Cinematic Coastal, and Modern Coastal Magazine. Same cookie; switch layouts and photographs from the bar at the bottom.</span></a>
+<a class="card" href="/preview/home"><b>Homepage (Ed's pick)</b><span>Classic Coastal Editorial masthead (A) with the Modern Coastal Magazine layout and the Bodie Island sunrise. Compare Cinematic and the other mastheads from the bar at the bottom.</span></a>
 <p><a href="/preview?lock=1">Lock this browser again</a></p></main></body></html>""" % PREVIEW_DAYS
 
 conditions.install(cache_get, cache_get_any, cache_put_ttl, lambda url: fetch_url(url, tries=2))
@@ -1792,13 +1827,14 @@ class Handler(SimpleHTTPRequestHandler):
             ctype = "image/avif" if path.suffix.lower() == ".avif" else "image/webp"
             return self._send_private(path, ctype)
         q = parse_qs(parsed.query or "")
-        home = (q.get("c") or ["cinematic"])[0].strip().lower()
+        home = (q.get("c") or ["final"])[0].strip().lower()
         if home not in HOME_CONCEPTS:
-            home = "cinematic"
+            home = "final"
+        mast = (q.get("m") or [""])[0].strip().lower() or None
         photo_id = (q.get("photo") or [""])[0].strip() or None
         shot = (q.get("shot") or [""])[0] == "1"
         try:
-            data = _home_preview_html(home, shot=shot, photo_id=photo_id)
+            data = _home_preview_html(home, shot=shot, photo_id=photo_id, mast=mast)
         except Exception as e:
             sys.stderr.write("home preview failed: %s\n" % e)
             return self.send_error(500, "preview failed")

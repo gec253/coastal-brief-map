@@ -162,5 +162,5 @@ class MastheadPreview(unittest.TestCase):
         status, body, _ = self._req("/preview/masthead?c=c&shot=1", env=env, cookie=self._cookie())
         self.assertEqual(status, 200)
         self.assertIn(b"data-shot", body)
-        self.assertNotIn(b"mast-preview-dock", body)
+        self.assertNotIn(b'id="mast-preview-dock"', body)
         self.assertIn(b"mast-wave", body)
