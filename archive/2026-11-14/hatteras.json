@@ -1,0 +1,122 @@
+{
+ "forecastUpdated": "2026-11-14T08:43:04+00:00",
+ "freshness": [
+  {
+   "label": "Wind",
+   "stale": false,
+   "station": "41025",
+   "time": "4:40 AM ET"
+  },
+  {
+   "label": "Seas",
+   "stale": false,
+   "station": "41120",
+   "time": "4:56 AM ET"
+  },
+  {
+   "label": "Barometer",
+   "stale": false,
+   "station": "8654467",
+   "time": "5:06 AM ET"
+  },
+  {
+   "label": "Water level",
+   "stale": false,
+   "station": "8654467",
+   "time": "5:06 AM ET"
+  },
+  {
+   "label": "Water temp",
+   "stale": false,
+   "station": "8654467",
+   "time": "5:06 AM ET"
+  }
+ ],
+ "issueDate": "2026-11-14",
+ "issuedAt": "2026-11-14T10:15:00.942875+00:00",
+ "issuedEt": "Sat Nov 14, 5:15 AM ET",
+ "items": [
+  [
+   "Advisories",
+   "Small Craft Advisory until Sun 12:00 AM ET; Small Craft Advisory until 12:00 PM ET."
+  ],
+  [
+   "Wind",
+   "25 kt from the NNW, gusting 33, at Diamond Shoals; up from 10 kt 10 h earlier."
+  ],
+  [
+   "Seas",
+   "6.2 ft every 6 s from the NNE at Cape Hatteras East (CDIP 250); building from 3.9 ft 10 h earlier."
+  ],
+  [
+   "Swell",
+   "0.7 ft at 10 s from the NE (split from the buoy spectrum)."
+  ],
+  [
+   "Pressure",
+   "29.81 inHg, rising, up 2.4 hPa over 10 h at 41025."
+  ],
+  [
+   "Marine forecast",
+   "Today: NW winds 20 to 25 kt, diminishing to 15 to 20 kt this afternoon. (NWS AMZ154)"
+  ],
+  [
+   "Rain",
+   "4% chance through tonight; partly cloudy, high 49°F."
+  ],
+  [
+   "Tides",
+   "low 6:00 AM ET (0.4 ft), high 12:07 PM ET (0.7 ft), low 6:47 PM ET (0.3 ft) at USCG Station Hatteras, MLLW."
+  ],
+  [
+   "Water temp",
+   "61°F inshore (USCG Station Hatteras), 69°F offshore (buoy 41120)."
+  ]
+ ],
+ "marineUpdated": "2026-11-14T03:41:00-05:00",
+ "marineZone": "AMZ154",
+ "missing": [],
+ "ok": true,
+ "reason": "scheduled",
+ "region": {
+  "anchor": {
+   "label": "Cape Hatteras",
+   "lat": 35.2515,
+   "lon": -75.5288
+  },
+  "area": "Cape Hatteras, Outer Banks",
+  "id": "hatteras",
+  "map": {
+   "center": [
+    35.2,
+    -75.6
+   ],
+   "zoom": 8
+  },
+  "name": "Hatteras Island"
+ },
+ "regionId": "hatteras",
+ "sources": "NOAA NDBC, NOAA CO-OPS, NWS (api.weather.gov)",
+ "take": [
+  "NWS rates conditions hazardous to small craft until Sun 12:00 AM ET.",
+  "Wind has built 16 kt over the past 10 h.",
+  "Seas are short-period wind chop, so expect a steep, close-together ride.",
+  "The NWS marine forecast has wind or seas easing later today."
+ ],
+ "validation": {
+  "checkedAt": "2026-11-14T10:15:00.942875+00:00",
+  "checks": [
+   "region",
+   "location",
+   "issue date",
+   "timestamp",
+   "marine zone",
+   "forecast age",
+   "core readings"
+  ],
+  "missingCore": [],
+  "status": "ok"
+ },
+ "waterType": "saltwater",
+ "words": 178
+}

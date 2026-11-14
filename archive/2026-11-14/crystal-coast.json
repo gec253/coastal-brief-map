@@ -1,0 +1,122 @@
+{
+ "forecastUpdated": "2026-11-14T08:43:04+00:00",
+ "freshness": [
+  {
+   "label": "Wind",
+   "stale": false,
+   "station": "CLKN7",
+   "time": "4:50 AM ET"
+  },
+  {
+   "label": "Seas",
+   "stale": false,
+   "station": "41159",
+   "time": "3:56 AM ET"
+  },
+  {
+   "label": "Barometer",
+   "stale": false,
+   "station": "8656483",
+   "time": "5:06 AM ET"
+  },
+  {
+   "label": "Water level",
+   "stale": false,
+   "station": "8656483",
+   "time": "5:06 AM ET"
+  },
+  {
+   "label": "Water temp",
+   "stale": false,
+   "station": "8656483",
+   "time": "5:06 AM ET"
+  }
+ ],
+ "issueDate": "2026-11-14",
+ "issuedAt": "2026-11-14T10:15:00.001577+00:00",
+ "issuedEt": "Sat Nov 14, 5:15 AM ET",
+ "items": [
+  [
+   "Advisories",
+   "Small Craft Advisory until 12:00 PM ET; Freeze Warning until Sun 9:00 AM ET."
+  ],
+  [
+   "Wind",
+   "14 kt from the N, gusting 22, at Cape Lookout; up from 10 kt 10 h earlier."
+  ],
+  [
+   "Seas",
+   "5.2 ft every 5 s from the N at Onslow Bay Outer (CDIP 217); building from 3.0 ft 10 h earlier."
+  ],
+  [
+   "Swell",
+   "0.3 ft at 10 s from the NE (split from the buoy spectrum)."
+  ],
+  [
+   "Pressure",
+   "29.84 inHg, rising, up 3.9 hPa over 10 h at CLKN7."
+  ],
+  [
+   "Marine forecast",
+   "Today: NW winds 15 to 20 kt. (NWS AMZ158)"
+  ],
+  [
+   "Rain",
+   "6% chance through tonight; partly cloudy, high 41°F."
+  ],
+  [
+   "Tides",
+   "low 4:08 AM ET (0.6 ft), high 10:58 AM ET (3.5 ft), low 5:16 PM ET (0.9 ft), high 11:14 PM ET (2.7 ft) at Beaufort, Duke Marine Lab, MLLW."
+  ],
+  [
+   "Water temp",
+   "63°F inshore (Beaufort, Duke Marine Lab), 70°F offshore (buoy 41159)."
+  ]
+ ],
+ "marineUpdated": "2026-11-14T03:41:00-05:00",
+ "marineZone": "AMZ158",
+ "missing": [],
+ "ok": true,
+ "reason": "scheduled",
+ "region": {
+  "anchor": {
+   "label": "Beaufort Inlet",
+   "lat": 34.695,
+   "lon": -76.668
+  },
+  "area": "Crystal Coast, North Carolina",
+  "id": "crystal-coast",
+  "map": {
+   "center": [
+    34.7,
+    -76.7
+   ],
+   "zoom": 8
+  },
+  "name": "Morehead City · Beaufort"
+ },
+ "regionId": "crystal-coast",
+ "sources": "NOAA NDBC, NOAA CO-OPS, NWS (api.weather.gov)",
+ "take": [
+  "NWS rates conditions hazardous to small craft until 12:00 PM ET.",
+  "Wind has built 4 kt over the past 10 h.",
+  "Seas are short-period wind chop, so expect a steep, close-together ride.",
+  "Offshore water is 7°F warmer than inshore."
+ ],
+ "validation": {
+  "checkedAt": "2026-11-14T10:15:00.001577+00:00",
+  "checks": [
+   "region",
+   "location",
+   "issue date",
+   "timestamp",
+   "marine zone",
+   "forecast age",
+   "core readings"
+  ],
+  "missingCore": [],
+  "status": "ok"
+ },
+ "waterType": "saltwater",
+ "words": 172
+}
