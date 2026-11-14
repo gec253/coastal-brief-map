@@ -1,0 +1,674 @@
+/* Private masthead concepts for /preview/masthead?c=a|b|c. Not used on public pages. */
+html[data-concept] {
+  --id-navy: #071C29;
+  --id-ivory: #F3E6D0;
+  --id-ivory-2: #D4C6AE;
+  --id-brass: #C4A36A;
+}
+
+/* -------- Shared compact, unified masthead -------- */
+html[data-concept] header.site[data-identity],
+html[data-concept] .compact-bar {
+  --id-navy: #071C29;
+  --id-ivory: #F3E6D0;
+  --id-ivory-2: #D4C6AE;
+  --id-brass: #C4A36A;
+  background-color: var(--id-navy);
+  background-image: none;
+  color: var(--id-ivory);
+  border: none;
+  box-shadow: none;
+  contain: layout style;
+  padding: 0;
+}
+/* Chart texture: tablet/desktop only, same public-domain crop, never fetched on phones. */
+@media (min-width: 761px) {
+  html[data-concept] header.site[data-identity]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: url("/branding/masthead-chart.webp") 70% 40% / cover no-repeat;
+    opacity: 0.10;
+  }
+}
+html[data-concept] header.site[data-identity] > * { position: relative; z-index: 1; }
+
+html[data-concept] .masthead { padding: 6px 0 0; }
+html[data-concept] .mast-top {
+  display: flex;
+  align-items: center;
+  gap: 8px 12px;
+  min-height: 36px;
+}
+html[data-concept] .mast-dateline {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 1.2em;
+  line-height: 1.2;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--id-ivory-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html[data-concept] .mast-dateline time { font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; }
+html[data-concept] .mast-top .mast-kicker {
+  display: none;
+  margin: 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--id-ivory-2);
+  white-space: nowrap;
+}
+html[data-concept] header.site[data-identity] .theme-toggle {
+  margin: 0 0 0 auto;
+  min-height: 36px;
+  min-width: 36px;
+  color: var(--id-ivory);
+  border-color: rgba(243, 230, 208, 0.45);
+  font-size: 0.72rem;
+}
+html[data-concept] header.site[data-identity] .theme-toggle:hover,
+html[data-concept] header.site[data-identity] .theme-toggle:focus-visible {
+  background: rgba(196, 163, 106, 0.18);
+  outline: 3px solid var(--id-brass);
+  outline-offset: 2px;
+}
+
+html[data-concept] .mast-nameplate {
+  text-align: center;
+  padding: 2px 0 0;
+}
+html[data-concept] .mast-kicker-center {
+  margin: 0 auto 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--id-ivory-2);
+}
+html[data-concept] header.site[data-identity] h1 {
+  margin: 0;
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: clamp(2.05rem, 8.4vw, 3.5rem);
+  line-height: 0.96;
+  letter-spacing: -0.03em;
+  font-variation-settings: "opsz" 144, "SOFT" 20, "WONK" 0.45;
+  color: var(--id-ivory);
+}
+html[data-concept] header.site[data-identity] a.site-title {
+  display: inline-block;
+  color: inherit;
+  text-decoration: none;
+  min-height: 44px;
+  padding: 4px 0 2px;
+}
+html[data-concept] header.site[data-identity] .wordmark {
+  font-family: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  text-transform: none;
+  color: inherit;
+  /* Painted at first frame — never opacity:0. Reveal uses a decorative sheen only. */
+  opacity: 1;
+}
+html[data-concept] header.site[data-identity] a.site-title:focus-visible {
+  outline: 3px solid var(--id-brass);
+  outline-offset: 4px;
+}
+html[data-concept] .mast-mission {
+  margin: 4px auto 0;
+  max-width: 36rem;
+  height: 1.35em;
+  line-height: 1.35;
+  font-family: var(--f-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(0.82rem, 2.6vw, 1.05rem);
+  color: var(--id-ivory-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Reserved wave/horizon slot — same height in play, settled, and reduced-motion. */
+html[data-concept] .mast-wave {
+  position: relative;
+  height: 22px;
+  margin: 6px 0 0;
+  overflow: hidden;
+  color: var(--id-brass);
+}
+html[data-concept] .mast-wave-svg {
+  display: block;
+  width: 100%;
+  height: 22px;
+}
+html[data-concept] .wave-swell,
+html[data-concept] .wave-settle {
+  stroke-dasharray: 1400;
+  stroke-dashoffset: 0;
+}
+html[data-concept] .wave-swell { opacity: 0; }
+html[data-concept] .wave-settle { opacity: 1; }
+html[data-concept] .wave-glint { opacity: 0; }
+html[data-concept] .mast-sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(243, 230, 208, 0.35) 50%, transparent 65%);
+  transform: translateX(-40%);
+}
+
+/* Unified sticky nav: region + sections + Morning Brief, once. */
+html[data-concept] .compact-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  min-height: 48px;
+  border-top: 1px solid rgba(196, 163, 106, 0.55);
+  border-bottom: 0;
+  box-shadow: 0 8px 20px -16px rgba(0, 0, 0, 0.65);
+}
+html[data-concept] .compact-inner,
+html[data-concept] .mast-nav-inner {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px 8px;
+  min-height: 48px;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow-x: hidden; /* never a horizontal scroll; links must fit */
+}
+html[data-concept] .mast-mono {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 44px;
+  padding: 0 2px;
+  font-family: var(--f-display);
+  font-weight: 600;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: var(--id-brass);
+  text-decoration: none;
+}
+html[data-concept] .mast-mono:focus-visible {
+  outline: 3px solid var(--id-brass);
+  outline-offset: 2px;
+}
+html[data-concept] .compact-bar .region-nav {
+  position: relative;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 11.5rem;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+}
+html[data-concept] .compact-bar .rn-k { display: none; }
+html[data-concept] .compact-bar .rn-btn {
+  width: 100%;
+  max-width: 100%;
+  min-height: 36px;
+  color: var(--id-ivory);
+  border-color: rgba(243, 230, 208, 0.35);
+  background: transparent;
+  justify-content: flex-start;
+  padding: 0 8px;
+  font-size: 0.78rem;
+}
+html[data-concept] .compact-bar .rn-btn:hover { background: rgba(196, 163, 106, 0.12); }
+html[data-concept] .compact-bar .rn-btn:focus-visible {
+  outline: 3px solid var(--id-brass);
+  outline-offset: 2px;
+}
+html[data-concept] .compact-bar .rn-name {
+  color: inherit;
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+html[data-concept] .compact-bar .rn-menu {
+  right: 0;
+  left: 0;
+  width: auto;
+  min-width: 16rem;
+}
+html[data-concept] header.site[data-identity] .site-nav,
+html[data-concept] .compact-bar .site-nav {
+  display: flex;
+  flex: 1 0 auto;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0 12px;
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+html[data-concept] .compact-bar .site-nav a,
+html[data-concept] .compact-bar #nav-brief {
+  color: var(--id-ivory);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  padding: 0;
+  background: none;
+}
+html[data-concept] .compact-bar .site-nav a[aria-current="page"],
+html[data-concept] .compact-bar #nav-brief:hover,
+html[data-concept] .compact-bar .site-nav a:hover,
+html[data-concept] .compact-bar #nav-brief:focus-visible,
+html[data-concept] .compact-bar .site-nav a:focus-visible {
+  border-bottom-color: var(--id-brass);
+  outline: none;
+  color: var(--id-ivory);
+}
+html[data-concept] .compact-bar .site-nav a:focus-visible,
+html[data-concept] .compact-bar #nav-brief:focus-visible {
+  outline: 3px solid var(--id-brass);
+  outline-offset: 2px;
+}
+
+/* No stacked gold rules from the shipped identity block. */
+html[data-concept] .mast-rule { display: none; }
+html[data-concept] .mast-region,
+html[data-concept] .mast-reach { display: none !important; }
+
+/* -------- A · Classic Coastal Editorial -------- */
+html[data-concept="a"] .mast-kicker-center { letter-spacing: 0.28em; }
+html[data-concept="a"] header.site[data-identity] h1 {
+  font-size: clamp(2.15rem, 8.8vw, 3.65rem);
+  letter-spacing: -0.035em;
+  font-variation-settings: "opsz" 144, "SOFT" 28, "WONK" 0.6;
+}
+html[data-concept="a"] .mast-mission {
+  font-size: clamp(0.86rem, 2.7vw, 1.1rem);
+  margin-top: 6px;
+}
+html[data-concept="a"] .mast-wave { margin-top: 8px; height: 18px; }
+html[data-concept="a"] .mast-wave-svg { height: 18px; }
+html[data-concept="a"] .wave-settle { stroke-width: 1.15; }
+html[data-concept="a"] .mast-mono { font-style: italic; letter-spacing: 0.02em; }
+html[data-concept="a"] .compact-bar {
+  border-top: 1px solid var(--id-brass);
+  box-shadow: none;
+}
+html[data-concept="a"] .compact-bar .rn-btn { border: 0; border-radius: 0; padding-left: 0; }
+html[data-concept="a"] .compact-bar .site-nav {
+  text-transform: none;
+  letter-spacing: 0.01em;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+/* -------- B · Modern Nautical -------- */
+html[data-concept="b"] .mast-top .mast-kicker { display: block; }
+html[data-concept="b"] .mast-kicker-center { display: none; }
+html[data-concept="b"] header.site[data-identity] h1 {
+  font-size: clamp(1.62rem, 6.6vw, 2.85rem);
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-transform: uppercase;
+  font-variation-settings: "opsz" 96, "SOFT" 0, "WONK" 0;
+}
+html[data-concept="b"] header.site[data-identity] .wordmark { text-transform: uppercase; letter-spacing: inherit; }
+html[data-concept="b"] .mast-mission {
+  font-style: normal;
+  font-family: var(--f-ui, "Source Sans 3", sans-serif);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  font-size: 0.75rem;
+  text-transform: none;
+  height: 1.4em;
+}
+html[data-concept="b"] .mast-nameplate { text-align: left; }
+html[data-concept="b"] .mast-mission { margin-left: 0; text-align: left; }
+html[data-concept="b"] .wave-swell { opacity: 1; }
+html[data-concept="b"] .wave-settle { opacity: 0; }
+html[data-concept="b"] .compact-bar {
+  border-top: none;
+  background: var(--id-navy);
+}
+html[data-concept="b"] .mast-nav-inner { gap: 6px; }
+html[data-concept="b"] .mast-mono {
+  border: 1px solid rgba(196, 163, 106, 0.55);
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: 2px;
+  letter-spacing: 0.08em;
+  font-size: 0.68rem;
+  font-style: normal;
+}
+html[data-concept="b"] .compact-bar .rn-btn,
+html[data-concept="b"] .compact-bar .site-nav a,
+html[data-concept="b"] .compact-bar #nav-brief {
+  border: 1px solid rgba(243, 230, 208, 0.22);
+  border-radius: 2px;
+  min-height: 36px;
+  padding: 0 8px;
+  letter-spacing: 0.06em;
+}
+html[data-concept="b"] .compact-bar .site-nav { gap: 6px; }
+html[data-concept="b"] .compact-bar .site-nav a[aria-current="page"],
+html[data-concept="b"] .compact-bar .site-nav a:hover,
+html[data-concept="b"] .compact-bar #nav-brief:hover {
+  border-color: var(--id-brass);
+  border-bottom-color: var(--id-brass);
+  background: rgba(196, 163, 106, 0.1);
+}
+
+/* -------- C · Coastal Editorial Hybrid (flagship) -------- */
+html[data-concept="c"] .mast-kicker-center { letter-spacing: 0.24em; }
+html[data-concept="c"] header.site[data-identity] h1 {
+  font-size: clamp(2.2rem, 9vw, 3.75rem);
+  letter-spacing: -0.038em;
+  font-variation-settings: "opsz" 144, "SOFT" 16, "WONK" 0.55;
+}
+html[data-concept="c"] .mast-mission { margin-top: 6px; }
+html[data-concept="c"] .mast-wave { height: 24px; margin-top: 8px; }
+html[data-concept="c"] .mast-wave-svg { height: 24px; }
+html[data-concept="c"] .compact-bar {
+  border-top: 1px solid rgba(196, 163, 106, 0.7);
+}
+html[data-concept="c"] .mast-mono { font-weight: 600; }
+
+/* -------- Motion: only when html.mast-play, and never under reduced motion -------- */
+@media (prefers-reduced-motion: reduce) {
+  html.mast-play .wave-swell,
+  html.mast-play .wave-settle,
+  html.mast-play .wave-glint,
+  html.mast-play .mast-sheen {
+    animation: none !important;
+  }
+  html.mast-play[data-concept="a"] .wave-swell,
+  html.mast-play[data-concept="c"] .wave-swell { opacity: 0; }
+  html.mast-play[data-concept="a"] .wave-settle,
+  html.mast-play[data-concept="c"] .wave-settle { opacity: 1; stroke-dashoffset: 0; }
+  html.mast-play[data-concept="b"] .wave-swell { opacity: 1; stroke-dashoffset: 0; }
+  html.mast-play[data-concept="b"] .wave-settle { opacity: 0; }
+  html.mast-play .wave-glint,
+  html.mast-play .mast-sheen { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* A: typesetter's rule draws left to right, 0.7s, no glint. */
+  html.mast-play[data-concept="a"] .wave-settle {
+    stroke-dashoffset: 1400;
+    animation: mast-draw 700ms cubic-bezier(0.22, 0.7, 0.2, 1) forwards;
+  }
+  html.mast-play[data-concept="a"] .wave-swell { opacity: 0; }
+  html.mast-play[data-concept="a"] .mast-sheen {
+    animation: mast-sheen-a 800ms cubic-bezier(0.22, 0.7, 0.2, 1) 80ms both;
+  }
+
+  /* B: swell horizon draws and stays; glint travels the curve. */
+  html.mast-play[data-concept="b"] .wave-swell {
+    stroke-dashoffset: 1400;
+    opacity: 1;
+    animation: mast-draw 780ms cubic-bezier(0.2, 0.75, 0.25, 1) forwards;
+  }
+  html.mast-play[data-concept="b"] .wave-settle { opacity: 0; }
+  html.mast-play[data-concept="b"] .wave-glint {
+    offset-path: path("M0 20 C 140 20, 220 8, 360 14 S 560 30, 720 18 S 960 8, 1200 20");
+    offset-rotate: 0deg;
+    animation: mast-glint 800ms cubic-bezier(0.3, 0.15, 0.25, 1) 120ms both;
+  }
+
+  /* C flagship: swell draws, glint travels, line settles to a straight rule, sheen on type. */
+  html.mast-play[data-concept="c"] .wave-swell {
+    stroke-dashoffset: 1400;
+    opacity: 1;
+    animation: mast-draw 640ms cubic-bezier(0.22, 0.8, 0.28, 1) forwards,
+               mast-fade-out 280ms ease 620ms forwards;
+  }
+  html.mast-play[data-concept="c"] .wave-settle {
+    stroke-dashoffset: 1400;
+    opacity: 0;
+    animation: mast-draw 500ms cubic-bezier(0.22, 0.7, 0.2, 1) 480ms forwards,
+               mast-fade-in 280ms ease 480ms forwards;
+  }
+  html.mast-play[data-concept="c"] .wave-glint {
+    offset-path: path("M0 20 C 140 20, 220 8, 360 14 S 560 30, 720 18 S 960 8, 1200 20");
+    offset-rotate: 0deg;
+    animation: mast-glint 700ms cubic-bezier(0.3, 0.15, 0.25, 1) 140ms both;
+  }
+  html.mast-play[data-concept="c"] .mast-sheen {
+    animation: mast-sheen-c 700ms cubic-bezier(0.22, 0.7, 0.2, 1) 280ms both;
+  }
+}
+
+@keyframes mast-draw {
+  from { stroke-dashoffset: 1400; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes mast-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes mast-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes mast-glint {
+  0% { opacity: 0; offset-distance: 0%; }
+  12% { opacity: 1; }
+  80% { opacity: 0.85; }
+  100% { opacity: 0; offset-distance: 100%; }
+}
+@keyframes mast-sheen-a {
+  from { opacity: 0; transform: translateX(-50%); }
+  30% { opacity: 0.35; }
+  to { opacity: 0; transform: translateX(50%); }
+}
+@keyframes mast-sheen-c {
+  from { opacity: 0; transform: translateX(-55%); }
+  25% { opacity: 0.5; }
+  to { opacity: 0; transform: translateX(55%); }
+}
+
+/* -------- Tablet / desktop polish -------- */
+@media (min-width: 761px) {
+  html[data-concept] .masthead { padding: 10px 0 0; }
+  html[data-concept] header.site[data-identity] h1 { font-size: clamp(2.8rem, 5.2vw, 4.2rem); }
+  html[data-concept="b"] header.site[data-identity] h1 { font-size: clamp(2.1rem, 4vw, 3.1rem); }
+  html[data-concept] .mast-mission { font-size: 1.12rem; height: 1.4em; }
+  html[data-concept] .compact-bar .region-nav { max-width: 16rem; }
+  html[data-concept] .compact-bar .rn-k {
+    display: inline;
+    color: var(--id-ivory-2);
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-right: 6px;
+  }
+  html[data-concept] .compact-bar .site-nav { gap: 0 12px; font-size: 0.76rem; letter-spacing: 0.03em; }
+  html[data-concept="b"] .compact-bar .site-nav a,
+  html[data-concept="b"] .compact-bar #nav-brief,
+  html[data-concept="b"] .compact-bar .rn-btn {
+    min-height: 44px;
+  }
+  html[data-concept] .mast-nav-inner { overflow: visible; }
+}
+@media (min-width: 1100px) {
+  html[data-concept] .mast-nameplate { padding: 6px 0 0; }
+  html[data-concept] .mast-wave { margin-left: auto; margin-right: auto; max-width: 46rem; }
+}
+
+/* Preview dock: visible to Ed, hidden for screenshots/LH via ?shot=1 (html[data-shot]). */
+.mast-preview-dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 80;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 8px 14px;
+  background: rgba(7, 28, 41, 0.94);
+  color: #F3E6D0;
+  border-top: 1px solid rgba(196, 163, 106, 0.55);
+  font: 600 0.75rem/1.3 "Source Sans 3", sans-serif;
+}
+.mast-preview-dock a, .mast-preview-dock button {
+  color: #F3E6D0;
+  background: transparent;
+  border: 1px solid rgba(196, 163, 106, 0.6);
+  border-radius: 3px;
+  min-height: 36px;
+  padding: 0 10px;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+.mast-preview-dock a.is-on, .mast-preview-dock button:hover, .mast-preview-dock a:hover {
+  border-color: #C4A36A;
+  background: rgba(196, 163, 106, 0.16);
+}
+.mast-preview-dock .pv-lab {
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.64rem;
+  color: #D4C6AE;
+  margin-right: auto;
+}
+html[data-shot] .mast-preview-dock { display: none; }
+
+
+/* Hardening: skip links stay visually hidden; theme toggle stays ivory on navy. */
+html[data-concept] .skip-links .skip {
+  position: absolute !important;
+  left: -9999px !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+html[data-concept] .skip-links .skip:focus,
+html[data-concept] .skip-links .skip:focus-visible {
+  left: 8px !important;
+  top: 8px !important;
+  width: auto;
+  height: auto;
+  clip: auto;
+  overflow: visible;
+  background: #fff;
+  color: #071C29;
+  padding: 8px 12px;
+}
+html[data-concept] header.site[data-identity] .theme-toggle,
+html[data-concept][data-theme="light"] header.site[data-identity] .theme-toggle,
+html[data-concept][data-theme="dark"] header.site[data-identity] .theme-toggle {
+  background: transparent;
+  color: var(--id-ivory);
+  border: 1px solid rgba(243, 230, 208, 0.5);
+}
+
+/* Short dateline at phone widths so concept B (kicker + toggle) does not ellipsize. */
+html[data-concept] .mast-date-short { display: none; }
+@media (max-width: 760px) {
+  html[data-concept] .mast-date-full { display: none; }
+  html[data-concept] .mast-date-short { display: inline; }
+}
+
+/* Preview proposal for main: the header picker is the single region control.
+   The in-card picker stays in the DOM (dashboard.js / region-nav.js stay in sync)
+   but is not shown, so the region is not repeated. */
+html[data-concept] .dash-controls .region-pick {
+  display: none;
+}
+
+/* Phone + large phone: region on row 1, section links on row 2.
+   Side padding is kept; all four links fit inside it with no scroll or clip. */
+@media (max-width: 760px) {
+  html[data-concept] .mast-nav-inner {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-items: center;
+    gap: 2px 8px;
+    min-height: 0;
+    padding: 4px 14px 6px;
+    overflow: hidden;
+  }
+  html[data-concept] .mast-mono { grid-column: 1; grid-row: 1; }
+  html[data-concept] .compact-bar .region-nav {
+    grid-column: 2;
+    grid-row: 1;
+    max-width: none;
+    width: auto;
+    justify-self: start;
+  }
+  html[data-concept] .compact-bar .site-nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    justify-content: stretch;
+    flex: none;
+    width: 100%;
+    gap: 0 2px;
+    font-family: "Barlow Condensed", "Barlow Condensed Fallback", sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  html[data-concept] .compact-bar .site-nav a,
+  html[data-concept] .compact-bar #nav-brief {
+    justify-content: center;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0 1px;
+    text-align: center;
+  }
+  /* B's instrument borders are kept, but padding is tightened so the four labels fit. */
+  html[data-concept="b"] .compact-bar .site-nav { gap: 0 4px; }
+  html[data-concept="b"] .compact-bar .site-nav a,
+  html[data-concept="b"] .compact-bar #nav-brief {
+    min-height: 44px;
+    padding: 0 2px;
+  }
+  html[data-concept="a"] .compact-bar .site-nav {
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+    font-size: 0.78rem;
+  }
+}
+
+html[data-concept] .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

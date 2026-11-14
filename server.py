@@ -233,7 +233,7 @@ def cache_get_any(url: str) -> tuple[int, str, bytes] | None:
 # docs, and test fixtures are not.
 _STATIC_EXT = {".html", ".css", ".js", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".ico",
                ".woff2", ".json", ".txt", ".xml", ".webmanifest", ".map"}
-_STATIC_DENY_PREFIX = ("/.", "/admin", "/branding/og-masthead.html", "/branding/render-og-masthead.", "/wind-lab.", "/lake.", "/tiles-lab.", "/docs/", "/tests/", "/scripts/", "/__pycache__/", "/requirements")
+_STATIC_DENY_PREFIX = ("/.", "/admin", "/preview/", "/branding/og-masthead.html", "/branding/render-og-masthead.", "/wind-lab.", "/lake.", "/tiles-lab.", "/docs/", "/tests/", "/scripts/", "/__pycache__/", "/requirements")
 
 
 def _static_allowed(path: str) -> bool:
@@ -1115,6 +1115,273 @@ def _apply_chrome(data: bytes) -> bytes:
     return _apply_dateline(_apply_brief_nav(data))
 
 
+def _preview_dateline_html() -> bytes:
+    """Preview-only dateline: full label plus a short phone form (SAT · NOV 14, 2026)."""
+    now = datetime.now(ZoneInfo("America/New_York"))
+    full = "%s, %s %d, %d · Eastern Time" % (
+        now.strftime("%A"),
+        now.strftime("%B"),
+        now.day,
+        now.year,
+    )
+    short = "%s · %s %d, %d" % (
+        now.strftime("%a"),
+        now.strftime("%b"),
+        now.day,
+        now.year,
+    )
+    iso = now.date().isoformat()
+    return (
+        b'<time datetime="%s">'
+        b'<span class="mast-date-full">%s</span>'
+        b'<span class="mast-date-short">%s</span>'
+        b"</time>"
+    ) % (
+        iso.encode("ascii"),
+        html.escape(full).encode("utf-8"),
+        html.escape(short).encode("utf-8"),
+    )
+
+
+def _apply_preview_dateline(data: bytes) -> bytes:
+    """Swap the public dateline in the concept masthead only; public pages are unchanged."""
+    return re.sub(
+        br'(<p class="mast-dateline" id="mast-dateline">)\s*<time datetime="[^"]*">[^<]*</time>',
+        br"\1" + _preview_dateline_html(),
+        data,
+        count=1,
+    )
+
+
+# Private masthead concepts. Public pages never include this markup or CSS.
+MASTHEAD_CONCEPTS = ("a", "b", "c")
+MASTHEAD_DIR = ROOT / "preview" / "masthead"
+_MASTHEAD_META = b'<div class="wrap">\n      <div class="meta-row">'
+_MASTHEAD_PLAY = b"""<script>
+(function(){
+  var c = document.documentElement.getAttribute("data-concept") || "c";
+  var key = "cb-mast-reveal-" + c;
+  var force = /(?:\\?|&)play=1(?:&|$)/.test(location.search || "");
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduce) return;
+  try {
+    if (force || !sessionStorage.getItem(key)) {
+      document.documentElement.classList.add("mast-play");
+      if (!force) sessionStorage.setItem(key, "1");
+    }
+  } catch (e) {}
+})();
+</script>
+"""
+_MASTHEAD_DOCK = """<div id="mast-preview-dock" class="mast-preview-dock" hidden>
+  <span class="pv-lab">Private preview</span>
+  <a href="/preview/masthead?c=a" data-c="a">A Editorial</a>
+  <a href="/preview/masthead?c=b" data-c="b">B Nautical</a>
+  <a href="/preview/masthead?c=c" data-c="c">C Hybrid</a>
+  <button type="button" id="mast-replay">Replay</button>
+</div>
+<script>
+(function(){
+  var dock = document.getElementById("mast-preview-dock");
+  if (!dock) return;
+  dock.hidden = false;
+  var c = document.documentElement.getAttribute("data-concept") || "c";
+  var on = dock.querySelector('a[data-c="'+c+'"]');
+  if (on) on.className += " is-on";
+  var btn = document.getElementById("mast-replay");
+  if (!btn) return;
+  btn.addEventListener("click", function(){
+    var key = "cb-mast-reveal-" + c;
+    try { sessionStorage.removeItem(key); } catch (e) {}
+    var html = document.documentElement;
+    html.classList.remove("mast-play");
+    void html.offsetWidth;
+    html.classList.add("mast-play");
+    document.querySelectorAll(".wave-swell, .wave-settle, .wave-glint, .mast-sheen").forEach(function(el){
+      var prev = el.style.animation;
+      el.style.animation = "none";
+      void el.offsetWidth;
+      el.style.animation = prev;
+    });
+  });
+})();
+</script>
+"""
+
+
+def _masthead_preview_html(concept: str, shot: bool = False, dock: str | None = None) -> bytes:
+    """Homepage with a concept masthead swapped in. Public index.html is not modified."""
+    if concept not in MASTHEAD_CONCEPTS:
+        concept = "c"
+    src = (ROOT / "index.html").read_bytes()
+    header = (MASTHEAD_DIR / "header.html").read_bytes().strip()
+    start = src.find(b'<header class="site"')
+    mid = src.find(_MASTHEAD_META)
+    if start < 0 or mid < 0 or mid < start:
+        raise RuntimeError("masthead preview: unexpected index.html shape")
+    data = src[:start] + header + b"\n\n    " + src[mid:]
+    attrs = b' data-concept="%s"' % concept.encode("ascii")
+    if shot:
+        attrs += b" data-shot"
+    data = data.replace(b'<html lang="en" data-tiles="v2">', b'<html lang="en" data-tiles="v2"' + attrs + b">", 1)
+    inject = b'  <link rel="stylesheet" href="/preview/masthead.css">\n  <meta name="robots" content="noindex, nofollow">\n  ' + _MASTHEAD_PLAY
+    needle = b'  <link rel="stylesheet" href="styles.css">\n'
+    if needle not in data:
+        raise RuntimeError("masthead preview: stylesheet link missing")
+    data = data.replace(needle, needle + inject, 1)
+    if not shot:
+        dock_html = _MASTHEAD_DOCK if dock is None else dock
+        data = data.replace(b"</body>", dock_html.encode("utf-8") + b"\n</body>", 1)
+    # Page is served from /preview/masthead, so homepage-relative assets must be rooted.
+    for a, b in (
+        (b'href="styles.css"', b'href="/styles.css"'),
+        (b'src="region-nav.js"', b'src="/region-nav.js"'),
+        (b'src="dashboard.js"', b'src="/dashboard.js"'),
+        (b'src="app.js"', b'src="/app.js"'),
+        (b'src="coast-strip.js"', b'src="/coast-strip.js"'),
+    ):
+        data = data.replace(a, b)
+    return _apply_preview_dateline(_apply_chrome(data))
+
+# Private photo-led homepage concepts, always on masthead concept C.
+HOME_CONCEPTS = ("cinematic", "magazine")
+HOME_DIR = ROOT / "preview" / "home"
+HOME_PHOTOS_DIR = HOME_DIR / "photos"
+HOME_PHOTOS_JSON = ROOT / "data" / "featured-photos.json"
+_HOME_PHOTO_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*-w(?:800|1280|1600|1920)\.(?:avif|webp)$")
+
+
+def _load_featured_photos() -> list[dict]:
+    raw = json.loads(HOME_PHOTOS_JSON.read_text(encoding="utf-8"))
+    return list(raw.get("photos") or [])
+
+
+def _featured_photo(photo_id: str | None = None) -> dict:
+    """Stable per local calendar day (America/New_York). Optional id override for the preview."""
+    photo_list = _load_featured_photos()
+    if not photo_list:
+        raise RuntimeError("featured photos list is empty")
+    by_id = {p.get("id"): p for p in photo_list if p.get("id")}
+    if photo_id and photo_id in by_id:
+        return by_id[photo_id]
+    now = datetime.now(ZoneInfo("America/New_York"))
+    return photo_list[now.timetuple().tm_yday % len(photo_list)]
+
+
+def _home_photo_band_html(home: str, photo: dict) -> bytes:
+    src = str(photo.get("src") or ("/preview/home/photos/" + str(photo.get("id") or "")))
+    widths = [int(w) for w in (photo.get("widths") or [800, 1280]) if int(w) > 0]
+    if 800 not in widths:
+        widths = [800] + widths
+
+    def srcset(ext: str) -> str:
+        return ", ".join("%s-w%s.%s %sw" % (src, w, ext, w) for w in widths)
+
+    alt = html.escape(str(photo.get("alt") or ""), quote=True)
+    credit_line = html.escape(str(photo.get("credit_line") or photo.get("credit") or "Photograph"))
+    source_url = html.escape(str(photo.get("source_url") or ""), quote=True)
+    kicker = html.escape(str(photo.get("kicker") or ""))
+    title = html.escape(str(photo.get("title") or ""))
+    focal = html.escape(str(photo.get("focal") or "50% 50%"), quote=True)
+    iw = int(photo.get("width") or 1600)
+    ih = int(photo.get("height") or 1067)
+    sizes = "(min-width: 900px) 58vw, 100vw" if home == "magazine" else "100vw"
+    fallback = "%s-w800.webp" % src
+    markup = """<section class="home-photo-band" aria-label="Featured photograph">
+  <div class="home-photo-frame">
+    <picture>
+      <source type="image/avif" srcset="%s" sizes="%s">
+      <source type="image/webp" srcset="%s" sizes="%s">
+      <img src="%s" alt="%s" width="%d" height="%d" fetchpriority="high" decoding="async" style="object-position:%s">
+    </picture>
+  </div>
+  <div class="home-photo-copy">
+    <p class="home-photo-kicker">%s</p>
+    <p class="home-photo-title">%s</p>
+    <p class="home-photo-credit"><a href="%s" rel="noopener noreferrer">%s</a></p>
+    <a class="home-photo-jump" href="#conditions">Today’s conditions</a>
+  </div>
+</section>
+""" % (srcset("avif"), sizes, srcset("webp"), sizes, fallback, alt, iw, ih, focal, kicker, title, source_url, credit_line)
+    return markup.encode("utf-8")
+
+
+def _home_preview_dock(home: str, photo: dict, photo_list: list[dict]) -> str:
+    pid = html.escape(str(photo.get("id") or ""), quote=True)
+    links = []
+    for c, label in (("cinematic", "Cinematic"), ("magazine", "Magazine")):
+        on = ' class="is-on"' if c == home else ""
+        links.append('<a href="/preview/home?c=%s&photo=%s"%s>%s</a>' % (c, pid, on, label))
+    photo_links = []
+    for item in photo_list:
+        item_id = str(item.get("id") or "")
+        on = ' class="is-on"' if item_id == photo.get("id") else ""
+        label = html.escape(str(item.get("title") or item_id))
+        photo_links.append('<a href="/preview/home?c=%s&photo=%s"%s>%s</a>' % (home, html.escape(item_id, quote=True), on, label))
+    return """<div id="mast-preview-dock" class="mast-preview-dock" hidden>
+  <span class="pv-lab">Private preview</span>
+  %s
+  <span class="pv-sep" aria-hidden="true">·</span>
+  %s
+  <a href="/preview/masthead?c=c">Masthead C</a>
+  <button type="button" id="mast-replay">Replay</button>
+</div>
+<script>
+(function(){
+  var dock = document.getElementById("mast-preview-dock");
+  if (!dock) return;
+  dock.hidden = false;
+  var c = document.documentElement.getAttribute("data-concept") || "c";
+  var btn = document.getElementById("mast-replay");
+  if (!btn) return;
+  btn.addEventListener("click", function(){
+    var key = "cb-mast-reveal-" + c;
+    try { sessionStorage.removeItem(key); } catch (e) {}
+    var html = document.documentElement;
+    html.classList.remove("mast-play");
+    void html.offsetWidth;
+    html.classList.add("mast-play");
+    document.querySelectorAll(".wave-swell, .wave-settle, .wave-glint, .mast-sheen").forEach(function(el){
+      var prev = el.style.animation;
+      el.style.animation = "none";
+      void el.offsetWidth;
+      el.style.animation = prev;
+    });
+  });
+})();
+</script>
+""" % ("\n  ".join(links), "\n  ".join(photo_links))
+
+
+def _home_preview_html(home: str, shot: bool = False, photo_id: str | None = None) -> bytes:
+    """Homepage with masthead C plus a photo-led band. Public index.html is not modified."""
+    if home not in HOME_CONCEPTS:
+        home = "cinematic"
+    photo_list = _load_featured_photos()
+    photo = _featured_photo(photo_id)
+    dock = None if shot else _home_preview_dock(home, photo, photo_list)
+    data = _masthead_preview_html("c", shot=shot, dock=dock)
+    data = data.replace(b'data-concept="c"', b'data-concept="c" data-home="%s"' % home.encode("ascii"), 1)
+    css = b'<link rel="stylesheet" href="/preview/masthead.css">'
+    if css not in data:
+        raise RuntimeError("home preview: masthead stylesheet missing")
+    data = data.replace(
+        css,
+        css + b'\n  <link rel="stylesheet" href="/preview/home.css">',
+        1,
+    )
+    band = _home_photo_band_html(home, photo)
+    mid = data.find(_MASTHEAD_META)
+    if mid < 0:
+        raise RuntimeError("home preview: unexpected index.html shape")
+    data = data[:mid] + band + b"\n    " + data[mid:]
+    return data
+
+
+
+
+
+
 # /catch-wall, /coastal-life and /photos share catch-wall.html. Give each its own
 # share title and URL by swapping only these three tags; the page body is unchanged.
 _SHARE_META = {
@@ -1187,7 +1454,7 @@ def sitemap_body() -> bytes:
 
 # ---------------------------------------------------------------- private preview access
 # /preview?key=<PREVIEW_KEY> sets an HttpOnly cookie that unlocks the flagged previews (/lab/wind,
-# /lab/tiles, and the not-yet-public saltwater dashboards) in that browser only. The key lives only in
+# /lab/tiles, /preview/masthead, and the not-yet-public saltwater dashboards) in that browser only. The key lives only in
 # the PREVIEW_KEY env var on Render; the cookie holds an HMAC of it, so rotating the key locks every
 # browser out. Without the key set, /preview is 404. Public freshwater and Morning Brief pages do not
 # need the cookie.
@@ -1228,6 +1495,8 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 <a class="card" href="/brief?region=falls-lake"><b>Morning Brief · Falls Lake</b><span>Freshwater version</span></a>
 <a class="card" href="/lab/wind"><b>Wind flow</b><span>Animated model wind (NOAA GFS forecast)</span></a>
 <a class="card" href="/lab/tiles"><b>Tile designs</b><span>The instrument tile prototype</span></a>
+<a class="card" href="/preview/masthead?c=c"><b>Masthead concepts</b><span>Three directions for a cinematic gold wave-to-masthead reveal (A editorial, B nautical, C hybrid). Replay from the bar at the bottom.</span></a>
+<a class="card" href="/preview/home?c=cinematic"><b>Homepage photo concepts</b><span>Two directions on masthead C: Cinematic Coastal, and Modern Coastal Magazine. Same cookie; switch layouts and photographs from the bar at the bottom.</span></a>
 <p><a href="/preview?lock=1">Lock this browser again</a></p></main></body></html>""" % PREVIEW_DAYS
 
 conditions.install(cache_get, cache_get_any, cache_put_ttl, lambda url: fetch_url(url, tries=2))
@@ -1303,6 +1572,10 @@ class Handler(SimpleHTTPRequestHandler):
             return self._send_bytes(sitemap_body(), "application/xml; charset=utf-8", cache_s=300)
         if parsed.path == "/preview":
             return self._preview_route(parsed)
+        if parsed.path == "/preview/masthead" or parsed.path == "/preview/masthead.css":
+            return self._masthead_preview_route(parsed)
+        if parsed.path == "/preview/home" or parsed.path == "/preview/home.css" or parsed.path.startswith("/preview/home/photos/"):
+            return self._home_preview_route(parsed)
         # /?region=falls-lake (etc.) should open the lake page, not break the saltwater dashboard.
         if parsed.path in ("/", "/index.html"):
             rid = (parse_qs(parsed.query).get("region") or [""])[0].strip()
@@ -1475,6 +1748,62 @@ class Handler(SimpleHTTPRequestHandler):
             return False
         host = (self.headers.get("X-Forwarded-Host") or self.headers.get("Host") or "").lower()
         return urlparse(origin).netloc.lower() == host
+
+
+    def _masthead_preview_route(self, parsed):
+        if not self._preview_ok():
+            return self.send_error(404, "not found")
+        if parsed.path == "/preview/masthead.css":
+            css = MASTHEAD_DIR / "masthead.css"
+            if not css.is_file():
+                return self.send_error(404, "not found")
+            return self._send_private(css, "text/css; charset=utf-8")
+        q = parse_qs(parsed.query or "")
+        concept = (q.get("c") or ["c"])[0].strip().lower()
+        if concept not in MASTHEAD_CONCEPTS:
+            concept = "c"
+        shot = (q.get("shot") or [""])[0] == "1"
+        try:
+            data = _masthead_preview_html(concept, shot=shot)
+        except Exception as e:
+            sys.stderr.write("masthead preview failed: %s\n" % e)
+            return self.send_error(500, "preview failed")
+        return self._send_private(None, "text/html; charset=utf-8", data)
+
+    def _home_preview_route(self, parsed):
+        if not self._preview_ok():
+            return self.send_error(404, "not found")
+        if parsed.path == "/preview/home.css":
+            css = HOME_DIR / "home.css"
+            if not css.is_file():
+                return self.send_error(404, "not found")
+            return self._send_private(css, "text/css; charset=utf-8")
+        if parsed.path.startswith("/preview/home/photos/"):
+            name = posixpath.basename(unquote(parsed.path))
+            if not _HOME_PHOTO_RE.match(name):
+                return self.send_error(404, "not found")
+            path = (HOME_PHOTOS_DIR / name).resolve()
+            try:
+                path.relative_to(HOME_PHOTOS_DIR.resolve())
+            except ValueError:
+                return self.send_error(404, "not found")
+            if not path.is_file():
+                return self.send_error(404, "not found")
+            ctype = "image/avif" if path.suffix.lower() == ".avif" else "image/webp"
+            return self._send_private(path, ctype)
+        q = parse_qs(parsed.query or "")
+        home = (q.get("c") or ["cinematic"])[0].strip().lower()
+        if home not in HOME_CONCEPTS:
+            home = "cinematic"
+        photo_id = (q.get("photo") or [""])[0].strip() or None
+        shot = (q.get("shot") or [""])[0] == "1"
+        try:
+            data = _home_preview_html(home, shot=shot, photo_id=photo_id)
+        except Exception as e:
+            sys.stderr.write("home preview failed: %s\n" % e)
+            return self.send_error(500, "preview failed")
+        return self._send_private(None, "text/html; charset=utf-8", data)
+
 
     def _send_private(self, path: Path, ctype: str, data: bytes | None = None, status: int = 200, extra=None, robots: str = "noindex, nofollow"):
         if data is None:

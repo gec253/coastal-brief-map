@@ -1,0 +1,60 @@
+{
+  "photos": [
+    {
+      "id": "bodie-sunrise",
+      "src": "/preview/home/photos/bodie-sunrise",
+      "widths": [800, 1280],
+      "width": 1600,
+      "height": 1067,
+      "alt": "Sunrise at the Bodie Island Lighthouse 10-13-2023",
+      "kicker": "Cape Hatteras National Seashore",
+      "title": "Sunrise at the Bodie Island Lighthouse",
+      "credit": "National Park Service / Cape Hatteras National Seashore",
+      "credit_line": "Photograph: U.S. National Park Service, Cape Hatteras National Seashore",
+      "source_url": "https://npgallery.nps.gov/AssetDetail/3011f0d3-bb6a-4b82-8fef-ca0b654e8040",
+      "focal": "50% 32%"
+    },
+    {
+      "id": "sea-oats",
+      "src": "/preview/home/photos/sea-oats",
+      "widths": [800, 1280, 1920],
+      "width": 1920,
+      "height": 1280,
+      "alt": "Sea oats at Sunset Beach, North Carolina",
+      "kicker": "Sunset Beach, North Carolina",
+      "title": "Sea oats at Sunset Beach",
+      "credit": "Ryan Hagerty / USFWS",
+      "credit_line": "Photograph: Ryan Hagerty/USFWS",
+      "source_url": "https://www.fws.gov/media/sea-oats-sunset-beach-north-carolina-0",
+      "focal": "50% 68%"
+    },
+    {
+      "id": "calm-sound",
+      "src": "/preview/home/photos/calm-sound",
+      "widths": [800, 1280, 1920],
+      "width": 1920,
+      "height": 1280,
+      "alt": "Pamlico Sound and clear blue sky at the Salvo Day Use Area",
+      "kicker": "Pamlico Sound, Salvo Day Use Area",
+      "title": "Calm Sound",
+      "credit": "National Park Service / Cape Hatteras National Seashore",
+      "credit_line": "Photograph: U.S. National Park Service, Cape Hatteras National Seashore",
+      "source_url": "https://npgallery.nps.gov/AssetDetail/645a3c8f-1dd8-b71c-071d-49f05d933ec8",
+      "focal": "50% 55%"
+    },
+    {
+      "id": "lookout-night",
+      "src": "/preview/home/photos/lookout-night",
+      "widths": [800, 1280, 1920],
+      "width": 1920,
+      "height": 1280,
+      "alt": "Cape Lookout Lighthouse reflected in the water at night",
+      "kicker": "Cape Lookout National Seashore",
+      "title": "Lighthouse reflected in water",
+      "credit": "National Park Service / Cape Lookout National Seashore",
+      "credit_line": "Photograph: U.S. National Park Service, Cape Lookout National Seashore",
+      "source_url": "https://npgallery.nps.gov/AssetDetail/8b290fe6-1dd8-b71c-074c-708914ee82ea",
+      "focal": "50% 30%"
+    }
+  ]
+}
