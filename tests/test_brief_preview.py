@@ -25,14 +25,15 @@ KEY = "preview-test-key-24-chars-ok"
 NOW = datetime(2026, 11, 14, 15, 0, tzinfo=timezone.utc)
 
 
-def _body(rid, missing=("water temp",), pressure="30.03 inHg, None, up 6.5 hPa over 10 h at 41064."):
+def _body(rid, missing=(), pressure="30.03 inHg, 3-hour trend not reported, up 6.5 hPa over 10 h at 41064."):
     cfg = brief_preview._cfg(rid)
     return {"region": {"id": rid, "name": cfg["name"], "area": cfg.get("area"), "anchor": cfg["anchor"]},
             "waterType": "saltwater",
             "items": [("Advisories", "No NWS marine advisories for this area."), ("Wind", "10 kt from the N, gusting 14, at X."),
                       ("Seas", "2.0 ft every 6 s from the E at Y."), ("Pressure", pressure),
                       ("Marine forecast", "Today: N winds 10 kt. (NWS %s)" % cfg["marine"]["zone"]),
-                      ("Tides", "high 10:31 AM ET (4.3 ft) at Z, MLLW.")],
+                      ("Tides", "high 10:31 AM ET (4.3 ft) at Z, MLLW."),
+                      ("Water temp", "Inshore unavailable (no sensor in this area); 63°F offshore at Nags Head offshore (CDIP 243).")],
             "freshness": [], "take": ["No advisories and no big overnight changes in the readings."], "missing": list(missing),
             "marineZone": cfg["marine"]["zone"], "marineUpdated": None, "forecastUpdated": None, "sources": "NOAA"}
 

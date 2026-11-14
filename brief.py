@@ -151,6 +151,16 @@ def _dir_word(delta, unit, up="up", down="down", flat="steady", eps=0.0):
 
 
 # ------------------------------------------------------------------ saltwater brief
+def _no_inshore_sensor(rid: str) -> bool:
+    """True when the region config lists no inshore water-temp source at all (data/regions.json)."""
+    try:
+        cfg = next((r for r in conditions.load_regions().get("regions") or [] if r.get("id") == rid), None) or {}
+        spec = (cfg.get("readings") or {}).get("waterTemp")
+        return isinstance(spec, dict) and not (spec.get("sources") or [])
+    except Exception:
+        return False
+
+
 def build_salt(rid: str, now: datetime) -> dict:
     st, d = conditions.assemble(rid)
     if st != 200 or not d.get("ok"):
@@ -220,7 +230,8 @@ def build_salt(rid: str, now: datetime) -> dict:
         miss("pressure", R["pressure"])
     if ok("pressure"):
         p = R["pressure"]; fr("Barometer", p)
-        line = "%.2f inHg, %s" % (p["values"]["inHg"], p["values"]["trend"])
+        # A buoy barometer may have no 3-hour change; say so instead of printing "None".
+        line = "%.2f inHg, %s" % (p["values"]["inHg"], p["values"].get("trend") or "3-hour trend not reported")
         if pres_tr:
             line += ", %s hPa over %d h at %s" % (_dir_word(pres_tr["now"] - pres_tr["then"], "", "up", "down", "steady", 0.4), pres_tr["hours"], pres_tr["station"])
         items.append(("Pressure", line + "."))
@@ -263,6 +274,12 @@ def build_salt(rid: str, now: datetime) -> dict:
         if ok("waterTempOffshore"):
             line += ", %.0f°F offshore (buoy %s)" % (R["waterTempOffshore"]["values"]["f"], R["waterTempOffshore"]["station"]["id"])
         items.append(("Water temp", line + "."))
+    elif ok("waterTempOffshore") and _no_inshore_sensor(rid):
+        # No inshore sensor exists in this region (not a sensor that is down): show the offshore
+        # buoy, labeled offshore, and say inshore is unavailable. Nothing is substituted.
+        wo = R["waterTempOffshore"]; fr("Offshore water temp", wo)
+        items.append(("Water temp", "Inshore unavailable (no sensor in this area); %.0f°F offshore at %s."
+                      % (wo["values"]["f"], (wo.get("station") or {}).get("name") or (wo.get("station") or {}).get("id"))))
     else:
         miss("water temp", R.get("waterTemp"))
 

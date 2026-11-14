@@ -29,7 +29,7 @@ _cache: dict[str, tuple[float, dict]] = {}
 _locks = {rid: threading.Lock() for rid in REGIONS}
 
 # brief.build_salt names missing items in lower case; map them to region reading kinds.
-_MISS_KIND = {"wind": "wind", "seas": "seas", "swell": "swell", "pressure": "pressure", "water temp": "waterTemp"}
+_MISS_KIND = {"wind": "wind", "seas": "seas", "swell": "swell", "pressure": "pressure"}  # water temp: handled above
 
 
 def available(rid: str) -> bool:
@@ -56,32 +56,13 @@ def compose(rid: str, now: datetime | None = None) -> dict:
     body = brief.build_salt(rid, now)
     cfg = _cfg(rid)
     specs = cfg.get("readings") or {}
-    items = [list(kv) for kv in body["items"]]
+    items = list(body["items"])
     missing = list(body["missing"])
     unavailable = []  # (label, why) shown with the dashboard's "unavailable" treatment
-
-    # Pressure from a buoy has no 3-hour trend; brief.build_salt would print "None". Say so plainly.
-    for it in items:
-        if it[0] == "Pressure":
-            it[1] = re.sub(r"inHg, None(,|\.)", lambda m: "inHg, 3-hour trend not reported" + m.group(1), it[1])
-
-    # Water temp: build_salt drops the whole line when there is no inshore sensor, even when the
-    # offshore buoy is reporting. Show the offshore reading and mark inshore as unavailable.
-    if "water temp" in missing and _no_sensor(specs.get("waterTemp")):
-        try:
-            st, d = conditions.assemble(rid)
-            off = (d.get("readings") or {}).get("waterTempOffshore") or {}
-        except Exception:
-            off = {}
-        missing.remove("water temp")
+    # brief.build_salt already writes "Inshore unavailable" plus the offshore reading when the region
+    # has no inshore sensor; list the region's note so the reader sees why.
+    if _no_sensor(specs.get("waterTemp")):
         unavailable.append(("Inshore water temp", specs["waterTemp"].get("note") or "No sensor in this area."))
-        if off.get("status") == "ok":
-            items.append(["Water temp", "Inshore unavailable (no sensor in this area); %.0f°F offshore at %s."
-                          % (off["values"]["f"], (off.get("station") or {}).get("name") or (off.get("station") or {}).get("id"))])
-            body["freshness"].append({"label": "Offshore water temp", "time": brief._t(off["time"]),
-                                      "station": (off.get("station") or {}).get("id"), "stale": False})
-        else:
-            missing.append("offshore water temp")
     # Any other missing reading the region has no sensor for gets its note, never a substitute.
     for name in list(missing):
         kind = _MISS_KIND.get(name)
@@ -92,7 +73,6 @@ def compose(rid: str, now: datetime | None = None) -> dict:
     if tide.get("observed") is False:
         unavailable.append(("Observed water level", "Tide times are NOAA predictions only. " + (tide.get("note") or "")))
 
-    items = [tuple(i) for i in items]
     words = len(" ".join([v for _, v in items] + body["take"]).split())
     b = {"ok": True, "regionId": rid, "issueDate": brief._issue_date(now), "issuedAt": now.isoformat(),
          "issuedEt": brief._et(now).strftime("%a %b %-d, %-I:%M %p ET"), "reason": "preview", "words": words,
