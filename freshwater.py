@@ -1,9 +1,8 @@
-"""Freshwater (lake and river) conditions for the private preview.
+"""Freshwater (lake and river) conditions.
 
-Off unless FRESHWATER_ENABLED=1. Production never sets it, so every route that
-uses this module returns 404 there. Only freshwater regions from
-data/regions.json with previewReady are served, and they stay enabled=false/draft=true.
-Falls Lake, Jordan Lake and the Neuse River (Falls Dam to Goldsboro) are preview-ready.
+On by default for Falls Lake, Jordan Lake and the Neuse River (Falls Dam to
+Goldsboro). Set FRESHWATER_ENABLED to 0, false, or off to disable (a kill switch).
+Only freshwater regions from data/regions.json with previewReady are assembled.
 
 Every value carries its source, station id and observation time. Nothing is
 estimated: if a reading is missing or stale, the payload says so. Instantaneous
@@ -42,7 +41,9 @@ _ASSEMBLED: dict[str, tuple[float, dict]] = {}
 
 
 def flag_on() -> bool:
-    return (os.environ.get("FRESHWATER_ENABLED") or "").strip().lower() in ("1", "true", "on", "yes")
+    """Freshwater pages are on unless FRESHWATER_ENABLED is explicitly 0, false, or off."""
+    v = (os.environ.get("FRESHWATER_ENABLED") or "").strip().lower()
+    return v not in ("0", "false", "off")
 
 
 def regions() -> dict:

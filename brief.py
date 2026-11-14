@@ -1,7 +1,8 @@
 """Morning Brief: a short daily summary per enabled region, built only from verified readings.
 
 On by default for saltwater regions. Set MORNING_BRIEF_ENABLED to 0, false, or off to disable
-(a kill switch). The Falls Lake brief stays private (FRESHWATER_ENABLED or a preview cookie).
+(a kill switch). The Falls Lake brief is public when freshwater is on (the default);
+Jordan Lake and Neuse River do not have briefs.
 Never includes market data. The Captain's take is produced by fixed
 rules from the numbers in the brief; nothing is invented.
 
@@ -46,7 +47,9 @@ def enabled_regions(include_fresh: bool | None = None) -> list[str]:
     try:  # freshwater regions only when their own flag is on (or for a preview browser)
         import freshwater
         if freshwater.flag_on() if include_fresh is None else include_fresh:
-            out += [rid for rid, r in freshwater.regions().items() if r.get("previewReady")]
+            # Only Falls Lake has a Morning Brief. Jordan and Neuse are lake/river pages only.
+            out += [rid for rid, r in freshwater.regions().items()
+                    if r.get("previewReady") and rid == "falls-lake"]
     except Exception:
         pass
     return out
@@ -211,7 +214,7 @@ def build_salt(rid: str, now: datetime) -> dict:
             "sources": "NOAA NDBC, NOAA CO-OPS, NWS (api.weather.gov)"}
 
 
-# ------------------------------------------------------------------ freshwater brief (preview regions only)
+# ------------------------------------------------------------------ freshwater brief (Falls Lake)
 def build_fresh(rid: str, now: datetime) -> dict:
     import freshwater
     st, d = freshwater.assemble(rid)
@@ -503,7 +506,7 @@ def page(b: dict, include_fresh: bool = False, public: bool = False, ads_on: boo
     miss = ('<p class="mb-miss">Not available at issue time: %s.</p>' % esc(", ".join(b["missing"]))) if b.get("missing") else ""
     stale = ('<p class="mb-miss mb-stale-note">%s</p>' % esc(b["staleNotice"])) if b.get("staleNotice") else ""
     take_ps = "".join("<p>%s</p>" % esc(t) for t in (b.get("take") or []) if t)
-    # Region switcher: saltwater briefs always; Falls Lake only when freshwater is in this preview.
+    # Region switcher: saltwater briefs always; Falls Lake when freshwater is on (or this is a freshwater brief).
     region_links = [
         ("crystal-coast", "Morehead City · Beaufort"),
         ("hatteras", "Hatteras Island"),

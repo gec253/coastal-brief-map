@@ -121,9 +121,8 @@ def load_regions() -> dict:
 
 
 def _servable(r: dict) -> bool:
-    """Enabled saltwater regions only. Freshwater regions need their own
-    instrument set (lake level, streamflow), which is not built yet, so they are
-    never served even if someone flips enabled=true by mistake."""
+    """Enabled saltwater regions only, for the coastal dashboard and /api/conditions.
+    Freshwater regions are served on /lake and /api/freshwater, not here."""
     return bool(r.get("enabled")) and not r.get("draft") and (r.get("waterType") or "saltwater") == "saltwater"
 
 

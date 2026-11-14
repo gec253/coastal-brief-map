@@ -994,17 +994,40 @@
     load(id, false);
   }
 
+  const FRESHWATER = [
+    { id: "falls-lake", name: "Falls Lake" },
+    { id: "jordan-lake", name: "Jordan Lake" },
+    { id: "neuse-river", name: "Neuse River" }
+  ];
+  function isFreshwater(id) {
+    return FRESHWATER.some(function (r) { return r.id === id; });
+  }
+
   function init() {
     const sel = $("region-select");
     fetch("/api/regions").then(function (r) { return r.json(); }).then(function (cfg) {
       state.regions = (cfg && cfg.regions) || [];
       if (!state.regions.length) throw new Error("no regions");
-      // Saltwater regions first; freshwater is shown honestly as not yet available.
+      // Saltwater regions stay on this dashboard. Freshwater options go to /lake?region=.
+      let urlRegion = null;
+      try { urlRegion = new URLSearchParams(location.search).get("region"); } catch (e) {}
+      if (isFreshwater(urlRegion)) {
+        location.replace("/lake?region=" + encodeURIComponent(urlRegion));
+        return;
+      }
       sel.innerHTML = '<optgroup label="Saltwater">' + state.regions.filter(function (r) { return (r.waterType || "saltwater") === "saltwater"; })
         .map(function (r) { return '<option value="' + esc(r.id) + '">' + esc(r.name) + "</option>"; }).join("") +
-        '</optgroup><optgroup label="Freshwater"><option value="" disabled>Coming soon</option></optgroup>';
+        '</optgroup><optgroup label="Freshwater">' + FRESHWATER.map(function (r) {
+          return '<option value="' + esc(r.id) + '">' + esc(r.name) + "</option>";
+        }).join("") + "</optgroup>";
       sel.disabled = state.regions.length < 1;
-      sel.addEventListener("change", function () { setRegion(sel.value, true); });
+      sel.addEventListener("change", function () {
+        if (isFreshwater(sel.value)) {
+          location.href = "/lake?region=" + encodeURIComponent(sel.value);
+          return;
+        }
+        setRegion(sel.value, true);
+      });
       setRegion(pickInitial(cfg.default), false);
     }).catch(function () { showError("Could not load the region list."); });
     let rt = null;

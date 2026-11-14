@@ -1,9 +1,9 @@
 # Neuse River and Jordan Lake: sources, stations and limitations
 
-Private preview, same gate as Falls Lake. `/lake?region=jordan-lake`,
-`/lake?region=neuse-river` and `/api/freshwater?region=` return 404 unless
-`FRESHWATER_ENABLED=1` (or a preview cookie) is set. Both regions stay
-`enabled: false` / `draft: true` and `previewReady: true`. Falls Lake is unchanged.
+Public by default, same gate as Falls Lake. `/lake?region=jordan-lake`,
+`/lake?region=neuse-river` and `/api/freshwater?region=` are on unless
+`FRESHWATER_ENABLED` is `0`, `false`, or `off` (or, if the kill switch is on, a preview
+cookie is set). Both regions are `enabled: true` / `draft: false` and `previewReady: true`.
 This note is the source survey used to build those views, in the same form as
 `docs/FALLS_LAKE_SOURCES.md`.
 

@@ -413,8 +413,8 @@
     },
     {
       "id": "falls-lake",
-      "enabled": false,
-      "draft": true,
+      "enabled": true,
+      "draft": false,
       "previewReady": true,
       "waterType": "freshwater",
       "instrumentSet": "freshwater-lake",
@@ -432,7 +432,7 @@
         ],
         "zoom": 11
       },
-      "notes": "PRIVATE PREVIEW. Served only when FRESHWATER_ENABLED=1 (never in production). Sources checked live 13 Nov 2026; see docs/FALLS_LAKE_SOURCES.md.",
+      "notes": "Public unless FRESHWATER_ENABLED is 0, false, or off. Sources checked live 13 Nov 2026; see docs/FALLS_LAKE_SOURCES.md.",
       "lake": {
         "usgs": "02087182",
         "nwps": "NUDN7",
@@ -526,8 +526,8 @@
     },
     {
       "id": "neuse-river",
-      "enabled": false,
-      "draft": true,
+      "enabled": true,
+      "draft": false,
       "waterType": "freshwater",
       "instrumentSet": "freshwater-river",
       "name": "Neuse River (Falls Dam to Goldsboro)",
@@ -544,7 +544,7 @@
         ],
         "zoom": 9
       },
-      "notes": "PRIVATE PREVIEW. Served only when FRESHWATER_ENABLED=1 (never in production). Sources checked live 13 Nov 2026; see docs/NEUSE_JORDAN_SOURCES.md. Falls Dam to Goldsboro (Kinston is not in this region). Smithfield is stage only. No active USGS water-temperature sensor on the main stem.",
+      "notes": "Public unless FRESHWATER_ENABLED is 0, false, or off. Sources checked live 13 Nov 2026; see docs/NEUSE_JORDAN_SOURCES.md. Falls Dam to Goldsboro (Kinston is not in this region). Smithfield is stage only. No active USGS water-temperature sensor on the main stem.",
       "river": [
         {
           "usgs": "02087183",
@@ -642,8 +642,8 @@
     },
     {
       "id": "jordan-lake",
-      "enabled": false,
-      "draft": true,
+      "enabled": true,
+      "draft": false,
       "waterType": "freshwater",
       "instrumentSet": "freshwater-lake",
       "name": "Jordan Lake",
@@ -660,7 +660,7 @@
         ],
         "zoom": 11
       },
-      "notes": "PRIVATE PREVIEW. Served only when FRESHWATER_ENABLED=1 (never in production). Sources checked live 13 Nov 2026; see docs/NEUSE_JORDAN_SOURCES.md. No USGS water temperature at the dam. Haw River near Moncure 02098206 is release plus local runoff, not official gate outflow. Do not use discontinued 02098198.",
+      "notes": "Public unless FRESHWATER_ENABLED is 0, false, or off. Sources checked live 13 Nov 2026; see docs/NEUSE_JORDAN_SOURCES.md. No USGS water temperature at the dam. Haw River near Moncure 02098206 is release plus local runoff, not official gate outflow. Do not use discontinued 02098198.",
       "lake": {
         "usgs": "02098197",
         "nwps": "NHPN7",

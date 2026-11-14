@@ -1,4 +1,4 @@
-"""Tests for private Jordan Lake and Neuse River freshwater views.
+"""Tests for public Falls Lake, Jordan Lake and Neuse River freshwater views.
 
 Run:  python -m unittest tests.test_freshwater
 """
@@ -62,12 +62,12 @@ class ConfigShape(unittest.TestCase):
     def setUp(self):
         self.regs = freshwater.regions()
 
-    def test_jordan_and_neuse_are_preview_ready_and_still_private(self):
+    def test_jordan_and_neuse_are_public_and_preview_ready(self):
         for rid in ("falls-lake", "jordan-lake", "neuse-river"):
             r = self.regs[rid]
             self.assertTrue(r.get("previewReady"), rid)
-            self.assertFalse(r.get("enabled"))
-            self.assertTrue(r.get("draft"))
+            self.assertTrue(r.get("enabled"), rid)
+            self.assertFalse(r.get("draft"), rid)
             self.assertEqual(r.get("waterType"), "freshwater")
 
     def test_jordan_gauges_and_guide_curve(self):
@@ -264,8 +264,34 @@ class AssembleJordanNeuse(unittest.TestCase):
         self.assertIsNone(smf["flowCfs"])
 
 
+class FlagOn(unittest.TestCase):
+    def setUp(self):
+        self._prev = os.environ.get("FRESHWATER_ENABLED")
+        os.environ.pop("FRESHWATER_ENABLED", None)
+
+    def tearDown(self):
+        if self._prev is None:
+            os.environ.pop("FRESHWATER_ENABLED", None)
+        else:
+            os.environ["FRESHWATER_ENABLED"] = self._prev
+
+    def test_default_on_with_no_env(self):
+        os.environ.pop("FRESHWATER_ENABLED", None)
+        self.assertTrue(freshwater.flag_on())
+
+    def test_kill_switch(self):
+        for v in ("0", "false", "off", "FALSE", "Off", " 0 "):
+            os.environ["FRESHWATER_ENABLED"] = v
+            self.assertFalse(freshwater.flag_on(), msg=repr(v))
+
+    def test_explicit_on_still_works(self):
+        for v in ("1", "true", "on", "yes", ""):
+            os.environ["FRESHWATER_ENABLED"] = v
+            self.assertTrue(freshwater.flag_on(), msg=repr(v))
+
+
 class GatingHttp(unittest.TestCase):
-    """Flag off → 404 for lake pages and API. Flag on → assemble is reached."""
+    """Public by default (200, no private-preview text). Kill switch → 404. Homepage stays 200."""
 
     @classmethod
     def setUpClass(cls):
@@ -293,8 +319,9 @@ class GatingHttp(unittest.TestCase):
             conn.request("GET", path)
             resp = conn.getresponse()
             body = resp.read()
+            headers = {k.lower(): v for k, v in resp.getheaders()}
             conn.close()
-            return resp.status, body
+            return resp.status, body, headers
         finally:
             for k, v in saved.items():
                 if v is None:
@@ -302,31 +329,72 @@ class GatingHttp(unittest.TestCase):
                 else:
                     os.environ[k] = v
 
-    def test_pages_and_api_404_when_flag_off(self):
+    def test_pages_and_api_200_with_no_env(self):
+        stub = (200, {"ok": True, "region": {"id": "jordan-lake", "name": "Jordan Lake"},
+                      "lake": {"guideCurveFt": 216.0, "vsGuideFt": -3.77, "elevation": {"value": 212.23}}})
+        paths = ("/lake", "/lake?region=falls-lake", "/lake?region=jordan-lake", "/lake?region=neuse-river")
+        with patch.object(freshwater, "assemble", return_value=stub):
+            for path in paths:
+                status, body, headers = self._req(path)
+                self.assertEqual(status, 200, path)
+                low = body.lower()
+                self.assertNotIn(b"private preview", low, path)
+                self.assertIn(b'name="robots" content="index, follow"', body, path)
+                robots = (headers.get("x-robots-tag") or "").lower()
+                self.assertIn("index", robots, path)
+                self.assertIn("follow", robots, path)
+                self.assertNotIn("noindex", robots, path)
+                self.assertIn(b'href="/lake?region=falls-lake"', body)
+                self.assertIn(b'href="/lake?region=jordan-lake"', body)
+                self.assertIn(b'href="/lake?region=neuse-river"', body)
+                self.assertIn(b'href="/"', body)
+            status, body, _ = self._req("/api/freshwater?region=jordan-lake")
+            self.assertEqual(status, 200)
+            self.assertIn(b"jordan-lake", body)
+            status, _, _ = self._req("/api/freshwater?region=falls-lake")
+            self.assertEqual(status, 200)
+            status, _, _ = self._req("/api/freshwater?region=neuse-river")
+            self.assertEqual(status, 200)
+
+    def test_kill_switch_gives_404(self):
         for path in ("/lake", "/lake?region=jordan-lake", "/lake?region=neuse-river",
                      "/api/freshwater?region=jordan-lake", "/api/freshwater?region=neuse-river",
                      "/api/freshwater?region=falls-lake"):
-            status, _ = self._req(path)
+            status, _, _ = self._req(path, env={"FRESHWATER_ENABLED": "0"})
             self.assertEqual(status, 404, path)
 
-    def test_home_is_200_when_flag_off(self):
-        status, body = self._req("/")
+    def test_home_is_200_with_or_without_kill_switch(self):
+        status, body, _ = self._req("/")
+        self.assertEqual(status, 200)
+        self.assertIn(b"The Coastal Brief", body)
+        self.assertNotIn(b"private preview", body.lower())
+        self.assertNotIn(b"Freshwater coming soon", body)
+        status, body, _ = self._req("/", env={"FRESHWATER_ENABLED": "0"})
         self.assertEqual(status, 200)
         self.assertIn(b"The Coastal Brief", body)
 
-    def test_flag_on_serves_pages_and_api(self):
-        stub = (200, {"ok": True, "private": True, "region": {"id": "jordan-lake", "name": "Jordan Lake"},
-                      "lake": {"guideCurveFt": 216.0, "vsGuideFt": -3.77, "elevation": {"value": 212.23}}})
-        with patch.object(freshwater, "assemble", return_value=stub):
-            status, body = self._req("/lake?region=jordan-lake", env={"FRESHWATER_ENABLED": "1"})
-            self.assertEqual(status, 200, body[:200])
-            status, body = self._req("/api/freshwater?region=jordan-lake", env={"FRESHWATER_ENABLED": "1"})
-            self.assertEqual(status, 200)
-            self.assertIn(b"jordan-lake", body)
-            status, _ = self._req("/lake?region=neuse-river", env={"FRESHWATER_ENABLED": "1"})
-            self.assertEqual(status, 200)
-            status, _ = self._req("/lake", env={"FRESHWATER_ENABLED": "1"})
-            self.assertEqual(status, 200)
+    def test_home_freshwater_query_redirects(self):
+        for rid in ("falls-lake", "jordan-lake", "neuse-river"):
+            status, _, headers = self._req("/?region=" + rid)
+            self.assertEqual(status, 303, rid)
+            self.assertEqual(headers.get("location"), "/lake?region=" + rid)
+        status, body, _ = self._req("/?region=falls-lake", env={"FRESHWATER_ENABLED": "0"})
+        self.assertEqual(status, 200)
+        self.assertIn(b"The Coastal Brief", body)
+
+    def test_api_regions_stays_saltwater(self):
+        status, body, _ = self._req("/api/regions")
+        self.assertEqual(status, 200)
+        self.assertNotIn(b"falls-lake", body)
+        self.assertNotIn(b"jordan-lake", body)
+        self.assertNotIn(b"neuse-river", body)
+
+    def test_dashboard_js_lists_freshwater_links(self):
+        js = Path(__file__).resolve().parents[1].joinpath("dashboard.js").read_text()
+        self.assertNotIn("Coming soon", js)
+        self.assertIn("/lake?region=", js)
+        for rid in ("falls-lake", "jordan-lake", "neuse-river"):
+            self.assertIn(rid, js)
 
 
 if __name__ == "__main__":

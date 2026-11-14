@@ -1,4 +1,4 @@
-"""Public launch checks for the Morning Brief: default-on saltwater, private Falls Lake."""
+"""Public launch checks for the Morning Brief: default-on saltwater, public Falls Lake with freshwater."""
 import os
 import threading
 import unittest
@@ -84,11 +84,18 @@ class BriefPublicHTTP(unittest.TestCase):
             self.assertIn("follow", robots)
             self.assertNotIn("noindex", robots)
             self.assertNotIn("Ad slot placeholder", body)
-            self.assertNotIn("/brief?region=falls-lake", body)
+            # Falls Lake brief is public when freshwater is on (the default).
+            self.assertIn("/brief?region=falls-lake", body)
 
-    def test_falls_lake_404_without_freshwater_or_preview(self):
-        status, body, _ = self._get("/brief?region=falls-lake")
-        self.assertEqual(status, 404)
+    def test_falls_lake_brief_200_with_no_env(self):
+        status, body, headers = self._get("/brief?region=falls-lake")
+        self.assertEqual(status, 200)
+        self.assertNotIn("private preview", body.lower())
+        self.assertIn('name="robots" content="index, follow"', body)
+        robots = (headers.get("X-Robots-Tag") or headers.get("x-robots-tag") or "").lower()
+        self.assertIn("index", robots)
+        self.assertIn("follow", robots)
+        self.assertNotIn("noindex", robots)
 
     def test_kill_switch_gives_404(self):
         os.environ["MORNING_BRIEF_ENABLED"] = "0"
@@ -103,18 +110,23 @@ class BriefPublicHTTP(unittest.TestCase):
         self.assertNotIn('href="/brief', body)
         self.assertNotIn("private preview", body.lower())
 
-    def test_lake_dashboard_stays_404_with_no_flags(self):
+    def test_lake_dashboard_is_200_with_no_flags(self):
+        status, body, _ = self._get("/lake")
+        self.assertEqual(status, 200)
+        self.assertNotIn("private preview", body.lower())
+
+    def test_falls_lake_404_when_freshwater_kill_switch_on(self):
+        os.environ["FRESHWATER_ENABLED"] = "0"
+        status, body, _ = self._get("/brief?region=falls-lake")
+        self.assertEqual(status, 404)
         status, _, _ = self._get("/lake")
         self.assertEqual(status, 404)
 
-    def test_falls_lake_200_with_freshwater_flag_is_noindex(self):
-        os.environ["FRESHWATER_ENABLED"] = "1"
-        status, body, headers = self._get("/brief?region=falls-lake")
+    def test_saltwater_brief_hides_falls_chip_when_freshwater_off(self):
+        os.environ["FRESHWATER_ENABLED"] = "0"
+        status, body, _ = self._get("/brief?region=crystal-coast")
         self.assertEqual(status, 200)
-        self.assertIn('name="robots" content="noindex, nofollow"', body)
-        robots = (headers.get("X-Robots-Tag") or headers.get("x-robots-tag") or "").lower()
-        self.assertIn("noindex", robots)
-        self.assertNotIn("private preview", body.lower())
+        self.assertNotIn("/brief?region=falls-lake", body)
 
 
 if __name__ == "__main__":

@@ -5,10 +5,11 @@ are **on by default**. Nothing needs to be set on Render to launch them. Set `MO
 `false`, or `off` to take them down (a kill switch). Code: `brief.py`, two routes in `server.py`. The brief
 never contains market or Finviz data; it only reads the site's own conditions and freshwater assemblers.
 
-The Falls Lake brief stays private: it is 404 unless `FRESHWATER_ENABLED` is on or the browser has a preview
-cookie, and the in-page region chips hide Falls Lake from public visitors the same way. Public saltwater
-briefs are `index, follow`; Falls Lake and briefs served only via a preview cookie (kill switch on) stay
-`noindex, nofollow`. The brief is not linked from the homepage or header yet (link placement is still open).
+The Falls Lake brief is public when freshwater is on (the default, same `FRESHWATER_ENABLED` kill switch
+as the lake pages). Region chips on the public brief include Falls Lake. There is no Jordan Lake or
+Neuse River brief. Public briefs, including Falls Lake, are `index, follow`; briefs served only via a
+preview cookie (a kill switch on) stay `noindex, nofollow`. The brief is not linked from the homepage
+or header yet (link placement is still open).
 
 ## What a brief contains
 1. **Issue time and data freshness at the top**: when it was built, why (scheduled / on request / rebuilt),
@@ -28,7 +29,7 @@ Target 120–200 words. Today's samples: Crystal Coast 185, Hatteras 177, Falls 
 
 ## Scheduling (as built, no new services)
 - When the brief is on (the default), `server.py` starts one daemon thread. It sleeps until **5:15 AM ET**, builds every enabled
-  region (Crystal Coast, Hatteras; plus freshwater preview regions when `FRESHWATER_ENABLED=1`), and retries any
+  region (Crystal Coast, Hatteras, and Falls Lake when freshwater is on), and retries any
   region with missing sections every 3 minutes until **5:30 AM ET**. Building reuses the same cached fetchers as
   the live dashboard, so it does not slow or replace the live instruments, which keep refreshing all day.
 - A brief "day" runs from 5:15 AM ET to 5:14 AM the next day.

@@ -1,9 +1,9 @@
 # Freshwater plan: from the rivers to the sounds to the sea
 
-Status: **planning only.** No freshwater region is enabled, and none can be served yet:
-`conditions.py` refuses any region whose `waterType` isn't `saltwater` (or that is
-marked `draft`), even if `enabled` is flipped by mistake. Saltwater instruments stay
-first on phones.
+Status: Falls Lake, Jordan Lake and the Neuse River (Falls Dam to Goldsboro) are **public**
+on `/lake?region=` unless `FRESHWATER_ENABLED` is `0`/`false`/`off`. The coastal dashboard
+(`/api/conditions`) still serves saltwater only. See `docs/FALLS_LAKE_SOURCES.md` and
+`docs/NEUSE_JORDAN_SOURCES.md`. The notes below are the original source survey.
 
 Sources below were checked live on **13 Nov 2026, about 7 AM ET**. Numbers are quoted
 only to show the feeds work; they are not shown on the site.

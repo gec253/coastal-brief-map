@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex, nofollow">
-  <title>Falls Lake (private preview) · The Coastal Brief</title>
-  <script>(function(){var r=new URLSearchParams(location.search).get("region")||"falls-lake";var n={ "falls-lake":"Falls Lake","jordan-lake":"Jordan Lake","neuse-river":"Neuse River" }[r]||"Freshwater";document.title=n+" (private preview) · The Coastal Brief";})();</script>
+  <meta name="robots" content="index, follow">
+  <title>Falls Lake · The Coastal Brief</title>
+  <script>(function(){var r=new URLSearchParams(location.search).get("region")||"falls-lake";var n={ "falls-lake":"Falls Lake","jordan-lake":"Jordan Lake","neuse-river":"Neuse River" }[r]||"Freshwater";document.title=n+" · The Coastal Brief";})();</script>
   <link rel="stylesheet" href="/styles.css">
   <meta name="theme-color" content="#0B2A3D">
   <link rel="icon" href="/branding/favicon.svg" type="image/svg+xml">
@@ -73,6 +73,10 @@
     /* author display rules would otherwise override the hidden attribute */
     [hidden] { display: none !important; }
     @media (max-width: 760px) { .fw-src thead { display: none; } .fw-src tr, .fw-src td { display: block; } .fw-src td { border: 0; padding: 1px 0; } .fw-src tr { padding: 8px 0; border-bottom: 1px solid var(--d-edge-2); } .fw-big { font-size: 3.1rem; }   }
+    .fw-regions { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; min-height: 44px; align-items: center; }
+    .fw-regions a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; border: 1px solid var(--d-edge); border-radius: 999px; background: var(--d-inst); color: var(--d-ink); text-decoration: none; font-size: 0.9rem; font-weight: 600; }
+    .fw-regions a[aria-current="page"] { border-color: var(--d-ink); box-shadow: inset 0 0 0 1px var(--d-ink); }
+    .fw-regions a:focus-visible { outline: 3px solid var(--seaglass); outline-offset: 2px; }
   </style>
 </head>
 <body>
@@ -90,17 +94,23 @@
       </div>
       <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
     </div>
-    <div class="wrap"><div class="meta-row"><span class="badge" id="fw-badge">Loading readings…</span><span class="loc">Private preview. Not linked or public.</span></div></div>
+    <div class="wrap"><div class="meta-row"><span class="badge" id="fw-badge">Loading readings…</span><span class="loc">Lakes and rivers</span></div></div>
   </header>
 
   <main class="wrap">
     <section class="panel glance dash" aria-labelledby="fw-h">
       <div class="dash-head">
         <div class="dash-title">
-          <p class="fw-preview">Freshwater · private preview</p>
+          <p class="fw-preview">Freshwater</p>
           <p class="eyebrow" id="fw-eyebrow">Live lake instruments</p>
           <h2 id="fw-h">Falls Lake</h2>
           <p class="dash-sub" id="fw-sub">Neuse River basin · Wake, Durham &amp; Granville counties</p>
+          <nav class="fw-regions" aria-label="Lakes and rivers">
+            <a href="/">The coast</a>
+            <a href="/lake?region=falls-lake">Falls Lake</a>
+            <a href="/lake?region=jordan-lake">Jordan Lake</a>
+            <a href="/lake?region=neuse-river">Neuse River</a>
+          </nav>
         </div>
         <div class="dash-controls">
           <div class="dash-legend" aria-label="Reading types">

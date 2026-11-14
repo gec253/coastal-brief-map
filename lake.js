@@ -1,4 +1,4 @@
-/* The Coastal Brief: private freshwater preview (FRESHWATER_ENABLED only).
+/* The Coastal Brief: freshwater pages (on by default; FRESHWATER_ENABLED=0/false/off is the kill switch).
    Renders /api/freshwater for Falls Lake, Jordan Lake and the Neuse River.
    Every number shows its source and time; missing or stale readings are said
    out loud, never filled in. */
@@ -196,6 +196,13 @@
   }
 
   const rid = new URLSearchParams(location.search).get("region") || "falls-lake";
+  document.querySelectorAll(".fw-regions a").forEach((a) => {
+    try {
+      const u = new URL(a.getAttribute("href"), location.href);
+      if (u.pathname === "/lake" && (u.searchParams.get("region") || "falls-lake") === rid) a.setAttribute("aria-current", "page");
+      else a.removeAttribute("aria-current");
+    } catch (e) {}
+  });
   fetch("/api/freshwater?region=" + encodeURIComponent(rid)).then((r) => r.json()).then(function (d) {
     if (!d.ok) throw new Error(d.error || "unavailable");
     const isRiver = (d.region && d.region.instrumentSet) === "freshwater-river";

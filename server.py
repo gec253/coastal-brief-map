@@ -1106,7 +1106,7 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 .pv a.card b{display:block;font-size:1.05rem}.pv a.card span{font-size:.86rem;color:var(--d-ink-2)}
 .pv .badge{display:inline-block;font:700 .7rem/1.6 var(--f-ui);letter-spacing:.1em;text-transform:uppercase;color:#fff;background:#8c2f23;padding:2px 8px;border-radius:3px}</style></head>
 <body><main class="pv"><span class="badge">Private preview · this browser only</span><h1>Previews</h1>
-<p>These pages are unlocked for this browser for %d days. The public still gets “not found”, and nothing here is linked from the site.</p>
+<p>These pages are unlocked for this browser for %d days. The wind and tile labs still return “not found” to the public. The Morning Brief and freshwater pages are public.</p>
 <a class="card" href="/lake"><b>Falls Lake</b><span>Freshwater dashboard: lake level vs guide curve, dam release, inflows, rain, river gauges</span></a>
 <a class="card" href="/lake?region=jordan-lake"><b>Jordan Lake</b><span>Pool vs 216.0 ft guide curve, release plus local runoff, Haw inflow</span></a>
 <a class="card" href="/lake?region=neuse-river"><b>Neuse River</b><span>Falls Dam to Goldsboro: stage, flow and NWS flood stages (Smithfield is stage only)</span></a>
@@ -1186,6 +1186,16 @@ class Handler(SimpleHTTPRequestHandler):
         parsed = urlparse(self.path)
         if parsed.path == "/preview":
             return self._preview_route(parsed)
+        # /?region=falls-lake (etc.) should open the lake page, not break the saltwater dashboard.
+        if parsed.path in ("/", "/index.html"):
+            rid = (parse_qs(parsed.query).get("region") or [""])[0].strip()
+            if rid in ("falls-lake", "jordan-lake", "neuse-river") and (freshwater.flag_on() or self._preview_ok()):
+                self.send_response(303)
+                self.send_header("Location", "/lake?region=%s" % rid)
+                self.send_header("Cache-Control", "no-store")
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return
         if parsed.path == "/api/brief/wake":
             # Daily wake-up ping (GitHub Actions, 5:16 AM ET). Builds today's briefs if missing; returns no
             # brief content, so it publishes nothing. Idempotent: at most one build per region per day.
@@ -1238,19 +1248,27 @@ class Handler(SimpleHTTPRequestHandler):
         if parsed.path.startswith("/fake-storage/approved/"):
             return self._fake_storage(parsed)
         if parsed.path in ("/lake", "/lake.js", "/api/freshwater"):
-            # Private freshwater preview, off unless FRESHWATER_ENABLED=1. Not linked from the site.
-            if not (freshwater.flag_on() or self._preview_ok()):
+            # Freshwater pages are on by default. FRESHWATER_ENABLED=0/false/off is the kill switch.
+            public = freshwater.flag_on()
+            if not (public or self._preview_ok()):
                 return self.send_error(404, "not found")
+            robots = "index, follow" if public else "noindex, nofollow"
             if parsed.path == "/lake":
-                return self._send_private(ROOT / "lake.html", "text/html; charset=utf-8")
+                data = (ROOT / "lake.html").read_bytes()
+                if not public:
+                    data = data.replace(
+                        b'name="robots" content="index, follow"',
+                        b'name="robots" content="noindex, nofollow"',
+                    )
+                return self._send_private(ROOT / "lake.html", "text/html; charset=utf-8", data, robots=robots)
             if parsed.path == "/lake.js":
-                return self._send_private(ROOT / "lake.js", "text/javascript; charset=utf-8")
+                return self._send_private(ROOT / "lake.js", "text/javascript; charset=utf-8", robots=robots)
             rid = (parse_qs(parsed.query).get("region") or ["falls-lake"])[0]
             status, payload = freshwater.assemble(rid)
             return self._send_json(payload, cache_s=0, status=status)
         if parsed.path in ("/brief", "/api/brief"):
             # Saltwater Morning Brief is on by default. MORNING_BRIEF_ENABLED=0/false/off is the
-            # kill switch. Falls Lake stays private (freshwater flag or preview cookie).
+            # kill switch. The Falls Lake brief is public when freshwater is also on (the default).
             # Not linked from the homepage or header.
             pv = self._preview_ok()
             if not (brief.flag_on() or pv):
@@ -1265,9 +1283,10 @@ class Handler(SimpleHTTPRequestHandler):
                 return self._send_private(None, "text/html; charset=utf-8", ("<p>%s</p>" % html.escape(b.get("error", ""))).encode(), status)
             water = b.get("waterType") or ""
             rid_final = b.get("regionId") or (b.get("region") or {}).get("id") or rid
-            # Indexable only when the brief is on for the public and this is not a freshwater page.
-            # Preview-only (kill switch) and Falls Lake stay noindex.
-            public = brief.flag_on() and water != "freshwater" and rid_final != "falls-lake"
+            # Indexable when the brief is on for the public. Falls Lake also needs the freshwater
+            # flag (kill switch or preview-only stays noindex). No Jordan/Neuse briefs.
+            is_fresh = water == "freshwater" or rid_final == "falls-lake"
+            public = brief.flag_on() and (freshwater.flag_on() if is_fresh else True)
             # No ad creative is wired into the brief yet, so never reserve an
             # empty gap. When ads are hooked up, pass ads_on from get_ads()
             # (adsOn and mode != paused) and place the slot below advisories.
