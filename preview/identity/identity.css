@@ -139,6 +139,14 @@ html[data-identity-sprint] .inst {
   border-color: var(--folio-edge);
   box-shadow: var(--folio-lift);
 }
+@media (max-width: 760px) {
+  /* Recover the 4px the folio panel padding takes from tile text at 390px
+     so source/station names do not ellipsize sooner than on public /. */
+  html[data-identity-sprint] .inst {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
 html[data-identity-sprint] .tag-observed,
 html[data-identity-sprint] .tag-forecast,
 html[data-identity-sprint] .tag-predicted {
