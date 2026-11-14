@@ -346,36 +346,304 @@ def start_scheduler():
 
 
 # ------------------------------------------------------------------ page
-def page(b: dict) -> str:
+def _item(b: dict, label: str) -> str:
+    want = label.lower()
+    for k, v in b.get("items") or []:
+        if str(k).lower() == want:
+            return v
+    return ""
+
+
+def _next_tide(text: str, issued_at):
+    """Next predicted tide after issue time, parsed from the existing tides line."""
+    evs = re.findall(r"(low|high)\s+(\d{1,2}:\d{2}\s+[AP]M)\s+ET\s+\(([-.\d]+)\s*ft\)", text or "", re.I)
+    if not evs or not issued_at:
+        return None
+    issued = issued_at if isinstance(issued_at, datetime) else datetime.fromisoformat(str(issued_at).replace("Z", "+00:00"))
+    issued = issued.astimezone(ET)
+    day = issued.date()
+    parsed = []
+    for typ, tm, ft in evs:
+        dt = datetime.strptime(tm, "%I:%M %p").replace(year=day.year, month=day.month, day=day.day, tzinfo=ET)
+        parsed.append((dt, typ.lower(), ft, tm))
+    future = [p for p in parsed if p[0] > issued]
+    if future:
+        dt, typ, ft, tm = future[0]
+        return {"time": tm, "type": typ.capitalize(), "ft": ft, "when": "next"}
+    dt, typ, ft, tm = parsed[-1]
+    return {"time": tm, "type": typ.capitalize(), "ft": ft, "when": "last today"}
+
+
+def _glance(b: dict) -> list[dict]:
+    """Presentation-only values parsed from existing brief lines. Does not change wording or data."""
+    cells: list[dict] = []
+    if (b.get("waterType") or "saltwater") == "freshwater":
+        lake = _item(b, "Lake level")
+        m = re.search(r"([\d.]+)\s*ft", lake)
+        vs = re.search(r"([\d.]+)\s*ft\s+(below|above)", lake)
+        if m:
+            sub = (vs.group(1) + " ft " + vs.group(2) + " guide") if vs else "NGVD29"
+            cells.append({"key": "Lake level", "kind": "observed", "value": m.group(1), "unit": "ft", "sub": sub, "tone": "lake"})
+        rel = _item(b, "Dam release")
+        m = re.search(r"(\d+)\s*cfs", rel)
+        if m:
+            cells.append({"key": "Release", "kind": "observed", "value": m.group(1), "unit": "cfs", "sub": "below the dam", "tone": "lake"})
+        wt = _item(b, "Water temp")
+        m = re.search(r"([\d.]+)°F", wt)
+        if m:
+            cells.append({"key": "Water temp", "kind": "observed", "value": str(int(float(m.group(1)))), "unit": "°F", "sub": "at the dam sensor", "tone": "water"})
+        rain = _item(b, "Rain")
+        m = re.search(r"([\d.]+)\s*in last 24 h", rain)
+        if m:
+            cells.append({"key": "Rain, 24 h", "kind": "observed", "value": m.group(1), "unit": "in", "sub": "at the dam", "tone": "lake"})
+        wx = _item(b, "Weather")
+        m = re.search(r"high\s+(\d+)°F", wx, re.I)
+        if m:
+            short = (re.split(r",\s*high", wx, maxsplit=1)[0] or "").strip()
+            cells.append({"key": "Air high", "kind": "forecast", "value": m.group(1), "unit": "°F", "sub": short or "NWS forecast", "tone": "air"})
+        return cells
+    wind = _item(b, "Wind")
+    m = re.search(r"(\d+)\s*kt from the (\w+)", wind)
+    if m:
+        cells.append({"key": "Wind", "kind": "observed", "value": m.group(1), "unit": "kt", "sub": "from " + m.group(2), "tone": "wind"})
+    seas = _item(b, "Seas")
+    m = re.search(r"([\d.]+)\s*ft every (\d+)\s*s from the (\w+)", seas)
+    if m:
+        cells.append({"key": "Seas", "kind": "observed", "value": m.group(1), "unit": "ft", "sub": "every %s s · from %s" % (m.group(2), m.group(3)), "tone": "seas"})
+    swell = _item(b, "Swell")
+    m = re.search(r"([\d.]+)\s*ft at ([\d.]+)\s*s from the (\w+)", swell)
+    if m:
+        per = m.group(2).rstrip("0").rstrip(".") if "." in m.group(2) else m.group(2)
+        cells.append({"key": "Swell", "kind": "observed", "value": m.group(1), "unit": "ft", "sub": "%s s · from %s" % (per, m.group(3)), "tone": "swell"})
+    nxt = _next_tide(_item(b, "Tides"), b.get("issuedAt"))
+    if nxt:
+        label = "Tide next" if nxt["when"] == "next" else "Last tide today"
+        cells.append({"key": label, "kind": "predicted", "value": nxt["time"].replace(" AM", "").replace(" PM", ""),
+                      "unit": "AM" if "AM" in nxt["time"] else "PM",
+                      "sub": "%s · %s ft" % (nxt["type"], nxt["ft"]), "tone": "tide"})
+    wt = _item(b, "Water temp")
+    m = re.search(r"([\d.]+)°F inshore", wt)
+    off = re.search(r"([\d.]+)°F offshore", wt)
+    if m:
+        sub = "inshore"
+        if off:
+            sub = "inshore · %s°F offshore" % str(int(float(off.group(1))))
+        cells.append({"key": "Water temp", "kind": "observed", "value": str(int(float(m.group(1)))), "unit": "°F", "sub": sub, "tone": "water"})
+    return cells
+
+
+def _advisory(b: dict):
+    for label in ("Advisories", "Alerts"):
+        v = _item(b, label)
+        if v:
+            low = v.lower()
+            if low.startswith("no nws"):
+                kind = "clear"
+            elif low.startswith("could not"):
+                kind = "unknown"
+            else:
+                kind = "active"
+            return {"label": label, "text": v, "kind": kind}
+    return None
+
+
+def page(b: dict, include_fresh: bool = False) -> str:
+    """Render the private brief page. On phones (<=600px) the prose
+    sections under the at-a-glance strip start collapsed so readings
+    are not shown twice above the fold; they stay open on tablet,
+    desktop, and in print."""
     esc = html.escape
-    reason = {"scheduled": "Prepared on schedule (5:15 AM ET build, woken by the daily 5:16 AM check).", "on-request": "Built on request because the 5:15 AM scheduled build did not run (the server was asleep or restarting).",
-              "rebuilt": "Rebuilt on request after a server restart.", "manual": "Built manually for testing."}.get(b.get("reason"), "")
-    fr = "".join('<li>%s <b>%s</b>%s</li>' % (esc(f["label"]), esc(f["time"]), ' <span class="mb-stale">stale</span>' if f.get("stale") else "") for f in b["freshness"])
-    rows = "".join('<div class="mb-row"><dt>%s</dt><dd>%s</dd></div>' % (esc(k), esc(v)) for k, v in b["items"])
+    reason = {"scheduled": "Prepared on schedule (5:15 AM ET build, woken by the daily 5:16 AM check).",
+              "on-request": "Built on request because the 5:15 AM scheduled build did not run (the server was asleep or restarting).",
+              "rebuilt": "Rebuilt on request after a server restart.",
+              "manual": "Built manually for testing."}.get(b.get("reason"), "")
+    water = b.get("waterType") or "saltwater"
+    name = b.get("region", {}).get("name") or "Morning Brief"
+    area = b.get("region", {}).get("area") or ""
+    rid = b.get("regionId") or b.get("region", {}).get("id") or ""
+    issued = b.get("issuedEt") or ""
+    fr_bits = []
+    for f in b.get("freshness") or []:
+        stale = ' <span class="mb-stale">stale</span>' if f.get("stale") else ""
+        stn = (' <span class="mb-stn">%s</span>' % esc(f["station"])) if f.get("station") else ""
+        fr_bits.append("<li><span class=\"mb-fk\">%s</span> <time>%s</time>%s%s</li>" % (esc(f["label"]), esc(f["time"]), stn, stale))
+    fr = "".join(fr_bits) or "<li>No observation times were recorded at issue time.</li>"
+    adv = _advisory(b)
+    if adv:
+        adv_html = ('<section class="mb-adv is-%s" aria-label="%s"><span class="mb-adv-dot" aria-hidden="true"></span>'
+                    '<div><p class="mb-adv-k">%s</p><p class="mb-adv-t">%s</p></div></section>'
+                    % (esc(adv["kind"]), esc(adv["label"]), esc(adv["label"]), esc(adv["text"])))
+    else:
+        adv_html = ""
+    glance_cells = []
+    for c in _glance(b):
+        glance_cells.append(
+            '<div class="mb-gc tone-%s kind-%s"><span class="mb-gk">%s</span>'
+            '<span class="mb-gv"><b>%s</b><span class="mb-gu">%s</span></span>'
+            '<span class="mb-gs">%s</span><span class="mb-gkind">%s</span></div>'
+            % (esc(c["tone"]), esc(c["kind"]), esc(c["key"]), esc(c["value"]), esc(c["unit"]), esc(c["sub"]), esc(c["kind"]))
+        )
+    glance = ('<section class="mb-glance" aria-label="At a glance">%s</section>' % "".join(glance_cells)) if glance_cells else ""
+    rows = []
+    for k, v in b.get("items") or []:
+        if k in ("Advisories", "Alerts"):
+            continue
+        slug = re.sub(r"[^a-z]+", "-", k.lower()).strip("-")
+        rows.append('<div class="mb-row tone-%s"><dt>%s</dt><dd>%s</dd></div>' % (esc(slug), esc(k), esc(v)))
+    rows_html = "".join(rows)
     miss = ('<p class="mb-miss">Not available at issue time: %s.</p>' % esc(", ".join(b["missing"]))) if b.get("missing") else ""
-    stale = ('<p class="mb-miss">%s</p>' % esc(b["staleNotice"])) if b.get("staleNotice") else ""
-    return """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow"><title>Morning Brief (private preview) · %(name)s</title>
-<script>(function(){try{var t=localStorage.getItem("coastalBrief.theme");if(t!=="light"&&t!=="dark")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.setAttribute("data-theme",t)}catch(e){}})();</script>
-<link rel="stylesheet" href="/styles.css"><style>
-body{background:var(--d-panel);color:var(--d-ink)} .mb{max-width:640px;margin:0 auto;padding:14px 16px 40px}
-.mb-badge{display:inline-block;font:700 .7rem/1.6 var(--f-ui);letter-spacing:.1em;text-transform:uppercase;color:#fff;background:#8c2f23;padding:2px 8px;border-radius:3px}
-.mb h1{font:600 1.7rem/1.1 var(--f-display);margin:10px 0 2px}.mb .mb-tag{font:italic 500 1rem var(--f-display);color:var(--d-ink-2);margin:0 0 12px}
-.mb-issue{border:1px solid var(--d-edge);border-radius:12px;padding:10px 12px;background:var(--d-inst);font-size:.86rem}
-.mb-issue b{font-weight:700}.mb-issue ul{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:2px 14px;color:var(--d-ink-2)}
-.mb-issue .why{color:var(--d-ink-2);margin:4px 0 0}.mb-stale{color:#B42318;font-weight:700}
-.mb dl{margin:16px 0 0}.mb-row{display:grid;grid-template-columns:7.5em 1fr;gap:10px;padding:8px 0;border-bottom:1px solid var(--d-edge)}
-.mb dt{font:700 .72rem/1.5 var(--f-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--d-ink-2);padding-top:2px}.mb dd{margin:0;font-size:.98rem;line-height:1.42}
-.mb-take{margin:18px 0 0;padding:12px 14px;border-left:3px solid var(--copper,#A9633A);background:var(--d-inst);border-radius:0 10px 10px 0}
-.mb-take h2{font:700 .72rem/1 var(--f-ui);letter-spacing:.14em;text-transform:uppercase;margin:0 0 6px;color:var(--d-ink-2)}
-.mb-take p{margin:0;font:500 1.02rem/1.45 var(--f-display)}.mb-take small{display:block;margin-top:6px;color:var(--d-ink-2);font:400 .8rem var(--f-ui)}
-.mb-miss{color:#B42318;font-size:.86rem}.mb-foot{font-size:.8rem;color:var(--d-ink-2);margin-top:16px}
-</style></head><body><main class="mb">
-<span class="mb-badge">Morning Brief · private preview</span>
-<h1>%(name)s</h1><p class="mb-tag">More than the forecast. It's a way of life.</p>
-<section class="mb-issue" aria-label="Issue time and data freshness"><b>Issued %(issued)s</b> · %(words)d words<p class="why">%(reason)s</p><ul>%(fr)s</ul></section>
-%(stale)s<dl>%(rows)s</dl>%(miss)s
-<section class="mb-take"><h2>Captain's take · interpretation</h2><p>%(take)s</p><small>Generated by fixed rules from the readings above. Not an observation and not a fishing report.</small></section>
-<p class="mb-foot">Sources: %(src)s. Live readings keep updating on the <a href="/">conditions page</a>; this brief does not. Not endorsed by NOAA.</p>
-</main></body></html>""" % {"name": esc(b["region"]["name"]), "issued": esc(b["issuedEt"]), "words": b["words"], "reason": esc(reason), "fr": fr,
-                         "stale": stale, "rows": rows, "miss": miss, "take": esc(" ".join(b["take"])), "src": esc(b["sources"])}
+    stale = ('<p class="mb-miss mb-stale-note">%s</p>' % esc(b["staleNotice"])) if b.get("staleNotice") else ""
+    take_ps = "".join("<p>%s</p>" % esc(t) for t in (b.get("take") or []) if t)
+    # Region switcher: saltwater briefs always; Falls Lake only when freshwater is in this preview.
+    region_links = [
+        ("crystal-coast", "Morehead City · Beaufort"),
+        ("hatteras", "Hatteras Island"),
+    ]
+    if include_fresh or water == "freshwater":
+        region_links.append(("falls-lake", "Falls Lake"))
+    nav = "".join(
+        '<a href="/brief?region=%s"%s>%s</a>' % (esc(i), ' aria-current="page"' if i == rid else "", esc(n))
+        for i, n in region_links
+    )
+    # Share text: issue time plus the glance numbers, no added interpretation.
+    share_bits = ["Morning Brief for %s, issued %s." % (name, issued)]
+    for c in _glance(b):
+        share_bits.append("%s %s %s (%s), %s." % (c["key"], c["value"], c["unit"], c["kind"], c["sub"]))
+    if adv and adv["kind"] == "active":
+        share_bits.append(adv["text"])
+    share_bits.append("Not a fishing report. Not endorsed by NOAA.")
+    desc = esc(" ".join(share_bits)[:300].rsplit(" ", 1)[0] + ".")
+    og_title = esc("Morning Brief · %s — The Coastal Brief" % name)
+    og_url = esc("https://thecoastalbrief.com/brief?region=%s" % rid)
+    return """<!DOCTYPE html>
+<html lang="en" data-theme="light" data-water="%(water)s">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0B2A3D">
+<title>Morning Brief · %(name)s (private preview) — The Coastal Brief</title>
+<meta name="description" content="%(desc)s">
+<meta property="og:title" content="%(og_title)s">
+<meta property="og:description" content="%(desc)s">
+<meta property="og:url" content="%(og_url)s">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://thecoastalbrief.com/branding/og-preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Coastal Brief wordmark over a breaking teal wave on a navy background, with the line North Carolina fishing, surfing, and boating conditions.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="%(og_title)s">
+<meta name="twitter:description" content="%(desc)s">
+<meta name="twitter:image" content="https://thecoastalbrief.com/branding/og-preview.png">
+<link rel="icon" href="/branding/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="/fonts/source-sans-3-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/barlow-condensed-600.woff2" as="font" type="font/woff2" crossorigin>
+<script>(function(){try{var q=new URLSearchParams(location.search).get("theme");var t=q||localStorage.getItem("coastalBrief.theme");if(t!=="light"&&t!=="dark")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.setAttribute("data-theme",t)}catch(e){}})();</script>
+<link rel="stylesheet" href="/brief.css">
+</head>
+<body class="mb-page">
+<a class="skip" href="#brief-body">Skip to the brief</a>
+<header class="mb-top">
+  <div class="mb-top-row">
+    <a class="mb-brand" href="/">
+      <svg class="crest" viewBox="0 0 64 40" aria-hidden="true" focusable="false"><path class="crest-sea" d="M0 30 C10 18 18 16 28 22 S48 34 64 20 L64 40 L0 40 Z"/><path class="crest-arc" d="M14 15 C26 4 46 4 58 14 L55 17 C44 9 28 9 17 18 Z"/><path class="crest-in" d="M24 15 C32 9 44 9 52 14 L50 16.5 C42 12 33 12 26 16.8 Z"/></svg>
+      <span class="wordmark">The Coastal Brief</span>
+    </a>
+    <div class="mb-tools">
+      <button type="button" class="mb-print" onclick="window.print()">Print</button>
+      <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
+    </div>
+  </div>
+</header>
+<main class="mb" id="brief-body">
+  <p class="mb-badge">Morning Brief · private preview</p>
+  <p class="mb-kicker">%(water_label)s</p>
+  <h1>%(name)s</h1>
+  <p class="mb-tag">More than the forecast. It’s a way of life.</p>
+  %(area)s
+  <nav class="mb-regions" aria-label="Brief region">%(nav)s</nav>
+  <section class="mb-issue" aria-label="Issue time and data freshness">
+    <p class="mb-issued"><span class="mb-issued-k">Issued</span> <time>%(issued)s</time></p>
+    <p class="mb-why">%(reason)s · %(words)d words</p>
+    <p class="mb-fresh-k">Reading times</p>
+    <ul class="mb-fresh">%(fr)s</ul>
+  </section>
+  %(stale)s
+  %(adv)s
+  %(glance)s
+  <details class="mb-details" id="mb-details">
+    <summary>Full readings <span class="mb-details-hint">the same observations in full</span></summary>
+    <dl class="mb-body">%(rows)s</dl>
+  </details>
+  %(miss)s
+  <script>
+  (function(){
+    var d=document.getElementById("mb-details");
+    if(!d)return;
+    var wide=window.matchMedia("(min-width: 601px)");
+    function apply(){
+      if(wide.matches) d.open=true;
+      else if(!d.hasAttribute("data-user")) d.open=false;
+    }
+    apply();
+    d.addEventListener("toggle", function(){ if(!wide.matches) d.setAttribute("data-user","1"); });
+    if(wide.addEventListener) wide.addEventListener("change", apply);
+    else wide.addListener(apply);
+    window.addEventListener("beforeprint", function(){ d.open=true; });
+    window.addEventListener("afterprint", apply);
+  })();
+  </script>
+  <div class="mb-ad" aria-hidden="true">Ad slot placeholder · inactive · reserved height, never above advisories</div>
+  <section class="mb-take">
+    <p class="mb-take-k"><span>Captain’s take</span> <span class="mb-interp">Interpretation</span></p>
+    <div class="mb-take-body">%(take)s</div>
+    <p class="mb-take-note">Generated by fixed rules from the readings above. Not an observation and not a fishing report.</p>
+  </section>
+  <footer class="mb-foot">
+    <p>Sources: %(src)s. Live readings keep updating on the <a href="/">conditions page</a>; this brief does not. This is not a fishing report. Not endorsed by NOAA.</p>
+  </footer>
+</main>
+<script>
+(function(){
+  var root=document.documentElement, btn=document.getElementById("theme-toggle");
+  function sync(){
+    var dark=root.getAttribute("data-theme")==="dark";
+    if(!btn)return;
+    btn.setAttribute("aria-pressed", dark?"true":"false");
+    btn.setAttribute("aria-label", dark?"Switch to light mode":"Switch to dark mode");
+    btn.textContent=dark?"Light mode":"Dark mode";
+  }
+  sync();
+  if(btn)btn.addEventListener("click",function(){
+    var n=root.getAttribute("data-theme")==="dark"?"light":"dark";
+    root.setAttribute("data-theme",n);
+    try{localStorage.setItem("coastalBrief.theme",n)}catch(e){}
+    sync();
+  });
+})();
+</script>
+</body>
+</html>""" % {
+        "water": esc(water),
+        "water_label": "River &amp; lake" if water == "freshwater" else "The sounds &amp; the sea",
+        "name": esc(name),
+        "desc": desc,
+        "og_title": og_title,
+        "og_url": og_url,
+        "area": ('<p class="mb-area">%s</p>' % esc(area)) if area else "",
+        "nav": nav,
+        "issued": esc(issued),
+        "reason": esc(reason),
+        "words": b.get("words") or 0,
+        "fr": fr,
+        "stale": stale,
+        "adv": adv_html,
+        "glance": glance,
+        "rows": rows_html,
+        "miss": miss,
+        "take": take_ps,
+        "src": esc(b.get("sources") or ""),
+    }
+
+

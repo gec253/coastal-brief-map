@@ -1257,7 +1257,7 @@ class Handler(SimpleHTTPRequestHandler):
                 return self._json_private(b, status)
             if status != 200:
                 return self._send_private(None, "text/html; charset=utf-8", ("<p>%s</p>" % html.escape(b.get("error", ""))).encode(), status)
-            return self._send_private(None, "text/html; charset=utf-8", brief.page(b).encode())
+            return self._send_private(None, "text/html; charset=utf-8", brief.page(b, include_fresh=freshwater.flag_on() or pv).encode())
         if parsed.path in ("/lab/tiles", "/lab/tiles.js"):
             # Tile design prototype, off unless TILES_LAB_ENABLED=1. Not linked from the site.
             if not (_flag("TILES_LAB_ENABLED") or self._preview_ok()):
