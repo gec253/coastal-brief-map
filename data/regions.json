@@ -261,6 +261,16 @@
       "setting": "Sound-side airfield north of Bogue Sound, about 5 miles northeast of Bogue Inlet",
       "url": "https://forecast.weather.gov/data/obhistory/KNJM.html",
       "staleAfterMin": 150
+    },
+    "8657419": {
+      "name": "Ocean City, Fishing Pier",
+      "network": "NOAA tide predictions (subordinate station)",
+      "agency": "NOAA CO-OPS (Tides & Currents)",
+      "type": "coops",
+      "lat": 34.4517,
+      "lon": -77.495,
+      "setting": "Ocean pier at North Topsail Beach. Official high and low predictions only; no 6-minute curve and no water-level gauge.",
+      "url": "https://tidesandcurrents.noaa.gov/noaatidepredictions.html?id=8657419"
     }
   },
   "regions": [
@@ -831,6 +841,123 @@
       ],
       "waterType": "saltwater",
       "notes": "Private preview. Town of Emerald Isle only, from Bogue Inlet to the east town line. Not Swansboro, Cedar Point or Cape Carteret; alerts are AMZ158 and NCZ195 only (NCZ199 comes in when Swansboro is added). Wind, seas and offshore temperature come from the Onslow Bay Outer buoys, about 32 miles offshore, and are labeled as such. Air temperature is the Bogue Field ASOS, about 5 miles northeast; the offshore buoy is not used for air. Inshore water temperature is unavailable. Tide predictions are official highs and lows at Bogue Inlet, a subordinate station whose reference has no live water-level gauge; there is no 6-minute curve and no local observed water level."
+    },
+    {
+      "id": "topsail",
+      "enabled": false,
+      "draft": false,
+      "previewReady": true,
+      "name": "Topsail",
+      "area": "New River Inlet to New Topsail Inlet, Topsail Island",
+      "anchor": {
+        "label": "Ocean City Fishing Pier",
+        "lat": 34.4517,
+        "lon": -77.495
+      },
+      "map": {
+        "center": [
+          34.4517,
+          -77.495
+        ],
+        "zoom": 10
+      },
+      "readings": {
+        "wind": {
+          "kind": "observed",
+          "role": "Onslow Bay buoy, ~35 mi offshore",
+          "stationLabel": "Onslow Bay buoy, ~35 mi offshore",
+          "sources": [
+            "41064"
+          ],
+          "note": "There is no wind sensor at Topsail Island. This is the Onslow Bay Outer weather buoy, about 35 miles offshore. The Wrightsville Beach nearshore buoy is not used."
+        },
+        "seas": {
+          "kind": "observed",
+          "role": "Offshore seas, Onslow Bay",
+          "stationLabel": "Onslow Bay Outer, ~36 mi offshore",
+          "sources": [
+            "41159"
+          ],
+          "note": "The New River Inlet waverider (41109) is not reporting and is not used. Masonboro Inlet is not used."
+        },
+        "swell": {
+          "kind": "observed",
+          "role": "Swell split from the wave spectrum",
+          "stationLabel": "Onslow Bay Outer, ~36 mi offshore",
+          "sources": [
+            "41159"
+          ]
+        },
+        "waterTemp": {
+          "kind": "observed",
+          "role": "Inshore ocean water",
+          "sources": [],
+          "note": "No ocean-pier water-temperature sensor at Topsail Island. Wrightsville Beach pier water is not used."
+        },
+        "waterTempOffshore": {
+          "kind": "observed",
+          "role": "Offshore surface water, Onslow Bay",
+          "stationLabel": "Onslow Bay Outer, ~36 mi offshore",
+          "sources": [
+            "41159"
+          ]
+        },
+        "airTemp": {
+          "kind": "observed",
+          "role": "Air at Topsail Island",
+          "sources": [],
+          "note": "There is no air-temperature sensor on the beach at Topsail Island. Camp Lejeune, Jacksonville, and Wilmington Airport are not used."
+        },
+        "pressure": {
+          "kind": "observed",
+          "role": "Barometer at the Onslow Bay buoy",
+          "stationLabel": "Onslow Bay buoy, ~35 mi offshore",
+          "sources": [
+            "41064"
+          ]
+        }
+      },
+      "tide": {
+        "station": "8657419",
+        "name": "Ocean City, Fishing Pier",
+        "datum": "MLLW",
+        "curve": false,
+        "observed": false,
+        "note": "NOAA publishes official high and low tide predictions at Ocean City Fishing Pier, but not a 6-minute curve or a local water-level gauge. 8657419 is a subordinate prediction station; its published reference, 8654400 Cape Hatteras Fishing Pier, has no live water-level gauge, so there is no official observed reference. New River Inlet predictions and Wrightsville observed water level are not used."
+      },
+      "forecast": {
+        "label": "North Topsail Beach",
+        "lat": 34.4517,
+        "lon": -77.502,
+        "gridId": "MHX",
+        "gridX": 32,
+        "gridY": 43,
+        "office": "NWS Newport/Morehead City (MHX)"
+      },
+      "marine": {
+        "zone": "AMZ158",
+        "zoneName": "North Topsail / New River Inlet",
+        "area": "North Topsail / New River Inlet",
+        "office": "NWS Newport/Morehead City (MHX)",
+        "zoneNote": "Official name: S of Cape Lookout NC to Surf City NC out to 20 NM. Topsail Island is split at Surf City. Each official marine zone also covers a larger stretch of coast than this island.",
+        "also": [
+          {
+            "zone": "AMZ250",
+            "zoneName": "Surf City / Topsail Beach",
+            "area": "Surf City / Topsail Beach",
+            "office": "NWS Wilmington (ILM)",
+            "zoneNote": "Official name: Coastal waters from Surf City to Cape Fear NC out 20 nm."
+          }
+        ]
+      },
+      "alertZones": [
+        "NCZ199",
+        "NCZ106",
+        "AMZ158",
+        "AMZ250"
+      ],
+      "waterType": "saltwater",
+      "notes": "Private preview. Topsail Island only, from New River Inlet to New Topsail Inlet. Land forecast is MHX 32, 43 at a point 0.4 mi west of the pier (the pier itself is in AMZ158). Marine tile shows AMZ158 and AMZ250 via marine.also, labeled by area. Alerts are NCZ199, NCZ106, AMZ158 and AMZ250. Wind and pressure come from 41064, about 35 miles offshore; seas, swell and offshore temperature from 41159, about 36 miles offshore; both labeled. Air and inshore water temperature are unavailable. Tide predictions are official highs and lows at 8657419; there is no 6-minute curve and no local observed water level."
     },
     {
       "id": "falls-lake",

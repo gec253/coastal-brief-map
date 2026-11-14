@@ -10,7 +10,7 @@ on their own and do not need this cookie.
   the key, sets an HttpOnly, Secure, SameSite=Lax cookie `cb_preview` (an HMAC of the key, 60 days), and
   redirects to `/preview` so the key does not stay in the address bar.
 - `/preview` lists the public lake and brief pages as shortcuts, plus the not-yet-public Wilmington,
-  Nags Head and Emerald Isle dashboards (`/?region=wilmington`, `/?region=nags-head`, `/?region=emerald-isle`) and `/lab/wind` and `/lab/tiles`,
+  Nags Head, Emerald Isle and Topsail dashboards (`/?region=wilmington`, `/?region=nags-head`, `/?region=emerald-isle`, `/?region=topsail`) and `/lab/wind` and `/lab/tiles`,
   which stay private (`noindex`, `no-store`, not linked from the public site). The public homepage
   region dropdown is unchanged. With the cookie, those saltwater regions also appear in the
   dashboard picker and their `/api/conditions` responses return 200; without it they 404.

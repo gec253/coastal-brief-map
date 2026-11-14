@@ -1,4 +1,4 @@
-"""HTTP gating for private Wilmington, Nags Head and Emerald Isle saltwater previews."""
+"""HTTP gating for private Wilmington, Nags Head, Emerald Isle and Topsail saltwater previews."""
 from __future__ import annotations
 
 import json
@@ -80,15 +80,18 @@ class SaltPreviewGating(unittest.TestCase):
         self.assertNotIn("wilmington", ids)
         self.assertNotIn("nags-head", ids)
         self.assertNotIn("emerald-isle", ids)
+        self.assertNotIn("topsail", ids)
 
     def test_preview_regions_404_publicly(self):
         for path in (
             "/?region=wilmington",
             "/?region=nags-head",
             "/?region=emerald-isle",
+            "/?region=topsail",
             "/api/conditions?region=wilmington",
             "/api/conditions?region=nags-head",
             "/api/conditions?region=emerald-isle",
+            "/api/conditions?region=topsail",
         ):
             status, _, _ = self._req(path)
             self.assertEqual(status, 404, path)
@@ -97,7 +100,7 @@ class SaltPreviewGating(unittest.TestCase):
         env = {"PREVIEW_KEY": self.KEY}
         cookie = self._cookie()
         with patch("conditions.assemble", return_value=(200, STUB)):
-            for path in ("/?region=wilmington", "/?region=nags-head", "/?region=emerald-isle"):
+            for path in ("/?region=wilmington", "/?region=nags-head", "/?region=emerald-isle", "/?region=topsail"):
                 status, body, headers = self._req(path, env=env, cookie=cookie)
                 self.assertEqual(status, 200, path)
                 self.assertIn(b"The Coastal Brief", body)
@@ -117,11 +120,12 @@ class SaltPreviewGating(unittest.TestCase):
         status, body, _ = self._req("/api/regions", env=env, cookie=self._cookie())
         data = json.loads(body)
         ids = [r["id"] for r in data["regions"]]
-        self.assertEqual(ids, ["crystal-coast", "hatteras", "wilmington", "nags-head", "emerald-isle"])
+        self.assertEqual(ids, ["crystal-coast", "hatteras", "wilmington", "nags-head", "emerald-isle", "topsail"])
         preview = {r["id"]: r.get("preview") for r in data["regions"]}
         self.assertTrue(preview["wilmington"])
         self.assertTrue(preview["nags-head"])
         self.assertTrue(preview["emerald-isle"])
+        self.assertTrue(preview["topsail"])
         self.assertIsNone(preview["crystal-coast"])
 
     def test_wrong_or_missing_key_still_404s(self):

@@ -710,13 +710,15 @@ def forecast_block(fcfg):
             "sourceUrl": "https://forecast.weather.gov/MapClick.php?lat=%s&lon=%s" % (fcfg["lat"], fcfg["lon"])}
 
 
-def _marine_one(zone, zone_name, office):
+def _marine_one(zone, zone_name, office, area=None):
     url = "https://api.weather.gov/zones/coastal/%s/forecast" % zone
     d = nws_json(url, TTL_MARINE)
     props = (d or {}).get("properties") or {}
     periods = props.get("periods") or []
     base = {"kind": "forecast", "zone": zone, "zoneName": zone_name, "office": office,
             "sourceUrl": "https://forecast.weather.gov/shmrn.php?mz=%s" % zone.lower()}
+    if area:
+        base["area"] = area
     if not periods:
         base["status"] = "unavailable"
         return base
@@ -733,14 +735,17 @@ def marine_block(mcfg):
     shape is unchanged.
     """
     office = mcfg.get("office")
-    primary = _marine_one(mcfg["zone"], mcfg.get("zoneName"), office)
+    primary = _marine_one(mcfg["zone"], mcfg.get("zoneName"), office, mcfg.get("area"))
     if mcfg.get("zoneNote"):
         primary["zoneNote"] = mcfg["zoneNote"]
     also = []
     for z in mcfg.get("also") or []:
         if not z or not z.get("zone"):
             continue
-        also.append(_marine_one(z["zone"], z.get("zoneName"), z.get("office") or office))
+        item = _marine_one(z["zone"], z.get("zoneName"), z.get("office") or office, z.get("area"))
+        if z.get("zoneNote"):
+            item["zoneNote"] = z["zoneNote"]
+        also.append(item)
     if also:
         primary["also"] = also
     return primary

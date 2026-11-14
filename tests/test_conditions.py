@@ -295,7 +295,7 @@ class WilmingtonNagsConfig(unittest.TestCase):
         self.stations = self.cfg["stations"]
 
     def test_preview_regions_are_not_public(self):
-        for rid in ("wilmington", "nags-head", "emerald-isle"):
+        for rid in ("wilmington", "nags-head", "emerald-isle", "topsail"):
             r = self.regions[rid]
             self.assertFalse(r.get("enabled"), rid)
             self.assertFalse(r.get("draft"), rid)
@@ -308,12 +308,13 @@ class WilmingtonNagsConfig(unittest.TestCase):
         self.assertEqual(public_ids, ["crystal-coast", "hatteras"])
         listed = conditions.listed_regions(preview=True)
         ids = [x["id"] for x in listed["regions"]]
-        self.assertEqual(ids, ["crystal-coast", "hatteras", "wilmington", "nags-head", "emerald-isle"])
+        self.assertEqual(ids, ["crystal-coast", "hatteras", "wilmington", "nags-head", "emerald-isle", "topsail"])
         preview_flags = {x["id"]: x.get("preview") for x in listed["regions"]}
         self.assertIsNone(preview_flags["crystal-coast"])
         self.assertTrue(preview_flags["wilmington"])
         self.assertTrue(preview_flags["nags-head"])
         self.assertTrue(preview_flags["emerald-isle"])
+        self.assertTrue(preview_flags["topsail"])
 
     def test_existing_public_regions_unchanged(self):
         cc = self.regions["crystal-coast"]
@@ -532,7 +533,7 @@ class SplitTideStations(unittest.TestCase):
 
 class AssemblePreviewGate(unittest.TestCase):
     def test_public_assemble_404s_preview_regions_without_fallback(self):
-        for rid in ("wilmington", "nags-head", "emerald-isle"):
+        for rid in ("wilmington", "nags-head", "emerald-isle", "topsail"):
             status, payload = conditions.assemble(rid)
             self.assertEqual(status, 404, rid)
             self.assertFalse(payload.get("ok"))
@@ -829,3 +830,201 @@ class EmeraldIsleTides(unittest.TestCase):
         self.assertEqual(out["status"], "unavailable")
         self.assertIn(("8658163", "6"), called)
 
+
+
+class TopsailConfig(unittest.TestCase):
+    def setUp(self):
+        self.cfg = conditions.load_regions()
+        self.regions = {r["id"]: r for r in self.cfg.get("regions") or []}
+        self.stations = self.cfg["stations"]
+        self.r = self.regions["topsail"]
+
+    def test_coverage_zones_and_grid(self):
+        self.assertFalse(self.r.get("enabled"))
+        self.assertFalse(self.r.get("draft"))
+        self.assertTrue(self.r.get("previewReady"))
+        self.assertEqual(self.r["anchor"]["label"], "Ocean City Fishing Pier")
+        self.assertEqual(self.r["anchor"]["lat"], 34.4517)
+        self.assertEqual(self.r["anchor"]["lon"], -77.495)
+        self.assertEqual(self.r["forecast"]["gridId"], "MHX")
+        self.assertEqual((self.r["forecast"]["gridX"], self.r["forecast"]["gridY"]), (32, 43))
+        self.assertEqual(self.r["forecast"]["lat"], 34.4517)
+        self.assertEqual(self.r["forecast"]["lon"], -77.502)
+        self.assertEqual(self.r["alertZones"], ["NCZ199", "NCZ106", "AMZ158", "AMZ250"])
+        self.assertEqual(self.r["tide"]["station"], "8657419")
+        self.assertFalse(self.r["tide"].get("curve", True))
+        self.assertFalse(self.r["tide"].get("observed", True))
+        self.assertNotIn("observedStation", self.r["tide"])
+
+    def test_marine_uses_also_for_both_zones_with_area_labels(self):
+        m = self.r["marine"]
+        self.assertEqual(m["zone"], "AMZ158")
+        self.assertEqual(m["area"], "North Topsail / New River Inlet")
+        also = m.get("also") or []
+        self.assertEqual(len(also), 1)
+        self.assertEqual(also[0]["zone"], "AMZ250")
+        self.assertEqual(also[0]["area"], "Surf City / Topsail Beach")
+        self.assertEqual(also[0]["zoneName"], "Surf City / Topsail Beach")
+        self.assertEqual(m["zoneName"], "North Topsail / New River Inlet")
+        self.assertIn("Cape Fear", also[0]["zoneNote"])
+        self.assertIn("Cape Lookout", m["zoneNote"])
+        # Hatteras and Crystal Coast are unchanged.
+        hat = self.regions["hatteras"]
+        self.assertEqual(hat["marine"]["zone"], "AMZ154")
+        self.assertEqual([z["zone"] for z in hat["marine"]["also"]], ["AMZ152"])
+        self.assertNotIn("area", hat["marine"])
+        self.assertFalse(self.regions["crystal-coast"]["marine"].get("also"))
+
+    def test_marine_block_passes_area_and_ilm_office(self):
+        urls = []
+
+        def fake_nws(url, ttl):
+            urls.append(url)
+            zone = url.rsplit("/", 2)[-2]
+            return {"properties": {
+                "updated": "2026-11-14T13:00:00+00:00",
+                "periods": [{"name": "Today", "detailedForecast": "Seas in %s." % zone}],
+            }}
+
+        with patch.object(conditions, "nws_json", side_effect=fake_nws):
+            out = conditions.marine_block(self.r["marine"])
+        self.assertEqual(out["zone"], "AMZ158")
+        self.assertEqual(out["area"], "North Topsail / New River Inlet")
+        self.assertEqual(out["also"][0]["zone"], "AMZ250")
+        self.assertEqual(out["also"][0]["area"], "Surf City / Topsail Beach")
+        self.assertEqual(out["also"][0]["zoneName"], "Surf City / Topsail Beach")
+        self.assertEqual(out["also"][0]["office"], "NWS Wilmington (ILM)")
+        self.assertIn("Cape Fear", out["also"][0]["zoneNote"])
+        self.assertIn("Cape Lookout", out["zoneNote"])
+        self.assertEqual(urls, [
+            "https://api.weather.gov/zones/coastal/AMZ158/forecast",
+            "https://api.weather.gov/zones/coastal/AMZ250/forecast",
+        ])
+
+    def test_sources_exclude_forbidden_fallbacks(self):
+        rd = self.r["readings"]
+        self.assertEqual(rd["wind"]["sources"], ["41064"])
+        self.assertEqual(rd["seas"]["sources"], ["41159"])
+        self.assertEqual(rd["swell"]["sources"], ["41159"])
+        self.assertEqual(rd["waterTempOffshore"]["sources"], ["41159"])
+        self.assertEqual(rd["waterTemp"]["sources"], [])
+        self.assertEqual(rd["airTemp"]["sources"], [])
+        self.assertEqual(rd["pressure"]["sources"], ["41064"])
+        forbidden = ("8657167", "8658163", "41038", "41109", "41110", "KNCA", "KOAJ", "KILM")
+        for kind, spec in rd.items():
+            srcs = spec.get("sources") or []
+            for sid in forbidden:
+                self.assertNotIn(sid, srcs, (kind, sid))
+        self.assertEqual(self.r["tide"]["station"], "8657419")
+        self.assertNotEqual(self.r["tide"]["station"], "8657167")
+
+    def test_labels_and_distances(self):
+        self.assertEqual(self.r["readings"]["wind"]["stationLabel"], "Onslow Bay buoy, ~35 mi offshore")
+        self.assertEqual(self.r["readings"]["pressure"]["stationLabel"], "Onslow Bay buoy, ~35 mi offshore")
+        self.assertEqual(self.r["readings"]["seas"]["stationLabel"], "Onslow Bay Outer, ~36 mi offshore")
+        self.assertEqual(self.stations["41064"]["name"], "Onslow Bay Outer (LEJ3)")
+        self.assertEqual(self.stations["41064"]["staleAfterMin"], 130)
+        wind_st = conditions.station_info("41064", self.stations["41064"], self.r["anchor"])
+        seas_st = conditions.station_info("41159", self.stations["41159"], self.r["anchor"])
+        self.assertGreaterEqual(wind_st["distanceMi"], 34)
+        self.assertLessEqual(wind_st["distanceMi"], 37)
+        self.assertGreaterEqual(seas_st["distanceMi"], 34)
+        self.assertLessEqual(seas_st["distanceMi"], 37)
+        # Shared official names and other regions are unchanged.
+        cc = self.regions["crystal-coast"]
+        self.assertEqual(cc["readings"]["wind"]["sources"], ["CLKN7", "41064"])
+        self.assertNotIn("stationLabel", cc["readings"]["wind"])
+        self.assertEqual(self.regions["emerald-isle"]["readings"]["wind"]["sources"], ["41064"])
+
+
+class TopsailFallbacks(unittest.TestCase):
+    def setUp(self):
+        cfg = conditions.load_regions()
+        self.reg = next(r for r in cfg["regions"] if r["id"] == "topsail")
+        self.stations = cfg["stations"]
+        self.anchor = self.reg["anchor"]
+
+    def _resolve(self, kind, reports):
+        def fake_fetch(k, sid, stations):
+            return reports.get(sid)
+
+        with patch.object(conditions, "fetch_one", side_effect=fake_fetch):
+            return conditions.resolve_reading(
+                kind, self.reg["readings"][kind], self.stations, self.anchor, NOW
+            )
+
+    def test_air_and_inshore_temp_unavailable_without_airport_or_pier_fallback(self):
+        for kind in ("airTemp", "waterTemp"):
+            out = self._resolve(kind, {
+                "KNCA": report(10, temp_values(10.6)),
+                "KOAJ": report(10, temp_values(8.0)),
+                "KILM": report(10, temp_values(8.0)),
+                "8658163": report(10, temp_values(19.0)),
+                "41064": report(10, temp_values(11.1)),
+            })
+            self.assertEqual(out["status"], "unavailable", kind)
+            self.assertNotIn("values", out)
+            self.assertTrue(out.get("note"), kind)
+            tried = [t["id"] for t in out.get("tried") or []]
+            self.assertEqual(tried, [], kind)
+
+    def test_wind_uses_41064_only_and_ignores_41038(self):
+        out = self._resolve("wind", {
+            "41064": report(20, wind_values(19)),
+            "41038": report(5, wind_values(16)),
+        })
+        self.assertEqual(out["status"], "ok")
+        self.assertEqual(out["station"]["id"], "41064")
+        self.assertEqual(out["station"]["name"], "Onslow Bay buoy, ~35 mi offshore")
+        self.assertEqual(out["staleAfterMin"], 130)
+
+    def test_41064_wind_stale_window_is_130(self):
+        out = self._resolve("wind", {"41064": report(90, wind_values(19))})
+        self.assertEqual(out["status"], "ok")
+        out = self._resolve("wind", {"41064": report(140, wind_values(19))})
+        self.assertEqual(out["status"], "stale")
+        self.assertEqual(out["station"]["id"], "41064")
+
+    def test_seas_and_offshore_temp_ignore_41109_and_41110(self):
+        for kind in ("seas", "swell", "waterTempOffshore"):
+            out = self._resolve(kind, {
+                "41159": None,
+                "41109": report(10, {"heightFt": 2.0}),
+                "41110": report(10, {"heightFt": 2.6}),
+            })
+            self.assertEqual(out["status"], "unavailable", kind)
+            self.assertEqual([t["id"] for t in out["tried"]], ["41159"])
+
+
+class TopsailTides(unittest.TestCase):
+    def test_hilo_only_no_curve_no_observed_no_inlet_or_wrightsville(self):
+        cfg = conditions.load_regions()
+        r = next(x for x in cfg["regions"] if x["id"] == "topsail")
+        called = {"preds": [], "obs": []}
+
+        def fake_preds(station, begin, end, interval):
+            called["preds"].append((station, interval))
+            if interval == "hilo" and station == "8657419":
+                return [{"t": "2026-11-14 10:19", "v": "4.652", "type": "H"}]
+            if interval == "hilo" and station == "8657167":
+                return [{"t": "2026-11-14 10:32", "v": "3.256", "type": "H"}]
+            if interval == "6":
+                return [{"t": "2026-11-14 10:00", "v": "4.0"}]
+            return None
+
+        def fake_obs(sid, curve_pts, now):
+            called["obs"].append(sid)
+            return {"kind": "observed", "status": "ok", "latest": {"v": 4.3}}
+
+        with patch.object(conditions, "tide_preds", side_effect=fake_preds):
+            with patch.object(conditions, "observed_water_level", side_effect=fake_obs):
+                out = conditions.tides_block(r["tide"], cfg["stations"], r["anchor"], NOW)
+        self.assertEqual(out["status"], "ok")
+        self.assertEqual(out["station"]["id"], "8657419")
+        self.assertEqual(out["interval"], "highs and lows only")
+        self.assertEqual(out.get("curve") or [], [])
+        self.assertNotIn("observed", out)
+        self.assertEqual(called["preds"], [("8657419", "hilo")])
+        self.assertEqual(called["obs"], [])
+        self.assertNotIn("8657167", [s for s, _ in called["preds"]])
+        self.assertNotIn("8658163", called["obs"])

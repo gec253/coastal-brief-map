@@ -361,3 +361,42 @@ and this morning they already disagreed with the Onslow Bay Outer series.
    seas/swell/nearshore-temp source for this region, and leave 41159 as
    a labeled offshore backup?
 
+## Phase 2 defaults (14 Nov 2026)
+
+Set for the private preview on 14 Nov 2026. Config-driven; later review can change them.
+
+- **Coverage:** Topsail Island only, from New River Inlet to New Topsail Inlet
+  (North Topsail Beach, Surf City, and Topsail Beach). Sneads Ferry, Hampstead,
+  and Holly Ridge are out.
+- **Anchor:** 8657419 Ocean City Fishing Pier, 34.4517 N, 77.4950 W. One page.
+- **Alerts:** NCZ199, NCZ106, AMZ158, and AMZ250.
+- **Land forecast:** MHX grid **32, 43**, at 34.4517 N, 77.5020 W, label North
+  Topsail Beach. This is the NWS gridpoint of the pier itself, taken at a land
+  point 0.4 mi west of the pier. `/points` at the pier (34.4517 N, 77.4950 W)
+  returns the same grid but marine zone AMZ158; 0.2 mi west is still AMZ158;
+  0.4 mi west returns NCZ199, Onslow County, North Topsail Beach. A closer
+  land point than MHX 35, 46 (6.3 mi east-northeast).
+- **Marine tile:** both official zones, using the existing `marine.also`
+  mechanism already live for Hatteras (AMZ154 + AMZ152). AMZ158 is labeled
+  "North Topsail / New River Inlet" (office MHX); AMZ250 is labeled "Surf City
+  / Topsail Beach" (office ILM). Those area labels are the displayed
+  `zoneName` so the existing dashboard heading reads "AMZ158 · North Topsail /
+  New River Inlet" without a public JS change (a main-branch test requires
+  `dashboard.js` to match origin/main). Official NWS zone names stay in the
+  caption, with a short note that the island is split at Surf City and that
+  each zone is wider than the island. The optional `area` field is still
+  passed through the marine payload.
+- **Tide:** official highs and lows from 8657419, labeled as predictions. No
+  6-minute curve and no observed water level. 8657167 and Wrightsville
+  observed level are not used.
+- **Ocean wind and pressure:** 41064 only, labeled "Onslow Bay buoy, ~35 mi
+  offshore", with that station's existing 130-minute stale window. 41038 is
+  not used. The 3-hour pressure trend is hidden when PTDY is missing.
+- **Seas, swell, and offshore temperature:** 41159 only, labeled "Onslow Bay
+  Outer, ~36 mi offshore". 41109 and 41110 are not used.
+- **Air temperature and inshore water temperature:** unavailable. KNCA, KOAJ,
+  KILM, and Wrightsville pier water are not used.
+- The region stays a private preview (`enabled: false`, `previewReady: true`).
+  Without the `cb_preview` cookie, `/?region=topsail` and
+  `/api/conditions?region=topsail` return 404 and `/api/regions` does not
+  list it. Going public needs Ed's separate approval.
