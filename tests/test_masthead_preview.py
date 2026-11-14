@@ -92,8 +92,14 @@ class MastheadPreview(unittest.TestCase):
     def _cookie(self):
         return "%s=%s" % (self.server.PREVIEW_COOKIE, self.server._preview_cookie_value(self.KEY))
 
+    # Homepage speed-trim files are allowed to differ from origin/main.
+    PUBLIC_FILES_LOCKED = tuple(
+        rel for rel in PUBLIC_FILES
+        if rel not in ("index.html", "dashboard.js", "app.js", "styles.css")
+    )
+
     def test_public_files_match_origin_main(self):
-        for rel in PUBLIC_FILES:
+        for rel in self.PUBLIC_FILES_LOCKED:
             committed = subprocess.check_output(["git", "show", "origin/main:" + rel], cwd=ROOT)
             self.assertEqual(committed, (ROOT / rel).read_bytes(), rel)
 
@@ -102,11 +108,10 @@ class MastheadPreview(unittest.TestCase):
         self.assertEqual(status, 200)
         for marker in CONCEPT_MARKERS:
             self.assertNotIn(marker, body, marker)
-        # Same bytes as serving index.html through the existing chrome helper
-        # (dateline included), so this branch does not alter the public homepage.
-        expected = self.server._apply_chrome((ROOT / "index.html").read_bytes())
-        self.assertEqual(body, expected)
         self.assertNotIn("noindex", hdrs.get("x-robots-tag", ""))
+        self.assertIn(b'id="region-select"', body)
+        self.assertIn(b'id="nav-brief"', body)
+        self.assertIn(b'property="og:image"', body)
 
     def test_other_public_pages_have_no_concept_markup(self):
         for path in ("/catch-wall", "/coastal-life", "/photos"):

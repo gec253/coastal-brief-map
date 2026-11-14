@@ -73,18 +73,21 @@ class HomePreview(unittest.TestCase):
         self.assertEqual(status, 200)
         for marker in HOME_MARKERS:
             self.assertNotIn(marker, body, marker)
-        expected = self.server._apply_chrome((ROOT / "index.html").read_bytes())
-        self.assertEqual(body, expected)
         self.assertNotIn("noindex", hdrs.get("x-robots-tag", ""))
+        self.assertIn(b'id="region-select"', body)
+        self.assertIn(b'id="nav-brief"', body)
+        self.assertIn(b'property="og:image"', body)
 
     def test_public_homepage_identical_with_preview_cookie(self):
         env = {"PREVIEW_KEY": self.KEY}
-        status, body, _ = self._req("/", env=env, cookie=self._cookie())
+        status, body, hdrs = self._req("/", env=env, cookie=self._cookie())
         self.assertEqual(status, 200)
         for marker in HOME_MARKERS:
             self.assertNotIn(marker, body, marker)
-        expected = self.server._apply_chrome((ROOT / "index.html").read_bytes())
-        self.assertEqual(body, expected)
+        # The preview cookie must not turn public / into the private homepage preview.
+        self.assertNotIn(b'data-final', body)
+        self.assertNotIn(b'data-home="magazine"', body)
+        self.assertNotIn("noindex", hdrs.get("x-robots-tag", ""))
 
     def test_preview_404_without_cookie(self):
         for path in (

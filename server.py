@@ -1073,6 +1073,7 @@ def fetch_radar_tile(z: str, x: str, y: str, t: str) -> tuple[int, str, bytes]:
 
 
 import conditions  # noqa: E402
+import homepage_boot  # noqa: E402
 import photos  # noqa: E402
 import windgrid  # noqa: E402
 import freshwater  # noqa: E402
@@ -1627,9 +1628,10 @@ class Handler(SimpleHTTPRequestHandler):
                 if not self._preview_ok():
                     return self.send_error(404, "not found")
                 data = _apply_chrome((ROOT / "index.html").read_bytes())
+                data = homepage_boot.inject(data, rid, preview=True)
                 data = data.replace(b'name="robots" content="index, follow"', b'name="robots" content="noindex, nofollow"')
                 return self._send_private(None, "text/html; charset=utf-8", data)
-            return self._send_html(ROOT / "index.html")
+            return self._send_html(ROOT / "index.html", region_id=rid or None)
         if parsed.path == "/api/brief/wake":
             # Daily wake-up ping (GitHub Actions, 5:16 AM ET). Builds today's briefs if missing; returns no
             # brief content, so it publishes nothing. Idempotent: at most one build per region per day.
@@ -1937,10 +1939,12 @@ class Handler(SimpleHTTPRequestHandler):
         status, payload = photos.admin_action(body)
         return self._json_private(payload, status)
 
-    def _send_html(self, path: Path, share: str | None = None):
+    def _send_html(self, path: Path, share: str | None = None, region_id: str | None = None, preview: bool = False):
         if not path.is_file():
             return self.send_error(404, "file not found")
         data = _apply_chrome(path.read_bytes())
+        if path.name == "index.html":
+            data = homepage_boot.inject(data, region_id, preview=preview)
         if share:
             data = _apply_share_meta(data, share)
         self.send_response(200)

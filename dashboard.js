@@ -984,11 +984,8 @@
     }
   }
 
-  function render(d) {
-    state.data = d;
-    renderGlance(d);
+  function renderInstruments(d) {
     const R = d.readings || {};
-    renderAlerts(d.alerts, d.marine);
     renderWind(R.wind);
     tweenAll($("i-wind"));
     renderSeas(R.seas);
@@ -1002,9 +999,52 @@
     renderMarine(d.marine);
     renderForecast(d.forecast, d.region, d.marine);
     renderSources(d);
-    renderHeaderBits(d);
+  }
+
+  function scheduleInstruments(d) {
+    if (state.instrumentsPainted) {
+      renderInstruments(d);
+      return;
+    }
+    const start = function () {
+      if (state.instrumentsPainted) return;
+      if (state.data !== d) return;
+      state.instrumentsPainted = true;
+      if (state.instIO) {
+        try { state.instIO.disconnect(); } catch (e) {}
+        state.instIO = null;
+      }
+      renderInstruments(d);
+    };
+    const box = document.querySelector("#conditions .console");
+    if (box && "IntersectionObserver" in window) {
+      state.instIO = new IntersectionObserver(function (ents) {
+        if (ents.some(function (e) { return e.isIntersecting; })) start();
+      }, { rootMargin: "240px 0px" });
+      state.instIO.observe(box);
+    }
+    if ("requestIdleCallback" in window) requestIdleCallback(start, { timeout: 2000 });
+    else setTimeout(start, 1);
+  }
+
+  function render(d, opts) {
+    state.data = d;
+    // If the HTML already contains this exact payload, leave glance/alerts/badge
+    // alone so LCP stays on the server-rendered text instead of a JS rewrite.
+    const boot = readBoot("cb-boot-conditions");
+    const already = !(opts && opts.forcePaint) && boot && boot.ok && d && d.ok
+      && boot.generatedAt === d.generatedAt
+      && boot.region && d.region && boot.region.id === d.region.id
+      && !state.firstPaintDirty;
+    if (!already) {
+      renderGlance(d);
+      renderAlerts(d.alerts, d.marine);
+      renderHeaderBits(d);
+      state.firstPaintDirty = true;
+    }
     $("conditions").classList.remove("is-booting");
     document.dispatchEvent(new CustomEvent("cb:conditions", { detail: d }));
+    scheduleInstruments(d);
   }
 
   function showError(msg) {
@@ -1070,6 +1110,7 @@
     if (window.CoastalBriefLink) CoastalBriefLink.sync(id);
     const tc = $("tide-chart");
     if (tc) delete tc.dataset.revealed;
+    state.instrumentsPainted = true;
     load(id, false);
   }
 
@@ -1082,9 +1123,20 @@
     return FRESHWATER.some(function (r) { return r.id === id; });
   }
 
+  function readBoot(id) {
+    const el = $(id);
+    if (!el || !el.textContent) return null;
+    try { return JSON.parse(el.textContent); } catch (e) { return null; }
+  }
+
   function init() {
     const sel = $("region-select");
-    fetch("/api/regions").then(function (r) { return r.json(); }).then(function (cfg) {
+    const bootRegions = readBoot("cb-boot-regions");
+    const bootConditions = readBoot("cb-boot-conditions");
+    const start = bootRegions && bootRegions.ok && (bootRegions.regions || []).length
+      ? Promise.resolve(bootRegions)
+      : fetch("/api/regions").then(function (r) { return r.json(); });
+    start.then(function (cfg) {
       state.regions = (cfg && cfg.regions) || [];
       if (!state.regions.length) throw new Error("no regions");
       // Saltwater regions stay on this dashboard. Freshwater options go to
@@ -1122,7 +1174,14 @@
           onSelect: function (id) { setRegion(id, true); }
         });
       }
-      setRegion(initial, false);
+      state.regionId = initial;
+      if (sel && sel.value !== initial) sel.value = initial;
+      if (window.CoastalBriefLink) CoastalBriefLink.sync(initial);
+      if (bootConditions && bootConditions.ok && bootConditions.region && bootConditions.region.id === initial) {
+        render(bootConditions);
+      } else {
+        load(initial, false);
+      }
 
     }).catch(function () { showError("Could not load the region list."); });
     let rt = null;

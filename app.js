@@ -1581,12 +1581,17 @@
 
   initTheme();
   initRadarControls();
-  initTides();
-
-  loadAds()
-    .then(fillAds)
-    .catch(function () {
-      /* ads flag unavailable: nothing to show publicly */
-    })
-    .finally(armLazyMap);
+  armLazyMap();
+  function whenIdle(fn) {
+    if ("requestIdleCallback" in window) requestIdleCallback(fn, { timeout: 2500 });
+    else setTimeout(fn, 1);
+  }
+  whenIdle(function () {
+    initTides();
+    loadAds()
+      .then(fillAds)
+      .catch(function () {
+        /* ads flag unavailable: nothing to show publicly */
+      });
+  });
 })();
