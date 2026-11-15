@@ -602,11 +602,11 @@ def _compact_regions(out: str) -> str:
 
 
 def _wrap_reading_times(out: str) -> str:
-    """Fold the reading-times list into a native details/summary.
-
-    The visible heading text remains "Reading times". List items, times and
-    station ids are unchanged. Issued time and the why line stay visible.
+    """Fold the reading-times list only if Data has not already placed the
+    single #mb-sources panel (full sources content + JSON).
     """
+    if 'id="mb-sources"' in out:
+        return out
     pat = r'<p class="mb-fresh-k">Reading times</p>\s*<ul class="mb-fresh">.*?</ul>'
 
     def repl(m: re.Match) -> str:
@@ -624,12 +624,21 @@ def _wrap_reading_times(out: str) -> str:
 
 
 def _move_take_after_glance(out: str) -> str:
-    """Place Captain's Take immediately after the glance cards (or advisories)."""
-    m = re.search(r'\n  <section class="mb-take">.*?</section>', out, flags=re.S)
-    if not m:
+    """Keep exactly one Captain's Take immediately after the glance cards.
+
+    Prefers the Data component (section.mb-summary.mb-take with JSON) and
+    drops the brief.page bottom take if it is still present.
+    """
+    takes = list(re.finditer(
+        r'\s*<section class="(?:mb-summary )?mb-take\b[^"]*"[^>]*>.*?</section>',
+        out, flags=re.S,
+    ))
+    if not takes:
         return out
-    block = m.group(0)
-    out = out[:m.start()] + out[m.end():]
+    preferred = next((m for m in takes if "mb-summary" in m.group(0) or "cb-captains-take" in m.group(0)), takes[0])
+    block = preferred.group(0).strip()
+    for m in reversed(takes):
+        out = out[:m.start()] + out[m.end():]
     for pat in (
         r'(<section class="mb-glance"[^>]*>.*?</section>)',
         r'(<section class="mb-adv"[^>]*>.*?</section>)',
@@ -637,8 +646,8 @@ def _move_take_after_glance(out: str) -> str:
     ):
         n = re.search(pat, out, flags=re.S)
         if n:
-            return out[:n.end()] + block + out[n.end():]
-    return out + block
+            return out[:n.end()] + "\n  " + block + out[n.end():]
+    return out + "\n  " + block
 
 
 def _apply_polish(out: str) -> str:

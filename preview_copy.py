@@ -1189,30 +1189,27 @@ def inject_page(html: str, b: dict) -> str:
     take_html = _render_captains_take(model)
     sources = b.get("readingSources") or []
     sources_html = _render_sources(sources, model)
-    # Place the single Take at the top, after the region nav and before the issue
-    # card, so it is visible in a 390px viewport. Remove the bottom take.
-    html = re.sub(r'<section class="mb-take">.*?</section>', "", html, count=1, flags=re.S)
+    # One Captain's Take, placed after the glance cards. Strip every existing
+    # take (the brief.page bottom take and any prior inject) first.
+    html = re.sub(
+        r'\s*<section class="(?:mb-summary )?mb-take\b[^"]*"[^>]*>.*?</section>',
+        "",
+        html,
+        flags=re.S,
+    )
     if take_html:
-        def _place_take(m):
+        def _after(m):
             return m.group(0) + "\n  " + take_html
-        if re.search(r'<nav class="mb-regions"', html):
-            html, n = re.subn(
-                r'<nav class="mb-regions"[^>]*>.*?</nav>',
-                _place_take,
-                html,
-                count=1,
-                flags=re.S,
-            )
-        else:
-            n = 0
-        if n == 0 and re.search(r'<section class="mb-issue"', html):
-            html = re.sub(
-                r'<section class="mb-issue"',
-                lambda m: take_html + "\n  " + m.group(0),
-                html,
-                count=1,
-            )
-        elif n == 0:
+        n = 0
+        for pat in (
+            r'<section class="mb-glance"[^>]*>.*?</section>',
+            r'<section class="mb-adv"[^>]*>.*?</section>',
+            r'<section class="mb-issue"[^>]*>.*?</section>',
+        ):
+            html, n = re.subn(pat, _after, html, count=1, flags=re.S)
+            if n:
+                break
+        if n == 0:
             html = re.sub(r"(<h1>[^<]*</h1>)", lambda m: m.group(0) + "\n  " + take_html, html, count=1)
     if b.get("stageNote"):
         note = '<p class="mb-stage-note">%s</p>' % esc(brief_strings.STAGE_NOTE)
@@ -1235,16 +1232,35 @@ def inject_page(html: str, b: dict) -> str:
             )
     html = re.sub(r'<p class="mb-miss">Not available at issue time: [^<]*</p>', "", html, count=1)
     html = re.sub(r'<section class="mb-miss mb-unavail"[^>]*>.*?</section>', "", html, count=1, flags=re.S)
-    extras = _missing_sections_html(b) + sources_html
+    # Single sources panel: replace the issue-section "Reading times" list
+    # so Design's wrap has nothing left to fold and no second details is added.
+    if sources_html:
+        html, n = re.subn(
+            r'<p class="mb-fresh-k">Reading times</p>\s*<ul class="mb-fresh">.*?</ul>',
+            sources_html,
+            html,
+            count=1,
+            flags=re.S,
+        )
+        if n == 0 and 'id="mb-sources"' not in html:
+            if re.search(r'</section>\s*<section class="mb-adv"', html):
+                html = re.sub(
+                    r'(</section>)(\s*<section class="mb-adv")',
+                    r"\1\n  " + sources_html + r"\2",
+                    html,
+                    count=1,
+                )
+            else:
+                html = html.replace('<footer class="mb-foot">', sources_html + '\n  <footer class="mb-foot">', 1)
+    extras = _missing_sections_html(b)
     if extras:
         html = html.replace(
             '  <script>\n  (function(){\n    var d=document.getElementById("mb-details");',
             extras + '\n  <script>\n  (function(){\n    var d=document.getElementById("mb-details");',
             1,
         )
-        # If that marker is gone, append before footer
-        if 'class="mb-sources"' not in html and sources_html:
-            html = html.replace('<footer class="mb-foot">', sources_html + '\n  <footer class="mb-foot">', 1)
+        if extras and extras not in html:
+            html = html.replace('<footer class="mb-foot">', extras + '\n  <footer class="mb-foot">', 1)
     return html
 
 
@@ -1315,7 +1331,11 @@ def _render_sources(rows: list, model: dict | None = None) -> str:
     import json
     if not rows:
         payload = json.dumps({"readings": [], "captainsTake": model or {}}, ensure_ascii=False)
-        return '<script type="application/json" id="cb-reading-sources">%s</script>' % esc(payload)
+        return (
+            '<details class="mb-sources" id="mb-sources"><summary>Sources and times</summary>'
+            "<ul></ul></details>"
+            '<script type="application/json" id="cb-reading-sources">%s</script>'
+        ) % payload.replace("</", "<\\/")
     lis = []
     for r in rows:
         kind = r.get("kind") or ""
@@ -1336,7 +1356,8 @@ def _render_sources(rows: list, model: dict | None = None) -> str:
         lis.append("<li>%s</li>" % esc(" · ".join(str(x) for x in bits if x)))
     payload = json.dumps({"readings": rows, "captainsTake": model or {}}, ensure_ascii=False, default=str)
     return (
-        '<details class="mb-sources"><summary>Sources and times</summary><ul>%s</ul></details>'
+        '<details class="mb-sources" id="mb-sources"><summary>Sources and times</summary>'
+        "<ul>%s</ul></details>"
         '<script type="application/json" id="cb-reading-sources">%s</script>'
     ) % ("".join(lis), payload.replace("</", "<\\/"))
 
