@@ -94,9 +94,19 @@ class MastheadPreview(unittest.TestCase):
 
     # Homepage speed-trim files, the Catch Wall form, and the header picker's default region list
     # (region-nav.js, which gains each region when it goes public) may differ from origin/main.
+    # Brief and lake Folio presentation (brief.css, lake.html) may also differ from origin/main.
     PUBLIC_FILES_LOCKED = tuple(
         rel for rel in PUBLIC_FILES
-        if rel not in ("index.html", "dashboard.js", "app.js", "styles.css", "catch-wall.html", "region-nav.js")
+        if rel not in (
+            "index.html",
+            "dashboard.js",
+            "app.js",
+            "styles.css",
+            "catch-wall.html",
+            "region-nav.js",
+            "lake.html",
+            "brief.css",
+        )
     )
 
     def test_public_files_match_origin_main(self):
