@@ -3,7 +3,9 @@
 Coastal previews (Wilmington, Nags Head, Emerald Isle, Topsail) reuse brief.build_salt.
 Freshwater previews (Jordan Lake, Neuse River) are based on the Falls Lake brief and
 assembled from the same official USGS / USACE / NWPS / NWS feeds as /api/freshwater.
-Both kinds run brief.validate as a read-only check, and they are:
+Coastal previews run brief.validate as a read-only check. Jordan Lake and Neuse River
+previews use river_gate (a freshwater-only quality gate) for the banner; brief.validate
+is left unchanged and is not used to accept or reject these two previews. They are:
 
 - served only at /preview/brief/<region-id> to a browser holding the cb_preview cookie (404 otherwise);
 - built in memory on request and kept in this module's own short cache, never in brief._mem,
@@ -97,15 +99,22 @@ def _compose_salt(rid: str, now: datetime) -> dict:
     return _finish(rid, now, body, items, missing, unavailable)
 
 
-def _finish(rid: str, now: datetime, body: dict, items: list, missing: list, unavailable: list, glance=None) -> dict:
+def _finish(rid: str, now: datetime, body: dict, items: list, missing: list, unavailable: list,
+            glance=None, payload=None) -> dict:
     words = len(" ".join([v for _, v in items] + body["take"]).split())
     b = {"ok": True, "regionId": rid, "issueDate": brief._issue_date(now), "issuedAt": now.isoformat(),
          "issuedEt": brief._et(now).strftime("%a %b %-d, %-I:%M %p ET"), "reason": "preview", "words": words,
          **body, "items": items, "missing": missing, "unavailable": unavailable, "preview": True}
     if glance is not None:
         b["glance"] = glance
-    errs, summary = brief.validate(b, rid, now)  # read-only: reports, never gates or stores
-    b["validation"] = {**summary, "errors": errs}
+    if rid in FRESH_REGIONS:
+        import river_gate
+        gate = river_gate.evaluate(rid, payload, now)
+        b["gate"] = gate
+        b["validation"] = river_gate.as_validation(gate)
+    else:
+        errs, summary = brief.validate(b, rid, now)  # read-only: reports, never gates or stores
+        b["validation"] = {**summary, "errors": errs}
     return b
 
 
@@ -395,7 +404,7 @@ def _compose_fresh(rid: str, now: datetime) -> dict:
                                           "anchor": cfg.get("anchor")},
             "waterType": "freshwater", "items": items, "freshness": fresh, "take": take,
             "missing": missing, "sources": sources}
-    return _finish(rid, now, body, items, missing, unavailable, glance=glance)
+    return _finish(rid, now, body, items, missing, unavailable, glance=glance, payload=d)
 
 
 def get(rid: str, now: datetime | None = None) -> tuple[int, dict]:
@@ -437,6 +446,24 @@ def _glance_html(cells: list[dict]) -> str:
     return '<section class="mb-glance" aria-label="At a glance">%s</section>' % "".join(out)
 
 
+def banner_check(b: dict) -> str:
+    """Banner sentence for data checks. Freshwater previews use river_gate; coastal previews use brief.validate."""
+    v = b.get("validation") or {}
+    rid = b.get("regionId") or ""
+    if rid in FRESH_REGIONS and v.get("gate") == "freshwater-preview":
+        if v.get("errors"):
+            return "Data checks: would NOT pass (%s)." % "; ".join(v["errors"])
+        return "Data checks: would pass (%s)." % ("; ".join(v.get("notes") or []) or "all core checks present")
+    if v.get("errors"):
+        return "Data checks: would NOT pass (%s)." % "; ".join(v["errors"])
+    bits = []
+    if v.get("status") == "partial":
+        bits.append("some readings missing at issue time")
+    if b.get("unavailable"):
+        bits.append("some readings have no local sensor, listed below")
+    return "Data checks: would pass (%s)." % ("; ".join(bits) or "all core readings present")
+
+
 def page(b: dict) -> str:
     """brief.page() with a private-preview banner, preview navigation, and an Unavailable section."""
     esc = html.escape
@@ -453,15 +480,7 @@ def page(b: dict) -> str:
         if n == 0 and repl:
             out = out.replace('<details class="mb-details" id="mb-details">', repl + '\n  <details class="mb-details" id="mb-details">', 1)
     v = b.get("validation") or {}
-    if v.get("errors"):
-        check = "Data checks: would NOT pass (%s)." % "; ".join(v["errors"])
-    else:
-        bits = []
-        if v.get("status") == "partial":
-            bits.append("some readings missing at issue time")
-        if b.get("unavailable"):
-            bits.append("some readings have no local sensor, listed below")
-        check = "Data checks: would pass (%s)." % ("; ".join(bits) or "all core readings present")
+    check = banner_check(b)
     banner = ('<section class="mb-pv" style="margin:0 0 14px;padding:10px 12px;border:2px dashed #8c2f23;border-radius:10px">'
               '<p style="margin:0;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.72rem;color:#8c2f23">'
               'Private preview · not published</p><p style="margin:4px 0 0;font-size:.88rem">Built on request from live readings for '
