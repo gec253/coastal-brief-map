@@ -10,6 +10,7 @@ import urllib.error
 import urllib.request
 
 import brief_strings
+import preview_zones
 
 UA = "TheCoastalBrief/1.0 (+https://thecoastalbrief.com; coastal conditions site)"
 
@@ -163,8 +164,11 @@ def apply_coverage(rid: str, payload: dict, fetch=fetch_coverage) -> dict:
     return out
 
 
-def alert_line(al: dict, rid: str = "") -> str:
-    areas = al.get("areasChecked") or areas_phrase(rid=rid)
+def alert_line(al: dict, rid: str = "", codes=None) -> str:
+    ids = list(codes or zone_ids(rid=rid) or [])
+    areas = preview_zones.format_alert_areas(ids) if ids else (
+        al.get("areasChecked") or areas_phrase(rid=rid) or "this area"
+    )
     if al.get("items"):
         import brief
         text = "; ".join(

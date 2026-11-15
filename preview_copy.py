@@ -13,12 +13,25 @@ import brief
 import brief_strings
 import conditions
 import preview_alerts
+import preview_zones
 
 ET = ZoneInfo("America/New_York")
 
 
 def _item_alert(text: str) -> str:
     return text[len("Alerts: "):] if text.startswith("Alerts: ") else text
+
+
+def _alert_areas(rid: str = "", cfg: dict | None = None, al: dict | None = None, codes=None) -> str:
+    """Official NWS names for the visible alerts line and Captain's Take."""
+    ids = list(codes or [])
+    if not ids:
+        ids = list(preview_alerts.zone_ids(rid=rid) or [])
+    if not ids:
+        ids = list((cfg or {}).get("alertZones") or [])
+    if ids:
+        return preview_zones.format_alert_areas(ids)
+    return (al or {}).get("areasChecked") or "this area"
 
 # Informal fragments that must not appear in rendered preview HTML.
 INFORMAL = (
@@ -197,21 +210,13 @@ def relabel_salt(rid: str, body: dict, payload: dict, cfg: dict) -> dict:
             items.append(("Alerts", _item_alert(brief_strings.ALERTS_CHECK_FAILED)))
         elif adv.startswith("No NWS"):
             # coastal: use marine + land zone names if present
-            zones = cfg.get("alertZones") or []
-            areas = ", ".join(zones) if zones else "this area"
-            items.append(("Alerts", _item_alert(brief_strings.alerts_none(areas))))
+            items.append(("Alerts", _item_alert(brief_strings.alerts_none(_alert_areas(rid, cfg, al)))))
         else:
             items.append(("Alerts", "Alerts: " + adv if adv and not adv.lower().startswith("alert") else adv or brief_strings.ALERTS_CHECK_FAILED))
     elif al.get("items"):
         items.append(("Alerts", preview_alerts.alert_item_text(al, rid)))
     elif al.get("status") == "ok":
-        zones = cfg.get("alertZones") or []
-        areas = ", ".join(zones) if zones else "this area"
-        # Prefer official zone names from marine + land if short
-        names = []
-        if (payload.get("marine") or {}).get("zone"):
-            names.append((payload["marine"].get("zoneName") or payload["marine"]["zone"]))
-        items.append(("Alerts", _item_alert(brief_strings.alerts_none(areas))))
+        items.append(("Alerts", _item_alert(brief_strings.alerts_none(_alert_areas(rid, cfg, al)))))
     else:
         items.append(("Alerts", _item_alert(brief_strings.ALERTS_CHECK_FAILED)))
 
@@ -472,8 +477,7 @@ def summary_salt(rid: str, body: dict, payload: dict, cfg: dict) -> str:
         ev = al["items"][0].get("event") or "An NWS alert"
         tail.append("A %s is in effect" % ev)
     else:
-        zones = cfg.get("alertZones") or []
-        tail.append(brief_strings.alerts_none(", ".join(zones) if zones else "this area").rstrip("."))
+        tail.append(brief_strings.alerts_none(_alert_areas(rid, cfg, al)).rstrip("."))
     if tail:
         sents.append(". ".join(tail))
 
@@ -942,7 +946,7 @@ def _take_salt(rid: str, body: dict, payload: dict, cfg: dict, now=None) -> list
                       "sources": [z for z in (cfg.get("alertZones") or [])][:3]})
     else:
         zones = cfg.get("alertZones") or []
-        parts.append({"text": brief_strings.alerts_none(", ".join(zones) if zones else "this area"),
+        parts.append({"text": brief_strings.alerts_none(_alert_areas(rid, cfg, al, zones)),
                       "kind": "alert", "sources": list(zones)})
     sent = _sentence(parts)
     if sent:
@@ -1174,6 +1178,42 @@ def has_stage(items: list) -> bool:
     return False
 
 
+
+def apply_advisory_kind(html: str) -> str:
+    """Restore the advisory tint class that brief.page no longer matches.
+
+    brief._advisory treats text starting with 'No NWS' as is-clear and
+    'Could not' as is-unknown; anything else, including the locked
+    'No active NWS alerts for …' string, is tagged is-active and gets
+    the warning (peach) tint. Preview-only: set is-clear when there are
+    no active alerts, is-unknown when alerts could not be checked
+    (Design's existing unknown class, which shares the calm/green
+    style with is-clear in brief.css), and is-active only for real
+    alerts. Design CSS is not changed.
+    """
+    m = re.search(
+        r'<section class="mb-adv is-([^"]+)"([^>]*)>(.*?)</section>',
+        html, flags=re.S,
+    )
+    if not m:
+        return html
+    body = m.group(3)
+    tm = re.search(r'<p class="mb-adv-t">(.*?)</p>', body, flags=re.S)
+    if not tm:
+        return html
+    low = tm.group(1).lower()
+    if "no active nws alerts" in low or low.startswith("no nws"):
+        kind = "clear"
+    elif "could not be checked" in low or low.startswith("could not"):
+        kind = "unknown"
+    else:
+        kind = "active"
+    if kind == m.group(1):
+        return html
+    return html[:m.start()] + '<section class="mb-adv is-%s"%s>%s</section>' % (
+        kind, m.group(2), body) + html[m.end():]
+
+
 def inject_page(html: str, b: dict) -> str:
     """Insert Captain's Take, stage note, sources block, and professional missing sections.
 
@@ -1181,6 +1221,7 @@ def inject_page(html: str, b: dict) -> str:
     """
     import json
     esc = __import__("html").escape
+    html = apply_advisory_kind(html)
     # Strip earlier preview typography overrides if a previous build added them — keep
     # only a minimal hook so mb-sources is identifiable, no palette or type changes.
     model = b.get("captainsTake") or captains_take(

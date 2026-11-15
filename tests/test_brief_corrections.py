@@ -314,7 +314,7 @@ class Summary(unittest.TestCase):
         self.assertIn("Clayton", ns)
         self.assertIn("1.22 ft stage", ns)
         self.assertIn("NWS forecasts a crest", ns)
-        self.assertIn("Wake, Johnston and Wayne counties", ns)
+        self.assertIn("Wake County, Johnston County, and Wayne County", ns)
         self.assertIn("mb-summary", brief_preview.page(jb))
         for sent in jb["captainsTake"]["sentences"]:
             self.assertIn(sent["text"].rstrip("."), brief_preview.page(jb))
