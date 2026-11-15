@@ -60,6 +60,31 @@ html.intro-seen .wave-intro,
   fill: var(--wi-navy);
 }
 
+/* Soft leading edge: four flat translucent layers stack into a ramp from
+   clear to the solid sheet. Plain fills only: no filters, masks or blur. */
+.wi-wash {
+  fill: var(--wi-navy);
+  fill-opacity: 0.14;
+}
+
+.wi-wash-1 {
+  fill: #2f6a6e;
+  fill-opacity: 0.08;
+}
+
+.wi-wash-2 {
+  fill: #1d4650;
+  fill-opacity: 0.11;
+}
+
+.wi-wash-3 {
+  fill-opacity: 0.13;
+}
+
+.wi-ripple {
+  stroke-width: 1px;
+}
+
 .wi-line {
   fill: none;
   stroke-linecap: round;
@@ -69,8 +94,8 @@ html.intro-seen .wave-intro,
 
 .wi-line-ivory {
   stroke: var(--wi-ivory);
-  stroke-width: 1.35px;
-  opacity: 0.96;
+  stroke-width: 1.2px;
+  opacity: 0.82;
 }
 
 .wi-line-sea {
@@ -158,7 +183,8 @@ html.intro-seen .wave-intro,
   html.intro-reduce:not(.intro-seen) .wi-fill {
     animation: wi-reduce 200ms ease both;
   }
-  html.intro-reduce:not(.intro-seen) .wi-line {
+  html.intro-reduce:not(.intro-seen) .wi-line,
+  html.intro-reduce:not(.intro-seen) .wi-wash {
     opacity: 0;
   }
   html.intro-reduce:not(.intro-seen) .wi-skip {

@@ -5,7 +5,8 @@ from pathlib import Path
 
 DIR = Path(__file__).resolve().parent / "preview" / "wave-intro"
 SESSION_KEY = "cb-wave-intro-seen"
-DURATION_MS = 1700
+DURATION_MS = 1900
+HARD_MAX_MS = 2000
 
 _OVERLAY = """
 <div id="wave-intro" class="wave-intro" role="dialog" aria-label="Site introduction">
@@ -19,8 +20,24 @@ _OVERLAY = """
         <stop offset="0.72" stop-color="#C4A36A"/>
         <stop offset="1" stop-color="#A67C45"/>
       </linearGradient>
+      <linearGradient id="wi-rip-1" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="100" y2="0">
+        <stop offset="0" stop-color="#8EB8B0" stop-opacity="0"/>
+        <stop offset="0.62" stop-color="#8EB8B0" stop-opacity="0.6"/>
+        <stop offset="1" stop-color="#8EB8B0" stop-opacity="0"/>
+      </linearGradient>
+      <linearGradient id="wi-rip-2" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="100" y2="0">
+        <stop offset="0" stop-color="#F3E6D0" stop-opacity="0"/>
+        <stop offset="0.6" stop-color="#F3E6D0" stop-opacity="0.38"/>
+        <stop offset="1" stop-color="#F3E6D0" stop-opacity="0"/>
+      </linearGradient>
     </defs>
+    <path class="wi-wash wi-wash-1" d=""/>
+    <path class="wi-wash wi-wash-2" d=""/>
+    <path class="wi-wash wi-wash-3" d=""/>
+    <path class="wi-wash wi-wash-4" d=""/>
     <path class="wi-sheet" d="M -140 -80 H 1140 V 1400 H -140 Z"/>
+    <path class="wi-line wi-ripple wi-ripple-1" fill="none" stroke="url(#wi-rip-1)" d=""/>
+    <path class="wi-line wi-ripple wi-ripple-2" fill="none" stroke="url(#wi-rip-2)" d=""/>
     <path class="wi-line wi-line-ivory" fill="none" d=""/>
     <path class="wi-line wi-line-sea" fill="none" d=""/>
     <path class="wi-line wi-line-brass" fill="none" stroke="url(#wi-aged-brass)" d=""/>
