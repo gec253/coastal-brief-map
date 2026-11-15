@@ -3867,3 +3867,313 @@ html[data-home="folio"] .dash-controls .region-pick {
     pointer-events: none;
   }
 }
+
+
+/* ---- Folio visual refinements (ported from /preview/visual) ---- */
+/* Homepage only: html[data-home="folio"]. Brief, lake, and Catch Wall are unchanged. */
+
+/* Observed / forecast / predicted stay visibly distinct. */
+html[data-home="folio"] .tag-observed {
+  box-shadow: inset 0 0 0 1px rgba(45, 122, 74, 0.45);
+}
+html[data-home="folio"] .tag-forecast {
+  box-shadow: inset 0 0 0 1px rgba(43, 111, 143, 0.45);
+}
+html[data-home="folio"] .tag-predicted {
+  box-shadow: inset 0 0 0 1px rgba(196, 163, 106, 0.7);
+}
+
+html[data-home="folio"] .gs-cell {
+  box-shadow: var(--folio-lift);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+html[data-home="folio"] .gs-cell:hover,
+html[data-home="folio"] .gs-cell:focus-visible {
+  border-color: rgba(11, 42, 61, 0.32);
+}
+html[data-home="folio"][data-theme="dark"] .gs-cell:hover,
+html[data-home="folio"][data-theme="dark"] .gs-cell:focus-visible {
+  border-color: rgba(228, 216, 196, 0.36);
+}
+html[data-home="folio"] .gs-cell[href="#i-wind"] { box-shadow: inset 3px 0 0 var(--atlantic, #0B2A3D), var(--folio-lift); }
+html[data-home="folio"] .gs-cell[href="#i-seas"] { box-shadow: inset 3px 0 0 var(--coastal, #2B6F8F), var(--folio-lift); }
+html[data-home="folio"] .gs-cell[href="#i-water"] { box-shadow: inset 3px 0 0 var(--seaglass, #5BA8A0), var(--folio-lift); }
+html[data-home="folio"] .gs-cell[href="#i-tide"] { box-shadow: inset 3px 0 0 var(--folio-brass), var(--folio-lift); }
+
+/* Instrument card depth: family hairline, quiet lift, decorative ticks. */
+html[data-home="folio"] .inst {
+  position: relative;
+  border: 1px solid var(--folio-edge);
+  box-shadow: var(--folio-lift), 0 12px 26px -20px rgba(7, 28, 41, 0.5);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+html[data-home="folio"] .inst:hover {
+  border-color: rgba(11, 42, 61, 0.28);
+}
+html[data-home="folio"][data-theme="dark"] .inst:hover {
+  border-color: rgba(228, 216, 196, 0.3);
+}
+html[data-home="folio"] .inst-h {
+  box-shadow: inset 0 -1px 0 var(--folio-edge);
+}
+html[data-home="folio"] .inst-wind { box-shadow: inset 0 2px 0 var(--atlantic, #0B2A3D), var(--folio-lift), 0 12px 26px -20px rgba(7, 28, 41, 0.5); }
+html[data-home="folio"] .inst-seas { box-shadow: inset 0 2px 0 var(--coastal, #2B6F8F), var(--folio-lift), 0 12px 26px -20px rgba(7, 28, 41, 0.5); }
+html[data-home="folio"] .inst-swell { box-shadow: inset 0 2px 0 #3D7A8C, var(--folio-lift), 0 12px 26px -20px rgba(7, 28, 41, 0.5); }
+html[data-home="folio"] .inst-pres { box-shadow: inset 0 2px 0 #6B5A3E, var(--folio-lift), 0 12px 26px -20px rgba(7, 28, 41, 0.5); }
+html[data-home="folio"] .inst-water { box-shadow: inset 0 2px 0 var(--seaglass, #5BA8A0), var(--folio-lift), 0 12px 26px -20px rgba(7, 28, 41, 0.5); }
+html[data-home="folio"] .inst-tide { box-shadow: inset 0 2px 0 var(--folio-brass), var(--folio-lift), 0 12px 26px -20px rgba(7, 28, 41, 0.5); }
+html[data-home="folio"] .inst-marine { box-shadow: inset 0 2px 0 var(--copper-ink, #8E4F2A), var(--folio-lift), 0 12px 26px -20px rgba(7, 28, 41, 0.5); }
+
+html[data-home="folio"] .folio-ticks {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 7px;
+  height: 7px;
+  background: repeating-linear-gradient(90deg, currentColor 0 1px, transparent 1px 7px);
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: 1;
+}
+html[data-home="folio"] .folio-ticks::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  bottom: 10px;
+  width: 10px;
+  height: 10px;
+  border-top: 1px solid currentColor;
+  border-left: 1px solid currentColor;
+  opacity: 0.7;
+}
+
+/* 6. Tighter mobile nameplate; compact bar stays in normal flow and sticky. */
+@media (max-width: 760px) {
+  html[data-home="folio"] .masthead { padding: 2px 0 0; }
+  html[data-home="folio"] .mast-top { min-height: 0; }
+  html[data-home="folio"][data-concept="a"] .mast-mission { margin-top: 2px; }
+  html[data-home="folio"][data-concept="a"] .mast-wave,
+  html[data-home="folio"][data-concept="a"] .mast-wave-svg {
+    margin-top: 2px;
+    height: 12px;
+  }
+  html[data-home="folio"] .mast-motto { margin: 2px auto 8px; }
+  html[data-home="folio"] .compact-bar {
+    position: sticky;
+    top: 0;
+    transform: none;
+    pointer-events: auto;
+  }
+}
+
+/* 8. Alert headlines stay open; long zone lists sit in details. */
+html[data-home="folio"] .dash-alert .al-ev { font-weight: 700; }
+html[data-home="folio"] .al-zones {
+  margin: 2px 0 0;
+  color: var(--d-ink-2, #3E5868);
+}
+html[data-home="folio"] .al-zones > summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  cursor: pointer;
+  font-size: 0.84rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--d-ink-2, #3E5868);
+  list-style: none;
+}
+html[data-home="folio"] .al-zones > summary::-webkit-details-marker { display: none; }
+html[data-home="folio"] .al-zones > summary::after { content: " ▾"; font-size: 0.75em; }
+html[data-home="folio"] .al-zones[open] > summary::after { content: " ▴"; }
+html[data-home="folio"] .al-zones > summary:focus-visible {
+  outline: 3px solid var(--seaglass, #5BA8A0);
+  outline-offset: 2px;
+}
+html[data-home="folio"] .al-zones p {
+  margin: 0 0 6px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--d-ink-2, #3E5868);
+}
+@media (min-width: 1090px) {
+  html[data-home="folio"] .dash-alert {
+    min-height: 0;
+    align-content: unset;
+  }
+  html[data-home="folio"] .al-zones > summary { min-height: 0; }
+}
+
+/* 9. On the Water: one featured photograph, then compact 120px-column cards. */
+html[data-home="folio"] .folio-water,
+html[data-home="folio"] #folio-water-h,
+html[data-home="folio"] #dash-alert,
+html[data-home="folio"] #conditions {
+  scroll-margin-top: 120px;
+}
+html[data-home="folio"] .folio-water {
+  margin: 28px 0 8px;
+  padding: 18px 16px 16px;
+  border: 1px solid var(--folio-edge);
+  border-radius: var(--folio-radius);
+  box-shadow: var(--folio-lift);
+  background-color: var(--d-panel);
+  background-image: var(--folio-grain);
+  background-size: 240px 120px;
+}
+html[data-home="folio"] .folio-water-kicker {
+  margin: 0 0 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--copper-ink, #8E4F2A);
+}
+html[data-home="folio"][data-theme="dark"] .folio-water-kicker { color: var(--copper-lt, #C98657); }
+html[data-home="folio"] .folio-water-title {
+  margin: 0 0 6px;
+  font-family: var(--f-display, "Fraunces", Georgia, serif);
+  font-size: 1.65rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--d-ink);
+}
+html[data-home="folio"] .folio-water-dek {
+  margin: 0 0 16px;
+  max-width: 36rem;
+  color: var(--d-ink-2);
+  font-size: 0.95rem;
+}
+html[data-home="folio"] .folio-water-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr);
+}
+html[data-home="folio"] .folio-water-card {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  border: 1px solid var(--folio-edge);
+  border-radius: var(--folio-radius-sm);
+  background: var(--d-inst);
+  box-shadow: var(--folio-lift);
+  overflow: hidden;
+  color: inherit;
+  min-height: 100%;
+}
+html[data-home="folio"] .folio-water-frame {
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  background: #dfe6ea;
+}
+html[data-home="folio"] .folio-water-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+html[data-home="folio"] .folio-water-copy {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+html[data-home="folio"] .folio-water-k {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--copper-ink, #8E4F2A);
+}
+html[data-home="folio"][data-theme="dark"] .folio-water-k { color: var(--copper-lt, #C98657); }
+html[data-home="folio"] .folio-water-copy h3 {
+  margin: 0;
+  font-family: var(--f-display, "Fraunces", Georgia, serif);
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--d-ink);
+}
+html[data-home="folio"] .folio-water-credit {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: var(--d-ink-2);
+}
+html[data-home="folio"] .folio-water-credit a { color: inherit; }
+html[data-home="folio"] .folio-water-card.is-featured { grid-column: 1 / -1; }
+html[data-home="folio"] .folio-water-card.is-featured .folio-water-frame { aspect-ratio: 16 / 10; }
+html[data-home="folio"] .folio-water-card.is-featured .folio-water-copy h3 { font-size: 1.4rem; }
+html[data-home="folio"] .folio-water-card:not(.is-featured) {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  align-items: start;
+  background: var(--d-inst, #fffdf8);
+}
+html[data-home="folio"] .folio-water-card:not(.is-featured) .folio-water-frame {
+  box-sizing: border-box;
+  width: 120px;
+  max-width: 120px;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  align-self: start;
+}
+html[data-home="folio"] .folio-water-card:not(.is-featured) .folio-water-frame img {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+html[data-home="folio"] .folio-water-card:not(.is-featured) .folio-water-copy {
+  min-width: 0;
+  padding: 8px 10px 10px;
+  gap: 2px;
+  background: var(--d-inst, #fffdf8);
+  color: var(--d-ink, #0b2a3d);
+  z-index: 1;
+}
+html[data-home="folio"] .folio-water-card:not(.is-featured) .folio-water-copy h3 { font-size: 1.02rem; }
+html[data-home="folio"][data-theme="dark"] .folio-water-card:not(.is-featured),
+html[data-home="folio"][data-theme="dark"] .folio-water-card:not(.is-featured) .folio-water-copy {
+  background: var(--d-inst, #0f2a3c);
+  color: var(--d-ink, #f3e6d0);
+}
+@media (min-width: 600px) {
+  html[data-home="folio"] .folio-water-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1100px) {
+  html[data-home="folio"] .folio-water-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  html[data-home="folio"] .folio-water-card.is-featured {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    align-items: stretch;
+  }
+  html[data-home="folio"] .folio-water-card.is-featured .folio-water-frame {
+    aspect-ratio: auto;
+    min-height: 280px;
+    height: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-home="folio"] .gs-cell,
+  html[data-home="folio"] .inst,
+  html[data-home="folio"] .folio-card,
+  html[data-home="folio"] .folio-water-card {
+    transition: none;
+  }
+}
