@@ -5,24 +5,48 @@ from pathlib import Path
 
 DIR = Path(__file__).resolve().parent / "preview" / "wave-intro"
 SESSION_KEY = "cb-wave-intro-seen"
-DURATION_MS = 1520
-HARD_MAX_MS = 1800
+DURATION_MS = 1300
+HARD_MAX_MS = 1500
+
+# Aged-brass stops shared by the masthead rule and the swell's leading edge.
+_BRASS_STOPS = (
+    '<stop offset="0" stop-color="#9C7440"/>'
+    '<stop offset="0.22" stop-color="#B38E55"/>'
+    '<stop offset="0.5" stop-color="#D2B47E"/>'
+    '<stop offset="0.78" stop-color="#B38E55"/>'
+    '<stop offset="1" stop-color="#9C7440"/>'
+)
+
+# The rule's gradient lives outside the overlay (which is display:none once
+# the intro ends), in the masthead SVG's own user space (viewBox 0..1200).
+_DEFS = (
+    '<svg class="wi-defs" width="0" height="0" aria-hidden="true" focusable="false">'
+    '<defs><linearGradient id="wi-rule-aged" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1200" y2="0">'
+    + _BRASS_STOPS
+    + "</linearGradient></defs></svg>\n"
+)
 
 _OVERLAY = """
-<div id="wave-intro" class="wave-intro" role="dialog" aria-label="Site introduction">
-  <div class="wi-fill" aria-hidden="true"></div>
-  <svg class="wi-svg" viewBox="0 0 1000 1000" preserveAspectRatio="none" focusable="false" aria-hidden="true">
+<div id="wave-intro" class="wave-intro" role="region" aria-label="Site introduction">
+  <div class="wi-water" aria-hidden="true">
+    <div class="wi-fill"></div>
+    <svg class="wi-svg" viewBox="0 0 1000 1000" preserveAspectRatio="none" focusable="false" aria-hidden="true">
+      <path class="wi-contour wi-contour-top" d="M -140 -80 H 1140 V 1400 H -140 Z"/>
+      <path class="wi-sheet" d="M -140 -80 H 1140 V 1400 H -140 Z"/>
+    </svg>
+  </div>
+  <svg class="wi-lines" viewBox="0 0 1000 1000" preserveAspectRatio="none" focusable="false" aria-hidden="true">
     <defs>
-      <linearGradient id="wi-brass-fade" gradientUnits="userSpaceOnUse" x1="0" y1="140" x2="0" y2="174">
-        <stop offset="0" stop-color="#C4A36A" stop-opacity="1"/>
-        <stop offset="1" stop-color="#C4A36A" stop-opacity="0"/>
+      <linearGradient id="wi-brass-aged" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1000" y2="0">""" + _BRASS_STOPS + """</linearGradient>
+      <linearGradient id="wi-foam" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1000" y2="0">
+        <stop offset="0" stop-color="#A9CFC4" stop-opacity="0.45"/>
+        <stop offset="0.6" stop-color="#A9CFC4" stop-opacity="1"/>
+        <stop offset="1" stop-color="#A9CFC4" stop-opacity="0.45"/>
       </linearGradient>
+      <clipPath id="wi-brass-clip" clipPathUnits="userSpaceOnUse"><rect x="0" y="-200" width="0" height="0"/></clipPath>
     </defs>
-    <path class="wi-contour wi-contour-top" d="M -140 -80 H 1140 V 1400 H -140 Z"/>
-    <path class="wi-contour wi-contour-mid" d="M -140 -80 H 1140 V 1400 H -140 Z"/>
-    <path class="wi-sheet" d="M -140 -80 H 1140 V 1400 H -140 Z"/>
-    <path class="wi-line wi-line-sea" fill="none" d=""/>
-    <path class="wi-line wi-line-brass" fill="none" stroke="url(#wi-brass-fade)" d=""/>
+    <path class="wi-line wi-line-foam" fill="none" stroke="url(#wi-foam)" d=""/>
+    <path class="wi-line wi-line-brass" fill="none" stroke="url(#wi-brass-aged)" clip-path="url(#wi-brass-clip)" d=""/>
   </svg>
   <button type="button" class="wi-skip" id="wi-skip">Skip intro</button>
   <button type="button" class="wi-sound" id="wi-sound" hidden aria-pressed="false" data-sound-hook>Sound</button>
@@ -132,7 +156,7 @@ def paint(data: bytes) -> bytes:
     gt = data.find(b">", body)
     if gt < 0:
         raise RuntimeError("wave intro: malformed <body>")
-    data = data[: gt + 1] + _OVERLAY.encode("utf-8") + data[gt + 1 :]
+    data = data[: gt + 1] + _DEFS.encode("utf-8") + _OVERLAY.encode("utf-8") + data[gt + 1 :]
 
     foot = b"    </div>\n  </footer>"
     if foot not in data:
