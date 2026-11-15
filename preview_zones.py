@@ -8,9 +8,10 @@ Names are properties.name as returned by api.weather.gov on 15 Nov 2026
 TheCoastalBrief/1.0 (+https://thecoastalbrief.com; coastal conditions
 site). Do not invent a name.
 
-Coverage: every zone used by the six preview briefs (wilmington,
-nags-head, emerald-isle, topsail, neuse-river, jordan-lake), plus Cape
-Fear's Harnett, Cumberland and Bladen forecast and county zones.
+Coverage: every zone used by the eight preview briefs (wilmington,
+nags-head, emerald-isle, topsail, carolina-kure, corolla-duck,
+neuse-river, jordan-lake), plus Cape Fear's Harnett, Cumberland and
+Bladen forecast and county zones.
 
 Display rules
 -------------
@@ -82,6 +83,12 @@ ZONE_NAMES: dict[str, dict[str, str]] = {
         "name": "Northern Outer Banks",
         "type": "public",
         "source": "https://api.weather.gov/zones/forecast/NCZ203",
+        "fetched": "2026-11-15",
+    },
+    "NCZ102": {
+        "name": "Eastern Currituck",
+        "type": "public",
+        "source": "https://api.weather.gov/zones/forecast/NCZ102",
         "fetched": "2026-11-15",
     },
     "NCZ199": {

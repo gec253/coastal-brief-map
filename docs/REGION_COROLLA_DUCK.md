@@ -51,13 +51,15 @@ coordinate before the map can be honestly centered between the two towns.
   - Duck Pier official coordinate → NWS `/points` office **MHX**,
     forecastZone **AMZ150** (the pier point is treated as marine), grid
     MHX 85,128, radar KAKQ (8:52 AM ET). The MHX public land zone
-    **NCZ203 Northern Outer Banks** exists; membership of the Duck
-    townsite in NCZ203 was **not verified** with a land `/points` query
-    today, because the official pier coordinate maps to AMZ150.
-  - Corolla is in Currituck County. Public zone **NCZ102 Eastern
-    Currituck** exists and is CWA **AKQ** (Wakefield). That is the
-    expected land zone for Corolla; a Corolla town `/points` query was
-    not issued today because no official town coordinate was on hand.
+    **NCZ203 Northern Outer Banks** exists. A later land `/points`
+    query at the Duck townsite (36.163, −75.75; 15 Nov 2026) confirmed
+    forecastZone **NCZ203**, county **NCC055** (Dare), office MHX,
+    relativeLocation Duck, NC, 0 m. The official pier coordinate still
+    maps to AMZ150.
+  - Corolla is in Currituck County. A land `/points` query at
+    36.377, −75.830 the same day confirmed forecastZone **NCZ102
+    Eastern Currituck**, county **NCC053** (Currituck), office **AKQ**
+    (Wakefield). relativeLocation was Coinjock, NC, 10,420 m at 75°.
 - **Sound side:** ANZ633 "Currituck Sound" (AKQ) is the official sound
   zone. It is relevant for the sound behind Corolla / Duck, not the
   oceanfront.
@@ -97,10 +99,16 @@ and was not re-fetched today.
   grid MHX 85,128. Point forecast:
   `https://api.weather.gov/gridpoints/MHX/85,128/forecast`. The pier
   coordinate's `forecastZone` is **AMZ150**, not a land zone.
-- **Duck land zone (expected, membership unverified at a land point
-  today):** NCZ203 Northern Outer Banks (MHX).
-- **Corolla land (expected, no `/points` query today):** NCZ102 Eastern
-  Currituck, office **AKQ** (Wakefield).
+- **Duck land zone (confirmed 15 Nov 2026):** NCZ203 Northern Outer
+  Banks (MHX). NWS `/points` at 36.163, −75.75 (Duck townsite) returned
+  forecastZone NCZ203, county NCC055, office MHX, relativeLocation
+  Duck, NC, 0 m. User-Agent: TheCoastalBrief/1.0
+  (+https://thecoastalbrief.com; coastal conditions site).
+- **Corolla land (confirmed 15 Nov 2026):** NCZ102 Eastern Currituck,
+  office **AKQ** (Wakefield). NWS `/points` at 36.377, −75.830 returned
+  forecastZone NCZ102, county NCC053, office AKQ, relativeLocation
+  Coinjock, NC, 10,420 m at bearing 75°. Same User-Agent. Alert zones
+  were not changed; both already matched.
 - **Marine tile for Duck and for Corolla beaches south of Currituck
   Beach Light:** AMZ150, with a caption that the official zone runs from
   the light to Oregon Inlet and is shared with Nags Head. Waters **north
@@ -130,8 +138,8 @@ offices and zones.
   come from the FRF buoys.
 - FRFN7, the FRF pier station in the NDBC table, is still 404.
 - Marine zone north of Currituck Beach Light not identified.
-- Land-zone membership of the Duck townsite (NCZ203) not verified with a
-  land `/points` query.
+- Land-zone membership of the Duck townsite (NCZ203) was confirmed with
+  a land `/points` query on 15 Nov 2026 (see NWS office section).
 - No verified MHX or AKQ SRF / rip-current product today.
 - FRF currents (`currents=y` on 44056 and 44100) not verified with a
   time series.
@@ -208,7 +216,7 @@ the lack of any Corolla sensor.
    Beach Light (USCG light list, NPS, or an NWS point)?
 3. Which AKQ ocean marine zone covers waters north of Currituck Beach
    Light?
-4. Confirm NCZ203 membership with a Duck land `/points` query.
+4. NCZ203 at the Duck townsite and NCZ102 at Corolla were confirmed with land `/points` queries on 15 Nov 2026 (forecastZone and county as recorded above).
 5. Is a labeled 44100 "26 m / offshore" tile worth showing beside 44056
    when seas differ, or should 44100 stay backup-only?
 6. Re-check MHX and AKQ SRF / rip-current products in season.

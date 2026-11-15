@@ -75,18 +75,38 @@ def place_word(meta: dict | None, role: str = "", kind: str = "") -> str | None:
     return None
 
 
-def where(sid: str, meta: dict | None, anchor: dict | None, role: str = "", kind: str = "") -> str:
+# Card/Take distances for these two regions keep one decimal (12.8, 2.2)
+# so they match the config labels. Other regions keep station_info rounding.
+_PRECISE_MI = {"carolina-kure", "corolla-duck"}
+
+
+def _miles_bearing_text(meta: dict | None, anchor: dict | None, rid: str = ""):
+    """Return (miles, bearing, label) or (None, None, None)."""
+    meta = meta or {}
+    anchor = anchor or {}
+    if (
+        rid in _PRECISE_MI
+        and anchor.get("lat") is not None
+        and meta.get("lat") is not None
+    ):
+        d, bdeg = conditions.miles_bearing(anchor["lat"], anchor["lon"], meta["lat"], meta["lon"])
+        return d, conditions.compass(bdeg), "%.1f" % round(d, 1)
+    return None, None, None
+
+
+def where(sid: str, meta: dict | None, anchor: dict | None, role: str = "", kind: str = "", rid: str = "") -> str:
     """'Name (id), N mi BEARING of Anchor (offshore)' or 'Name (id)' when local."""
     meta = meta or {}
     info = conditions.station_info(sid, meta, anchor)
     name = info.get("name") or sid
     loc = "%s (%s)" % (name, sid)
-    d = info.get("distanceMi")
-    b = info.get("bearingFromAnchor")
+    d, b, dtxt = _miles_bearing_text(meta, anchor, rid)
+    if dtxt is None:
+        d = info.get("distanceMi")
+        b = info.get("bearingFromAnchor")
+        dtxt = str(int(d)) if d is not None and float(d) == int(d) else (str(d) if d is not None else None)
     anchor_label = (anchor or {}).get("label") or (info.get("anchor") or "the region anchor")
     if d is not None and float(d) >= 0.5 and b:
-        # distances already rounded by station_info
-        dtxt = str(int(d)) if float(d) == int(d) else str(d)
         loc += ", %s mi %s of %s" % (dtxt, b, anchor_label)
     word = place_word(meta, role, kind)
     if word:
@@ -98,14 +118,14 @@ def _ok(block: dict | None) -> bool:
     return bool(block) and block.get("status") == "ok" and not block.get("stale")
 
 
-def _tides_text(t: dict, cfg: dict, stations: dict, anchor: dict) -> str | None:
+def _tides_text(t: dict, cfg: dict, stations: dict, anchor: dict, rid: str = "") -> str | None:
     if t.get("status") != "ok":
         return None
     st = t.get("station") or {}
     sid = st.get("id") or (cfg.get("tide") or {}).get("station")
     meta = stations.get(sid) or {}
     pred_where = where(sid, {**meta, **{k: st.get(k) or meta.get(k) for k in ("name", "lat", "lon", "setting", "agency")}},
-                       anchor, role="tide predictions")
+                       anchor, role="tide predictions", rid=rid)
     evs = t.get("events") or []
     # keep today's events already selected by build_salt; if the item listed them, we rebuild from t
     now = datetime.now(timezone.utc)
@@ -133,7 +153,7 @@ def _tides_text(t: dict, cfg: dict, stations: dict, anchor: dict) -> str | None:
         if ob.get("status") == "ok" and ob.get("latest"):
             obs_sid = (ob.get("station") or {}).get("id") or tide_cfg.get("observedStation") or sid
             obs_meta = stations.get(obs_sid) or (ob.get("station") or {})
-            obs_where = where(obs_sid, obs_meta, anchor, role="observed water level")
+            obs_where = where(obs_sid, obs_meta, anchor, role="observed water level", rid=rid)
             latest = ob["latest"]
             try:
                 ot = brief._t(datetime.fromtimestamp(latest["t"] / 1000, timezone.utc))
@@ -151,7 +171,7 @@ def _tides_text(t: dict, cfg: dict, stations: dict, anchor: dict) -> str | None:
     return text
 
 
-def _water_temp_text(R: dict, cfg: dict, stations: dict, anchor: dict) -> tuple[str, list]:
+def _water_temp_text(R: dict, cfg: dict, stations: dict, anchor: dict, rid: str = "") -> tuple[str, list]:
     """Return (item text, unavailable pairs)."""
     specs = cfg.get("readings") or {}
     unavail = []
@@ -165,7 +185,7 @@ def _water_temp_text(R: dict, cfg: dict, stations: dict, anchor: dict) -> tuple[
         sid = st.get("id")
         bits.append("%.0f°F inshore at %s, observed." % (
             inshore["values"]["f"],
-            where(sid, stations.get(sid) or st, anchor, role=inshore_spec.get("role") or "inshore", kind="waterTemp"),
+            where(sid, stations.get(sid) or st, anchor, role=inshore_spec.get("role") or "inshore", kind="waterTemp", rid=rid),
         ))
     elif not (inshore_spec.get("sources")):
         bits.append(brief_strings.not_measured("Inshore water temperature"))
@@ -186,7 +206,7 @@ def _water_temp_text(R: dict, cfg: dict, stations: dict, anchor: dict) -> tuple[
         bits.append("%s: %.0f°F, observed at %s." % (
             label,
             offshore["values"]["f"],
-            where(sid, meta, anchor, role=off_spec.get("role") or "", kind="waterTempOffshore"),
+            where(sid, meta, anchor, role=off_spec.get("role") or "", kind="waterTempOffshore", rid=rid),
         ))
     return " ".join(bits), unavail
 
@@ -226,7 +246,7 @@ def relabel_salt(rid: str, body: dict, payload: dict, cfg: dict) -> dict:
             return False
         st = r.get("station") or {}
         sid = st.get("id")
-        loc = where(sid, stations.get(sid) or st, anchor, role=(specs.get(kind) or {}).get("role") or "", kind=kind)
+        loc = where(sid, stations.get(sid) or st, anchor, role=(specs.get(kind) or {}).get("role") or "", kind=kind, rid=rid)
         items.append((label, verb + " at " + loc + (", observed." if not extra else extra)))
         return True
 
@@ -235,9 +255,9 @@ def relabel_salt(rid: str, body: dict, payload: dict, cfg: dict) -> dict:
         v = R["wind"]["values"]
         st = R["wind"].get("station") or {}
         sid = st.get("id")
-        loc = where(sid, stations.get(sid) or st, anchor, role=(specs.get("wind") or {}).get("role") or "", kind="wind")
+        loc = where(sid, stations.get(sid) or st, anchor, role=(specs.get("wind") or {}).get("role") or "", kind="wind", rid=rid)
         gust = v.get("gustKt") or v.get("speedKt")
-        lead = card_lead(sid, stations.get(sid) or st, anchor, (specs.get("wind") or {}).get("role") or "", "wind")
+        lead = card_lead(sid, stations.get(sid) or st, anchor, (specs.get("wind") or {}).get("role") or "", "wind", rid)
         line = "%s: %d kt from the %s, gusting %d, observed at %s." % (
             lead or "Wind", round(v["speedKt"]), v.get("dirCompass") or "", round(gust or 0), loc)
         if not lead:
@@ -254,12 +274,12 @@ def relabel_salt(rid: str, body: dict, payload: dict, cfg: dict) -> dict:
         v = R["seas"]["values"]
         st = R["seas"].get("station") or {}
         sid = st.get("id")
-        loc = where(sid, stations.get(sid) or st, anchor, role=(specs.get("seas") or {}).get("role") or "", kind="seas")
+        loc = where(sid, stations.get(sid) or st, anchor, role=(specs.get("seas") or {}).get("role") or "", kind="seas", rid=rid)
         period = v.get("dominantPeriodS")
         dirc = v.get("meanDirCompass") or ""
         pbit = " every %d s" % round(period) if period else ""
         dbit = (" from the %s" % dirc) if dirc else ""
-        lead = card_lead(sid, stations.get(sid) or st, anchor, (specs.get("seas") or {}).get("role") or "", "seas")
+        lead = card_lead(sid, stations.get(sid) or st, anchor, (specs.get("seas") or {}).get("role") or "", "seas", rid)
         prefix = (lead + ": ") if lead else ""
         line = "%sCombined seas %.1f ft%s%s at %s, observed." % (prefix, v["heightFt"], pbit, dbit, loc)
         old = by_old.get("Seas") or ""
@@ -272,8 +292,8 @@ def relabel_salt(rid: str, body: dict, payload: dict, cfg: dict) -> dict:
         v = R["swell"]["values"]
         st = (R.get("swell") or {}).get("station") or (R.get("seas") or {}).get("station") or {}
         sid = st.get("id") or ((specs.get("swell") or {}).get("sources") or [None])[0]
-        loc = where(sid, stations.get(sid) or st, anchor, role=(specs.get("swell") or {}).get("role") or "", kind="swell") if sid else "the wave buoy"
-        lead = card_lead(sid, stations.get(sid) or st, anchor, (specs.get("swell") or {}).get("role") or "", "swell") if sid else ""
+        loc = where(sid, stations.get(sid) or st, anchor, role=(specs.get("swell") or {}).get("role") or "", kind="swell", rid=rid) if sid else "the wave buoy"
+        lead = card_lead(sid, stations.get(sid) or st, anchor, (specs.get("swell") or {}).get("role") or "", "swell", rid) if sid else ""
         prefix = (lead + ": ") if lead else ""
         items.append((
             "Swell",
@@ -286,7 +306,7 @@ def relabel_salt(rid: str, body: dict, payload: dict, cfg: dict) -> dict:
         v = p["values"]
         st = p.get("station") or {}
         sid = st.get("id")
-        loc = where(sid, stations.get(sid) or st, anchor, role=(specs.get("pressure") or {}).get("role") or "", kind="pressure")
+        loc = where(sid, stations.get(sid) or st, anchor, role=(specs.get("pressure") or {}).get("role") or "", kind="pressure", rid=rid)
         trend = v.get("trend") or "3-hour trend not reported"
         line = "%.2f inHg, %s, observed at %s." % (v["inHg"], trend, loc)
         old = by_old.get("Pressure") or ""
@@ -306,13 +326,13 @@ def relabel_salt(rid: str, body: dict, payload: dict, cfg: dict) -> dict:
         items.append(("Rain", nws_chance_of_rain(by_old["Rain"])))
     # Tides
     t = (payload or {}).get("tides") or {}
-    rebuilt = _tides_text(t, cfg, stations, anchor)
+    rebuilt = _tides_text(t, cfg, stations, anchor, rid)
     if rebuilt:
         items.append(("Tides", rebuilt))
     elif "Tides" in by_old:
         items.append(("Tides", by_old["Tides"]))
     # Water temp
-    wt, wt_un = _water_temp_text(R, cfg, stations, anchor)
+    wt, wt_un = _water_temp_text(R, cfg, stations, anchor, rid)
     unavail.extend(wt_un)
     if wt:
         items.append(("Water temp", wt))
@@ -603,8 +623,14 @@ JORDAN_GUIDE_NOTE = (
 
 
 
+_ZERO_RAIN = re.compile(
+    r"(?:NWS forecasts a\s+)?0\s*%\s*chance(?: of rain)?(?:\s+through tonight)?\s*[;,]?\s*",
+    re.I,
+)
+
+
 def nws_chance_of_rain(txt: str) -> str:
-    """Preview-only: 'NWS forecasts a 0% chance through tonight' -> '...chance of rain...'."""
+    """Preview-only: add 'of rain' after a non-zero chance, and an NWS lead-in."""
     if not txt:
         return txt
     if re.search(r"% chance(?! of rain)", txt, re.I):
@@ -617,7 +643,21 @@ def nws_chance_of_rain(txt: str) -> str:
     return txt
 
 
-def take_place(sid: str, meta: dict | None, anchor: dict | None, role: str = "", kind: str = "") -> tuple[str, str]:
+def rain_clause_for_take(txt: str) -> str | None:
+    """Take forecast clause, omitting a 0% chance of rain. Keeps the rest."""
+    if not txt:
+        return None
+    if re.search(r"\b0\s*%\s*chance", txt, re.I):
+        rest = _ZERO_RAIN.sub("", txt, count=1).strip(" ;.")
+        if not rest or re.search(r"\b0\s*%\s*chance", rest, re.I):
+            return None
+        return nws_chance_of_rain(rest)
+    if "NWS" in txt or "% chance" in txt:
+        return nws_chance_of_rain(txt)
+    return None
+
+
+def take_place(sid: str, meta: dict | None, anchor: dict | None, role: str = "", kind: str = "", rid: str = "") -> tuple[str, str]:
     """Natural Take location: ('offshore buoy 41064, 32 mi SSE', '') or
     ('Duck Pier (8651370), 21 mi NNW', 'a representative observation').
     Card labels stay on card_lead and are not changed here.
@@ -627,12 +667,14 @@ def take_place(sid: str, meta: dict | None, anchor: dict | None, role: str = "",
         return "", ""
     info = conditions.station_info(sid, meta, anchor)
     word = place_word(meta, role, kind)
-    d = info.get("distanceMi")
-    b = info.get("bearingFromAnchor")
+    d, b, dtxt = _miles_bearing_text(meta, anchor, rid)
+    if dtxt is None:
+        d = info.get("distanceMi")
+        b = info.get("bearingFromAnchor")
+        dtxt = str(int(d)) if d is not None and float(d) == int(d) else (str(d) if d is not None else None)
     name = info.get("name") or sid
     loc = None
     if d is not None and float(d) >= 0.5 and b:
-        dtxt = str(int(d)) if float(d) == int(d) else str(d)
         loc = "%s mi %s" % (dtxt, b)
     if word == "offshore" and loc:
         return "offshore buoy %s, %s" % (sid, loc), ""
@@ -653,15 +695,21 @@ def _at_place(place: str, qual: str = "") -> str:
 
 
 def _take_wind(kt, compass: str, gust=None) -> str:
-    if kt is None:
-        return ""
-    k = int(round(kt))
+    """Sustained speed when it was reported; never imply one from a gust alone."""
     dirc = (compass or "").strip()
+    if kt is None:
+        if gust is None:
+            return ""
+        g = int(round(gust))
+        if dirc:
+            return "Only a %s gust of %d kt was reported" % (dirc, g)
+        return "Only a gust of %d kt was reported" % g
+    k = int(round(kt))
     if k < 10:
         w = "Light %s wind" % dirc if dirc else "Light wind"
     else:
         w = "%s wind %d kt" % (dirc, k) if dirc else "%d kt wind" % k
-    if gust is not None and kt is not None and gust - kt >= 3:
+    if gust is not None and gust - kt >= 3:
         w += ", gusting %d kt" % round(gust)
     return w
 
@@ -727,17 +775,18 @@ def _sentence(parts: list) -> dict | None:
     }
 
 
-def card_lead(sid: str, meta: dict | None, anchor: dict | None, role: str = "", kind: str = "") -> str:
+def card_lead(sid: str, meta: dict | None, anchor: dict | None, role: str = "", kind: str = "", rid: str = "") -> str:
     """Short, prominent station lead for a card, e.g. 'Offshore buoy 44086, 11 mi ENE'."""
     meta = meta or {}
     info = conditions.station_info(sid, meta, anchor)
     word = place_word(meta, role, kind)
-    d = info.get("distanceMi")
-    b = info.get("bearingFromAnchor")
+    d, b, dtxt = _miles_bearing_text(meta, anchor, rid)
+    if dtxt is None:
+        d = info.get("distanceMi")
+        b = info.get("bearingFromAnchor")
+        dtxt = str(int(d)) if d is not None and float(d) == int(d) else (str(d) if d is not None else None)
     name = info.get("name") or sid
-    dtxt = None
     if d is not None and float(d) >= 0.5 and b:
-        dtxt = str(int(d)) if float(d) == int(d) else str(d)
         loc = "%s mi %s" % (dtxt, b)
     else:
         loc = None
@@ -807,18 +856,18 @@ def _take_salt(rid: str, body: dict, payload: dict, cfg: dict, now=None) -> list
         sid = st.get("id") or sid_fallback
         if not sid:
             return "", ""
-        return take_place(sid, stations.get(sid) or st, anchor, (specs.get(kind) or {}).get("role") or "", kind)
+        return take_place(sid, stations.get(sid) or st, anchor, (specs.get(kind) or {}).get("role") or "", kind, rid)
 
     # 1. Wind and seas/swell
     parts = []
-    if _ok(R.get("wind")) and (R["wind"].get("values") or {}).get("speedKt") is not None:
-        v = R["wind"]["values"]
-        wtxt = _take_wind(v["speedKt"], v.get("dirCompass"), v.get("gustKt"))
+    wv = (R.get("wind") or {}).get("values") or {}
+    if _ok(R.get("wind")) and (wv.get("speedKt") is not None or wv.get("gustKt") is not None):
+        wtxt = _take_wind(wv.get("speedKt"), wv.get("dirCompass"), wv.get("gustKt"))
         wplace, wqual = place_for("wind")
         if not wplace:
             sid = ((R["wind"].get("station") or {}).get("id"))
             wplace, wqual = take_place(sid, stations.get(sid) or R["wind"].get("station"), anchor,
-                                       (specs.get("wind") or {}).get("role") or "", "wind") if sid else ("", "")
+                                       (specs.get("wind") or {}).get("role") or "", "wind", rid) if sid else ("", "")
         text = wtxt + _at_place(wplace, wqual)
         sid = ((R["wind"].get("station") or {}).get("id"))
         parts.append({"text": text, "kind": "observed", "sources": [sid] if sid else []})
@@ -869,12 +918,9 @@ def _take_salt(rid: str, body: dict, payload: dict, cfg: dict, now=None) -> list
     if _ok(inshore) and (inshore.get("values") or {}).get("f") is not None:
         st = inshore.get("station") or {}
         sid = st.get("id")
-        place, qual = take_place(sid, stations.get(sid) or st, anchor, in_spec.get("role") or "inshore", "waterTemp")
+        place, qual = take_place(sid, stations.get(sid) or st, anchor, in_spec.get("role") or "inshore", "waterTemp", rid)
         parts.append({"text": "%.0f°F inshore%s" % (inshore["values"]["f"], _at_place(place, qual)),
                       "kind": "observed", "sources": [sid] if sid else []})
-    elif not in_spec.get("sources"):
-        parts.append({"text": brief_strings.not_measured("Inshore water temperature"),
-                      "kind": "missing", "sources": []})
     elif inshore.get("status") == "stale" and inshore.get("time"):
         parts.append({"text": brief_strings.not_used(
             "Inshore water temperature", brief._t(inshore["time"]),
@@ -884,7 +930,7 @@ def _take_salt(rid: str, body: dict, payload: dict, cfg: dict, now=None) -> list
     if _ok(offshore) and (offshore.get("values") or {}).get("f") is not None:
         st = offshore.get("station") or {}
         sid = st.get("id")
-        place, qual = take_place(sid, stations.get(sid) or st, anchor, off_spec.get("role") or "", "waterTempOffshore")
+        place, qual = take_place(sid, stations.get(sid) or st, anchor, off_spec.get("role") or "", "waterTempOffshore", rid)
         parts.append({"text": "%.0f°F observed%s" % (offshore["values"]["f"], _at_place(place, qual)),
                       "kind": "observed", "sources": [sid] if sid else []})
 
@@ -923,8 +969,9 @@ def _take_salt(rid: str, body: dict, payload: dict, cfg: dict, now=None) -> list
     marine = dict(body.get("items") or []).get("Marine forecast")
     fc_bits = []
     fc_srcs = []
-    if rain and ("NWS" in rain or "% chance" in rain):
-        fc_bits.append(nws_chance_of_rain(rain))
+    clause = rain_clause_for_take(rain) if rain else None
+    if clause:
+        fc_bits.append(clause)
         fc_srcs.append("NWS")
     elif any("Rain forecast" in m or "rain forecast" in m.lower() for m in (body.get("missing") or [])):
         parts.append({"text": brief_strings.nws_forecast_unavailable("Rain forecast"),
