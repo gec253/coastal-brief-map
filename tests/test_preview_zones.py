@@ -23,15 +23,15 @@ ZONE_RE = re.compile(r"\b(?:AMZ|NCZ|NCC)\d+\b")
 
 # Official display phrases, from names fetched 15 Nov 2026.
 EXPECTED = {
-    "wilmington": "Coastal waters from Surf City to Cape Fear NC out 20 nm and Coastal New Hanover",
+    "wilmington": "Coastal waters from Surf City to Cape Fear NC out 20 nm; Coastal New Hanover",
     "nags-head": (
-        "S of Currituck Beach Light NC to Oregon Inlet NC out to 20 nm, "
-        "Northern Outer Banks and Croatan and Roanoke Sounds"
+        "S of Currituck Beach Light NC to Oregon Inlet NC out to 20 nm; "
+        "Northern Outer Banks; Croatan and Roanoke Sounds"
     ),
-    "emerald-isle": "S of Cape Lookout NC to Surf City NC out to 20 nm and West Carteret",
+    "emerald-isle": "S of Cape Lookout NC to Surf City NC out to 20 nm; West Carteret",
     "topsail": (
-        "Coastal Onslow, Coastal Pender, S of Cape Lookout NC to Surf City NC out to 20 nm "
-        "and Coastal waters from Surf City to Cape Fear NC out 20 nm"
+        "Coastal Onslow; Coastal Pender; S of Cape Lookout NC to Surf City NC out to 20 nm; "
+        "Coastal waters from Surf City to Cape Fear NC out 20 nm"
     ),
     "neuse-river": "Wake, Johnston and Wayne counties",
     "jordan-lake": "Chatham County",
@@ -141,7 +141,7 @@ class ZoneNameMap(unittest.TestCase):
         self.assertEqual(preview_zones.official_name("AMZ999"), None)
         self.assertEqual(
             preview_zones.format_alert_areas(["AMZ158", "AMZ999", "NCZ195"]),
-            "S of Cape Lookout NC to Surf City NC out to 20 nm, AMZ999 and West Carteret",
+            "S of Cape Lookout NC to Surf City NC out to 20 nm; AMZ999; West Carteret",
         )
 
     def test_phrases_for_every_preview_and_cape_fear(self):
@@ -213,15 +213,30 @@ class ZoneNameMap(unittest.TestCase):
     def test_joins_without_an_oxford_comma(self):
         self.assertEqual(preview_zones.join_names(["A", "B", "C"]), "A, B and C")
         self.assertEqual(preview_zones.join_names(["A", "B"]), "A and B")
-        for rid in ("nags-head", "topsail", "neuse-river", "cape-fear"):
+        for rid in ("neuse-river", "cape-fear"):
             phrase = preview_zones.format_alert_areas(_codes(rid))
             self.assertNotIn(", and ", phrase, rid)
             self.assertEqual(phrase, EXPECTED[rid], rid)
-        # Grouped counties are one item, placed after non-county zone names.
+
+    def test_mixed_items_use_semicolons_and_keep_and_in_a_name(self):
+        self.assertEqual(
+            preview_zones.format_alert_areas(_codes("nags-head")),
+            EXPECTED["nags-head"],
+        )
+        self.assertIn("Croatan and Roanoke Sounds", EXPECTED["nags-head"])
+        self.assertNotIn("Northern Outer Banks and Croatan", EXPECTED["nags-head"])
+        # Mixed marine + bare counties + a qualified land zone: semicolons,
+        # each bare county as "{Name} County", first-seen order.
         self.assertEqual(
             preview_zones.format_alert_areas(["AMZ158", "NCZ041", "NCZ195", "NCZ042"]),
-            "S of Cape Lookout NC to Surf City NC out to 20 nm, West Carteret and Wake and Johnston counties",
+            "S of Cape Lookout NC to Surf City NC out to 20 nm; Wake County; West Carteret; Johnston County",
         )
+        self.assertEqual(
+            preview_zones.format_alert_areas(_codes("wilmington")),
+            EXPECTED["wilmington"],
+        )
+        self.assertIn("; ", EXPECTED["wilmington"])
+        self.assertNotIn(" nm and ", EXPECTED["wilmington"])
 
 
 class VisibleAlertsUseNames(unittest.TestCase):

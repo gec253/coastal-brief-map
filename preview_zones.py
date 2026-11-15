@@ -29,11 +29,14 @@ spacing where NWS is inconsistent: standalone "NM" is written "nm".
 "out to" and "out" are left as NWS published them; adding or removing
 "to" would be rewording.
 
-List joining: one style everywhere, no Oxford comma ("A, B and C").
-Non-county items (marine zones, qualified land zones, and unknown
-codes) stay in first-seen order. Grouped counties are one list item
-placed after those zone names. Unknown codes fall back to the code,
-never a guessed name.
+If every item is a bare county, keep the grouped form ("Wake,
+Johnston and Wayne counties", or "Chatham County" for one). Otherwise
+separate the items with semicolons, in first-seen order, one per
+item. In that mixed case each bare county is its own item as
+"{Name} County" (not a grouped "counties" clause). A name that
+contains "and" (for example "Croatan and Roanoke Sounds") stays one
+item. Grouped county lists still use no Oxford comma. Unknown codes
+fall back to the code, never a guessed name.
 """
 from __future__ import annotations
 
@@ -256,16 +259,18 @@ def display_name(code: str) -> str:
 
 
 def format_alert_areas(codes) -> str:
-    """Plain-English list of official display names.
+    """Official display names for a list of alert zones.
 
-    Non-county items stay in first-seen order. Bare counties are
-    de-duplicated and emitted as one list item after those zone names.
-    Unknown codes are kept as codes. Returns 'this area' when empty.
+    If every item is a bare county, group them: 'Chatham County' or
+    'Wake, Johnston and Wayne counties'. Otherwise join items with
+    semicolons, keeping first-seen order; each bare county is
+    '{Name} County'. Forecast and county codes for the same county
+    are de-duplicated. Unknown codes stay as codes. Empty → 'this area'.
     """
-    non_county = []
-    counties = []
-    seen_other = set()
-    seen_county = set()
+    items: list[tuple[str, str]] = []
+    seen_county: set[str] = set()
+    seen_other: set[str] = set()
+    all_county = True
     for raw in codes or []:
         code = (raw or "").strip()
         if not code:
@@ -277,15 +282,20 @@ def format_alert_areas(codes) -> str:
             if key in seen_county:
                 continue
             seen_county.add(key)
-            counties.append(short)
+            items.append(("county", short))
             continue
         name = display_name(code)
         key = name.lower()
         if key in seen_other:
             continue
         seen_other.add(key)
-        non_county.append(name)
-    items = list(non_county)
-    if counties:
-        items.append(county_group(counties))
-    return join_names(items)
+        items.append(("other", name))
+        all_county = False
+    if not items:
+        return "this area"
+    if all_county:
+        return county_group([short for _kind, short in items])
+    names = []
+    for kind, val in items:
+        names.append(county_group([val]) if kind == "county" else val)
+    return "; ".join(names)
