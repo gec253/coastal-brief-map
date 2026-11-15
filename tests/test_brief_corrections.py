@@ -19,6 +19,7 @@ import brief_strings  # noqa: E402
 import conditions  # noqa: E402
 import preview_alerts  # noqa: E402
 import preview_copy  # noqa: E402
+import preview_zones  # noqa: E402
 import river_gate  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -272,7 +273,9 @@ class Summary(unittest.TestCase):
         self.assertIn("offshore buoy", text)
         self.assertNotIn("at Offshore buoy", text)
         self.assertTrue("next high" in text or "next low" in text or "tide" in text.lower())
-        self.assertIn("chance of rain", text)
+        self.assertNotIn("0% chance", text)
+        self.assertNotIn("chance of rain", text)
+        self.assertIn("sunny, high 56°F", text)
         self.assertIn("Alerts:", text)
         self.assertLess(len(text.split()), 180)
         html = preview_copy._render_captains_take(model)
@@ -466,16 +469,17 @@ class CaptainsTakeAndSources(unittest.TestCase):
         self.assertNotIn("3.50 ft MLLW", text)
         self.assertNotIn("3.50", text)
         self.assertIn("next high", text)
-        self.assertIn("Not measured", text)
+        # Locked inshore-missing string stays on the card, not in the Take.
+        self.assertNotIn("Not measured", text)
+        self.assertNotIn("No official sensor in this area", text)
         self.assertIn("62°F observed at offshore buoy 44086", text)
-        # Mixed-kind water/tide sentence uses parts and kinds
+        # Water/tide sentence is verified readings only (inshore-missing stays on the card).
         mid = model["sentences"][1]
-        self.assertIn("missing", mid["kinds"])
-        self.assertIn("observed", mid["kinds"])
-        self.assertIn("predicted", mid["kinds"])
+        self.assertEqual(mid["kinds"], ["observed", "predicted"])
+        self.assertNotIn("missing", mid["kinds"])
         html = preview_copy._render_captains_take(model)
-        self.assertIn('data-kind="missing observed predicted"', html)
-        self.assertIn('<span data-kind="missing"', html)
+        self.assertIn('data-kind="observed predicted"', html)
+        self.assertNotIn('data-kind="missing"', html)
         self.assertIn('<span data-kind="predicted"', html)
 
 
@@ -563,21 +567,31 @@ class CaptainsTakeAndSources(unittest.TestCase):
         }
         body = preview_copy.relabel_salt(rid, {"items": [], "missing": [], "freshness": [], "take": []}, payload, c)
         d = dict(body["items"])
-        self.assertIn("Nearshore buoy 41110", d["Seas"])
-        self.assertIn("NE", d["Seas"])
+        self.assertIn("Nearshore buoy 41110, 12.8 mi NE", d["Seas"])
         self.assertIn("Inshore water temperature: Not measured", d["Water temp"])
+        self.assertIn("No official sensor in this area", d["Water temp"])
         model = preview_copy.captains_take(rid, body, payload, c, now=NOW)
         self.assertEqual(len(model["sentences"]), 3)
         text = preview_copy.take_text(model)
+        self.assertIn("Light NNW wind", text)
         self.assertIn("MBIN7", text)
-        self.assertIn("nearshore buoy 41110", text)
+        self.assertIn("nearshore buoy 41110, 12.8 mi NE", text)
+        self.assertNotIn("13 mi", text)
+        self.assertIn("66°F observed at nearshore buoy 41110, 12.8 mi NE", text)
         self.assertIn("next high", text)
         self.assertIn("Wilmington Beach (8658559)", text)
         self.assertNotIn("3.96", text)
         self.assertNotIn("observed water level is 3.96", text)
-        self.assertIn("Not measured", text)
-        self.assertIn("AMZ250", text)
-        self.assertIn("NCZ108", text)
+        self.assertNotIn("Not measured", text)
+        self.assertNotIn("No official sensor in this area", text)
+        phrase = preview_zones.format_alert_areas(c["alertZones"])
+        self.assertIn(phrase, text)
+        self.assertIn(brief_strings.alerts_none(phrase), text)
+        self.assertNotIn("AMZ250", text)
+        self.assertNotIn("NCZ108", text)
+        for s in model["sentences"]:
+            body_txt = (s["text"] or "").rstrip(".")
+            self.assertNotIn(". ", body_txt, s["text"])
 
     def test_corolla_duck_take_includes_local_duck_level(self):
         cfg = {r["id"]: r for r in conditions.load_regions()["regions"]}
@@ -599,22 +613,88 @@ class CaptainsTakeAndSources(unittest.TestCase):
         }
         body = preview_copy.relabel_salt(rid, {"items": [], "missing": [], "freshness": [], "take": []}, payload, c)
         d = dict(body["items"])
-        self.assertIn("Nearshore buoy 44056", d["Seas"])
-        self.assertIn("ENE", d["Seas"])
+        self.assertIn("Nearshore buoy 44056, 2.2 mi ENE", d["Seas"])
         self.assertIn("Inshore water temperature: Not measured", d["Water temp"])
         model = preview_copy.captains_take(rid, body, payload, c, now=NOW)
         self.assertEqual(len(model["sentences"]), 3)
         text = preview_copy.take_text(model)
         self.assertIn("Duck Pier (8651370)", text)
-        self.assertIn("nearshore buoy 44056", text)
+        self.assertIn("nearshore buoy 44056, 2.2 mi ENE", text)
+        self.assertNotIn(", 2 mi ENE", text)
+        self.assertIn("61°F observed at nearshore buoy 44056, 2.2 mi ENE", text)
         self.assertIn("next high", text)
         self.assertIn("observed water level is 3.23 ft MLLW", text)
-        self.assertIn("Not measured", text)
-        self.assertIn("AMZ150", text)
-        self.assertIn("NCZ203", text)
-        self.assertIn("NCZ102", text)
+        self.assertNotIn("Not measured", text)
+        self.assertNotIn("No official sensor in this area", text)
+        phrase = preview_zones.format_alert_areas(c["alertZones"])
+        self.assertIn(phrase, text)
+        self.assertIn(brief_strings.alerts_none(phrase), text)
+        self.assertNotIn("AMZ150", text)
+        self.assertNotIn("NCZ203", text)
+        self.assertNotIn("NCZ102", text)
         self.assertNotIn("44086", text)
         self.assertNotIn("8652587", text)
+        for s in model["sentences"]:
+            body_txt = (s["text"] or "").rstrip(".")
+            self.assertNotIn(". ", body_txt, s["text"])
+
+
+
+    def test_take_wind_reports_sustained_or_says_only_gust(self):
+        cfg = {r["id"]: r for r in conditions.load_regions()["regions"]}
+        rid, c = "carolina-kure", cfg["carolina-kure"]
+        def take(values):
+            payload = {
+                "ok": True, "region": {"id": rid, "anchor": c["anchor"]},
+                "readings": {
+                    "wind": {"status": "ok", "values": values,
+                             "station": {"id": "MBIN7", "name": "Masonboro Island, south end"}},
+                },
+                "alerts": {"status": "ok", "items": []},
+            }
+            body = preview_copy.relabel_salt(rid, {"items": [], "missing": [], "freshness": [], "take": []}, payload, c)
+            return preview_copy.take_text(preview_copy.captains_take(rid, body, payload, c, now=NOW))
+        text = take({"speedKt": 8, "gustKt": 11, "dirCompass": "NNW"})
+        self.assertIn("Light NNW wind, gusting 11 kt", text)
+        self.assertNotIn("Only a", text)
+        text = take({"gustKt": 11, "dirCompass": "NNW"})
+        self.assertIn("Only a NNW gust of 11 kt was reported", text)
+        self.assertNotIn("Light NNW wind", text)
+        self.assertNotIn("11 kt wind", text)
+        self.assertNotIn("wind 11 kt", text.lower().replace("gust of 11 kt", ""))
+
+    def test_nonzero_rain_stays_in_the_take(self):
+        cfg = next(r for r in conditions.load_regions()["regions"] if r["id"] == "emerald-isle")
+        payload = {
+            "ok": True, "region": {"id": "emerald-isle", "anchor": cfg["anchor"]},
+            "readings": {}, "alerts": {"status": "ok", "items": []},
+        }
+        body = preview_copy.relabel_salt("emerald-isle", {"items": [
+            ("Rain", "9% chance through tonight; sunny, high 55°F."),
+            ("Marine forecast", "Today: NW winds around 15 kt. (NWS AMZ158)"),
+        ], "missing": [], "freshness": [], "take": []}, payload, cfg)
+        text = preview_copy.take_text(preview_copy.captains_take("emerald-isle", body, payload, cfg, now=NOW))
+        self.assertIn("9% chance of rain", text)
+        self.assertNotIn("0% chance", text)
+
+    def test_existing_brief_card_distances_unchanged(self):
+        cfg = {r["id"]: r for r in conditions.load_regions()["regions"]}
+        rid, c = "wilmington", cfg["wilmington"]
+        payload = {
+            "ok": True, "region": {"id": rid, "anchor": c["anchor"]},
+            "readings": {
+                "seas": {"status": "ok", "values": {"heightFt": 2.0},
+                         "station": {"id": "41110", "name": "Masonboro Inlet (CDIP 150)"}},
+            },
+            "alerts": {"status": "ok", "items": []},
+        }
+        body = preview_copy.relabel_salt(rid, {"items": [], "missing": [], "freshness": [], "take": []}, payload, c)
+        d = dict(body["items"])
+        self.assertIn("Nearshore buoy 41110, 6 mi SE", d["Seas"])
+        self.assertNotIn("12.8", d["Seas"])
+        text = preview_copy.take_text(preview_copy.captains_take(rid, body, payload, c, now=NOW))
+        self.assertIn("nearshore buoy 41110, 6 mi SE", text)
+        self.assertNotIn("12.8", text)
 
 
 

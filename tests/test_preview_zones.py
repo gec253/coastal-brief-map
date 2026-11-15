@@ -38,6 +38,17 @@ EXPECTED = {
     "cape-fear": "Harnett, Cumberland and Bladen counties",
 }
 
+# New preview regions: derive the alerts phrase so a later grouping/casing
+# change in format_alert_areas does not require a hardcoded rewrite here.
+NEW_COASTAL = ("carolina-kure", "corolla-duck")
+COASTAL_RIDS = ("wilmington", "nags-head", "emerald-isle", "topsail") + NEW_COASTAL
+
+
+def _phrase(rid: str) -> str:
+    if rid in EXPECTED:
+        return EXPECTED[rid]
+    return preview_zones.format_alert_areas(_codes(rid))
+
 CAPE_FEAR_ZONES = ["NCZ077", "NCC085", "NCZ088", "NCC051", "NCZ096", "NCC017"]
 
 
@@ -83,7 +94,7 @@ class ZoneNameMap(unittest.TestCase):
     def test_every_required_code_has_official_name_and_source(self):
         required = {
             "AMZ158", "AMZ250", "AMZ150", "AMZ231",
-            "NCZ195", "NCZ108", "NCZ203", "NCZ199", "NCZ106",
+            "NCZ195", "NCZ108", "NCZ203", "NCZ102", "NCZ199", "NCZ106",
             "NCZ041", "NCZ042", "NCZ078", "NCZ040",
             "NCZ077", "NCZ088", "NCZ096",
             "NCC183", "NCC101", "NCC191", "NCC037",
@@ -104,6 +115,8 @@ class ZoneNameMap(unittest.TestCase):
         self.assertEqual(preview_zones.display_name("NCC183"), "Wake County")
         self.assertEqual(preview_zones.display_name("NCZ195"), "West Carteret")
         self.assertEqual(preview_zones.display_name("NCZ108"), "Coastal New Hanover")
+        self.assertEqual(preview_zones.display_name("NCZ102"), "Eastern Currituck")
+        self.assertEqual(preview_zones.display_name("NCZ203"), "Northern Outer Banks")
         self.assertEqual(
             preview_zones.display_name("AMZ158"),
             "S of Cape Lookout NC to Surf City NC out to 20 nm",
@@ -134,6 +147,14 @@ class ZoneNameMap(unittest.TestCase):
     def test_phrases_for_every_preview_and_cape_fear(self):
         for rid, phrase in EXPECTED.items():
             self.assertEqual(preview_zones.format_alert_areas(_codes(rid)), phrase, rid)
+
+    def test_new_coastal_regions_use_official_names(self):
+        for rid in NEW_COASTAL:
+            phrase = preview_zones.format_alert_areas(_codes(rid))
+            self.assertTrue(phrase, rid)
+            self.assertFalse(ZONE_RE.search(phrase), (rid, phrase))
+            for code in _codes(rid):
+                self.assertIn(preview_zones.display_name(code), phrase, (rid, code, phrase))
 
     def test_empty_list_is_this_area(self):
         self.assertEqual(preview_zones.format_alert_areas([]), "this area")
@@ -206,7 +227,7 @@ class ZoneNameMap(unittest.TestCase):
 class VisibleAlertsUseNames(unittest.TestCase):
     def test_coastal_item_and_take_use_names_not_codes(self):
         cfg = {r["id"]: r for r in conditions.load_regions()["regions"]}
-        for rid in ("wilmington", "nags-head", "emerald-isle", "topsail"):
+        for rid in COASTAL_RIDS:
             payload = {
                 "ok": True, "region": {"id": rid, "anchor": cfg[rid]["anchor"]},
                 "readings": {}, "alerts": {"status": "ok", "items": []},
@@ -215,10 +236,10 @@ class VisibleAlertsUseNames(unittest.TestCase):
                 rid, {"items": [], "missing": [], "freshness": [], "take": []}, payload, cfg[rid]
             )
             line = dict(body["items"])["Alerts"]
-            self.assertEqual(line, brief_strings.alerts_none(EXPECTED[rid])[len("Alerts: "):], rid)
+            self.assertEqual(line, brief_strings.alerts_none(_phrase(rid))[len("Alerts: "):], rid)
             self.assertFalse(ZONE_RE.search(line), (rid, line))
             take = preview_copy.take_text(preview_copy.captains_take(rid, body, payload, cfg[rid], now=NOW))
-            self.assertIn(brief_strings.alerts_none(EXPECTED[rid]), take, rid)
+            self.assertIn(brief_strings.alerts_none(_phrase(rid)), take, rid)
             # Codes may still appear as marine-forecast attribution in the Take;
             # the alerts clause itself must use names.
             alert_clause = [s for s in take.split(". ") if "No active NWS alerts" in s]
@@ -297,15 +318,15 @@ class AdvisoryTint(unittest.TestCase):
             return brief_preview.page(brief_preview.compose(rid, NOW))
 
     def test_no_alerts_page_is_calm_and_codes_stay_in_sources(self):
-        for rid in ("wilmington", "nags-head", "emerald-isle", "topsail"):
+        for rid in COASTAL_RIDS:
             html = self._coastal_page(rid, {"status": "ok", "items": []})
             kind, text = _adv(html)
             self.assertEqual(kind, "clear", rid)
             self.assertNotIn("is-active", html[html.find("mb-adv"):html.find("mb-adv") + 80])
-            self.assertEqual(text, brief_strings.alerts_none(EXPECTED[rid])[len("Alerts: "):], rid)
+            self.assertEqual(text, brief_strings.alerts_none(_phrase(rid))[len("Alerts: "):], rid)
             self.assertFalse(ZONE_RE.search(text), (rid, text))
             take = _take_alert_text(html)
-            self.assertIn(EXPECTED[rid], take, rid)
+            self.assertIn(_phrase(rid), take, rid)
             self.assertFalse(ZONE_RE.search(take), (rid, take))
             src = _sources_blob(html)
             for code in _codes(rid):

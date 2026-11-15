@@ -396,7 +396,7 @@ class CorollaDuckConfig(unittest.TestCase):
         self.assertNotIn("1.9 miles", blob)
         self.assertEqual(self.r["alertZones"], ["AMZ150", "NCZ203", "NCZ102"])
         self.assertIn("NCZ203 Northern Outer Banks", self.r["notes"])
-        self.assertIn("land-zone membership at the townsite is unverified", self.r["notes"])
+        self.assertIn("Duck townsite confirmed NCZ203", self.r["notes"])
         self.assertIn("NCZ102", self.r["notes"])
         self.assertIn("Eastern Currituck", self.r["notes"])
         self.assertIn("AKQ", self.r["notes"])
