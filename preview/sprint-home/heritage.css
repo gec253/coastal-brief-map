@@ -1,0 +1,54 @@
+/* A · Carolina Maritime Heritage: chart room, workboat craft, brass and serif. */
+html[data-sprint="heritage"]{--panel:#0A2232;--panel-2:#0E2C40;--pink:#E9D9B8}
+html[data-sprint="heritage"] body{background:var(--page)}
+/* chart-line texture: graticule and a soft depth contour, masthead only */
+.mh-heritage .mh-plate{position:relative;background:
+  radial-gradient(120% 90% at 85% 120%,transparent 58%,rgba(14,58,87,.09) 58.4%,transparent 59%),
+  radial-gradient(110% 80% at 85% 120%,transparent 66%,rgba(14,58,87,.07) 66.4%,transparent 67%),
+  linear-gradient(rgba(14,58,87,.06) 1px,transparent 1px) 0 0/100% 28px,
+  linear-gradient(90deg,rgba(14,58,87,.06) 1px,transparent 1px) 0 0/28px 100%}
+@media (prefers-color-scheme:dark){.mh-heritage .mh-plate{background:
+  linear-gradient(rgba(196,163,106,.07) 1px,transparent 1px) 0 0/100% 28px,
+  linear-gradient(90deg,rgba(196,163,106,.07) 1px,transparent 1px) 0 0/28px 100%}}
+.mh-heritage .mh-name{font-weight:650;font-variation-settings:"SOFT" 0,"WONK" 0;letter-spacing:-.005em}
+.mh-heritage .mh-date{font-family:var(--f-num);font-weight:600;letter-spacing:.12em;font-size:.8rem}
+.mh-heritage .mh-motto{font-family:var(--f-display)}
+
+/* the instrument panel: navy board, brass neatline with a chart-border scale */
+.cg-heritage{margin:2px 10px 0;padding:12px 10px 10px;background:var(--panel);color:#F3E6D0;position:relative;
+  border:1px solid var(--brass);box-shadow:inset 0 0 0 3px var(--panel),inset 0 0 0 4px rgba(196,163,106,.55)}
+.cg-heritage::before{content:"";position:absolute;left:4px;right:4px;top:4px;height:3px;
+  background:repeating-linear-gradient(90deg,rgba(196,163,106,.75) 0 14px,transparent 14px 28px)}
+.cg-heritage{--paper:var(--panel-2);--ink:#F3E6D0;--ink-2:#C9BCA5;--line:rgba(196,163,106,.28);--line-2:rgba(196,163,106,.5);--link:#E6CF9F;
+  --obs:#A6DCC9;--obs-bg:rgba(166,220,201,.12);--pred:#B5D3F2;--pred-bg:rgba(181,211,242,.12);--fc:#F0C487;--fc-bg:rgba(240,196,135,.13);--stale:#F4B39A;--stale-bg:rgba(244,179,154,.14);--alert:#F6A493}
+.cg-heritage .cg-head{padding-top:4px}
+.cg-heritage .cg-head h2{color:var(--brass)}
+.cg-heritage .cg-where{color:#F3E6D0}
+.cg-heritage .t{background:var(--panel-2)}
+.cg-heritage .t-num{color:#F6EBD6}
+.cg-heritage .t-name{color:var(--brass)}
+.cg-heritage .t-src{color:#B9AD97}
+.cg-heritage .al{background:rgba(255,255,255,.03)}
+.cg-heritage .cg-region nav a{color:#F3E6D0}
+.cg-heritage .cg-region nav a[aria-current]{background:var(--brass);color:var(--navy);border-color:var(--brass)}
+.cg-heritage .s-line{stroke:#B5D3F2}
+
+/* working water plates */
+.hx-water,.hx-log{padding:24px 14px 0}
+.hx-plates{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hx-plates .plate-lead{grid-column:1/-1}
+.plate .ph-frame{border:6px solid var(--paper);outline:1px solid var(--line-2)}
+.plate figcaption{font-family:var(--f-display);font-style:italic}
+.plate .ph-credit{font-family:var(--f-ui);font-style:normal}
+.hx-cards{display:grid;gap:18px}
+.hx-cards .card{border-top:2px solid var(--ink);padding-top:2px}
+.sec{border-bottom:1px solid var(--line-2);padding-bottom:6px}
+
+@media (min-width:1000px){
+  .cg-heritage{margin:6px 0 0;padding:18px 18px 14px}
+  .cg-heritage .cg-more{grid-template-columns:repeat(4,1fr)}
+  .hx-water,.hx-log{padding:36px 0 0}
+  .hx-plates{grid-template-columns:2fr 1fr 1fr}
+  .hx-plates .plate-lead{grid-column:auto}
+  .hx-cards{grid-template-columns:repeat(3,1fr);gap:28px}
+}

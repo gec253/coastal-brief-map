@@ -1,0 +1,39 @@
+{
+  "source_sha256": "54e27cdd2b952fe432de46c362ee237c0d43fe28e2830fa81a75ecc5f7d78f25",
+  "source_size": [
+    9528,
+    6328
+  ],
+  "crop_box_xywh": [
+    2466,
+    186,
+    5208,
+    3906
+  ],
+  "levels_black": {
+    "R": 12,
+    "G": 12,
+    "B": 5
+  },
+  "levels_white": {
+    "R": 248,
+    "G": 252,
+    "B": 248
+  },
+  "gamma": 1.07,
+  "saturation": 0.92,
+  "resample": "LANCZOS",
+  "outputs": {
+    "800": [
+      800,
+      600
+    ],
+    "1280": [
+      1280,
+      960
+    ]
+  },
+  "avif_quality": 50,
+  "webp_quality": 76,
+  "no_other_adjustments": "no added saturation, sharpening, vignette, filters or local edits"
+}

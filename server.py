@@ -1080,6 +1080,7 @@ import windgrid  # noqa: E402
 import freshwater  # noqa: E402
 import brief  # noqa: E402
 import wave_intro  # noqa: E402
+import sprint_home  # noqa: E402
 
 # Header "Morning Brief" link is in the HTML behind this marker. When the kill
 # switch is on (MORNING_BRIEF_ENABLED=0/false/off), strip it so the nav never
@@ -2211,6 +2212,9 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 <a class="card" href="/preview/home"><b>Homepage (Ed's pick)</b><span>Classic Coastal Editorial masthead (A) with the Modern Coastal Magazine layout and the Bodie Island sunrise. Compare Cinematic and the other mastheads from the bar at the bottom.</span></a>
 <a class="card" href="/preview/identity"><b>Chartroom Folio</b><span>Visual identity sprint: stronger nameplate, conditions as one instrument panel, a slim credited photo strip after the readings, and one editorial card for saltwater and freshwater.</span></a>
 <a class="card" href="/preview/intro?play=1"><b>Wave intro</b><span>Private signature intro over the public homepage. Plays on a new visit, not within 12 hours or from an in-site link. Use ?play=1 to review. Skip or press Escape.</span></a>
+<a class="card" href="/preview/home-heritage"><b>Homepage concept A · Heritage</b><span>Private sprint concept: Carolina maritime heritage, live instruments first.</span></a>
+<a class="card" href="/preview/home-editorial"><b>Homepage concept B · Editorial</b><span>Private sprint concept: magazine grid, photo-led, live instruments first.</span></a>
+<a class="card" href="/preview/home-hybrid"><b>Homepage concept C · Hybrid</b><span>Private sprint concept: heritage instruments with an editorial grid.</span></a>
 <a class="card" href="/catch-wall"><b>Catch Wall photo submissions</b><span>Private test: the Share form and the review page work in this browser, even while public uploads stay off. Photos you send wait in the pending queue until you approve them.</span></a>
 <a class="card" href="/preview/photos-check"><b>Photo setup check</b><span>A private status report: storage, image tools, and the pending queue. It never shows keys.</span></a>
 <p><a href="/preview?lock=1">Lock this browser again</a></p></main></body></html>""" % PREVIEW_DAYS
@@ -2329,6 +2333,15 @@ class Handler(SimpleHTTPRequestHandler):
             return self._identity_preview_route(parsed)
         if parsed.path == "/preview/intro":
             return self._wave_intro_route(parsed)
+        if parsed.path in sprint_home.ROUTES:
+            return self._sprint_home_route(parsed)
+        if parsed.path.startswith(sprint_home.PHOTO_ROUTE):
+            if not self._preview_ok():
+                return self.send_error(404, "not found")
+            path = sprint_home.photo_path(parsed.path)
+            if not path:
+                return self.send_error(404, "not found")
+            return self._send_file(path, "image/avif" if path.suffix == ".avif" else "image/webp")
         # /?region=falls-lake (etc.) should open the lake page, not break the saltwater dashboard.
         if parsed.path in ("/", "/index.html"):
             rid = (parse_qs(parsed.query).get("region") or [""])[0].strip()
@@ -2618,6 +2631,19 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_error(500, "preview failed")
         return self._send_private(None, "text/html; charset=utf-8", data)
 
+
+    def _sprint_home_route(self, parsed):
+        if not self._preview_ok():
+            return self.send_error(404, "not found")
+        q = parse_qs(parsed.query or "")
+        rid = (q.get("region") or [""])[0].strip()[:40] or None
+        shot = (q.get("shot") or [""])[0] == "1"
+        try:
+            data = sprint_home.page(sprint_home.ROUTES[parsed.path], rid, shot=shot)
+        except Exception as e:
+            sys.stderr.write("sprint home preview failed: %s\n" % e)
+            return self.send_error(500, "preview failed")
+        return self._send_private(None, "text/html; charset=utf-8", data)
 
     def _send_private(self, path: Path, ctype: str, data: bytes | None = None, status: int = 200, extra=None, robots: str = "noindex, nofollow"):
         if data is None:
