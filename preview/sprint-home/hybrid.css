@@ -264,3 +264,6 @@ html[data-water="fresh"] .hz-lake .hz-img img{object-position:60% 50%}
 .cg-strip .t-chip.k-fc{background:#F6EAD6;color:#6E400C}
 @media (prefers-color-scheme:dark){.cg-strip .t-chip.k-fc{background:#3A2A12;color:#F0C487}}
 @media (min-width:1000px){.mh-sec a{padding:0 16px;font-size:.86rem}}
+/* Daily featured photo: per-photo focal point from the manifest; same frame, gradient and caption as before. */
+.hz-rot .hz-img img{object-position:var(--fp-m,36% 50%)}
+@media (min-width:1000px){.hz-rot .hz-img img{object-position:var(--fp-d,50% 8%)}}

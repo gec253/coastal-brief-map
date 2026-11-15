@@ -96,7 +96,8 @@ class HybridPublic(unittest.TestCase):
         self.assertIn(b"data-wave-intro", b)
         self.assertIn(b'href="/dashboard?region=crystal-coast">Full dashboard', b)
         self.assertNotIn(b'href="/?region=crystal-coast">Full dashboard', b)
-        self.assertIn(b"/home-photos/bodie-sunrise-800.webp", b)
+        self.assertIn(b'<link rel="preload" as="image"', b)   # the daily featured photo (photo_rotation)
+        self.assertIn(b'<section class="hz hz-rot"', b)
 
     def test_index_html_path_is_hybrid_too(self):
         self.assertIn(b'data-sprint="hybrid"', self._get("/index.html")[2])

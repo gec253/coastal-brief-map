@@ -252,7 +252,8 @@ class Render(unittest.TestCase):
         h = render("editorial", salt("wilmington"), photos=[])
         self.assertNotIn("<img", h)
         self.assertGreaterEqual(h.count(sprint_home.AWAITING), 3)
-        with mock.patch.object(sprint_home, "PHOTO_DIR", Path("/nonexistent")):
+        with mock.patch.object(sprint_home, "PHOTO_DIR", Path("/nonexistent")), \
+             mock.patch.object(sprint_home.photo_rotation, "active", return_value=None):
             h = render("hybrid", salt("wilmington"), photos=[])
         self.assertNotIn("<img", h)
         self.assertNotIn("Awaiting real material", h)   # hybrid hides empty slots entirely
@@ -403,15 +404,19 @@ class Refinement(unittest.TestCase):
         self.assertIn('data-water="fresh"', h)
 
     def test_bodie_is_the_saltwater_horizon(self):
-        h = render("hybrid", salt("wilmington"))
-        hz = h[h.index('<section class="hz"'):]
-        self.assertIn("/preview/sprint-home/photos/bodie-sunrise-800.webp", hz[:2000])
+        # The horizon is now the daily featured photo; pin the day that shows Bodie Island.
+        with mock.patch.object(sprint_home, "_featured", return_value=sprint_home.photo_rotation.featured(photo_id="bodie-sunrise", approved=[])):
+            h = render("hybrid", salt("wilmington"))
+        hz = h[h.index('<section class="hz'):]
+        self.assertIn("/featured-photos/photos/bodie-sunrise-800.webp", hz[:2000])
         self.assertIn('width="1600" height="1200"', hz[:2000])
         self.assertIn("Photo: National Park Service, Cape Hatteras National Seashore (public domain)", hz[:2500])
         self.assertTrue((sprint_home.DIR / "CREDITS.md").is_file())
 
     def test_mosaic_full_set_has_no_placeholders_and_unique_captions(self):
-        h = render("hybrid", salt("wilmington"), photos=ALL_PHOTOS)
+        # On a day the featured photo is not a mosaic frame (Bodie Island), the composed mosaic is full.
+        with mock.patch.object(sprint_home, "_featured", return_value=sprint_home.photo_rotation.featured(photo_id="bodie-sunrise", approved=[])):
+            h = render("hybrid", salt("wilmington"), photos=ALL_PHOTOS)
         mz = h[h.index('<section class="mzs"'):]
         mz = mz[:mz.index("</section>")]
         self.assertIn('<div class="mz-grid">', mz)

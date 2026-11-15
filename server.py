@@ -1081,6 +1081,7 @@ import freshwater  # noqa: E402
 import brief  # noqa: E402
 import wave_intro  # noqa: E402
 import sprint_home  # noqa: E402
+import photo_rotation  # noqa: E402
 
 # Header "Morning Brief" link is in the HTML behind this marker. When the kill
 # switch is on (MORNING_BRIEF_ENABLED=0/false/off), strip it so the nav never
@@ -2343,6 +2344,14 @@ class Handler(SimpleHTTPRequestHandler):
             if not path:
                 return self.send_error(404, "not found")
             return self._send_file(path, "image/avif" if path.suffix == ".avif" else "image/webp")
+        if parsed.path.startswith(photo_rotation.ROUTE):
+            # Daily featured photo files: only files the active manifest references.
+            path = photo_rotation.file_for(parsed.path[len(photo_rotation.ROUTE):])
+            if not path:
+                return self.send_error(404, "not found")
+            self._static_cache = "public, max-age=86400"
+            ctype = {".avif": "image/avif", ".webp": "image/webp"}.get(path.suffix, "image/jpeg")
+            return self._send_file(path, ctype)
         if parsed.path.startswith(sprint_home.PUBLIC_PHOTO_ROUTE):
             # Public homepage photos: the approved files only (strict name pattern, one folder, no listing).
             path = sprint_home.photo_path(parsed.path, sprint_home.PUBLIC_PHOTO_ROUTE)
@@ -2666,8 +2675,11 @@ class Handler(SimpleHTTPRequestHandler):
         q = parse_qs(parsed.query or "")
         rid = (q.get("region") or [""])[0].strip()[:40] or None
         shot = (q.get("shot") or [""])[0] == "1"
+        # Preview-only: ?date=YYYY-MM-DD or ?photo=<id> shows any day's featured photo (gated route).
+        pday = (q.get("date") or [""])[0].strip()[:10] or None
+        pid = (q.get("photo") or [""])[0].strip()[:64] or None
         try:
-            data = sprint_home.page(sprint_home.ROUTES[parsed.path], rid, shot=shot)
+            data = sprint_home.page(sprint_home.ROUTES[parsed.path], rid, shot=shot, photo_day=pday, photo_id=pid)
         except Exception as e:
             sys.stderr.write("sprint home preview failed: %s\n" % e)
             return self.send_error(500, "preview failed")

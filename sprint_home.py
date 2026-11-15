@@ -22,6 +22,7 @@ from pathlib import Path
 
 import conditions
 import homepage_boot
+import photo_rotation
 import wave_intro
 
 ROOT = Path(__file__).resolve().parent
@@ -1085,7 +1086,7 @@ PUBLIC_FOOTER = """<div class="ft-pub">
 _CSS_COMMENT = re.compile(r"/\*.*?\*/", re.S)
 
 
-def _shell(variant: str, main: str, shot: bool, water: str = "salt", public: bool = False) -> bytes:
+def _shell(variant: str, main: str, shot: bool, water: str = "salt", public: bool = False, preload: str = "") -> bytes:
     intro_css = wave_intro._css()
     page = """<!DOCTYPE html>
 <html lang="en" data-sprint="%(v)s" data-water="%(water)s" data-wave-intro%(shot)s>
@@ -1097,7 +1098,7 @@ def _shell(variant: str, main: str, shot: bool, water: str = "salt", public: boo
 <link rel="preload" href="/fonts/fraunces-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/barlow-condensed-600.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/source-sans-3-var.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="icon" href="/branding/favicon.svg" type="image/svg+xml">
+%(img_preload)s<link rel="icon" href="/branding/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://wgjoenkugzfrrfejmtvh.supabase.co" crossorigin>
 %(css)s<style id="wave-intro-css">
 %(icss)s
@@ -1126,7 +1127,7 @@ def _shell(variant: str, main: str, shot: bool, water: str = "salt", public: boo
     if public:   # drop the private-concept CSS comments from public view-source; rules unchanged
         css, icss = _CSS_COMMENT.sub("", css), _CSS_COMMENT.sub("", icss)
     page = page % {
-        "meta": meta, "foot": PUBLIC_FOOTER if public else priv_foot,
+        "meta": meta, "img_preload": preload, "foot": PUBLIC_FOOTER if public else priv_foot,
         "water": water, "defs": getattr(wave_intro, "_DEFS", ""),
         "v": variant, "shot": " data-shot" if shot else "", "title": _esc(TITLES[variant]),
         "css": css, "icss": icss, "boot": wave_intro._BOOT, "overlay": wave_intro._OVERLAY,
@@ -1252,17 +1253,20 @@ def page_hybrid(m: dict, P: dict, public: bool = False) -> str:
         hero, wide = None, P["fresh"]
     elif fresh:   # rivers: Weldon (Roanoke River) leads; the Falls Lake frame takes the wide cell
         hero, wide = (P["fresh"] or falls or P["bodie"]), falls or P["bodie"]
-    else:
-        hero, wide = (P["bodie"] or P["lead"]), P["fresh"]
+    else:   # saltwater: the daily featured photo (photo_rotation), else the Bodie Island default
+        hero, wide = (P.get("featured") or P["bodie"] or P["lead"]), P["fresh"]
+    hero_cw = (hero or {}).get("catch_wall_id") or ""
     # Each photo gets the shape that suits it: the portrait diner frame (89eef7f7) takes the tall cell.
     want = [("mz-a", P["lead"]), ("mz-b", P["wide"]), ("mz-c", P["life"]), ("mz-e", P.get("life2")),
             ("mz-d", wide)]
-    placed = [(sh, x) for sh, x in want if x and x is not hero]
+    placed = [(sh, x) for sh, x in want if x and x is not hero and str(x.get("id") or "").lower() != hero_cw.lower()]
     # No placeholders: empty cells are dropped. A full set uses the composed mosaic; fewer falls back to a loose grid.
     full = len(placed) == len(want)
     # Stored captions as submitted. When two photos share the same stored caption (the two diner frames),
     # the location is shown once: the later frame keeps its credit but drops the repeated caption.
     seen, cells = set(), []
+    if hero is not None and hero is P.get("featured"):   # the featured photo's place is already captioned above
+        seen.add(re.sub(r"\s+", "", hero.get("location") or "").casefold())
     for sh, x in placed:
         c = caption(x)
         key = re.sub(r"\s+", "", c).casefold()   # "Rx Chicken& Oysters" == "Rx Chicken & Oysters"
@@ -1270,7 +1274,9 @@ def page_hybrid(m: dict, P: dict, public: bool = False) -> str:
         seen.add(key)
     cells.append(MZ_CTA)
     grid_cls = "mz-grid" + ("" if full else " mz-loose mz-n%d" % len(placed))
-    if hero:
+    if hero and hero is P.get("featured"):
+        horizon = photo_rotation.horizon_html(hero)
+    elif hero:
         horizon = (
             '<section class="hz%s" aria-labelledby="hz-h"><div class="hz-img">%s</div>'
             '<div class="hz-cap"><h2 id="hz-h" class="hz-t">%s</h2><p class="hz-m">%s</p><p class="hz-c">%s</p></div></section>'
@@ -1294,8 +1300,17 @@ def page_hybrid(m: dict, P: dict, public: bool = False) -> str:
 BUILDERS = {"heritage": page_heritage, "editorial": page_editorial, "hybrid": page_hybrid}
 
 
-def page(variant: str, region_id: str | None = None, shot: bool = False, public: bool = False) -> bytes:
-    """public=True is the public homepage (/): Hybrid only, public regions only, no concept chrome."""
+def _featured(day=None, photo_id: str | None = None):
+    try:
+        return photo_rotation.featured(day=day, photo_id=photo_id, approved=approved_photos())
+    except Exception:
+        return None   # the Bodie Island default stays
+
+
+def page(variant: str, region_id: str | None = None, shot: bool = False, public: bool = False,
+         photo_day: str | None = None, photo_id: str | None = None) -> bytes:
+    """public=True is the public homepage (/): Hybrid only, public regions only, no concept chrome.
+    photo_day (YYYY-MM-DD) and photo_id are preview-only overrides; the public page ignores them."""
     if variant not in BUILDERS:
         raise ValueError("unknown concept")
     if public:
@@ -1305,7 +1320,16 @@ def page(variant: str, region_id: str | None = None, shot: bool = False, public:
         if rid not in public_salt_ids() and rid not in public_fresh_ids():
             region_id = None   # unknown or not-public ids fall back to the default region, never render
         m = model(region_id)
-        data = _shell(variant, page_hybrid(m, _photos(), public=True), shot, water=m.get("water") or "salt", public=True)
+        P = _photos()
+        fresh = m.get("water") == "fresh"
+        P["featured"] = None if fresh else _featured()
+        data = _shell(variant, page_hybrid(m, P, public=True), shot, water=m.get("water") or "salt", public=True,
+                      preload=photo_rotation.preload_html(P["featured"]))
         return data.replace(PHOTO_ROUTE.encode(), PUBLIC_PHOTO_ROUTE.encode())
     m = model(region_id)
-    return _shell(variant, BUILDERS[variant](m, _photos()), shot, water=m.get("water") or "salt")
+    P = _photos()
+    pre = ""
+    if variant == "hybrid" and m.get("water") != "fresh":
+        P["featured"] = _featured(photo_rotation.parse_day(photo_day or ""), (photo_id or "")[:64] or None)
+        pre = photo_rotation.preload_html(P["featured"])
+    return _shell(variant, BUILDERS[variant](m, P), shot, water=m.get("water") or "salt", preload=pre)

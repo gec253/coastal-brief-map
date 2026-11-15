@@ -78,3 +78,14 @@ Credit rule:
 Per Ed (Nov 15, 2026), the 89eef7f7 caption stays as stored; there is no caption override. Nothing was written to the submission, moderation data or Supabase.
 
 No AI, stock or scraped images are used anywhere.
+
+## JPEG fallbacks for the daily featured photo (design/photo-rotation)
+
+Re-encoded from the existing 1280 WebP derivatives above (quality 80, progressive; 800 px by Lanczos resize). No new source images, no retouching. Same credits and licenses as above.
+
+| file | size | sha256 |
+|---|---|---|
+| bodie-sunrise-1280.jpg | 1280×960 | aaeb9821c3749f9db06a7120ca7eb8ef11f709519df98a58e820b42dc4aac6fe |
+| bodie-sunrise-800.jpg | 800×600 | 23dad49f682bc2492aa6a2a5faba0bdf5dffdba1dce50b181761f99183d22f26 |
+| falls-lake-pier-1280.jpg | 1280×960 | 16837d123a0901271e25107ca9623dc272300383fd55bdcd4e26097187116844 |
+| falls-lake-pier-800.jpg | 800×600 | 562a26b0fa09e7d798b53f7db3665e0c93002536956d334dd865d545ac94b450 |
