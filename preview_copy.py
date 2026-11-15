@@ -695,20 +695,21 @@ def _at_place(place: str, qual: str = "") -> str:
 
 
 def _take_wind(kt, compass: str, gust=None) -> str:
-    """Sustained speed when it was reported; never imply one from a gust alone."""
+    """Sustained speed when it was reported; never imply one from a gust alone.
+
+    "Light" is not used here: a measured sustained value is stated as N kt.
+    A gust-only report must not be phrased as a light (or any) sustained wind.
+    """
     dirc = (compass or "").strip()
     if kt is None:
         if gust is None:
             return ""
         g = int(round(gust))
         if dirc:
-            return "Only a %s gust of %d kt was reported" % (dirc, g)
-        return "Only a gust of %d kt was reported" % g
+            return "%s wind gusting %d kt (sustained speed not reported)" % (dirc, g)
+        return "Wind gusting %d kt (sustained speed not reported)" % g
     k = int(round(kt))
-    if k < 10:
-        w = "Light %s wind" % dirc if dirc else "Light wind"
-    else:
-        w = "%s wind %d kt" % (dirc, k) if dirc else "%d kt wind" % k
+    w = "%s wind %d kt" % (dirc, k) if dirc else "%d kt wind" % k
     if gust is not None and gust - kt >= 3:
         w += ", gusting %d kt" % round(gust)
     return w
@@ -801,13 +802,12 @@ def card_lead(sid: str, meta: dict | None, anchor: dict | None, role: str = "", 
 
 
 def _wind_plain(kt, compass: str) -> str:
+    """Unused helper; keep in step with _take_wind so "Light" is never a stand-in for a measured speed."""
     if kt is None:
         return ""
     k = int(round(kt))
     dirc = (compass or "").strip()
-    if k < 10:
-        return "Light %s wind" % dirc if dirc else "Light wind"
-    return "%d kt %s wind" % (k, dirc) if dirc else "%d kt wind" % k
+    return "%s wind %d kt" % (dirc, k) if dirc else "%d kt wind" % k
 
 
 def captains_take(rid: str, body: dict, payload: dict, cfg: dict, issued_et: str = "", now=None) -> dict:
