@@ -246,7 +246,8 @@ def _compose_jordan(d: dict, cfg: dict, now: datetime) -> tuple[list, list, list
     inf = [i for i in (d.get("inflows") or []) if i.get("flowCfs")]
     if inf:
         for i in inf:
-            _fresh_add(fresh, i.get("label") or "Inflow", i["flowCfs"], i.get("usgs"))
+            short = (i.get("label") or "Inflow").split("(")[0].strip()
+            _fresh_add(fresh, short, i["flowCfs"], i.get("usgs"))
         items.append(("Inflow",
                       "; ".join("%s %s%s at USGS %s" % (
                           i.get("label") or "Inflow", _cfs(i["flowCfs"]["value"]), _band(i), i.get("usgs") or "")
@@ -296,10 +297,16 @@ def _compose_neuse(d: dict, cfg: dict, now: datetime) -> tuple[list, list, list,
     for block in river:
         label, text = _river_item(block)
         items.append((label, text))
-        if block.get("stageFt"):
-            _fresh_add(fresh, (block.get("label") or "Stage") + " (stage)", block["stageFt"], block.get("usgs"))
-        if block.get("flowCfs"):
-            _fresh_add(fresh, (block.get("label") or "Flow") + " (flow)", block["flowCfs"], block.get("usgs"))
+        stage, flow = block.get("stageFt"), block.get("flowCfs")
+        name = block.get("label") or "Gauge"
+        if stage and flow and stage.get("time") == flow.get("time"):
+            _fresh_add(fresh, name, {"time": stage["time"], "stale": bool(stage.get("stale") or flow.get("stale"))},
+                       block.get("usgs"))
+        else:
+            if stage:
+                _fresh_add(fresh, name + " (stage)", stage, block.get("usgs"))
+            if flow:
+                _fresh_add(fresh, name + " (flow)", flow, block.get("usgs"))
     unavailable.append(_water_temp_unavailable(d, cfg))
     wx = _weather_item(d, missing)
     if wx:

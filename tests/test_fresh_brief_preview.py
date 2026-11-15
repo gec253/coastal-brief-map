@@ -198,6 +198,14 @@ class Compose(unittest.TestCase):
         blob = " ".join(v for _, v in b["items"]).lower()
         self.assertNotIn("depth", blob)
         self.assertNotRegex(" ".join(v for _, v in b["items"]), r"\d+°F at the dam")
+        # Same-timestamp stage and flow share one freshness line so the phone issue block stays short.
+        labels = [f["label"] for f in b["freshness"]]
+        self.assertEqual(labels, [
+            "Neuse River below Falls Dam",
+            "Neuse River near Clayton",
+            "Neuse River at Smithfield (stage)",
+            "Neuse River near Goldsboro",
+        ])
 
     def test_page_is_private_and_labeled(self):
         with patch.object(freshwater, "assemble", side_effect=_assemble):
