@@ -352,8 +352,16 @@ console.log(JSON.stringify(out));
         # from the start and only Skip is opaque.
         self.assertIn(b"var WASH_FROM = 0.84", body)
         self.assertRegex(css, rb"\.wi-water \.wi-fill,\s*\.wi-water \.wi-svg\s*\{[^}]*opacity:\s*0\.84")
-        # The phone mini-bar never pops in and out behind the water.
-        self.assertRegex(css, rb"html\.intro-play \.mini-bar\s*\{[^}]*visibility:\s*hidden")
+        # Ed (v7b): the phone mini-bar is shown from first paint UNDER the
+        # wash and is never hidden or delayed during (or after) the intro.
+        self.assertNotRegex(css, rb"\.mini-bar[^{]*\{[^}]*(visibility:\s*hidden|display:\s*none|opacity:\s*0)")
+        self.assertNotRegex(css, rb"intro-play[^{]*\.mini-bar")
+        self.assertRegex(css, rb"html\[data-wave-intro\] body\.glance-on-screen \.mini-bar\s*\{[^}]*transform:\s*none")
+        # It sits below the overlay in z-order (mini-bar 900 in styles.css).
+        page_css = (Path(__file__).resolve().parents[1] / "styles.css").read_text(encoding="utf-8")
+        mz = re.search(r"\.mini-bar\s*\{[^}]*z-index:\s*(\d+)", page_css)
+        oz = re.search(rb"\.wave-intro\s*\{[^}]*z-index:\s*(\d+)", css)
+        self.assertLess(int(mz.group(1)), int(oz.group(1)))
 
     def test_public_homepage_untouched(self):
         status, body, hdrs = self._req("/")
