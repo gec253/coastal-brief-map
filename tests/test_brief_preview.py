@@ -21,6 +21,8 @@ import brief  # noqa: E402
 import brief_preview  # noqa: E402
 
 NEW = ["wilmington", "nags-head", "emerald-isle", "topsail"]
+CKD = ["carolina-kure", "corolla-duck"]
+PREVIEW_BRIEFS = NEW + CKD
 KEY = "preview-test-key-24-chars-ok"
 NOW = datetime(2026, 11, 14, 15, 0, tzinfo=timezone.utc)
 
@@ -45,22 +47,36 @@ OFF = {"ok": True, "readings": {"waterTempOffshore": {"status": "ok", "values": 
 class Unchanged(unittest.TestCase):
     def test_enabled_regions_unchanged(self):
         self.assertEqual(brief.enabled_regions(False), ["crystal-coast", "hatteras"])
-        for rid in NEW:
+        for rid in PREVIEW_BRIEFS:
             self.assertNotIn(rid, brief.enabled_regions(True))
             self.assertNotIn(rid, brief.enabled_regions(False))
 
     def test_public_get_still_404(self):
-        for rid in NEW:
+        for rid in PREVIEW_BRIEFS:
             self.assertEqual(brief.get(rid, include_fresh=True)[0], 404, rid)
 
     def test_live_regions_have_no_preview(self):
         for rid in ("crystal-coast", "hatteras", "falls-lake", "bogus"):
             self.assertFalse(brief_preview.available(rid), rid)
-        for rid in NEW:
+        for rid in PREVIEW_BRIEFS:
             self.assertTrue(brief_preview.available(rid), rid)
 
 
 class Compose(unittest.TestCase):
+    def test_cookie_gated_regions_assemble_with_preview_flag(self):
+        seen = []
+        def fake(rid=None, preview=False):
+            seen.append((rid, preview))
+            if not preview:
+                return 404, {"ok": False, "error": "Unknown region."}
+            return 200, OFF
+        with patch("conditions.assemble", side_effect=fake), \
+             patch.object(brief, "build_salt", side_effect=lambda rid, now: seen.append(("build", rid)) or _body(rid)):
+            b = brief_preview.compose("carolina-kure", NOW)
+        self.assertTrue(b["preview"])
+        self.assertIn(("carolina-kure", True), seen)
+        self.assertNotIn(("carolina-kure", False), seen)
+
     def test_never_stores_or_archives(self):
         with patch.object(brief, "build_salt", side_effect=lambda rid, now: _body(rid)), \
              patch("conditions.assemble", return_value=(200, OFF)), \
@@ -125,7 +141,7 @@ class Gate(unittest.TestCase):
         return r.status, body.decode("utf-8", "replace"), hdrs
 
     def test_404_without_cookie(self):
-        for rid in NEW:
+        for rid in PREVIEW_BRIEFS:
             self.assertEqual(self._get("/preview/brief/" + rid)[0], 404, rid)
             self.assertEqual(self._get("/preview/brief/" + rid, "cb_preview=wrong")[0], 404, rid)
 
@@ -134,7 +150,7 @@ class Gate(unittest.TestCase):
         self.assertEqual(self._get("/preview/brief/wilmington", self.cookie)[0], 404)
 
     def test_200_with_cookie(self):
-        for rid in NEW:
+        for rid in PREVIEW_BRIEFS:
             st, body, h = self._get("/preview/brief/" + rid, self.cookie)
             self.assertEqual(st, 200, rid)
             self.assertIn("Private preview", body)
@@ -146,7 +162,7 @@ class Gate(unittest.TestCase):
             self.assertEqual(self._get("/preview/brief/" + rid, self.cookie)[0], 404, rid)
 
     def test_public_brief_routes_unchanged(self):
-        for rid in NEW:
+        for rid in PREVIEW_BRIEFS:
             for ck in (None, self.cookie):
                 self.assertEqual(self._get("/brief?region=" + rid, ck)[0], 404, rid)
                 self.assertEqual(self._get("/api/brief?region=" + rid, ck)[0], 404, rid)
@@ -155,7 +171,7 @@ class Gate(unittest.TestCase):
     def test_hub_lists_preview_briefs(self):
         st, body, _ = self._get("/preview", self.cookie)
         self.assertEqual(st, 200)
-        for rid in NEW:
+        for rid in PREVIEW_BRIEFS:
             self.assertIn('href="/preview/brief/%s"' % rid, body)
 
     def test_sitemap_has_no_preview_briefs(self):

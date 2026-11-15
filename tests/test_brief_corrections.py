@@ -541,6 +541,83 @@ class CaptainsTakeAndSources(unittest.TestCase):
         self.assertIn("Offshore buoy 41159, 36 mi ESE", d["Seas"])
 
 
+    def test_carolina_kure_take_labels_and_omits_wrightsville_level(self):
+        cfg = {r["id"]: r for r in conditions.load_regions()["regions"]}
+        rid, c = "carolina-kure", cfg["carolina-kure"]
+        payload = {
+            "ok": True, "region": {"id": rid, "anchor": c["anchor"]},
+            "readings": {
+                "wind": {"status": "ok", "values": {"speedKt": 7, "gustKt": 10, "dirCompass": "NNW"},
+                         "station": {"id": "MBIN7", "name": "Masonboro Island, south end"}},
+                "seas": {"status": "ok", "values": {"heightFt": 2.0},
+                         "station": {"id": "41110", "name": "Masonboro Inlet (CDIP 150)"}},
+                "swell": {"status": "ok", "values": {"heightFt": 0.7}, "station": {"id": "41110"}},
+                "waterTempOffshore": {"status": "ok", "values": {"f": 66}, "station": {"id": "41110"}},
+            },
+            "alerts": {"status": "ok", "items": []},
+            "tides": {"status": "ok", "station": {"id": "8658559", "name": "Wilmington Beach"},
+                      "observed": {"status": "ok", "station": {"id": "8658163", "name": "Wrightsville Beach, Johnnie Mercer's Pier"},
+                                   "latest": {"t": int(NOW.timestamp() * 1000), "v": 3.96},
+                                   "note": c["tide"]["observedNote"]},
+                      "events": [{"t": int(NOW.timestamp() * 1000) + 3600_000, "v": 4.44, "type": "H"}]},
+        }
+        body = preview_copy.relabel_salt(rid, {"items": [], "missing": [], "freshness": [], "take": []}, payload, c)
+        d = dict(body["items"])
+        self.assertIn("Nearshore buoy 41110", d["Seas"])
+        self.assertIn("NE", d["Seas"])
+        self.assertIn("Inshore water temperature: Not measured", d["Water temp"])
+        model = preview_copy.captains_take(rid, body, payload, c, now=NOW)
+        self.assertEqual(len(model["sentences"]), 3)
+        text = preview_copy.take_text(model)
+        self.assertIn("MBIN7", text)
+        self.assertIn("nearshore buoy 41110", text)
+        self.assertIn("next high", text)
+        self.assertIn("Wilmington Beach (8658559)", text)
+        self.assertNotIn("3.96", text)
+        self.assertNotIn("observed water level is 3.96", text)
+        self.assertIn("Not measured", text)
+        self.assertIn("AMZ250", text)
+        self.assertIn("NCZ108", text)
+
+    def test_corolla_duck_take_includes_local_duck_level(self):
+        cfg = {r["id"]: r for r in conditions.load_regions()["regions"]}
+        rid, c = "corolla-duck", cfg["corolla-duck"]
+        payload = {
+            "ok": True, "region": {"id": rid, "anchor": c["anchor"]},
+            "readings": {
+                "wind": {"status": "ok", "values": {"speedKt": 7, "dirCompass": "NW"},
+                         "station": {"id": "8651370", "name": "Duck Pier"}},
+                "seas": {"status": "ok", "values": {"heightFt": 3.3},
+                         "station": {"id": "44056", "name": "Duck FRF (USACE waverider)"}},
+                "swell": {"status": "ok", "values": {"heightFt": 0.7}, "station": {"id": "44056"}},
+                "waterTempOffshore": {"status": "ok", "values": {"f": 61}, "station": {"id": "44056"}},
+            },
+            "alerts": {"status": "ok", "items": []},
+            "tides": {"status": "ok", "station": {"id": "8651370", "name": "Duck Pier"},
+                      "observed": {"status": "ok", "latest": {"t": int(NOW.timestamp() * 1000), "v": 3.23}},
+                      "events": [{"t": int(NOW.timestamp() * 1000) + 3600_000, "v": 3.40, "type": "H"}]},
+        }
+        body = preview_copy.relabel_salt(rid, {"items": [], "missing": [], "freshness": [], "take": []}, payload, c)
+        d = dict(body["items"])
+        self.assertIn("Nearshore buoy 44056", d["Seas"])
+        self.assertIn("ENE", d["Seas"])
+        self.assertIn("Inshore water temperature: Not measured", d["Water temp"])
+        model = preview_copy.captains_take(rid, body, payload, c, now=NOW)
+        self.assertEqual(len(model["sentences"]), 3)
+        text = preview_copy.take_text(model)
+        self.assertIn("Duck Pier (8651370)", text)
+        self.assertIn("nearshore buoy 44056", text)
+        self.assertIn("next high", text)
+        self.assertIn("observed water level is 3.23 ft MLLW", text)
+        self.assertIn("Not measured", text)
+        self.assertIn("AMZ150", text)
+        self.assertIn("NCZ203", text)
+        self.assertIn("NCZ102", text)
+        self.assertNotIn("44086", text)
+        self.assertNotIn("8652587", text)
+
+
+
 
 if __name__ == "__main__":
     unittest.main()

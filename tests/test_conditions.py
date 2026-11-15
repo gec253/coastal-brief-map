@@ -4,6 +4,8 @@ Run:  python -m unittest tests.test_conditions
 """
 from __future__ import annotations
 
+import json
+
 import sys
 import unittest
 from datetime import datetime, timedelta, timezone
@@ -284,6 +286,207 @@ class HatterasMarineZones(unittest.TestCase):
         self.assertIn("Zones are shown side by side, not merged", js)
 
 
+
+
+PREVIEW_SALT = ("carolina-kure", "corolla-duck")
+
+
+class CarolinaKureConfig(unittest.TestCase):
+    def setUp(self):
+        self.cfg = conditions.load_regions()
+        self.regions = {r["id"]: r for r in self.cfg.get("regions") or []}
+        self.stations = self.cfg["stations"]
+        self.r = self.regions["carolina-kure"]
+
+    def test_preview_only_and_standard_shape(self):
+        r = self.r
+        self.assertFalse(r.get("enabled"))
+        self.assertFalse(r.get("draft"))
+        self.assertTrue(r.get("previewReady"))
+        self.assertEqual(r.get("waterType"), "saltwater")
+        self.assertNotIn("instrumentSets", r)
+        self.assertNotIn("brief", r)
+        self.assertTrue(conditions.is_preview_salt_region("carolina-kure"))
+        self.assertFalse(conditions._servable(r))
+        self.assertTrue(conditions._servable(r, preview=True))
+        self.assertIn("readings", r)
+        self.assertIn("tide", r)
+
+    def test_distances_and_labels(self):
+        anchor = self.r["anchor"]
+        self.assertEqual(anchor["label"], "Wilmington Beach")
+        d, b = conditions.miles_bearing(anchor["lat"], anchor["lon"],
+                                        self.stations["41110"]["lat"], self.stations["41110"]["lon"])
+        self.assertAlmostEqual(d, 12.8, places=1)
+        self.assertEqual(conditions.compass(b), "NE")
+        d2, b2 = conditions.miles_bearing(anchor["lat"], anchor["lon"],
+                                          self.stations["MBIN7"]["lat"], self.stations["MBIN7"]["lon"])
+        self.assertAlmostEqual(d2, 4.3, places=1)
+        self.assertEqual(conditions.compass(b2), "NNE")
+        d3, b3 = conditions.miles_bearing(anchor["lat"], anchor["lon"],
+                                          self.stations["8658163"]["lat"], self.stations["8658163"]["lon"])
+        self.assertAlmostEqual(d3, 14.0, places=1)
+        self.assertEqual(conditions.compass(b3), "NNE")
+        blob = json.dumps(self.r)
+        self.assertIn("12.8 mi NE", blob)
+        self.assertIn("4.3 mi NNE", self.r["readings"]["wind"]["stationLabel"])
+        self.assertNotIn("about 8", blob.lower())
+        self.assertIn("12.8 miles northeast", self.r["readings"]["seas"]["note"])
+        self.assertIn("subordinate station; predictions only", self.r["tide"]["note"])
+        self.assertIn("8654400", self.r["tide"]["note"])
+        self.assertIn("Wrightsville Beach", self.r["tide"]["observedNote"])
+        self.assertIn("8658163", self.r["tide"]["observedNote"])
+        self.assertIn("14.0 miles north-northeast", self.r["tide"]["observedNote"])
+
+    def test_sources_zones_and_zoom(self):
+        r, rd = self.r, self.r["readings"]
+        self.assertEqual(rd["wind"]["sources"], ["MBIN7"])
+        self.assertEqual(rd["seas"]["sources"], ["41110"])
+        self.assertEqual(rd["swell"]["sources"], ["41110"])
+        self.assertEqual(rd["waterTemp"]["sources"], [])
+        self.assertEqual(rd["waterTempOffshore"]["sources"], ["41110"])
+        self.assertEqual(rd["airTemp"]["sources"], ["MBIN7"])
+        self.assertEqual(rd["pressure"]["sources"], ["MBIN7"])
+        self.assertNotIn("8658163", rd["wind"]["sources"])
+        self.assertNotIn("8658163", rd["waterTemp"]["sources"])
+        self.assertEqual(r["tide"]["station"], "8658559")
+        self.assertEqual(r["tide"]["observedStation"], "8658163")
+        self.assertFalse(r["tide"].get("curve", True))
+        self.assertTrue(r["tide"].get("observed"))
+        self.assertEqual(r["forecast"]["gridId"], "ILM")
+        self.assertEqual((r["forecast"]["gridX"], r["forecast"]["gridY"]), (92, 67))
+        self.assertEqual(r["marine"]["zone"], "AMZ250")
+        self.assertTrue(r["marine"].get("zoneNote"))
+        self.assertEqual(r["alertZones"], ["AMZ250", "NCZ108"])
+        self.assertEqual(r["map"]["zoom"], 11)
+        self.assertEqual(self.stations["MBIN7"]["name"], "Masonboro Island, south end")
+        self.assertEqual(self.stations["MBIN7"]["staleAfterMin"], 130)
+        self.assertIn("2.2 miles east-northeast", self.stations["44056"]["setting"])
+
+
+class CorollaDuckConfig(unittest.TestCase):
+    def setUp(self):
+        self.cfg = conditions.load_regions()
+        self.regions = {r["id"]: r for r in self.cfg.get("regions") or []}
+        self.stations = self.cfg["stations"]
+        self.r = self.regions["corolla-duck"]
+
+    def test_preview_only_and_standard_shape(self):
+        r = self.r
+        self.assertFalse(r.get("enabled"))
+        self.assertFalse(r.get("draft"))
+        self.assertTrue(r.get("previewReady"))
+        self.assertEqual(r.get("waterType"), "saltwater")
+        self.assertNotIn("instrumentSets", r)
+        self.assertNotIn("brief", r)
+        self.assertTrue(conditions.is_preview_salt_region("corolla-duck"))
+        self.assertFalse(conditions._servable(r))
+        self.assertTrue(conditions._servable(r, preview=True))
+
+    def test_distances_labels_and_alert_zones(self):
+        anchor = self.r["anchor"]
+        self.assertEqual(anchor["label"], "Duck Pier")
+        d, b = conditions.miles_bearing(anchor["lat"], anchor["lon"],
+                                        self.stations["44056"]["lat"], self.stations["44056"]["lon"])
+        self.assertAlmostEqual(d, 2.2, places=1)
+        self.assertEqual(conditions.compass(b), "ENE")
+        blob = json.dumps(self.r)
+        self.assertIn("2.2 mi ENE", self.r["readings"]["seas"]["stationLabel"])
+        self.assertNotIn("about 1.9", blob.lower())
+        self.assertNotIn("1.9 miles", blob)
+        self.assertEqual(self.r["alertZones"], ["AMZ150", "NCZ203", "NCZ102"])
+        self.assertIn("NCZ203 Northern Outer Banks", self.r["notes"])
+        self.assertIn("land-zone membership at the townsite is unverified", self.r["notes"])
+        self.assertIn("NCZ102", self.r["notes"])
+        self.assertIn("Eastern Currituck", self.r["notes"])
+        self.assertIn("AKQ", self.r["notes"])
+        self.assertEqual(self.r["marine"]["zone"], "AMZ150")
+        self.assertIn("Currituck Beach Light", self.r["marine"]["zoneName"])
+        self.assertIn("north of the light", self.r["marine"]["zoneNote"])
+        self.assertEqual(self.r["map"]["zoom"], 10)
+        self.assertEqual(self.r["forecast"]["gridId"], "MHX")
+        self.assertEqual((self.r["forecast"]["gridX"], self.r["forecast"]["gridY"]), (85, 128))
+
+    def test_sources_exclude_nags_head_buoys_and_marina_temp(self):
+        rd = self.r["readings"]
+        self.assertEqual(rd["wind"]["sources"], ["8651370"])
+        self.assertEqual(rd["seas"]["sources"], ["44056"])
+        self.assertEqual(rd["swell"]["sources"], ["44056"])
+        self.assertEqual(rd["waterTemp"]["sources"], [])
+        self.assertEqual(rd["waterTempOffshore"]["sources"], ["44056"])
+        self.assertEqual(rd["airTemp"]["sources"], ["8651370"])
+        self.assertEqual(rd["pressure"]["sources"], ["8651370"])
+        for kind, spec in rd.items():
+            srcs = spec.get("sources") or []
+            self.assertNotIn("44086", srcs, kind)
+            self.assertNotIn("44095", srcs, kind)
+            self.assertNotIn("8652587", srcs, kind)
+        self.assertEqual(self.r["tide"]["station"], "8651370")
+        self.assertNotIn("observedStation", self.r["tide"])
+        self.assertTrue(self.r["tide"].get("curve", True))
+        self.assertTrue(self.r["tide"].get("observed", True))
+
+
+class CarolinaKureTides(unittest.TestCase):
+    def test_hilo_only_labeled_wrightsville_observed_no_curve(self):
+        cfg = conditions.load_regions()
+        r = next(x for x in cfg["regions"] if x["id"] == "carolina-kure")
+        called = {"preds": [], "obs": []}
+
+        def fake_preds(station, begin, end, interval):
+            called["preds"].append((station, interval))
+            if interval == "hilo":
+                return [{"t": "2026-11-15 16:21", "v": "4.44", "type": "H"}]
+            return [{"t": "2026-11-15 15:00", "v": "3.0"}]
+
+        def fake_obs(sid, curve_pts, now):
+            called["obs"].append(sid)
+            return {"kind": "observed", "status": "ok", "latest": {"v": 3.96}, "staleAfterMin": 30}
+
+        with patch.object(conditions, "tide_preds", side_effect=fake_preds):
+            with patch.object(conditions, "observed_water_level", side_effect=fake_obs):
+                out = conditions.tides_block(r["tide"], cfg["stations"], r["anchor"], NOW)
+        self.assertEqual(out["status"], "ok")
+        self.assertEqual(out["station"]["id"], "8658559")
+        self.assertIn("Wilmington Beach", out["station"]["name"])
+        self.assertIn("subordinate", (out.get("note") or "").lower())
+        self.assertEqual(out.get("curve") or [], [])
+        self.assertNotIn("curveStation", out)
+        self.assertEqual(called["preds"], [("8658559", "hilo")])
+        self.assertEqual(called["obs"], ["8658163"])
+        self.assertEqual(out["observed"]["station"]["id"], "8658163")
+        self.assertIn("Wrightsville", out["observed"]["note"])
+
+
+class NdbcLatestObs(unittest.TestCase):
+    SAMPLE = (
+        "Station MBIN7\n"
+        "34 5.4' N  77 52.1' W\n"
+        "\n"
+        "8:00 am EST\n"
+        "1300 GMT 11/15/26\n"
+        "Wind: NNW (330°), 7.0 kt\n"
+        "Gust: 10.0 kt\n"
+        "Pres: 30.26 rising\n"
+        "Air Temp: 42.1 °F\n"
+    )
+
+    def test_parse_english_units_and_wind_reading(self):
+        parsed = conditions.parse_ndbc_latest_obs(self.SAMPLE)
+        self.assertIsNotNone(parsed)
+        self.assertEqual(parsed["WDIR"], 330.0)
+        self.assertEqual(parsed["WSPD_kt"], 7.0)
+        self.assertEqual(parsed["GST_kt"], 10.0)
+        self.assertEqual(parsed["ATMP_F"], 42.1)
+        self.assertEqual(parsed["PRES_inHg"], 30.26)
+        self.assertEqual(parsed["PRES_trend"], "rising")
+        out = conditions.ndbc_reading_from_latest_obs("wind", parsed, "https://example.test/mbin7.txt")
+        self.assertEqual(out["values"]["speedKt"], 7.0)
+        self.assertEqual(out["values"]["gustKt"], 10.0)
+        self.assertEqual(out["values"]["dirCompass"], "NNW")
+
+
+
 if __name__ == "__main__":
     unittest.main()
 
@@ -308,11 +511,13 @@ class WilmingtonNagsConfig(unittest.TestCase):
             self.assertNotIn("brief", r, rid)  # no Morning Brief for these regions
         public_ids = [x["id"] for x in conditions.public_regions()["regions"]]
         self.assertEqual(public_ids, ["crystal-coast", "hatteras", "wilmington", "nags-head", "emerald-isle", "topsail"])
+        self.assertNotIn("carolina-kure", public_ids)
+        self.assertNotIn("corolla-duck", public_ids)
         listed = conditions.listed_regions(preview=True)
         ids = [x["id"] for x in listed["regions"]]
-        self.assertEqual(ids, public_ids)
-        # Nothing is flagged as a preview any more, with or without the cookie.
-        self.assertFalse(any(x.get("preview") for x in listed["regions"]))
+        self.assertEqual(ids, public_ids + ["carolina-kure", "corolla-duck"])
+        flagged = [x["id"] for x in listed["regions"] if x.get("preview")]
+        self.assertEqual(flagged, ["carolina-kure", "corolla-duck"])
 
     def test_planned_regions_stay_disabled(self):
         for rid in ("atlantic-beach", "cape-lookout", "new-bern"):
@@ -538,7 +743,13 @@ class SplitTideStations(unittest.TestCase):
 
 class AssemblePreviewGate(unittest.TestCase):
     def test_public_assemble_404s_preview_regions_without_fallback(self):
-        # No real region is preview-only today, so use a fake previewReady region.
+        # Real cookie-gated regions 404 without preview=True; a fake id is also checked.
+        for rid in ("carolina-kure", "corolla-duck"):
+            self.assertTrue(conditions.is_preview_salt_region(rid), rid)
+            status, payload = conditions.assemble(rid)
+            self.assertEqual(status, 404, rid)
+            self.assertFalse(payload.get("ok"))
+            self.assertNotIn("readings", payload)
         cfg = conditions.load_regions()
         fake = dict(next(r for r in cfg["regions"] if r["id"] == "wilmington"), id="fixture-preview", enabled=False)
         cfg["regions"].append(fake)

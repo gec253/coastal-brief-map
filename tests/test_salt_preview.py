@@ -26,6 +26,7 @@ STUB = {
 
 SALT_PUBLIC = ["crystal-coast", "hatteras", "wilmington", "nags-head", "emerald-isle", "topsail"]
 NEW_PUBLIC = ["wilmington", "nags-head", "emerald-isle", "topsail"]
+PREVIEW_SALT = ["carolina-kure", "corolla-duck"]
 
 
 import conditions  # noqa: E402
@@ -99,14 +100,15 @@ class SaltPreviewGating(unittest.TestCase):
         ids = [r["id"] for r in data["regions"]]
         self.assertEqual(ids, SALT_PUBLIC)
         self.assertFalse(any(r.get("preview") for r in data["regions"]))
-        for rid in ("atlantic-beach", "cape-lookout", "new-bern"):
+        for rid in ("atlantic-beach", "cape-lookout", "new-bern", *PREVIEW_SALT):
             self.assertNotIn(rid, ids)
-        # Same list with a preview cookie: nothing extra and nothing flagged.
+        # With a preview cookie the two cookie-gated regions appear, flagged as preview.
         env = {"PREVIEW_KEY": self.KEY}
         status, body, _ = self._req("/api/regions", env=env, cookie=self._cookie())
         data = json.loads(body)
-        self.assertEqual([r["id"] for r in data["regions"]], SALT_PUBLIC)
-        self.assertFalse(any(r.get("preview") for r in data["regions"]))
+        self.assertEqual([r["id"] for r in data["regions"]], SALT_PUBLIC + PREVIEW_SALT)
+        flagged = [r["id"] for r in data["regions"] if r.get("preview")]
+        self.assertEqual(flagged, PREVIEW_SALT)
 
     def test_new_regions_are_public_without_cookie(self):
         stub = lambda rid=None, preview=False: (200, dict(STUB, region={"id": rid, "name": rid}))
@@ -162,8 +164,9 @@ class SaltPreviewGating(unittest.TestCase):
             self.assertTrue(json.loads(body)["ok"])
             status, body, _ = self._req("/api/regions", env=env, cookie=cookie)
             data = json.loads(body)
-            self.assertEqual([r["id"] for r in data["regions"]], SALT_PUBLIC + ["fixture-preview"])
+            self.assertEqual([r["id"] for r in data["regions"]], SALT_PUBLIC + PREVIEW_SALT + ["fixture-preview"])
             self.assertTrue(data["regions"][-1].get("preview"))
+            self.assertEqual(data["regions"][-1]["id"], "fixture-preview")
 
     def test_wrong_or_missing_key_still_404s(self):
         env = {"PREVIEW_KEY": self.KEY}
@@ -178,6 +181,28 @@ class SaltPreviewGating(unittest.TestCase):
         for path in ("/preview", "/preview/photos-check", "/preview/masthead"):
             status, _, _ = self._req(path)
             self.assertEqual(status, 404, path)
+
+    def test_carolina_kure_and_corolla_duck_404_publicly(self):
+        for rid in PREVIEW_SALT:
+            for path in ("/?region=" + rid, "/api/conditions?region=" + rid,
+                         "/brief?region=" + rid, "/api/brief?region=" + rid):
+                status, _, _ = self._req(path)
+                self.assertEqual(status, 404, path)
+
+    def test_preview_cookie_unlocks_carolina_kure_and_corolla_duck(self):
+        env = {"PREVIEW_KEY": self.KEY}
+        cookie = self._cookie()
+        stub = lambda rid=None, preview=False: (200, dict(STUB, region={"id": rid or "carolina-kure", "name": rid or "carolina-kure"}))
+        with patch("conditions.assemble", side_effect=stub):
+            for rid in PREVIEW_SALT:
+                status, body, headers = self._req("/?region=" + rid, env=env, cookie=cookie)
+                self.assertEqual(status, 200, rid)
+                self.assertIn(b"The Coastal Brief", body)
+                self.assertIn("noindex", (headers.get("x-robots-tag") or "").lower(), rid)
+                status, body, _ = self._req("/api/conditions?region=" + rid, env=env, cookie=cookie)
+                self.assertEqual(status, 200, rid)
+                self.assertTrue(json.loads(body)["ok"])
+
 
 
 if __name__ == "__main__":
