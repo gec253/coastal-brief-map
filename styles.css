@@ -4245,8 +4245,40 @@ html[data-page="lake"] .al-zones p {
   line-height: 1.4;
   color: var(--d-ink-2, #3E5868);
 }
+/* Reserve the alert at its loaded size so a late /api/freshwater
+   response does not shift the instruments. */
 html[data-page="lake"] #fw-alert,
 html[data-page="lake"] .dash-alert {
-  min-height: 0;
+  min-height: 94px;
   align-content: unset;
+}
+@media (min-width: 640px) {
+  html[data-page="lake"] #fw-alert,
+  html[data-page="lake"] .dash-alert {
+    min-height: 66px;
+  }
+}
+
+/* Neuse is a river dashboard. Hide the lake grid and inflows on first
+   paint (they are removed when data arrives) and reserve the river
+   section and a two-line title. Jordan has no river section and must
+   not inherit this gap. */
+html[data-page="lake"][data-region="neuse-river"] #fw-grid,
+html[data-page="lake"][data-region="neuse-river"] #fw-inflows-sec {
+  display: none;
+}
+@media (max-width: 429px) {
+  html[data-page="lake"][data-region="neuse-river"] #fw-h { min-height: 50px; }
+}
+html[data-page="lake"][data-region="neuse-river"] #fw-river-sec {
+  min-height: 1206px;
+}
+@media (min-width: 640px) {
+  html[data-page="lake"][data-region="neuse-river"] #fw-river-sec { min-height: 657px; }
+}
+@media (min-width: 760px) {
+  html[data-page="lake"][data-region="neuse-river"] #fw-river-sec { min-height: 618px; }
+}
+@media (min-width: 860px) {
+  html[data-page="lake"][data-region="neuse-river"] #fw-river-sec { min-height: 626px; }
 }

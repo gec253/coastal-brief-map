@@ -1979,11 +1979,18 @@ _LAKE_ALERT_JS = """<script>
 
 
 
-def _paint_public_lake(data: bytes) -> bytes:
+_LAKE_REGIONS = {b"falls-lake", b"jordan-lake", b"neuse-river"}
+
+
+def _paint_public_lake(data: bytes, region: str = "falls-lake") -> bytes:
     """Presentation-only Folio chrome and alert folding on public /lake."""
     data = _install_folio_chrome(data, "lake")
     data = _set_html_attr(data, b"data-concept", b"a")
     data = _set_html_attr(data, b"data-page", b"lake")
+    rid = (region or "falls-lake").strip().lower().encode("ascii", "ignore")
+    if rid not in _LAKE_REGIONS:
+        rid = b"falls-lake"
+    data = _set_html_attr(data, b"data-region", rid)
     data = _apply_preview_dateline(_apply_chrome(data))
     if b"cb-mast-reveal" not in data:
         data = data.replace(b"</head>", b"  " + _MASTHEAD_PLAY + b"</head>", 1)
@@ -2309,7 +2316,8 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.send_error(404, "not found")
             robots = "index, follow" if public else "noindex, nofollow"
             if parsed.path == "/lake":
-                data = _paint_public_lake((ROOT / "lake.html").read_bytes())
+                rid = (parse_qs(parsed.query or "").get("region") or ["falls-lake"])[0]
+                data = _paint_public_lake((ROOT / "lake.html").read_bytes(), region=rid)
                 if not public:
                     data = data.replace(
                         b'name="robots" content="index, follow"',
