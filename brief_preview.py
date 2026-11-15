@@ -27,6 +27,7 @@ import re
 import threading
 import time
 from datetime import datetime, timezone
+from pathlib import Path
 
 import brief
 import brief_strings
@@ -497,4 +498,164 @@ def page(b: dict) -> str:
     out = out.replace("<title>Morning Brief", "<title>Preview · Morning Brief", 1)
     out = out.replace("https://thecoastalbrief.com/brief?region=%s" % esc(rid), "https://thecoastalbrief.com/preview/brief/%s" % esc(rid))
     out = preview_copy.inject_page(out, b)
+    return _apply_polish(out)
+
+# Presentation-only polish for /preview/brief/* pages, applied in page() after
+# brief.page() returns. Strings, data logic and values are not changed.
+# Touches in this file: Path import; these helpers; a final _apply_polish()
+# call at the end of page(). page() still does its existing banner, nav,
+# glance, title and unavailable-section replacements first.
+_POLISH_CSS = Path(__file__).resolve().parent / "preview" / "brief-polish.css"
+
+_TOOLS_FROM = """    <div class="mb-tools">
+      <button type="button" class="mb-print" onclick="window.print()">Print</button>
+      <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
+    </div>"""
+
+_TOOLS_TO = """    <div class="mb-tools" role="group" aria-label="Page tools">
+      <button type="button" class="mb-print" onclick="window.print()" aria-label="Print">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round" d="M7 8V3.5h10V8M7 17H5.5A2.5 2.5 0 0 1 3 14.5v-5A2.5 2.5 0 0 1 5.5 7h13A2.5 2.5 0 0 1 21 9.5v5A2.5 2.5 0 0 1 18.5 17H17M7 14h10v6.5H7z"/></svg>
+      </button>
+      <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Switch to dark mode">
+        <svg class="mb-icon-moon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round" d="M15.2 3.5A8.5 8.5 0 1 0 20.5 14 7 7 0 0 1 15.2 3.5z"/></svg>
+        <svg class="mb-icon-sun" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="1.75"/><path fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6"/></svg>
+      </button>
+    </div>"""
+
+_DETAILS_SCRIPT_FROM = """    var d=document.getElementById("mb-details");
+    if(!d)return;
+    var wide=window.matchMedia("(min-width: 601px)");
+    function apply(){
+      if(wide.matches) d.open=true;
+      else if(!d.hasAttribute("data-user")) d.open=false;
+    }
+    apply();
+    d.addEventListener("toggle", function(){ if(!wide.matches) d.setAttribute("data-user","1"); });
+    if(wide.addEventListener) wide.addEventListener("change", apply);
+    else wide.addListener(apply);
+    window.addEventListener("beforeprint", function(){ d.open=true; });
+    window.addEventListener("afterprint", apply);"""
+
+_DETAILS_SCRIPT_TO = """    var d=document.getElementById("mb-details");
+    var src=document.getElementById("mb-sources");
+    var wide=window.matchMedia("(min-width: 601px)");
+    function applyOne(el){
+      if(!el)return;
+      if(wide.matches) el.open=true;
+      else if(!el.hasAttribute("data-user")) el.open=false;
+    }
+    function apply(){ applyOne(d); applyOne(src); }
+    apply();
+    function track(el){ if(el) el.addEventListener("toggle", function(){ if(!wide.matches) el.setAttribute("data-user","1"); }); }
+    track(d); track(src);
+    if(wide.addEventListener) wide.addEventListener("change", apply);
+    else wide.addListener(apply);
+    window.addEventListener("beforeprint", function(){ if(d)d.open=true; if(src)src.open=true; });
+    window.addEventListener("afterprint", apply);"""
+
+
+def _inject_polish_css(out: str) -> str:
+    css = _POLISH_CSS.read_text(encoding="utf-8").replace("</", "<\\/")
+    return out.replace("</head>", '<style id="brief-polish">\n%s\n</style>\n</head>' % css, 1)
+
+
+def _compact_tools(out: str) -> str:
+    if _TOOLS_FROM not in out:
+        return out
+    out = out.replace(_TOOLS_FROM, _TOOLS_TO, 1)
+    out = out.replace('    btn.textContent=dark?"Light mode":"Dark mode";\n', "", 1)
+    return out
+
+
+def _compact_regions(out: str) -> str:
+    """Replace the preview region link row with a compact labeled select.
+
+    The original <a href="..."> links are kept inside <noscript> so existing
+    tests and no-JS navigation still see them. Option labels are the same
+    region names; no strings are rewritten.
+    """
+    m = re.search(
+        r'<nav class="mb-regions" aria-label="Preview brief region">(.*?)</nav>',
+        out, flags=re.S,
+    )
+    if not m:
+        return out
+    links = re.findall(r'<a href="(/preview/brief/[^"]+)"([^>]*)>([^<]*)</a>', m.group(1))
+    if not links:
+        return out
+    opts, anchors = [], []
+    for href, attrs, name in links:
+        sel = " selected" if 'aria-current="page"' in attrs else ""
+        opts.append('<option value="%s"%s>%s</option>' % (href, sel, name))
+        anchors.append('<a href="%s"%s>%s</a>' % (href, attrs, name))
+    nav = (
+        '<nav class="mb-regions" aria-label="Preview brief region">'
+        '<label class="mb-rv-label" for="mb-region-select">Region</label>'
+        '<select id="mb-region-select" class="mb-region-select" autocomplete="off" '
+        'onchange="if(this.value)location.href=this.value">'
+        + "".join(opts)
+        + "</select>"
+        "<noscript>" + "".join(anchors) + "</noscript>"
+        "</nav>"
+    )
+    return out[:m.start()] + nav + out[m.end():]
+
+
+def _wrap_reading_times(out: str) -> str:
+    """Fold the reading-times list into a native details/summary.
+
+    The visible heading text remains "Reading times". List items, times and
+    station ids are unchanged. Issued time and the why line stay visible.
+    """
+    pat = r'<p class="mb-fresh-k">Reading times</p>\s*<ul class="mb-fresh">.*?</ul>'
+
+    def repl(m: re.Match) -> str:
+        ul = re.search(r'<ul class="mb-fresh">.*?</ul>', m.group(0), flags=re.S)
+        if not ul:
+            return m.group(0)
+        return (
+            '<details class="mb-sources" id="mb-sources">'
+            "<summary>Reading times</summary>"
+            + ul.group(0)
+            + "</details>"
+        )
+
+    return re.sub(pat, repl, out, count=1, flags=re.S)
+
+
+def _move_take_after_glance(out: str) -> str:
+    """Place Captain's Take immediately after the glance cards (or advisories)."""
+    m = re.search(r'\n  <section class="mb-take">.*?</section>', out, flags=re.S)
+    if not m:
+        return out
+    block = m.group(0)
+    out = out[:m.start()] + out[m.end():]
+    for pat in (
+        r'(<section class="mb-glance"[^>]*>.*?</section>)',
+        r'(<section class="mb-adv"[^>]*>.*?</section>)',
+        r'(<section class="mb-issue"[^>]*>.*?</section>)',
+    ):
+        n = re.search(pat, out, flags=re.S)
+        if n:
+            return out[:n.end()] + block + out[n.end():]
+    return out + block
+
+
+def _apply_polish(out: str) -> str:
+    out = out.replace('<body class="mb-page">', '<body class="mb-page mb-preview-brief">', 1)
+    out = _inject_polish_css(out)
+    out = _compact_tools(out)
+    out = _compact_regions(out)
+    out = _wrap_reading_times(out)
+    out = _move_take_after_glance(out)
+    if _DETAILS_SCRIPT_FROM in out:
+        out = out.replace(_DETAILS_SCRIPT_FROM, _DETAILS_SCRIPT_TO, 1)
+    # Mark glance tiles whose value is already the locked placeholder.
+    out = out.replace(
+        "</body>",
+        '<script>(function(){document.querySelectorAll(".mb-gv b").forEach(function(b){'
+        'if((b.textContent||"").trim()==="Not available"){b.parentElement.classList.add("mb-na");}'
+        "});})();</script>\n</body>",
+        1,
+    )
     return out
