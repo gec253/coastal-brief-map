@@ -143,7 +143,31 @@
     s.async = true; s.defer = true;
     document.head.appendChild(s);
   }
+  function syncSpecies() {
+    const form = $("share-form");
+    if (!form) return;
+    const c = form.querySelector("input[name=category]:checked");
+    const wrap = $("sh-species-wrap");
+    if (wrap) wrap.hidden = !(c && c.value === "fishing");
+  }
+  function fillRegions() {
+    const sel = $("sh-region");
+    if (!sel || sel.dataset.filled) return;
+    const regions = config.regions || [];
+    regions.forEach(function (r) {
+      const o = document.createElement("option");
+      o.value = r.id;
+      o.textContent = r.name;
+      sel.appendChild(o);
+    });
+    const other = document.createElement("option");
+    other.value = "other";
+    other.textContent = "Other / not listed";
+    sel.appendChild(other);
+    sel.dataset.filled = "1";
+  }
   function openShare(e) {
+
     if (!config.uploads) return;
     shareOpener = (e && e.currentTarget) || $("share-open");
     $("share-form").hidden = false; $("share-done").hidden = true;
@@ -168,27 +192,7 @@
       if (b.id === "share-open") return;
       b.addEventListener("click", openShare);
     });
-    function syncSpecies() {
-      const c = $("share-form").querySelector("input[name=category]:checked");
-      $("sh-species-wrap").hidden = !(c && c.value === "fishing");
-    }
     $("share-form").querySelectorAll("input[name=category]").forEach((r) => r.addEventListener("change", syncSpecies));
-    function fillRegions() {
-      const sel = $("sh-region");
-      if (!sel || sel.dataset.filled) return;
-      const regions = config.regions || [];
-      regions.forEach(function (r) {
-        const o = document.createElement("option");
-        o.value = r.id;
-        o.textContent = r.name;
-        sel.appendChild(o);
-      });
-      const other = document.createElement("option");
-      other.value = "other";
-      other.textContent = "Other / not listed";
-      sel.appendChild(other);
-      sel.dataset.filled = "1";
-    }
     let previewUrl = null;
     function showPickedFile(f, input) {
       const box = $("sh-preview"), img = $("sh-preview-img");

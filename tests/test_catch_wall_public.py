@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 import os
+import subprocess
 import time
 import threading
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from http.server import ThreadingHTTPServer
@@ -70,18 +72,52 @@ PHOTOS = [
 
 
 class Assemble(unittest.TestCase):
-    def test_featured_prefers_red_drum(self):
-        model = cw.assemble("catch", "all", live=PHOTOS)
-        self.assertEqual(model["featured"]["id"], RED_DRUM_ID)
+    def test_featured_prefers_admin_flag(self):
+        rows = [dict(p) for p in PHOTOS]
+        rows[2]["featured"] = True
+        model = cw.assemble("catch", "all", live=rows)
+        self.assertEqual(model["featured"]["id"], rows[2]["id"])
         self.assertEqual(len(model["photos"]), 3)
         self.assertFalse(model["invite"])
+        # A flagged life photo wins on All Photos over a newer unflagged catch.
+        mixed = [dict(p) for p in (PHOTOS[0], PHOTOS[3])]
+        mixed[1]["featured"] = True
+        all_view = cw.assemble("all", "all", live=mixed)
+        self.assertEqual(all_view["featured"]["id"], mixed[1]["id"])
+
+    def test_featured_falls_back_to_newest_fishing(self):
+        # Lists are newest-first. With no admin flag, the first fishing photo is featured.
+        model = cw.assemble("catch", "all", live=PHOTOS)
+        self.assertEqual(model["featured"]["id"], PHOTOS[0]["id"])
+        self.assertEqual(len(model["photos"]), 3)
+        self.assertFalse(model["invite"])
+        later_first = [PHOTOS[1], PHOTOS[2], PHOTOS[0], PHOTOS[3]]
+        model = cw.assemble("catch", "all", live=later_first)
+        self.assertEqual(model["featured"]["id"], PHOTOS[1]["id"])
+        # A newer life photo does not beat an approved fishing photo.
+        all_view = cw.assemble("all", "all", live=[PHOTOS[3], PHOTOS[1], PHOTOS[0]])
+        self.assertEqual(all_view["featured"]["id"], PHOTOS[1]["id"])
+
+    def test_share_cta_matches_view(self):
+        self.assertEqual(cw.share_cta("catch"), "Share your catch")
+        self.assertEqual(cw.share_cta("life"), "Share your photo")
+        self.assertEqual(cw.share_cta("all"), "Share your photo")
+        catch = cw.intro_html("catch") + cw.invite_html("catch")
+        self.assertIn("Share your catch", catch)
+        self.assertNotIn("Share your photo", catch)
+        life = cw.intro_html("life") + cw.invite_html("life")
+        self.assertIn("Share your photo", life)
+        self.assertNotIn("Share your catch", life)
+        allp = cw.intro_html("all") + cw.invite_html("all")
+        self.assertIn("Share your photo", allp)
+        self.assertNotIn("Share your catch", allp)
 
     def test_invite_when_zero_or_one(self):
         none = cw.assemble("catch", "all", live=[])
         self.assertIsNone(none["featured"])
         self.assertTrue(none["invite"])
         one = cw.assemble("catch", "all", live=PHOTOS[:1])
-        self.assertEqual(one["featured"]["id"], RED_DRUM_ID)
+        self.assertEqual(one["featured"]["id"], PHOTOS[0]["id"])
         self.assertTrue(one["invite"])
 
     def test_life_and_water_filters(self):
@@ -338,6 +374,68 @@ class PublicPages(unittest.TestCase):
         self.assertNotIn('fetch("/api/photos?', js)
         self.assertNotIn("fetch('/api/photos?", js)
 
+    def test_share_cta_on_pages(self):
+        status, catch, _ = self._get("/catch-wall")
+        self.assertEqual(status, 200)
+        self.assertIn(">Share your catch</button>", catch)
+        self.assertNotIn('id="share-open" hidden>Share your photo</button>', catch)
+        status, life, _ = self._get("/coastal-life")
+        self.assertEqual(status, 200)
+        self.assertIn(">Share your photo</button>", life)
+        self.assertNotIn('id="share-open" hidden>Share your catch</button>', life)
+        status, allp, _ = self._get("/photos")
+        self.assertEqual(status, 200)
+        self.assertIn(">Share your photo</button>", allp)
+        self.assertNotIn('id="share-open" hidden>Share your catch</button>', allp)
+
+    def test_open_share_helpers_are_in_scope(self):
+        js = Path(__file__).resolve().parents[1].joinpath("catch-wall-public.js").read_text()
+        open_at = js.find("function openShare(")
+        dlg_at = js.find("if (dlg) {", open_at)
+        sync_at = js.find("function syncSpecies(")
+        fill_at = js.find("function fillRegions(")
+        self.assertGreater(open_at, 0)
+        self.assertGreater(dlg_at, open_at)
+        self.assertTrue(0 < sync_at < open_at, "syncSpecies must be in the same scope as openShare, not inside if (dlg)")
+        self.assertTrue(0 < fill_at < open_at, "fillRegions must be in the same scope as openShare, not inside if (dlg)")
+        inner = js[dlg_at:js.find('fetch("/api/photos/config")', dlg_at)]
+        self.assertNotIn("function syncSpecies", inner)
+        self.assertNotIn("function fillRegions", inner)
+        self.assertIn("syncSpecies();", js[open_at:dlg_at])
+        self.assertIn("fillRegions();", js[open_at:dlg_at])
+
+    def test_share_open_opens_dialog_in_stub_dom(self):
+        stub = Path(__file__).resolve().parent / "share_open_stub.mjs"
+        result = subprocess.run(
+            ["node", str(stub)],
+            cwd=str(Path(__file__).resolve().parents[1]),
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr or result.stdout)
+        self.assertIn("share-open-ok", result.stdout)
+
+    def test_share_open_opens_dialog_in_browser(self):
+        pw = "/tmp/pwvenv/bin/python"
+        script = Path(__file__).resolve().parent / "share_open_playwright.py"
+        if not os.path.exists(pw):
+            self.skipTest("Playwright venv is not available")
+        cfg = {
+            "uploads": True,
+            "regions": [{"id": "neuse", "name": "Neuse River"}],
+            "turnstileSiteKey": "",
+        }
+        with patch.object(photos, "public_config", return_value=cfg):
+            result = subprocess.run(
+                [pw, str(script), self.base + "/catch-wall"],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+        self.assertEqual(result.returncode, 0, result.stderr or result.stdout)
+        self.assertIn("playwright-share-ok", result.stdout)
+
     def test_other_pages_untouched(self):
         status, home, _ = self._get("/")
         self.assertEqual(status, 200)
@@ -444,7 +542,7 @@ def _db_row(photo, **extra):
         "region_id": "",
         "taken_on": "",
         "caption": "",
-        "featured": photo["id"] == RED_DRUM_ID,
+        "featured": bool(photo.get("featured")),
     }
     row.update(extra)
     return row

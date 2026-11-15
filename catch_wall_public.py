@@ -29,7 +29,6 @@ VIEWS = {
     },
 }
 DEK = "Real catches. Real Carolina waters. Every picture has a story."
-RED_DRUM_ID = "3e41ed83-23a3-4032-8a5f-c7957b788e3f"
 EXISTING_VARIANTS = ("400", "800", "1600")
 FEATURED_SIZES = "(min-width: 860px) 55vw, 100vw"
 PROD_PHOTOS_URL = "https://thecoastalbrief.com/api/photos?view=all"
@@ -318,16 +317,24 @@ def _matches(p: dict, view: str, water: str) -> bool:
     return True
 
 
+def share_cta(view: str) -> str:
+    """Primary share label: catch-specific on Catch Wall, generic elsewhere."""
+    return "Share your catch" if view == "catch" else "Share your photo"
+
+
 def pick_featured(photo_list: list[dict]) -> tuple[dict | None, list[dict]]:
+    """Featured slot: the admin featured flag, else the newest approved fishing photo.
+
+    Public photo lists arrive newest-first (created_at descending), so an earlier
+    index is treated as newer. Nothing here names a particular photo.
+    """
     if not photo_list:
         return None, []
 
     def score(p: dict) -> tuple:
-        sid = str(p.get("id") or "")
         return (
-            1 if sid == RED_DRUM_ID else 0,
+            1 if p.get("featured") else 0,
             1 if p.get("category") == "fishing" else 0,
-            1 if p.get("species") else 0,
         )
 
     i = max(range(len(photo_list)), key=lambda k: (score(photo_list[k]), -k))
@@ -521,13 +528,13 @@ def invite_html(view: str) -> str:
             "Coastal Life is just getting started. If you have a photograph from "
             "Carolina waters, share it. Every picture is reviewed before it appears."
         )
-        cta = "Share a photo"
+        cta = share_cta(view)
     else:
         body = (
             "The wall is just getting started. If you have a catch from Carolina waters, "
             "share the photograph. Every picture is reviewed before it appears."
         )
-        cta = "Share your catch"
+        cta = share_cta(view)
     return (
         '<aside class="cw-invite">'
         "<h3>A place for real photographs</h3>"
@@ -569,12 +576,12 @@ def intro_html(view: str) -> str:
         <h2 id="gal-h">%s</h2>
         <p class="cw-dek" id="gal-lead">%s</p>
         <p class="cw-actions">
-          <button type="button" class="cw-share" id="share-open" hidden>Share your catch</button>
+          <button type="button" class="cw-share" id="share-open" hidden>%s</button>
           <span class="gal-soon" id="share-soon">Photo sharing opens soon.</span>
         </p>
       </div>
     </section>
-    """ % (_esc(v["eyebrow"]), _esc(v["h"]), _esc(DEK))
+    """ % (_esc(v["eyebrow"]), _esc(v["h"]), _esc(DEK), _esc(share_cta(view)))
 
 
 def switch_html(view: str, water: str, count: int = 0) -> str:
