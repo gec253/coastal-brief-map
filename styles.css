@@ -28,12 +28,19 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; background: var(--sand); color: var(--ink); }
+/* Sticky #compact-bar is 101px at ≤760px and 49px above that. */
+@media (max-width: 760px) {
+  html { scroll-padding-top: 110px; }
+}
+@media (min-width: 761px) {
+  html { scroll-padding-top: 57px; }
+}
 body { line-height: 1.45; }
 
 .skip {
   position: absolute; left: -999px; top: 0;
 }
-.skip:focus { left: 8px; top: 8px; background: #fff; padding: 8px; z-index: 9999; }
+.skip:focus, .skip:focus-visible { left: 8px; top: 8px; background: #fff; padding: 8px; z-index: 9999; min-width: 44px; min-height: 44px; box-sizing: border-box; }
 
 .wrap { max-width: 1100px; margin: 0 auto; padding: 0 14px 48px; }
 
@@ -446,7 +453,8 @@ footer.site a { color: #1a4a5c; }
   top: 0;
   z-index: 10000;
 }
-.skip:focus {
+.skip:focus,
+.skip:focus-visible {
   left: 8px;
   top: 8px;
   background: #fff;
@@ -455,6 +463,9 @@ footer.site a { color: #1a4a5c; }
   border-radius: 6px;
   font-weight: 700;
   outline: 3px solid var(--teal);
+  min-width: 44px;
+  min-height: 44px;
+  box-sizing: border-box;
 }
 
 .header-row {
@@ -1350,8 +1361,21 @@ a.site-title { display: inline-flex; align-items: center; gap: 10px; }
   .dash h2 { font-size: 1.7rem; }
   .dash-head { align-items: stretch; }
   .dash-controls { align-items: stretch; width: 100%; }
-  .region-pick { width: 100%; }
-  .region-pick select { flex: 1; }
+  .region-pick {
+    width: 100%;
+    flex-wrap: wrap;
+    align-items: center;
+    height: auto;
+  }
+  .region-pick select {
+    flex: 1 1 12rem;
+    min-width: 0;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    height: auto;
+    line-height: 1.25;
+  }
   .dash-legend { justify-content: flex-start; }
   .console {
     grid-template-columns: minmax(0, 1fr);
@@ -2639,7 +2663,7 @@ html[data-concept] .mast-dateline {
   min-width: 0;
   height: 1.2em;
   line-height: 1.2;
-  font-size: 0.62rem;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -3029,6 +3053,9 @@ html[data-concept] .skip-links .skip:focus-visible {
   top: 8px !important;
   width: auto;
   height: auto;
+  min-width: 44px;
+  min-height: 44px;
+  box-sizing: border-box;
   clip: auto;
   overflow: visible;
   background: #fff;
@@ -3468,7 +3495,7 @@ html[data-home="folio"] .mast-motto {
   max-width: 36rem;
   height: 1.2em;
   font-family: var(--f-ui);
-  font-size: 0.66rem;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.16em;
   line-height: 1.2;
@@ -4007,11 +4034,15 @@ html[data-home="folio"] .al-zones p {
 }
 
 /* 9. On the Water: one featured photograph, then compact 120px-column cards. */
+/* #compact-bar is 101px on phones and 49px from 761px. html scroll-padding
+   clears hash jumps site-wide. These already had 120px scroll-margin; drop
+   that to 10px so padding + margin still clear the bar (~19px) without stacking
+   to ~230px. */
 html[data-home="folio"] .folio-water,
 html[data-home="folio"] #folio-water-h,
 html[data-home="folio"] #dash-alert,
 html[data-home="folio"] #conditions {
-  scroll-margin-top: 120px;
+  scroll-margin-top: 10px;
 }
 html[data-home="folio"] .folio-water {
   margin: 28px 0 8px;
@@ -4187,7 +4218,7 @@ html[data-page="lake"] .mast-motto {
   max-width: 36rem;
   height: 1.2em;
   font-family: var(--f-ui);
-  font-size: 0.66rem;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.16em;
   line-height: 1.2;

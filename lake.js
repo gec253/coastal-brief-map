@@ -18,7 +18,7 @@
   function setTheme(t, save) {
     document.documentElement.setAttribute("data-theme", t);
     const b = $("theme-toggle");
-    if (b) { b.textContent = t === "dark" ? "Light mode" : "Dark mode"; b.setAttribute("aria-pressed", String(t === "dark")); b.setAttribute("aria-label", t === "dark" ? "Switch to dark mode" : "Switch to light mode"); }
+    if (b) { b.textContent = t === "dark" ? "Light mode" : "Dark mode"; b.setAttribute("aria-pressed", String(t === "dark")); b.setAttribute("aria-label", t === "dark" ? "Switch to light mode" : "Switch to dark mode"); }
     if (save) try { localStorage.setItem("coastalBrief.theme", t); } catch (e) {}
   }
   setTheme(document.documentElement.getAttribute("data-theme") || "light", false);

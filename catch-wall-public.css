@@ -188,7 +188,9 @@ html[data-catch-wall] .gal-water a,
 html[data-catch-wall] .cw-water a {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: 44px;
+  min-width: 44px;
   padding: 0 12px;
   border-radius: 999px;
   border: 1px solid var(--cw-edge);

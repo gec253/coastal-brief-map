@@ -241,6 +241,19 @@ def _replace_text_by_id(data: bytes, el_id: bytes, text: str) -> bytes:
     return pat.sub(lambda m: m.group(1) + _esc(text).encode("utf-8") + m.group(3), data, count=1)
 
 
+def _paint_region_select(data: bytes, region_id, name) -> bytes:
+    """Replace the template's single #region-select option with the current region."""
+    if not region_id or not name:
+        return data
+    rid = html.escape(str(region_id), quote=True).encode("utf-8")
+    label = html.escape(str(name), quote=False).encode("utf-8")
+    pat = re.compile(
+        br'(<select id="region-select"[^>]*>)\s*<option value="[^"]*">[^<]*</option>\s*(</select>)',
+        re.S,
+    )
+    return pat.sub(br'\1<option value="' + rid + br'" selected>' + label + br'</option>\2', data, count=1)
+
+
 def inject(data: bytes, region_id: str | None = None, preview: bool = False) -> bytes:
     """Fill glance, alerts, badge, and boot JSON. Leave the template alone on failure."""
     try:
@@ -283,6 +296,10 @@ def inject(data: bytes, region_id: str | None = None, preview: bool = False) -> 
     data = data.replace(b' class="panel glance dash is-booting"', b' class="panel glance dash"', 1)
     data = _replace_text_by_id(data, b"loc-line", loc)
     data = _replace_text_by_id(data, b"dash-sub", sub)
+    # Keep the glance region control's first-paint label in sync with the
+    # current region so a wrapping name (e.g. Wilmington) does not change
+    # height when dashboard.js later fills the full option list.
+    data = _paint_region_select(data, region.get("id") or region_id, region.get("name"))
 
     boot = _json_script(payload, "cb-boot-conditions") + _json_script(listed, "cb-boot-regions")
     if _BOOT_MARK in data:
