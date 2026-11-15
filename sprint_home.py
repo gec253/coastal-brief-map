@@ -41,6 +41,8 @@ LIFE2_PHOTO_ID = "89eef7f7-9d80-41ad-b1e5-96985bcaa73d"  # Rx Chicken & Oysters 
 # Verified 15 Nov 2026; see preview/sprint-home/CREDITS.md. Served locally.
 PHOTO_DIR = DIR / "photos"
 PHOTO_ROUTE = "/preview/sprint-home/photos/"
+# Public homepage (/) serves the same approved files from this path. No listing; strict names only.
+PUBLIC_PHOTO_ROUTE = "/home-photos/"
 BODIE = {
     "id": "bodie-sunrise", "local": True, "w": 1600, "h": 1200,
     "base": PHOTO_ROUTE + "bodie-sunrise", "widths": (800, 1280),
@@ -192,9 +194,11 @@ def _temp_tile(r, name, tid, note="") -> dict:
 _PHOTO_NAME = re.compile(r"^[a-z0-9-]+-(800|1280)\.(avif|webp)$")
 
 
-def photo_path(url_path: str):
-    """Local preview photo for a request path, or None. Strict names only."""
-    name = url_path[len(PHOTO_ROUTE):]
+def photo_path(url_path: str, route: str = PHOTO_ROUTE):
+    """Local photo for a request path under route, or None. Strict names only."""
+    if not url_path.startswith(route):
+        return None
+    name = url_path[len(route):]
     if not _PHOTO_NAME.match(name):
         return None
     path = PHOTO_DIR / name
@@ -462,8 +466,45 @@ def region_groups(current: str) -> list[tuple[str, list[tuple[str, str, bool]]]]
     return [("Saltwater", salt), ("Freshwater", fresh)]
 
 
-def region_rail(current: str) -> str:
+def public_salt_ids() -> set:
+    """Saltwater regions the public picker lists today (same list as /api/regions without the cookie)."""
+    try:
+        return {r["id"] for r in conditions.listed_regions(preview=False).get("regions") or []
+                if (r.get("waterType") or "saltwater") == "saltwater"}
+    except Exception:
+        return set()
+
+
+def public_region_groups(current: str) -> list[tuple[str, list[tuple[str, str, bool, str]]]]:
+    """Public rail: only regions public today. Never preview, draft or disabled regions."""
+    salt, fresh = [], []
+    try:
+        for r in conditions.listed_regions(preview=False).get("regions") or []:
+            if (r.get("waterType") or "saltwater") == "saltwater":
+                salt.append((r["id"], r.get("name") or r["id"], r["id"] == current, "/?region=%s" % r["id"]))
+    except Exception:
+        pass
+    try:
+        import freshwater
+        if freshwater.flag_on():
+            for rid, r in freshwater.regions().items():
+                if r.get("enabled") and r.get("previewReady") and not r.get("draft") and not freshwater.is_preview_region(rid):
+                    fresh.append((rid, r.get("name") or rid, rid == current, "/lake?region=%s" % rid))
+    except Exception:
+        pass
+    return [("Saltwater", salt), ("Freshwater", fresh)]
+
+
+def region_rail(current: str, public: bool = False) -> str:
     groups = []
+    if public:
+        for label, items in public_region_groups(current):
+            if not items:
+                continue
+            links = "".join('<a href="%s"%s>%s</a>' % (_esc(h, True), ' aria-current="page"' if c else "", _esc(n))
+                            for r, n, c, h in items)
+            groups.append('<div class="rr-g rr-%s"><p class="rr-k">%s</p><div class="rr-l">%s</div></div>' % (label.lower(), label, links))
+        return '<nav class="rr" aria-label="Choose your water">%s</nav>' % "".join(groups)
     for label, items in region_groups(current):
         if not items:
             continue
@@ -828,7 +869,7 @@ def strip_item(t: dict) -> str:
         _esc(t["id"], True), " is-off" if st == "off" else "", _esc(t["name"], True), _esc(t["name"]), chip, val, sub, fc, src)
 
 
-def conditions_html(m: dict, *, variant: str) -> str:
+def conditions_html(m: dict, *, variant: str, public: bool = False) -> str:
     reg = m.get("region") or {}
     rid = reg.get("id") or ""
     if not m.get("ok"):
@@ -847,7 +888,16 @@ def conditions_html(m: dict, *, variant: str) -> str:
     links = []
     for r_id, name, cur in region_links(rid):
         links.append('<a href="?region=%s"%s>%s</a>' % (_esc(r_id, True), ' aria-current="true"' if cur else "", _esc(name)))
-    dash = "/lake?region=%s" % rid if m.get("water") == "fresh" else ("/?region=%s" % rid if rid else "/")
+    brief_link = '<a class="cg-link" href="/brief?region=%s">Today\'s brief for this water</a>' % _esc(rid, True)
+    if public:   # only public briefs; same fallback as brief-link.js; no link when the brief is switched off
+        brief_link = ('<a class="cg-link" href="/brief?region=%s">Today\'s Morning Brief</a>'
+                      % _esc(rid if rid in PUBLIC_BRIEF_SALT else "crystal-coast", True)) if _brief_on() else ""
+    if m.get("water") == "fresh":
+        dash = "/lake?region=%s" % rid
+    elif public:   # the old dashboard lives at /dashboard once / is this page
+        dash = "/dashboard?region=%s" % rid if rid else "/dashboard"
+    else:
+        dash = "/?region=%s" % rid if rid else "/"
     return (
         '<section class="cg cg-%s" id="conditions" aria-labelledby="cg-h" data-conditions>'
         '<header class="cg-head"><h2 id="cg-h">Conditions at a Glance</h2>'
@@ -855,15 +905,15 @@ def conditions_html(m: dict, *, variant: str) -> str:
         '<p class="cg-upd">%s</p></header>'
         "%s%s%s%s"
         '<div class="cg-foot">%s'
-        '<a class="cg-link" href="%s">Full dashboard</a><a class="cg-link" href="/brief?region=%s">Today\'s brief for this water</a></div>'
+        '<a class="cg-link" href="%s">Full dashboard</a>%s</div>'
         "</section>"
     ) % (
         variant, _esc(reg.get("name") or ""),
         ("Updated %s" % _esc(m["updated"])) if m.get("updated") else "",
         body, tiles, *_extras(m, more, variant),
-        (region_rail(rid) if variant == "hybrid" else
+        (region_rail(rid, public=public) if variant == "hybrid" else
          '<details class="cg-region"><summary>Change water</summary><nav aria-label="Regions">%s</nav></details>' % "".join(links)),
-        _esc(dash, True), _esc(rid, True),
+        _esc(dash, True), brief_link,
     )
 
 
@@ -874,7 +924,31 @@ def _today() -> str:
     return "%s, %s %d, %d" % (d.strftime("%A"), d.strftime("%B"), d.day, d.year)
 
 
-def masthead_html(variant: str) -> str:
+def _brief_on() -> bool:
+    """Morning Brief public flag (MORNING_BRIEF_ENABLED kill switch). Links are dropped when it is off."""
+    try:
+        import brief
+        return bool(brief.flag_on())
+    except Exception:
+        return False
+
+
+PUBLIC_BRIEF_SALT = ("crystal-coast", "hatteras")   # the coastal briefs that are public today
+
+
+def masthead_html(variant: str, public: bool = False) -> str:
+    if public:
+        return (
+            '<header class="mh mh-hybrid">'
+            '<div class="mh-plate"><p class="mh-date"><time>%s</time><span class="mh-motto">From the rivers to the sounds to the sea</span></p>'
+            '<h1 class="mh-name"><a href="/">The Coastal Brief</a></h1>'
+            '<svg class="mh-rule" viewBox="0 0 1200 4" preserveAspectRatio="none" aria-hidden="true" focusable="false">'
+            '<line class="wave-settle" x1="0" y1="2" x2="1200" y2="2"/></svg>'
+            '<nav class="mh-sec" aria-label="Sections"><a href="/" aria-current="page">Saltwater</a><a href="/lake">Freshwater</a>'
+            '%s<a href="/catch-wall">Catch Wall</a>'
+            '<a href="/dashboard">Map &amp; tides</a></nav></div>'
+            "</header>"
+        ) % (_esc(_today()), '<a href="/brief?region=crystal-coast" id="nav-brief">Morning Brief</a>' if _brief_on() else "")
     return (
         '<header class="mh mh-%s"><p class="pv-flag">Private concept · %s</p>'
         + ('<div class="mh-plate"><p class="mh-date"><time>%s</time><span class="mh-motto">From the rivers to the sounds to the sea</span></p>'
@@ -963,17 +1037,45 @@ TITLES = {
 }
 
 
-def _shell(variant: str, main: str, shot: bool, water: str = "salt") -> bytes:
+def _public_head() -> str:
+    """Title, description, OG and Twitter tags copied verbatim from the public index.html."""
+    src = (ROOT / "index.html").read_text(encoding="utf-8")
+    keep = []
+    for line in src.splitlines():
+        t = line.strip()
+        if t.startswith(("<title>", '<meta name="description"', '<meta property="og:', '<meta name="twitter:', '<meta name="theme-color"')):
+            keep.append(t)
+        if t.startswith("</head>"):
+            break
+    return "\n".join(keep) + '\n<link rel="canonical" href="https://thecoastalbrief.com/">'
+
+
+PUBLIC_FOOTER = """<div class="ft-pub">
+<ul class="ft-links" aria-label="Quick links">
+<li><a href="https://license.gooutdoorsnorthcarolina.com/Licensing/CustomerLookup.aspx" rel="noopener" target="_blank">Buy an NC fishing or hunting license</a></li>
+<li><a href="https://www.ncwildlife.gov/hunting/license-types-and-fees" rel="noopener" target="_blank">License types and fees</a></li>
+<li><a href="https://www.ncwildlife.gov/" rel="noopener" target="_blank">NC Wildlife Resources Commission</a></li>
+</ul>
+<p>Readings are live from NOAA, NWS and USGS. Data credits: NOAA National Data Buoy Center; National Weather Service (api.weather.gov and the National Digital Forecast Database); NOAA CO-OPS tide predictions and observed water levels; USGS water data. The <a href="/dashboard">full dashboard</a> credits the map, chart, sea-surface temperature and radar sources.</p>
+<p>Photographs: approved Catch Wall and Coastal Life submissions, credited as submitted. Bodie Island Lighthouse: Photo: National Park Service, Cape Hatteras National Seashore (public domain). Falls Lake: Photo: <a href="%(falls)s" rel="noopener">Sergiy Galyonkin</a>, <a href="%(lic)s" rel="noopener license">CC BY-SA 2.0</a> (cropped and adjusted).</p>
+<p>Your location is never requested; the region picker sets what you see.</p>
+<p>The Coastal Brief is not weather, surf, or fishing advice. Radar and other conditions data are for general information only and can be incomplete or late. Always check official NWS marine forecasts and advisories before going out. Do not rely on this site as the only source for safety decisions.</p>
+<p>Licenses are sold by the NC Wildlife Resources Commission; The Coastal Brief is not affiliated with it.</p>
+</div>""" % {"falls": FALLS_SRC, "lic": CC_BY_SA_2}
+
+
+_CSS_COMMENT = re.compile(r"/\*.*?\*/", re.S)
+
+
+def _shell(variant: str, main: str, shot: bool, water: str = "salt", public: bool = False) -> bytes:
     intro_css = wave_intro._css()
     page = """<!DOCTYPE html>
 <html lang="en" data-sprint="%(v)s" data-water="%(water)s" data-wave-intro%(shot)s>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="robots" content="noindex, nofollow">
+%(meta)s
 <meta name="color-scheme" content="light dark">
-<title>The Coastal Brief · %(title)s (private concept)</title>
-<meta name="description" content="Private homepage concept for The Coastal Brief. Not public.">
 <link rel="preload" href="/fonts/fraunces-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/barlow-condensed-600.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/source-sans-3-var.woff2" as="font" type="font/woff2" crossorigin>
@@ -989,18 +1091,28 @@ def _shell(variant: str, main: str, shot: bool, water: str = "salt") -> bytes:
 %(mast)s
 <main id="main">%(main)s</main>
 <footer class="ft"><div class="ft-in">
-<p>Private concept preview. Readings are live from NOAA, NWS and USGS through the same feed as the homepage. Photographs are approved Catch Wall and Coastal Life submissions, credited as stored, plus a public-domain National Park Service photograph and, on lake and river views, a CC BY-SA 2.0 Flickr photograph of Falls Lake (cropped and colour-adjusted).</p>
-%(replay)s</div></footer>
+%(foot)s%(replay)s</div></footer>
 <script>
 %(ijs)s
 </script>
 </body>
 </html>
-""" % {
+"""
+    priv_foot = """<p>Private concept preview. Readings are live from NOAA, NWS and USGS through the same feed as the homepage. Photographs are approved Catch Wall and Coastal Life submissions, credited as stored, plus a public-domain National Park Service photograph and, on lake and river views, a CC BY-SA 2.0 Flickr photograph of Falls Lake (cropped and colour-adjusted).</p>
+"""
+    meta = _public_head() if public else (
+        '<meta name="robots" content="noindex, nofollow">\n'
+        '<title>The Coastal Brief · %s (private concept)</title>\n'
+        '<meta name="description" content="Private homepage concept for The Coastal Brief. Not public.">' % _esc(TITLES[variant]))
+    css, icss = style_tag(variant), intro_css
+    if public:   # drop the private-concept CSS comments from public view-source; rules unchanged
+        css, icss = _CSS_COMMENT.sub("", css), _CSS_COMMENT.sub("", icss)
+    page = page % {
+        "meta": meta, "foot": PUBLIC_FOOTER if public else priv_foot,
         "water": water, "defs": getattr(wave_intro, "_DEFS", ""),
         "v": variant, "shot": " data-shot" if shot else "", "title": _esc(TITLES[variant]),
-        "css": style_tag(variant), "icss": intro_css, "boot": wave_intro._BOOT, "overlay": wave_intro._OVERLAY,
-        "mast": masthead_html(variant), "main": main, "replay": wave_intro._REPLAY, "ijs": wave_intro._js(),
+        "css": css, "icss": icss, "boot": wave_intro._BOOT, "overlay": wave_intro._OVERLAY,
+        "mast": masthead_html(variant, public=public), "main": main, "replay": wave_intro._REPLAY, "ijs": wave_intro._js(),
     }
     return page.encode("utf-8")
 
@@ -1111,7 +1223,7 @@ BRAND_LINE = ('<div class="bl"><p class="bl-p"><span class="bl-k">The Coastal Br
               '<span class="bl-t">Know the Water. Live the Coast.</span></p></div>')
 
 
-def page_hybrid(m: dict, P: dict) -> str:
+def page_hybrid(m: dict, P: dict, public: bool = False) -> str:
     fresh = m.get("water") == "fresh"
     lake = fresh and _is_lake((m.get("region") or {}).get("id") or "")
     falls = P.get("falls")
@@ -1150,22 +1262,34 @@ def page_hybrid(m: dict, P: dict) -> str:
     else:
         horizon = '<div class="hz-none" aria-hidden="true"></div>'
     return (
-        conditions_html(m, variant="hybrid")
+        conditions_html(m, variant="hybrid", public=public)
         + horizon
         + BRAND_LINE
         + '<section class="mzs" aria-labelledby="mz-h"><p class="kicker"><span class="dm dm-sq" aria-hidden="true"></span>Catch Wall · Coastal Life</p>'
         + '<h2 id="mz-h" class="mzs-h">From the docks, sounds and rivers</h2>'
         + '<p class="mzs-dek">Approved community photographs, shown as they were submitted.</p>'
         + '<div class="%s">%s</div></section>' % (grid_cls, "".join(cells))
-        + system_html("hybrid")
+        + ("" if public else system_html("hybrid"))
     )
 
 
 BUILDERS = {"heritage": page_heritage, "editorial": page_editorial, "hybrid": page_hybrid}
 
 
-def page(variant: str, region_id: str | None = None, shot: bool = False) -> bytes:
+def page(variant: str, region_id: str | None = None, shot: bool = False, public: bool = False) -> bytes:
+    """public=True is the public homepage (/): Hybrid only, public saltwater regions only, no concept chrome."""
     if variant not in BUILDERS:
         raise ValueError("unknown concept")
+    if public:
+        if variant != "hybrid":
+            raise ValueError("only the Hybrid page is public")
+        rid = (region_id or "").strip()
+        if rid not in public_salt_ids():
+            region_id = None   # unknown or not-public ids fall back to the default region, never render
+        m = model(region_id)
+        if m.get("water") == "fresh":   # belt and braces: freshwater lives on /lake
+            m = model(None)
+        data = _shell(variant, page_hybrid(m, _photos(), public=True), shot, water=m.get("water") or "salt", public=True)
+        return data.replace(PHOTO_ROUTE.encode(), PUBLIC_PHOTO_ROUTE.encode())
     m = model(region_id)
     return _shell(variant, BUILDERS[variant](m, _photos()), shot, water=m.get("water") or "salt")

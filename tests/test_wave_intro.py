@@ -371,8 +371,8 @@ console.log(JSON.stringify(out));
         oz = re.search(rb"\.wave-intro\s*\{[^}]*z-index:\s*(\d+)", css)
         self.assertLess(int(mz.group(1)), int(oz.group(1)))
 
-    def test_public_homepage_untouched(self):
-        status, body, hdrs = self._req("/")
+    def test_public_dashboard_untouched(self):
+        status, body, hdrs = self._req("/dashboard")
         self.assertEqual(status, 200)
         self.assertNotIn("noindex", hdrs.get("x-robots-tag", ""))
         self.assertNotIn(b"data-wave-intro", body)
@@ -382,7 +382,7 @@ console.log(JSON.stringify(out));
         self.assertNotIn(b"wave-intro-css", body)
         self.assertIn(b'data-home="folio"', body)
         self.assertIn(b'data-concept="a"', body)
-        status, body, hdrs = self._req("/", env={"PREVIEW_KEY": self.KEY}, cookie=self._cookie())
+        status, body, hdrs = self._req("/dashboard", env={"PREVIEW_KEY": self.KEY}, cookie=self._cookie())
         self.assertEqual(status, 200)
         self.assertNotIn(b"data-wave-intro", body)
         self.assertNotIn(b'id="wave-intro"', body)

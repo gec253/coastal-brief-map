@@ -103,7 +103,7 @@
       brassClip.setAttribute("x", ruleBox.left.toFixed(2));
       brassClip.setAttribute("width", Math.max(0, ruleBox.right - ruleBox.left).toFixed(2));
       brassClip.setAttribute("y", "-200");
-      brassClip.setAttribute("height", (200 + ruleBox.y + 0.4).toFixed(2));
+      brassClip.setAttribute("height", Math.max(0, 200 + ruleBox.y + 0.4).toFixed(2));
     }
   }
 

@@ -115,7 +115,7 @@ class MastheadPreview(unittest.TestCase):
             self.assertEqual(committed, (ROOT / rel).read_bytes(), rel)
 
     def test_public_homepage_is_the_final_design(self):
-        status, body, hdrs = self._req("/")
+        status, body, hdrs = self._req("/dashboard")
         self.assertEqual(status, 200)
         self.assertNotIn("noindex", hdrs.get("x-robots-tag", ""))
         self.assertIn(b'data-concept="a"', body)
@@ -191,7 +191,7 @@ class MastheadPreview(unittest.TestCase):
         self.assertIn("noindex", hdrs.get("x-robots-tag", ""))
         self.assertIn(b"wave-swell", body)
         # With the cookie, public / is still the published homepage, not a gated preview.
-        status, home, hdrs = self._req("/", env=env, cookie=ck)
+        status, home, hdrs = self._req("/dashboard", env=env, cookie=ck)
         self.assertEqual(status, 200)
         self.assertIn(b'data-concept="a"', home)
         self.assertIn(b'data-home="folio"', home)

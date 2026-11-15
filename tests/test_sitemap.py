@@ -12,6 +12,7 @@ NS = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 
 ALWAYS = {
     SITE + "/",
+    SITE + "/dashboard",
     SITE + "/catch-wall",
     SITE + "/coastal-life",
     SITE + "/photos",

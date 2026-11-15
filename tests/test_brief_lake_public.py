@@ -147,7 +147,7 @@ class BriefLakePublic(unittest.TestCase):
         self.assertIn('html[data-page="lake"][data-region="neuse-river"] #fw-river-sec', css)
 
     def test_public_homepage_unchanged_by_brief_lake_chrome(self):
-        status, body = self._get("/")
+        status, body = self._get("/dashboard")
         self.assertEqual(status, 200)
         self.assertIn(b'data-home="folio"', body)
         self.assertNotIn(b'data-page="lake"', body)

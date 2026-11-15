@@ -129,6 +129,10 @@ img{display:block;max-width:100%}
 .ft{margin-top:28px;background:var(--navy);color:var(--ivory)}
 .ft-in{max-width:1200px;margin:0 auto;padding:18px 16px 28px;font-size:.84rem}
 .ft .wi-replay{min-height:44px}
+.ft-pub a{color:var(--ivory);text-underline-offset:2px}
+.ft-pub p{margin:0 0 10px;line-height:1.5}
+.ft-links{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-wrap:wrap;gap:4px 18px}
+.ft-links a{display:inline-flex;align-items:center;min-height:44px}
 
 @media (min-width:1000px){
   .mh-bar{padding:0 32px}

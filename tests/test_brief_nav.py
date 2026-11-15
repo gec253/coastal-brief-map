@@ -42,7 +42,7 @@ class BriefHeaderLink(unittest.TestCase):
             return e.code, e.read().decode("utf-8", "replace"), dict(e.headers)
 
     def test_default_on_pages_include_link_to_crystal_coast(self):
-        for path in ("/", "/catch-wall", "/coastal-life", "/photos", "/lake", "/lake?region=falls-lake"):
+        for path in ("/dashboard", "/catch-wall", "/coastal-life", "/photos", "/lake", "/lake?region=falls-lake"):
             status, body, _ = self._get(path)
             self.assertEqual(status, 200, msg=path)
             self.assertIn('id="nav-brief"', body, msg=path)

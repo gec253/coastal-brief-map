@@ -2128,6 +2128,7 @@ def robots_body() -> bytes:
 def public_sitemap_urls() -> list[str]:
     urls = [
         SITE_ORIGIN + "/",
+        SITE_ORIGIN + "/dashboard",
         SITE_ORIGIN + "/catch-wall",
         SITE_ORIGIN + "/coastal-life",
         SITE_ORIGIN + "/photos",
@@ -2342,8 +2343,17 @@ class Handler(SimpleHTTPRequestHandler):
             if not path:
                 return self.send_error(404, "not found")
             return self._send_file(path, "image/avif" if path.suffix == ".avif" else "image/webp")
+        if parsed.path.startswith(sprint_home.PUBLIC_PHOTO_ROUTE):
+            # Public homepage photos: the approved files only (strict name pattern, one folder, no listing).
+            path = sprint_home.photo_path(parsed.path, sprint_home.PUBLIC_PHOTO_ROUTE)
+            if not path:
+                return self.send_error(404, "not found")
+            self._static_cache = "public, max-age=86400"
+            return self._send_file(path, "image/avif" if path.suffix == ".avif" else "image/webp")
         # /?region=falls-lake (etc.) should open the lake page, not break the saltwater dashboard.
-        if parsed.path in ("/", "/index.html"):
+        # "/" is the Hybrid homepage; the previous dashboard (map, tides, 7-day) lives at /dashboard
+        # with the same region handling.
+        if parsed.path in ("/", "/index.html", "/dashboard", "/dashboard/"):
             rid = (parse_qs(parsed.query).get("region") or [""])[0].strip()
             if rid in ("falls-lake", "jordan-lake", "neuse-river") and (freshwater.flag_on() or self._preview_ok()):
                 self.send_response(303)
@@ -2372,6 +2382,8 @@ class Handler(SimpleHTTPRequestHandler):
                 else:
                     data = data.replace(b'name="robots" content="index, follow"', b'name="robots" content="noindex, nofollow"')
                 return self._send_private(None, "text/html; charset=utf-8", data)
+            if parsed.path in ("/", "/index.html"):
+                return self._send_public_home(rid or None)
             return self._send_html(ROOT / "index.html", region_id=rid or None)
         if parsed.path == "/api/brief/wake":
             # Daily wake-up ping (GitHub Actions, 5:16 AM ET). Builds today's briefs if missing; returns no
@@ -2631,6 +2643,19 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_error(500, "preview failed")
         return self._send_private(None, "text/html; charset=utf-8", data)
 
+
+    def _send_public_home(self, rid):
+        """Public Hybrid homepage. If it cannot render, serve the dashboard so / never goes down."""
+        try:
+            data = sprint_home.page("hybrid", rid, public=True)
+        except Exception as e:
+            sys.stderr.write("hybrid home failed, serving dashboard: %s\n" % e)
+            return self._send_html(ROOT / "index.html", region_id=rid)
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
 
     def _sprint_home_route(self, parsed):
         if not self._preview_ok():

@@ -77,7 +77,7 @@ class IdentityPreview(unittest.TestCase):
             self.assertEqual(status, 404, path + " key set, no cookie")
 
     def test_public_homepage_is_folio(self):
-        status, body, hdrs = self._req("/")
+        status, body, hdrs = self._req("/dashboard")
         self.assertEqual(status, 200)
         self.assertNotIn("noindex", hdrs.get("x-robots-tag", ""))
         self.assertIn(b'data-concept="a"', body)
@@ -121,7 +121,7 @@ class IdentityPreview(unittest.TestCase):
             self.assertRegex(body, br'<details class="al-zones">.*</details>', re.S)
 
     def test_public_homepage_unchanged_with_preview_cookie(self):
-        status, body, hdrs = self._req("/", env={"PREVIEW_KEY": self.KEY}, cookie=self._cookie())
+        status, body, hdrs = self._req("/dashboard", env={"PREVIEW_KEY": self.KEY}, cookie=self._cookie())
         self.assertEqual(status, 200)
         self.assertIn(b'data-home="folio"', body)
         self.assertNotIn(b"data-identity-sprint", body)
@@ -184,7 +184,7 @@ class IdentityPreview(unittest.TestCase):
     def test_no_value_or_label_drift(self):
         env = {"PREVIEW_KEY": self.KEY}
         ck = self._cookie()
-        pub_status, pub, _ = self._req("/")
+        pub_status, pub, _ = self._req("/dashboard")
         status, body, _ = self._req("/preview/identity", env=env, cookie=ck)
         self.assertEqual(pub_status, 200)
         self.assertEqual(status, 200)
@@ -230,7 +230,7 @@ class IdentityPreview(unittest.TestCase):
             self.assertGreater(len(names), 8)
 
     def test_on_the_water_uses_credited_photos(self):
-        status, body, _ = self._req("/")
+        status, body, _ = self._req("/dashboard")
         self.assertEqual(status, 200)
         start = body.find(b'<section class="folio-water"')
         end = body.find(b"</section>", start)

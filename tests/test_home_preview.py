@@ -69,7 +69,7 @@ class HomePreview(unittest.TestCase):
         return "%s=%s" % (self.server.PREVIEW_COOKIE, self.server._preview_cookie_value(self.KEY))
 
     def test_public_homepage_is_the_final_design(self):
-        status, body, hdrs = self._req("/")
+        status, body, hdrs = self._req("/dashboard")
         self.assertEqual(status, 200)
         self.assertNotIn("noindex", hdrs.get("x-robots-tag", ""))
         self.assertIn(b'data-concept="a"', body)
@@ -87,7 +87,7 @@ class HomePreview(unittest.TestCase):
 
     def test_public_homepage_identical_with_preview_cookie(self):
         env = {"PREVIEW_KEY": self.KEY}
-        status, body, hdrs = self._req("/", env=env, cookie=self._cookie())
+        status, body, hdrs = self._req("/dashboard", env=env, cookie=self._cookie())
         self.assertEqual(status, 200)
         # Cookie must not swap public / for a gated comparison preview.
         self.assertIn(b'data-home="folio"', body)

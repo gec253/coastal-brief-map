@@ -105,7 +105,7 @@ class BriefPublicHTTP(unittest.TestCase):
         self.assertEqual(status, 404)
 
     def test_homepage_unchanged_200(self):
-        status, body, _ = self._get("/")
+        status, body, _ = self._get("/dashboard")
         self.assertEqual(status, 200)
         self.assertNotIn("private preview", body.lower())
         # Header Morning Brief link is part of the public homepage (see test_brief_nav).
