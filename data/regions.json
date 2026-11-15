@@ -1446,7 +1446,7 @@
       "waterType": "freshwater",
       "instrumentSet": "freshwater-lake",
       "name": "Jordan Lake",
-      "area": "Cape Fear basin \u00b7 Chatham & Wake counties",
+      "area": "Cape Fear basin \u00b7 Chatham & Durham counties",
       "anchor": {
         "label": "B. Everett Jordan Dam (USGS 02098197)",
         "lat": 35.6547,
@@ -1501,7 +1501,8 @@
         "office": "NWS Raleigh (RAH)"
       },
       "alertZones": [
-        "NCZ040"
+        "NCZ040",
+        "NCZ025"
       ],
       "previewReady": true,
       "waterTemp": {

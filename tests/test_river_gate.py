@@ -430,7 +430,7 @@ class AlertCoverage(unittest.TestCase):
         payload["alerts"] = preview_alerts.ok_coverage("jordan-lake")
         g = river_gate.evaluate("jordan-lake", payload, NOW)
         self.assertTrue(g["ok"], g["errors"])
-        self.assertIn("Chatham County", _by_id(g, "alerts")["reason"])
+        self.assertIn("Chatham and Durham counties", _by_id(g, "alerts")["reason"])
 
     def test_jordan_partial_zone_coverage_fails(self):
         payload = _jordan()
@@ -440,6 +440,13 @@ class AlertCoverage(unittest.TestCase):
         c = _by_id(g, "alerts")
         self.assertIn("Chatham County (NCZ040)", c["reason"])
         self.assertIn("NCC037", c["reason"])
+        self.assertIn("Chatham and Durham counties", c["reason"])
+        payload["alerts"] = preview_alerts.failed_coverage("jordan-lake", ["NCC063"])
+        g = river_gate.evaluate("jordan-lake", payload, NOW)
+        self.assertFalse(g["ok"])
+        c = _by_id(g, "alerts")
+        self.assertIn("Durham County (NCC063)", c["reason"])
+        self.assertIn("NCZ025", c["reason"])
 
 
 if __name__ == "__main__":

@@ -312,7 +312,7 @@ class Summary(unittest.TestCase):
         js, ns = jb["summary"], nb["summary"]
         self.assertIn("212.23 ft NGVD29", js)
         self.assertIn("guide curve", js)
-        self.assertIn("Chatham County", js)
+        self.assertIn("Chatham and Durham counties", js)
         self.assertNotIn("n/a", js)
         self.assertIn("Clayton", ns)
         self.assertIn("1.22 ft stage", ns)
@@ -383,8 +383,9 @@ class ZoneLists(unittest.TestCase):
             ["NCZ041", "NCC183", "NCZ042", "NCC101", "NCZ078", "NCC191"],
         )
         self.assertEqual(preview_alerts.areas_phrase(rid="neuse-river"), "Wake, Johnston and Wayne counties")
-        self.assertEqual(preview_alerts.zone_ids(rid="jordan-lake"), ["NCZ040", "NCC037"])
-        self.assertEqual(preview_alerts.areas_phrase(rid="jordan-lake"), "Chatham County")
+        self.assertEqual(preview_alerts.zone_ids(rid="jordan-lake"),
+                         ["NCZ040", "NCC037", "NCZ025", "NCC063"])
+        self.assertEqual(preview_alerts.areas_phrase(rid="jordan-lake"), "Chatham and Durham counties")
 
 
 

@@ -34,7 +34,7 @@ EXPECTED = {
         "Coastal waters from Surf City to Cape Fear NC out 20 nm"
     ),
     "neuse-river": "Wake, Johnston and Wayne counties",
-    "jordan-lake": "Chatham County",
+    "jordan-lake": "Chatham and Durham counties",
     "cape-fear": "Harnett, Cumberland and Bladen counties",
 }
 
@@ -95,9 +95,9 @@ class ZoneNameMap(unittest.TestCase):
         required = {
             "AMZ158", "AMZ250", "AMZ150", "AMZ231",
             "NCZ195", "NCZ108", "NCZ203", "NCZ102", "NCZ199", "NCZ106",
-            "NCZ041", "NCZ042", "NCZ078", "NCZ040",
+            "NCZ041", "NCZ042", "NCZ078", "NCZ040", "NCZ025",
             "NCZ077", "NCZ088", "NCZ096",
-            "NCC183", "NCC101", "NCC191", "NCC037",
+            "NCC183", "NCC101", "NCC191", "NCC037", "NCC063",
             "NCC085", "NCC051", "NCC017",
         }
         self.assertEqual(required, set(preview_zones.ZONE_NAMES))
@@ -276,7 +276,7 @@ class VisibleAlertsUseNames(unittest.TestCase):
             preview_alerts.areas_phrase(rid="neuse-river"),
             "Wake, Johnston and Wayne counties",
         )
-        self.assertEqual(preview_alerts.areas_phrase(rid="jordan-lake"), "Chatham County")
+        self.assertEqual(preview_alerts.areas_phrase(rid="jordan-lake"), "Chatham and Durham counties")
 
 
 class AdvisoryTint(unittest.TestCase):

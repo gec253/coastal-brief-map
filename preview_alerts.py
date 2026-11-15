@@ -19,8 +19,9 @@ UA = "TheCoastalBrief/1.0 (+https://thecoastalbrief.com; coastal conditions site
 # Neuse reach (Falls Dam to Goldsboro): official gauges map to Wake, Johnston
 # and Wayne only. The dam and 02087183 are Wake (NCZ041 / NCC183), not Durham
 # or Granville. Jordan official points (dam, Haw at Moncure, Haw at Bynum) all
-# map to Chatham (NCZ040 / NCC037); Wake/Durham were not added because no
-# official station on this preview's instrument list maps to those counties.
+# map to Chatham (NCZ040 / NCC037). The NHD lake polygon also enters Durham
+# (NCZ025 / NCC063), verified 15 Nov 2026 against TIGERweb counties; Wake
+# was not added because the lake does not reach it.
 # Cape Fear reach (Lillington to Lock 1): official gauges map to Harnett,
 # Cumberland and Bladen only, verified 15 Nov 2026 from NWS /points at
 # 02102500, 02104000, 02105500 and 02105769. Huske Lock and Lock 1 near Kelly
@@ -32,6 +33,7 @@ NEUSE_ALERT_COUNTIES = (
 )
 JORDAN_ALERT_COUNTIES = (
     {"short": "Chatham", "name": "Chatham County", "id": "NCZ040", "ncc": "NCC037"},
+    {"short": "Durham", "name": "Durham County", "id": "NCZ025", "ncc": "NCC063"},
 )
 CAPE_FEAR_ALERT_COUNTIES = (
     {"short": "Harnett", "name": "Harnett County", "id": "NCZ077", "ncc": "NCC085"},

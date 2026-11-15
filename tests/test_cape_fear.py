@@ -38,9 +38,19 @@ HUSKE_NOTE = (
 ALERT_NAMES = preview_zones.format_alert_areas(preview_alerts.zone_ids(rid="cape-fear-river"))
 
 def _county_names(phrase: str) -> list[str]:
-    s = re.sub(r"\bcounties\b|\bcounty\b", "", phrase or "", flags=re.I)
+    s = phrase or ""
+    if "·" in s:
+        s = s.split("·", 1)[1]
+    s = re.sub(r"\bcounties\b|\bcounty\b", "", s, flags=re.I)
     s = s.replace("&", " and ")
     return [p.strip().lower() for p in re.split(r",| and ", s) if p.strip()]
+
+
+HEADER_BY_RID = {
+    "jordan-lake": "Cape Fear basin · Chatham & Durham counties",
+    "neuse-river": "Wake, Johnston & Wayne counties",
+    "cape-fear-river": "Harnett, Cumberland & Bladen counties",
+}
 ZONE_RE = re.compile(r"\b(?:NCZ|NCC)\d+\b")
 FORECAST_FLOWS = {"02102500": 8888, "02104000": 7777, "02105500": 6666, "02105769": 5555}
 
@@ -148,13 +158,18 @@ class ConfigAndUnchanged(unittest.TestCase):
 
     def test_header_counties_match_alert_checked_counties(self):
         """The /lake and brief header names the same counties the alert check covers."""
-        area = freshwater.regions()[RID]["area"]
-        alert_phrase = preview_zones.format_alert_areas(preview_alerts.zone_ids(rid=RID))
-        self.assertEqual(_county_names(area), _county_names(alert_phrase))
-        self.assertEqual(_county_names(area), ["harnett", "cumberland", "bladen"])
-        self.assertNotIn("columbus", " ".join(_county_names(area)))
-        self.assertEqual(area, "Harnett, Cumberland & Bladen counties")
-        self.assertEqual(alert_phrase, ALERT_NAMES)
+        for rid, header in HEADER_BY_RID.items():
+            area = freshwater.regions()[rid]["area"]
+            alert_phrase = preview_zones.format_alert_areas(preview_alerts.zone_ids(rid=rid))
+            self.assertEqual(area, header, rid)
+            self.assertEqual(_county_names(area), _county_names(alert_phrase), rid)
+        self.assertEqual(_county_names(HEADER_BY_RID["cape-fear-river"]),
+                         ["harnett", "cumberland", "bladen"])
+        self.assertNotIn("columbus", " ".join(_county_names(HEADER_BY_RID["cape-fear-river"])))
+        self.assertEqual(_county_names(HEADER_BY_RID["jordan-lake"]), ["chatham", "durham"])
+        self.assertNotIn("wake", _county_names(HEADER_BY_RID["jordan-lake"]))
+        self.assertEqual(_county_names(HEADER_BY_RID["neuse-river"]),
+                         ["wake", "johnston", "wayne"])
 
     def test_public_pickers_omit_cape_fear(self):
         for rel in ("lake.html", "region-nav.js", "dashboard.js"):

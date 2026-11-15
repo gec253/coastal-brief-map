@@ -42,7 +42,7 @@ def _jordan_payload():
         "region": {
             "id": "jordan-lake",
             "name": "Jordan Lake",
-            "area": "Cape Fear basin · Chatham & Wake counties",
+            "area": "Cape Fear basin · Chatham & Durham counties",
             "anchor": freshwater.regions()["jordan-lake"]["anchor"],
             "waterType": "freshwater",
             "instrumentSet": "freshwater-lake",

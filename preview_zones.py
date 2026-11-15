@@ -130,6 +130,12 @@ ZONE_NAMES: dict[str, dict[str, str]] = {
         "source": "https://api.weather.gov/zones/forecast/NCZ040",
         "fetched": "2026-11-15",
     },
+    "NCZ025": {
+        "name": "Durham",
+        "type": "public",
+        "source": "https://api.weather.gov/zones/forecast/NCZ025",
+        "fetched": "2026-11-15",
+    },
     "NCZ077": {
         "name": "Harnett",
         "type": "public",
@@ -171,6 +177,12 @@ ZONE_NAMES: dict[str, dict[str, str]] = {
         "name": "Chatham",
         "type": "county",
         "source": "https://api.weather.gov/zones/county/NCC037",
+        "fetched": "2026-11-15",
+    },
+    "NCC063": {
+        "name": "Durham",
+        "type": "county",
+        "source": "https://api.weather.gov/zones/county/NCC063",
         "fetched": "2026-11-15",
     },
     "NCC085": {
