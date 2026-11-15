@@ -1075,6 +1075,7 @@ def fetch_radar_tile(z: str, x: str, y: str, t: str) -> tuple[int, str, bytes]:
 import conditions  # noqa: E402
 import homepage_boot  # noqa: E402
 import photos  # noqa: E402
+import catch_wall_public  # noqa: E402
 import windgrid  # noqa: E402
 import freshwater  # noqa: E402
 import brief  # noqa: E402
@@ -1999,6 +2000,49 @@ def _paint_public_lake(data: bytes, region: str = "falls-lake") -> bytes:
     return data
 
 
+
+def _paint_public_catch_wall(data: bytes, page: str, water: str = "all") -> bytes:
+    """Server-render public /catch-wall, /coastal-life, and /photos from approved photos."""
+    view = {"catch-wall": "catch", "coastal-life": "life", "photos": "all"}.get(page, "catch")
+    water = catch_wall_public.parse_water(water)
+    model = catch_wall_public.assemble(view, water)
+    data = _install_folio_chrome(data, page)
+    data = _set_html_attr(data, b"data-home", b"folio")
+    data = _set_html_attr(data, b"data-concept", b"a")
+    data = _set_html_attr(data, b"data-catch-wall", b"")
+    data = re.sub(
+        br'[ \t]*<link rel="preload" href="/fonts/fraunces-italic-var\.woff2"[^>]*>\s*',
+        b"",
+        data,
+        count=1,
+    )
+    if b'href="/folio-chrome.css"' not in data:
+        needle = b'<link rel="stylesheet" href="/styles.css">'
+        if needle not in data:
+            raise RuntimeError("public catch wall: styles.css link missing")
+        data = data.replace(needle, needle + b"\n  " + _FOLIO_CHROME_CSS_LINK, 1)
+    inject = catch_wall_public.featured_preload_html(model).encode("utf-8")
+    inject += b'  <link rel="stylesheet" href="/catch-wall-public.css">\n'
+    if b"cb-mast-reveal" not in data:
+        inject += _MASTHEAD_PLAY
+    data = data.replace(b"</head>", inject + b"</head>", 1)
+    start = data.find(b'<div class="gal-head">')
+    end = data.find(b"</main>")
+    if start < 0 or end < start:
+        raise RuntimeError("public catch wall: gallery block missing")
+    data = data[:start] + catch_wall_public.main_html(model).encode("utf-8") + data[end:]
+    boot = catch_wall_public.boot_script(model).encode("utf-8")
+    old_js = b'  <script src="/gallery.js" defer></script>'
+    new_js = boot + b'  <script src="/catch-wall-public.js" defer></script>'
+    if old_js not in data:
+        raise RuntimeError("public catch wall: gallery.js script missing")
+    data = data.replace(old_js, new_js, 1)
+    data = _apply_preview_dateline(_apply_chrome(data))
+    for src in (b"/region-nav.js", b"/brief-link.js", b"/identity.js"):
+        data = _ensure_script(data, src)
+    return data
+
+
 # /catch-wall, /coastal-life and /photos share catch-wall.html. Give each its own
 # share title and URL by swapping only these three tags; the page body is unchanged.
 _SHARE_META = {
@@ -2594,6 +2638,10 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_error(404, "file not found")
         if path.name == "index.html":
             data = _public_home_html(region_id, preview=preview)
+        elif share in ("catch-wall", "coastal-life", "photos"):
+            q = parse_qs(urlparse(getattr(self, "path", "") or "").query)
+            water = (q.get("water") or ["all"])[0]
+            data = _paint_public_catch_wall(path.read_bytes(), share, water)
         else:
             data = _apply_chrome(path.read_bytes())
         if share:
