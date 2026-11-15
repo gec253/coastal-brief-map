@@ -586,37 +586,16 @@ def _dial(deg) -> str:
     ) % (x, y)
 
 
-def hilo_curve(events: list, t0: float, t1: float, step_ms: float = 360e3) -> list:
-    """Cosine interpolation between consecutive official NOAA highs and lows. Passes exactly through each
-    extreme; nothing is drawn outside the span the extremes cover (no extrapolation)."""
-    ev = sorted(([float(e["t"]), float(e["v"])] for e in events or [] if _num(e.get("t")) and _num(e.get("v"))), key=lambda x: x[0])
-    out = []
-    for (ta, va), (tb, vb) in zip(ev, ev[1:]):
-        if tb <= t0 or ta >= t1 or tb <= ta:
-            continue
-        x = max(ta, t0)
-        while x < min(tb, t1):
-            f = (x - ta) / (tb - ta)
-            out.append([x, va + (vb - va) * (1 - math.cos(math.pi * f)) / 2])
-            x += step_ms
-    for tx, vx in ev:  # make sure each real extreme in the window is an exact vertex
-        if t0 <= tx <= t1:
-            out.append([tx, vx])
-    out.sort(key=lambda p: p[0])
-    return out
-
-
 def _tide_spark(t: dict) -> str:
     now = _now_ms()
     t0, t1 = now - 3 * 3600e3, now + 12 * 3600e3
     curve = [c for c in (t.get("curve") or []) if isinstance(c, (list, tuple)) and len(c) == 2 and _num(c[1])]
     pts = [c for c in curve if t0 <= c[0] <= t1]
     method = "6-minute NOAA predictions"
-    if len(pts) < 10:
-        pts = hilo_curve(t.get("events") or [], t0, t1)
-        method = "interpolated between NOAA predicted highs and lows"
-        if len(pts) < 10 or not (pts[0][0] <= now <= pts[-1][0]):
-            return ""
+    # Owner decision (Nov 15): stations with only official highs and lows (Emerald Isle, Topsail)
+    # get text only; a curve is drawn only from genuine NOAA 6-minute predictions.
+    if len(pts) < 10 or not (pts[0][0] <= now <= pts[-1][0]):
+        return ""
     evs = [e for e in (t.get("events") or []) if _num(e.get("t")) and _num(e.get("v")) and t0 <= e["t"] <= t1]
     ob = t.get("obs_pt") if t.get("obs_pt") and t0 <= t["obs_pt"][0] <= t1 else None
     vals = [p[1] for p in pts] + [e["v"] for e in evs] + ([ob[1]] if ob else [])
@@ -643,7 +622,7 @@ def _tide_spark(t: dict) -> str:
         nowm += '<circle cx="%.1f" cy="%.1f" r="3" class="s-nowdot"/>' % (X(now), Y(yn))
     obs = ('<circle cx="%.1f" cy="%.1f" r="3.4" class="s-obs"/>' % (X(ob[0]), Y(ob[1]))) if ob else ""
     label = "Tide curve, %s, from 3 hours ago to 12 hours ahead%s." % (method, "; dot marks the latest observed level" if ob else "")
-    legend = '<span class="s-k s-k-pred">Predicted%s</span>' % ("" if method.startswith("6-minute") else " · interpolated from NOAA highs and lows")
+    legend = '<span class="s-k s-k-pred">Predicted</span>'
     if ob:
         legend += '<span class="s-k s-k-obs">Observed</span>'
     legend += '<span class="s-k s-k-now">Now</span>'

@@ -495,7 +495,7 @@ class Refinement(unittest.TestCase):
         live.pop("testData")
         self.assertNotIn("test-banner\"", render("hybrid", live))
 
-    def test_tide_curve_uses_real_predictions_or_hilo_interpolation(self):
+    def test_tide_curve_only_from_real_6min_predictions(self):
         # 6-minute predictions are plotted as given
         h = render("hybrid", salt("wilmington"))
         tt = tile(h, "tide")
@@ -504,20 +504,17 @@ class Refinement(unittest.TestCase):
         self.assertIn('class="s-now"', tt)
         self.assertIn('class="s-obs"', tt)                  # fixture has an observed level with a time
         self.assertIn("Then low", tt)
-        # hi/lo only: cosine interpolation that passes exactly through each real extreme
+        # hi/lo only (Emerald Isle, Topsail): official text only, no curve of any kind
         t0 = NOW * 1000
         evs = [{"t": t0 - 5 * 3600e3, "v": 0.5, "type": "L"}, {"t": t0 + 1 * 3600e3, "v": 3.9, "type": "H"},
                {"t": t0 + 7.2 * 3600e3, "v": 0.7, "type": "L"}, {"t": t0 + 13.5 * 3600e3, "v": 3.4, "type": "H"}]
-        pts = sprint_home.hilo_curve(evs, t0 - 3 * 3600e3, t0 + 12 * 3600e3)
-        for e in evs[1:3]:
-            self.assertIn([e["t"], e["v"]], pts)
-        self.assertTrue(all(0.5 <= v <= 3.9 for _, v in pts))
         hl = tides(curve=False, observed=False)
         hl["events"] = evs
         tt = tile(render("hybrid", salt("topsail", tides=hl)), "tide")
-        self.assertIn("interpolated from NOAA highs and lows", tt)
+        self.assertNotIn("t-spark", tt)
+        self.assertNotIn("interpolat", tt)
         self.assertIn("Predicted", tt)
-        self.assertNotIn('class="s-obs"', tt)               # no observation, no observed mark
+        self.assertFalse(hasattr(sprint_home, "hilo_curve"))
         # predictions missing: text only, no curve
         tt = tile(render("hybrid", salt("topsail", tides={"status": "unavailable"})), "tide")
         self.assertNotIn("t-spark", tt)
