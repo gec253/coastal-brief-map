@@ -1,0 +1,655 @@
+/* Public Catch Wall — scoped to html[data-catch-wall]. Does not touch production CSS. */
+html[data-catch-wall] {
+  --cw-navy: #0b2a3d;
+  --cw-navy-deep: #081c29;
+  --cw-ivory: #f6f1e7;
+  --cw-paper: #efe6d6;
+  --cw-panel: #fbf8f2;
+  --cw-brass: #c4a36a;
+  --cw-ink: #0b2a3d;
+  --cw-ink-soft: #3e5868;
+  --cw-salt: #2b6f8f;
+  --cw-fresh: #3e7a74;
+  --cw-edge: rgba(11, 42, 61, 0.16);
+  --cw-lift: 0 8px 24px rgba(11, 42, 61, 0.08);
+  background: var(--cw-paper);
+  color: var(--cw-ink);
+}
+html[data-catch-wall][data-theme="dark"] {
+  --cw-navy: #07151f;
+  --cw-navy-deep: #050f16;
+  --cw-ivory: #f3e6d0;
+  --cw-paper: #0c2231;
+  --cw-panel: #0f2a3c;
+  --cw-brass: #c4a36a;
+  --cw-ink: #f3e6d0;
+  --cw-ink-soft: #b9c9cf;
+  --cw-salt: #7eb3c9;
+  --cw-fresh: #8ec4be;
+  --cw-edge: rgba(243, 230, 208, 0.16);
+  --cw-lift: 0 8px 24px rgba(0, 0, 0, 0.28);
+  background: var(--cw-paper);
+  color: var(--cw-ink);
+}
+html[data-catch-wall] body.catch-page {
+  background: var(--cw-paper);
+  color: var(--cw-ink);
+  padding-bottom: 0;
+}
+
+/* Folio chrome already comes from styles.css. Keep 44px targets and a stable compact bar. */
+html[data-catch-wall] #theme-toggle,
+html[data-catch-wall] .rn-btn,
+html[data-catch-wall] .mast-mono {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ----- Sample banner ----- */
+html[data-catch-wall] .cw-banner {
+  margin: 0;
+  padding: 10px 16px;
+  background: var(--cw-navy);
+  color: var(--cw-ivory);
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--cw-brass);
+}
+html[data-catch-wall] .cw-banner strong {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+/* ----- Navy intro ----- */
+html[data-catch-wall] .cw-intro {
+  background:
+    linear-gradient(180deg, rgba(11, 42, 61, 0.15), transparent 42%),
+    var(--cw-navy);
+  color: var(--cw-ivory);
+  padding: 28px 0 32px;
+  border-bottom: 1px solid var(--cw-brass);
+}
+html[data-catch-wall] .cw-intro-inner {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+}
+html[data-catch-wall] .cw-kicker {
+  margin: 0 0 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--cw-brass);
+}
+html[data-catch-wall] .cw-intro #gal-h,
+html[data-catch-wall] .cw-intro h2 {
+  margin: 0 0 12px;
+  font-family: var(--f-display, "Fraunces", Georgia, serif);
+  font-weight: 600;
+  font-size: clamp(2rem, 7vw, 3.4rem);
+  line-height: 1.04;
+  color: var(--cw-ivory);
+  letter-spacing: -0.02em;
+}
+html[data-catch-wall] .cw-dek {
+  margin: 0 0 22px;
+  max-width: 26ch;
+  font-family: var(--f-display, "Fraunces", Georgia, serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(1.15rem, 3.2vw, 1.55rem);
+  line-height: 1.35;
+  color: var(--cw-ivory);
+}
+html[data-catch-wall] .cw-share,
+html[data-catch-wall] .btn-share,
+html[data-catch-wall] button.cw-share {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 999px;
+  border: 1px solid var(--cw-brass);
+  background: var(--cw-ivory);
+  color: var(--cw-navy);
+  font: 700 0.95rem/1 var(--f-ui, "Source Sans 3", system-ui, sans-serif);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  text-decoration: none;
+}
+html[data-catch-wall] .cw-share:hover,
+html[data-catch-wall] .cw-share:focus-visible {
+  background: #fff;
+}
+html[data-catch-wall] .cw-share:focus-visible,
+html[data-catch-wall] .cw-tabs a:focus-visible,
+html[data-catch-wall] .cw-water a:focus-visible,
+html[data-catch-wall] .cw-open:focus-visible,
+html[data-catch-wall] .cw-invite .cw-share:focus-visible {
+  outline: 3px solid var(--cw-brass);
+  outline-offset: 3px;
+}
+
+/* ----- Body, switch, filters ----- */
+html[data-catch-wall] .cw-body {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 20px 0 48px;
+}
+html[data-catch-wall] .cw-switch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin: 0 0 22px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--cw-edge);
+}
+html[data-catch-wall] .gal-tabs,
+html[data-catch-wall] .cw-tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--cw-panel);
+  border: 1px solid var(--cw-edge);
+  margin: 0;
+  max-width: 100%;
+}
+html[data-catch-wall] .gal-tabs a,
+html[data-catch-wall] .cw-tabs a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--cw-ink-soft);
+  text-decoration: none;
+  white-space: nowrap;
+}
+html[data-catch-wall] .gal-tabs a[aria-current="page"],
+html[data-catch-wall] .cw-tabs a[aria-current="page"] {
+  background: var(--cw-navy);
+  color: var(--cw-ivory);
+  box-shadow: none;
+}
+html[data-catch-wall] .gal-water,
+html[data-catch-wall] .cw-water {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin: 0;
+  font-size: 0.86rem;
+}
+html[data-catch-wall] .gal-water .gw-k,
+html[data-catch-wall] .cw-water .gw-k {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cw-ink-soft);
+  padding-right: 4px;
+}
+html[data-catch-wall] .gal-water a,
+html[data-catch-wall] .cw-water a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--cw-edge);
+  color: var(--cw-ink-soft);
+  text-decoration: none;
+  font-weight: 700;
+  background: var(--cw-panel);
+  box-shadow: none;
+}
+html[data-catch-wall] .gal-water a[aria-current="true"],
+html[data-catch-wall] .cw-water a[aria-current="true"] {
+  border-color: var(--cw-navy);
+  color: var(--cw-navy);
+  background: var(--cw-ivory);
+  box-shadow: inset 0 0 0 1px var(--cw-navy);
+}
+html[data-catch-wall][data-theme="dark"] .gal-water a[aria-current="true"],
+html[data-catch-wall][data-theme="dark"] .cw-water a[aria-current="true"] {
+  border-color: var(--cw-brass);
+  color: var(--cw-ivory);
+  background: var(--cw-navy);
+  box-shadow: inset 0 0 0 1px var(--cw-brass);
+}
+
+/* ----- Stage: featured + invitation + grid ----- */
+html[data-catch-wall] .cw-stage {
+  display: grid;
+  gap: 22px 20px;
+}
+@media (min-width: 860px) {
+  html[data-catch-wall] .cw-stage.is-single {
+    grid-template-columns: minmax(0, 1.15fr) minmax(16rem, 0.85fr);
+    align-items: stretch;
+  }
+}
+html[data-catch-wall] .cw-feature,
+html[data-catch-wall] .cw-tile,
+html[data-catch-wall] .cw-invite,
+html[data-catch-wall] .cw-slot {
+  margin: 0;
+  background: var(--cw-panel);
+  border: 1px solid var(--cw-edge);
+  border-radius: 4px;
+  box-shadow: var(--cw-lift);
+  overflow: hidden;
+  color: inherit;
+}
+html[data-catch-wall] .cw-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cw-paper);
+  width: 100%;
+  overflow: hidden;
+}
+html[data-catch-wall] .cw-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+html[data-catch-wall] .cw-open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+  color: inherit;
+}
+html[data-catch-wall] .cw-meta {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--cw-panel);
+}
+html[data-catch-wall] .cw-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  align-items: center;
+  margin: 0;
+}
+html[data-catch-wall] .cw-species,
+html[data-catch-wall] .cw-place,
+html[data-catch-wall] .cw-water-tag,
+html[data-catch-wall] .cw-credit {
+  margin: 0;
+}
+html[data-catch-wall] .cw-species {
+  font-family: var(--f-display, "Fraunces", Georgia, serif);
+  font-weight: 600;
+  font-size: 1.2rem;
+  line-height: 1.2;
+  color: var(--cw-ink);
+}
+html[data-catch-wall] .cw-feature .cw-species {
+  font-size: clamp(1.35rem, 3vw, 1.8rem);
+}
+html[data-catch-wall] .cw-place,
+html[data-catch-wall] .cw-credit {
+  font-size: 0.9rem;
+  color: var(--cw-ink-soft);
+  line-height: 1.35;
+}
+html[data-catch-wall] .cw-water-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid var(--cw-edge);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cw-salt);
+}
+html[data-catch-wall] .cw-water-tag[data-water="fresh"] {
+  color: var(--cw-fresh);
+}
+html[data-catch-wall] .cw-title {
+  margin: 0;
+  font-family: var(--f-display, "Fraunces", Georgia, serif);
+  font-weight: 600;
+  font-size: 1.15rem;
+  color: var(--cw-ink);
+}
+
+/* Invitation completes a sparse wall; never looks like a submitted photo. */
+html[data-catch-wall] .cw-invite {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  padding: 22px 20px 24px;
+  background:
+    linear-gradient(180deg, rgba(196, 163, 106, 0.1), transparent 42%),
+    var(--cw-ivory);
+  min-height: 12rem;
+}
+html[data-catch-wall][data-theme="dark"] .cw-invite {
+  background:
+    linear-gradient(180deg, rgba(196, 163, 106, 0.1), transparent 42%),
+    var(--cw-panel);
+}
+html[data-catch-wall] .cw-invite h3 {
+  margin: 0;
+  font-family: var(--f-display, "Fraunces", Georgia, serif);
+  font-weight: 600;
+  font-size: 1.45rem;
+  line-height: 1.2;
+  color: var(--cw-ink);
+}
+html[data-catch-wall] .cw-invite p {
+  margin: 0;
+  color: var(--cw-ink-soft);
+  font-size: 1rem;
+  line-height: 1.45;
+  max-width: 36ch;
+}
+html[data-catch-wall] .cw-invite .cw-share {
+  align-self: flex-start;
+  background: var(--cw-navy);
+  color: var(--cw-ivory);
+  border-color: var(--cw-navy);
+}
+
+/* Phone: 2 columns. From 860px: a balanced 3-column editorial grid, no span holes. */
+html[data-catch-wall] .cw-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  grid-column: 1 / -1;
+  align-items: start;
+}
+@media (min-width: 860px) {
+  html[data-catch-wall] .cw-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+  html[data-catch-wall] .cw-tile.is-wide,
+  html[data-catch-wall] .cw-tile.is-tall,
+  html[data-catch-wall] .cw-tile.is-mid,
+  html[data-catch-wall] .cw-slot.is-wide,
+  html[data-catch-wall] .cw-slot.is-tall,
+  html[data-catch-wall] .cw-slot.is-mid {
+    grid-column: auto;
+  }
+}
+html[data-catch-wall] .cw-tile {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+html[data-catch-wall] .cw-tile .cw-meta {
+  flex: 0 0 auto;
+}
+
+/* Empty frames: clearly labeled, never a fake catch. */
+html[data-catch-wall] .cw-slot {
+  box-shadow: none;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--cw-panel),
+    var(--cw-panel) 10px,
+    rgba(11, 42, 61, 0.03) 10px,
+    rgba(11, 42, 61, 0.03) 20px
+  );
+  border-style: dashed;
+  min-height: 10rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 14px;
+}
+html[data-catch-wall] .cw-slot.is-tall { min-height: 16rem; }
+html[data-catch-wall] .cw-slot-k {
+  margin: 0 0 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cw-ink-soft);
+}
+html[data-catch-wall] .cw-slot p {
+  margin: 0;
+  font-family: var(--f-display, "Fraunces", Georgia, serif);
+  font-size: 1.05rem;
+  color: var(--cw-ink);
+}
+
+html[data-catch-wall] .gal-empty[hidden] { display: none; }
+html[data-catch-wall] footer.site {
+  background: var(--cw-navy);
+  color: var(--cw-ivory);
+  margin-top: 0;
+  border-top: 1px solid var(--cw-brass);
+}
+html[data-catch-wall] footer.site a { color: var(--cw-ivory); }
+
+/* Reveals: transform only, so layout is reserved from first paint. */
+html[data-catch-wall] .cw-feature,
+html[data-catch-wall] .cw-tile,
+html[data-catch-wall] .cw-invite,
+html[data-catch-wall] .cw-slot {
+  animation: cw-rise 0.55s ease both;
+}
+html[data-catch-wall] .cw-tile:nth-child(2),
+html[data-catch-wall] .cw-slot:nth-child(2) { animation-delay: 0.05s; }
+html[data-catch-wall] .cw-tile:nth-child(3),
+html[data-catch-wall] .cw-slot:nth-child(3) { animation-delay: 0.1s; }
+html[data-catch-wall] .cw-tile:nth-child(4),
+html[data-catch-wall] .cw-slot:nth-child(4) { animation-delay: 0.15s; }
+@keyframes cw-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+html[data-catch-wall] .cw-open:hover img,
+html[data-catch-wall] .cw-open:focus-visible img {
+  filter: brightness(1.03);
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-catch-wall] .cw-feature,
+  html[data-catch-wall] .cw-tile,
+  html[data-catch-wall] .cw-invite,
+  html[data-catch-wall] .cw-slot,
+  html[data-catch-wall] .cw-open img {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    filter: none !important;
+  }
+}
+
+
+/* Reserved aspect boxes: tiles never change size when images arrive. */
+html[data-catch-wall] .cw-frame,
+html[data-catch-wall] .cw-slot {
+  aspect-ratio: var(--cw-aspect, 3 / 2);
+}
+html[data-catch-wall] .cw-feature .cw-frame {
+  aspect-ratio: var(--cw-aspect, 3 / 4);
+}
+html[data-catch-wall] .cw-grid { align-items: start; }
+
+/* Desktop: cap the featured portrait and sit the caption beside it, with no empty frame. */
+@media (min-width: 860px) {
+  html[data-catch-wall] .cw-feature {
+    display: grid;
+    grid-template-columns: auto minmax(14rem, 1fr);
+    align-items: end;
+    column-gap: 1.25rem;
+  }
+  html[data-catch-wall] .cw-feature .cw-open {
+    width: min(100%, calc(75vh * var(--cw-w, 3) / var(--cw-h, 4)));
+    max-width: 100%;
+  }
+  html[data-catch-wall] .cw-feature .cw-frame {
+    width: 100%;
+    max-height: 75vh;
+    height: auto;
+    aspect-ratio: var(--cw-aspect, 3 / 4);
+  }
+  html[data-catch-wall] .cw-feature .cw-meta {
+    padding: 0 16px 18px 0;
+  }
+  /* One-photo composition: caption directly under the capped photo; invite stays beside the card. */
+  html[data-catch-wall] .cw-stage.is-single .cw-feature {
+    grid-template-columns: minmax(0, auto);
+    justify-content: start;
+  }
+  html[data-catch-wall] .cw-stage.is-single .cw-feature .cw-meta {
+    padding: 12px 14px 14px;
+  }
+}
+
+/* Empty slots are grouped and compact so they don't read as a long empty column. */
+html[data-catch-wall] .cw-open-frames {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 4px 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+@media (min-width: 640px) {
+  html[data-catch-wall] .cw-open-frames {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+  }
+}
+html[data-catch-wall] .cw-open-frames .cw-slot {
+  margin: 0;
+  min-height: 0;
+  aspect-ratio: 4 / 3;
+  padding: 8px 10px;
+  justify-content: flex-end;
+  box-shadow: none;
+  border: 1px dashed var(--cw-edge);
+  background: var(--cw-panel);
+  animation: none;
+}
+html[data-catch-wall] .cw-open-frames .cw-slot.is-tall,
+html[data-catch-wall] .cw-open-frames .cw-slot.is-wide,
+html[data-catch-wall] .cw-open-frames .cw-slot.is-mid {
+  grid-column: auto;
+  min-height: 0;
+}
+html[data-catch-wall] .cw-open-frames .cw-slot-k {
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  margin: 0 0 2px;
+}
+html[data-catch-wall] .cw-open-frames .cw-slot p {
+  font-size: 0.78rem;
+  line-height: 1.3;
+  color: var(--cw-ink-soft);
+  font-family: var(--f-ui, "Source Sans 3", system-ui, sans-serif);
+}
+
+/* Public share control follows the uploads flag in JS. Default markup
+   hides #share-open and shows #share-soon. */
+html[data-catch-wall] #share-open[hidden],
+html[data-catch-wall] #share-soon[hidden],
+html[data-catch-wall] [data-share][hidden] { display: none !important; }
+html[data-catch-wall] #share-soon {
+  margin: 0;
+  color: var(--cw-ivory);
+  font: 500 0.95rem/1.4 var(--f-ui, "Source Sans 3", system-ui, sans-serif);
+  opacity: 0.85;
+}
+html[data-catch-wall] #gal-empty { display: none !important; }
+/* Folio masthead already reserved; keep gallery from collapsing before SSR paint. */
+html[data-catch-wall] .cw-stage { min-height: 12rem; }
+
+/* Keep Folio compact-bar "CB" mark from leaking its visually-hidden name. */
+html[data-catch-wall] .visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+@media (max-width: 639px) {
+  html[data-catch-wall] .cw-intro { padding: 20px 0 22px; }
+  html[data-catch-wall] .cw-dek { margin-bottom: 16px; }
+  html[data-catch-wall] .cw-switch { margin-bottom: 14px; padding-bottom: 10px; }
+}
+
+/* Catch Wall is statewide: drop the region picker so the compact Folio
+   tabs stay on one row at 390 and don't steal the first screen. */
+html[data-catch-wall] .compact-bar .region-nav { display: none; }
+html[data-catch-wall] .compact-bar .compact-inner,
+html[data-catch-wall] .compact-bar .mast-nav-inner {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+html[data-catch-wall] .compact-bar .site-nav {
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  gap: 0 8px;
+  min-width: 0;
+}
+@media (max-width: 639px) {
+  html[data-catch-wall][data-concept] .compact-bar .wrap,
+  html[data-catch-wall] .compact-bar .wrap {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  html[data-catch-wall][data-concept] .compact-bar .mast-mono,
+  html[data-catch-wall] .compact-bar .mast-mono {
+    min-width: 32px;
+    padding: 0;
+    font-size: 0.7rem;
+  }
+  html[data-catch-wall][data-concept="a"] .compact-bar .compact-inner,
+  html[data-catch-wall][data-concept="a"] .compact-bar .mast-nav-inner {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    min-height: 52px;
+  }
+  html[data-catch-wall][data-concept="a"] .compact-bar .site-nav {
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    min-width: 0;
+    gap: 0 6px;
+    font-size: 0.58rem;
+    letter-spacing: 0.03em;
+  }
+  html[data-catch-wall][data-concept="a"] .compact-bar .site-nav a,
+  html[data-catch-wall][data-concept="a"] .compact-bar #nav-brief {
+    flex: 0 1 auto;
+    padding: 0;
+    letter-spacing: 0.03em;
+  }
+}
