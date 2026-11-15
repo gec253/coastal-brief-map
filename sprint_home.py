@@ -724,6 +724,7 @@ def _shell(variant: str, main: str, shot: bool) -> bytes:
 <meta name="description" content="Private homepage concept for The Coastal Brief. Not public.">
 <link rel="preload" href="/fonts/fraunces-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/barlow-condensed-600.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/source-sans-3-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="icon" href="/branding/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://wgjoenkugzfrrfejmtvh.supabase.co" crossorigin>
 %(css)s<style id="wave-intro-css">

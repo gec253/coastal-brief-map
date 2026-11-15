@@ -68,7 +68,7 @@ img{display:block;max-width:100%}
 .t-dial{width:30px;height:30px;margin-left:auto;align-self:center}
 .d-rim{fill:none;stroke:var(--line-2);stroke-width:1.2}.d-tick{stroke:var(--line-2);stroke-width:1.2}.d-mark{fill:var(--brass)}
 .t-sub{font:500 .84rem/1.3 var(--f-ui);font-variant-numeric:tabular-nums}
-.t-note{font:italic 500 .76rem/1.3 var(--f-display);color:var(--ink-2)}
+.t-note{font:italic 500 .76rem/1.3 var(--f-ui);color:var(--ink-2)}
 .t-src{font:500 .7rem/1.3 var(--f-ui);color:var(--ink-2);margin-top:auto;padding-top:3px;font-variant-numeric:tabular-nums}
 .t-src time{white-space:nowrap}
 .t-spark{width:100%;height:26px;margin-top:3px}.s-line{fill:none;stroke:var(--pred);stroke-width:1.5;vector-effect:non-scaling-stroke}.s-now{stroke:var(--brass);stroke-width:1;vector-effect:non-scaling-stroke}
