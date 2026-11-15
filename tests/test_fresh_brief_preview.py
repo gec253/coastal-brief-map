@@ -7,6 +7,7 @@ and /brief?region=neuse-river stay 404.
 from __future__ import annotations
 
 import hashlib
+import re
 import hmac
 import os
 import sys
@@ -22,6 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import brief  # noqa: E402
 import brief_preview  # noqa: E402
 import preview_alerts  # noqa: E402
+import preview_copy  # noqa: E402
 import freshwater  # noqa: E402
 
 FRESH = ["jordan-lake", "neuse-river"]
@@ -226,6 +228,99 @@ class Compose(unittest.TestCase):
         self.assertIn("stage only", nhtml.lower())
         self.assertIn("It is not water depth.", nhtml)
         self.assertNotIn("depth", nhtml.lower().replace("it is not water depth.", ""))
+
+
+    def test_nwps_forecast_is_stage_only_observed_cfs_remains(self):
+        """NWPS crest flow estimates are not shown; USGS observed cfs is."""
+        import copy
+
+        def assemble(rid, now=None):
+            if rid == "jordan-lake":
+                d = copy.deepcopy(_jordan_payload())
+                rel = d["release"]
+                rel["nwps"] = {
+                    "lid": "HRMN7", "status": "ok",
+                    "forecast": {
+                        "issued": "2026-11-15T12:00:00+00:00",
+                        "crestStage": 4.2,
+                        "crestTime": "2026-11-16T00:00:00+00:00",
+                        "category": "no_flooding",
+                        "crestFlowCfs": 9999,
+                    },
+                }
+                return 200, d
+            d = copy.deepcopy(_neuse_payload(forecast=True))
+            for block, flow in (
+                ("02087500", 8888),
+                ("02087183", 7777),
+                ("02087570", 6666),
+                ("02089000", 5555),
+            ):
+                for b in d["river"]:
+                    if b.get("usgs") != block:
+                        continue
+                    nw = dict(b.get("nwps") or {"status": "ok"})
+                    fc = dict(nw.get("forecast") or {
+                        "issued": "2026-11-15T12:00:00+00:00",
+                        "crestStage": 3.0,
+                        "crestTime": "2026-11-16T00:00:00+00:00",
+                        "category": "no_flooding",
+                    })
+                    fc["crestFlowCfs"] = flow
+                    nw["forecast"] = fc
+                    b["nwps"] = nw
+            return 200, d
+
+        with patch.object(freshwater, "assemble", side_effect=assemble):
+            jb = brief_preview.compose("jordan-lake", NOW)
+            nb = brief_preview.compose("neuse-river", NOW)
+            jhtml = brief_preview.page(jb)
+            nhtml = brief_preview.page(nb)
+
+        jtake = preview_copy.take_text(jb.get("captainsTake") or {})
+        ntake = preview_copy.take_text(nb.get("captainsTake") or {})
+        jitems = " ".join(v for _, v in jb["items"])
+        nitems = " ".join(v for _, v in nb["items"])
+
+        # Distinctive NWPS crest-flow estimates must not appear anywhere visible,
+        # including glance tiles, the readings list, the Take, or the sources panel.
+        for blob, name in (
+            (jitems, "jordan items"), (jtake, "jordan take"),
+            (jhtml, "jordan page"), (nitems, "neuse items"),
+            (ntake, "neuse take"), (nhtml, "neuse page"),
+        ):
+            for val in ("9999", "8888", "7777", "6666", "5555"):
+                self.assertNotIn(val, blob, name)
+            self.assertNotIn("NWS estimate", blob, name)
+            self.assertNotIn("crestFlowCfs", blob, name)
+            for m in re.finditer(r"NWS forecast \(NWPS[^)]*\):[^.]*(?:\.|$)", blob):
+                self.assertNotIn("cfs", m.group(0).lower(), (name, m.group(0)))
+
+        # Observed USGS discharge is unchanged.
+        self.assertIn("245 cfs", jitems)
+        self.assertIn("245 cfs", jtake)
+        self.assertIn("217 cfs", nitems)
+        self.assertIn("217 cfs", ntake)
+        self.assertIn("60 cfs (regulated)", nitems)
+        self.assertIn("319 cfs", nitems)
+        self.assertIn("77.4 cfs", jitems)
+
+        # Stage forecast remains; sources keep the NWPS station, with no cfs value.
+        self.assertIn("NWS forecast (NWPS CLYN7)", dict(nb["items"])["Neuse River near Clayton"])
+        self.assertIn("crest 1.4 ft", dict(nb["items"])["Neuse River near Clayton"])
+        self.assertIn("NWS forecasts a crest of 1.4 ft", ntake)
+        self.assertNotIn("cfs", [s.get("text", "") for s in (nb.get("captainsTake") or {}).get("sentences") or [] if "forecast" in ((s.get("kind") or "") + " ".join(s.get("kinds") or []))][0])
+        srcs = " ".join(
+            "%s %s" % (r.get("label") or "", r.get("station") or "")
+            for r in (nb.get("readingSources") or [])
+        )
+        self.assertIn("NWPS forecast (CLYN7)", srcs)
+        self.assertIn("CLYN7", nhtml)
+        glance_cfs = [c["value"] for c in (nb.get("glance") or []) if c.get("unit") == "cfs"]
+        self.assertEqual(set(glance_cfs), {"217", "60"})
+        for c in (nb.get("glance") or []) + (jb.get("glance") or []):
+            if c.get("unit") == "cfs":
+                self.assertEqual(c.get("kind"), "observed", c)
 
 
 class Gate(unittest.TestCase):

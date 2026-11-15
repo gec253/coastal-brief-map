@@ -134,7 +134,11 @@ def _band(block: dict) -> str:
 
 
 def _nwps_forecast(block: dict) -> str:
-    """Label an NWPS stage forecast as a forecast, or return empty if none was issued."""
+    """Label an NWPS stage forecast as a forecast, or return empty if none was issued.
+
+    Stage only. An NWPS crest-flow (cfs) estimate is never shown; observed
+    USGS discharge stays on the gauge line.
+    """
     nw = block.get("nwps") or {}
     fc = nw.get("forecast") if nw.get("status") == "ok" else None
     if not fc or fc.get("crestStage") is None:
@@ -147,11 +151,8 @@ def _nwps_forecast(block: dict) -> str:
         flood = "no flooding forecast"
     else:
         flood = cat
-    extra = ""
-    if fc.get("crestFlowCfs") is not None:
-        extra = ", about %s (NWS estimate, not a USGS observation)" % _cfs(fc["crestFlowCfs"])
     issued_bit = ("," + issued) if issued else ""
-    return " NWS forecast (NWPS %s): crest %.1f ft%s, %s%s%s." % (lid, fc["crestStage"], when, flood, extra, issued_bit)
+    return " NWS forecast (NWPS %s): crest %.1f ft%s, %s%s." % (lid, fc["crestStage"], when, flood, issued_bit)
 
 
 def _vs_action(block: dict) -> str:
@@ -344,7 +345,8 @@ def _glance_jordan(items: list) -> list[dict]:
         sub = (vs.group(1) + " ft " + vs.group(2) + " guide") if vs else "NGVD29"
         cells.append({"key": "Lake level", "kind": "observed", "value": m.group(1), "unit": "ft", "sub": sub, "tone": "lake"})
     rel = d.get(preview_copy.MONCURE_LABEL) or d.get("Release plus runoff") or ""
-    m = re.search(r"([\d.]+)\s*cfs", rel)
+    rel_obs = re.split(r"\s+NWS forecast\b", rel, maxsplit=1)[0]
+    m = re.search(r"([\d.]+)\s*cfs", rel_obs)
     if m:
         cells.append({"key": "Haw River at Moncure", "kind": "observed", "value": m.group(1).rstrip("0").rstrip(".") if "." in m.group(1) else m.group(1),
                       "unit": "cfs", "sub": "USGS 02098206 · not official discharge", "tone": "lake"})
@@ -364,15 +366,17 @@ def _glance_neuse(items: list) -> list[dict]:
     cells: list[dict] = []
     d = dict(items)
     clay = d.get("Neuse River near Clayton") or ""
-    m = re.search(r"([\d.]+)\s*ft stage", clay)
+    clay_obs = re.split(r"\s+NWS forecast\b", clay, maxsplit=1)[0]
+    m = re.search(r"([\d.]+)\s*ft stage", clay_obs)
     if m:
         cells.append({"key": "Clayton stage", "kind": "observed", "value": m.group(1), "unit": "ft", "sub": "USGS 02087500", "tone": "lake"})
-    m = re.search(r"([\d.]+)\s*cfs", clay)
+    m = re.search(r"([\d.]+)\s*cfs", clay_obs)
     if m:
         val = m.group(1).rstrip("0").rstrip(".") if "." in m.group(1) else m.group(1)
         cells.append({"key": "Clayton flow", "kind": "observed", "value": val, "unit": "cfs", "sub": "regulated", "tone": "lake"})
     falls = d.get("Neuse River below Falls Dam") or ""
-    m = re.search(r"([\d.]+)\s*cfs", falls)
+    falls_obs = re.split(r"\s+NWS forecast\b", falls, maxsplit=1)[0]
+    m = re.search(r"([\d.]+)\s*cfs", falls_obs)
     if m:
         val = m.group(1).rstrip("0").rstrip(".") if "." in m.group(1) else m.group(1)
         cells.append({"key": "Below Falls Dam", "kind": "observed", "value": val, "unit": "cfs", "sub": "regulated release", "tone": "lake"})
