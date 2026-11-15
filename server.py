@@ -1785,6 +1785,201 @@ def _identity_preview_html(region_id: str | None = None, photo_id: str | None = 
     )
 
 
+def _folio_chrome(current: str) -> bytes:
+    """The public Folio nameplate, motto, region picker, and site tabs."""
+    header = (MASTHEAD_DIR / "header.html").read_bytes().strip()
+    if _IDENTITY_MOTTO_NEEDLE not in header:
+        raise RuntimeError("folio chrome: motto needle missing")
+    header = header.replace(_IDENTITY_MOTTO_NEEDLE, _IDENTITY_MOTTO_HTML, 1)
+    header = header.replace(b' aria-current="page"', b"", 1)
+    tab = {
+        "home": (
+            b'<a href="/">Conditions</a>',
+            b'<a href="/" aria-current="page">Conditions</a>',
+        ),
+        "brief": (
+            b'<a href="/brief?region=crystal-coast" id="nav-brief">Morning Brief</a>',
+            b'<a href="/brief?region=crystal-coast" id="nav-brief" aria-current="page">Morning Brief</a>',
+        ),
+        "catch-wall": (
+            b'<a href="/catch-wall">Catch Wall</a>',
+            b'<a href="/catch-wall" aria-current="page">Catch Wall</a>',
+        ),
+        "coastal-life": (
+            b'<a href="/coastal-life">Coastal Life</a>',
+            b'<a href="/coastal-life" aria-current="page">Coastal Life</a>',
+        ),
+    }.get(current)
+    if tab:
+        header = header.replace(tab[0], tab[1], 1)
+    return header
+
+
+def _end_of_div(data: bytes, id_attr: bytes) -> int | None:
+    i = data.find(id_attr)
+    if i < 0:
+        return None
+    open_lt = data.rfind(b"<div", 0, i)
+    if open_lt < 0:
+        return None
+    pos = open_lt
+    depth = 0
+    while pos < len(data):
+        if data.startswith(b"</div>", pos):
+            depth -= 1
+            if depth == 0:
+                return pos + len(b"</div>")
+            pos += 6
+        elif data.startswith(b"<div", pos):
+            nxt = data[pos + 4 : pos + 5]
+            if nxt in (b" ", b">", b"\n", b"\t", b"\r"):
+                depth += 1
+            pos += 4
+        else:
+            pos += 1
+    return None
+
+
+def _install_folio_chrome(data: bytes, current: str) -> bytes:
+    """Replace a page header with the single Folio masthead and compact nav.
+
+    Picker IDs (#region-nav, #rn-btn, #rn-menu, #nav-brief) come from
+    header.html and are left unchanged. Does not edit brief.py.
+    """
+    chrome = _folio_chrome(current)
+    start = data.find(b'<header class="site"')
+    end = _end_of_div(data, b'id="compact-bar"')
+    if start >= 0 and end is not None and end > start:
+        return data[:start] + chrome + data[end:]
+    mb = data.find(b'<header class="mb-top">')
+    if mb >= 0:
+        close = data.find(b"</header>", mb)
+        if close >= 0:
+            return data[:mb] + chrome + data[close + len(b"</header>") :]
+    raise RuntimeError("folio chrome: header not found")
+
+
+def _set_html_attr(data: bytes, name: bytes, value: bytes) -> bytes:
+    """Add or replace a single html attribute without touching the rest."""
+    m = re.search(br"<html\b([^>]*)>", data)
+    if not m:
+        return data
+    attrs = m.group(1)
+    pat = re.compile(br'\s' + re.escape(name) + br'="[^"]*"')
+    if pat.search(attrs):
+        attrs = pat.sub(b' ' + name + b'="' + value + b'"', attrs, count=1)
+    else:
+        attrs = attrs + b' ' + name + b'="' + value + b'"'
+    return data[:m.start()] + b"<html" + attrs + b">" + data[m.end():]
+
+
+_FRAUNCES_PRELOAD = (
+    b'<link rel="preload" href="/fonts/fraunces-var.woff2" as="font" '
+    b'type="font/woff2" crossorigin>'
+)
+_BRIEF_FONT_PRELOAD_RE = re.compile(
+    br'[ \t]*<link rel="preload" href="/fonts/(?:source-sans-3-var|barlow-condensed-600|fraunces-var|fraunces-italic-var)\.woff2"[^>]*>\s*'
+)
+
+
+def _slim_brief_fonts(data: bytes) -> bytes:
+    """Only the roman Fraunces wordmark is preloaded. Italic and body faces
+    stay font-display: optional with metric fallbacks in brief.css."""
+    data = _BRIEF_FONT_PRELOAD_RE.sub(b"", data)
+    if _FRAUNCES_PRELOAD not in data:
+        data = data.replace(b"<head>", b"<head>\n" + _FRAUNCES_PRELOAD, 1)
+    return data
+
+
+def _ensure_script(data: bytes, src: bytes) -> bytes:
+    tag = b'<script src="' + src + b'" defer></script>'
+    if tag in data or (b'src="' + src + b'"') in data:
+        return data
+    return data.replace(b"</body>", tag + b"\n</body>", 1)
+
+
+_FOLIO_CHROME_CSS_LINK = b'<link rel="stylesheet" href="/folio-chrome.css">\n'
+
+
+def _link_folio_chrome_css(data: bytes) -> bytes:
+    """Load Folio chrome off the brief LCP path. Reserved heights are in brief.css."""
+    if b'href="/folio-chrome.css"' in data:
+        return data
+    needle = b'<link rel="stylesheet" href="/brief.css">'
+    if needle not in data:
+        raise RuntimeError("public brief: brief.css link missing")
+    return data.replace(needle, needle + b"\n  " + _FOLIO_CHROME_CSS_LINK, 1)
+
+
+def _paint_public_brief(data: bytes) -> bytes:
+    """Presentation-only Folio chrome on public /brief. brief.page() is unchanged."""
+    data = _install_folio_chrome(data, "brief")
+    data = _set_html_attr(data, b"data-concept", b"a")
+    data = _slim_brief_fonts(data)
+    data = _link_folio_chrome_css(data)
+    if b'href="/styles.css"' in data or b'href="styles.css"' in data:
+        raise RuntimeError("public brief must not load styles.css")
+    data = _apply_preview_dateline(_apply_chrome(data))
+    if b"cb-mast-reveal" not in data:
+        data = data.replace(b"</head>", b"  " + _MASTHEAD_PLAY + b"</head>", 1)
+    for src in (b"/region-nav.js", b"/brief-link.js", b"/identity.js"):
+        data = _ensure_script(data, src)
+    return data
+
+
+_LAKE_ALERT_JS = """<script>
+(function(){
+  function wrapAlerts(){
+    var box = document.getElementById("fw-alert");
+    if (!box) return;
+    box.querySelectorAll(".al-item").forEach(function(item){
+      if (item.querySelector("details.al-zones")) return;
+      var meta = item.querySelector(".al-meta");
+      if (!meta) return;
+      var raw = (meta.textContent || "").trim();
+      var cut = raw.indexOf(" \u00b7 ");
+      if (cut < 0) return;
+      var until = raw.slice(0, cut).trim();
+      var zones = raw.slice(cut + 3).trim();
+      if (!zones) return;
+      var parts = zones.split(";").map(function(s){ return s.trim(); }).filter(Boolean);
+      if (parts.length < 2 && zones.length < 28) return;
+      meta.textContent = until;
+      var det = document.createElement("details");
+      det.className = "al-zones";
+      var sum = document.createElement("summary");
+      sum.textContent = parts.length + (parts.length === 1 ? " zone" : " zones");
+      var p = document.createElement("p");
+      p.textContent = zones;
+      det.appendChild(sum);
+      det.appendChild(p);
+      meta.insertAdjacentElement("afterend", det);
+    });
+  }
+  wrapAlerts();
+  var box = document.getElementById("fw-alert");
+  if (box && "MutationObserver" in window) {
+    new MutationObserver(wrapAlerts).observe(box, { childList: true, subtree: true });
+  }
+})();
+</script>
+""".encode("utf-8")
+
+
+
+def _paint_public_lake(data: bytes) -> bytes:
+    """Presentation-only Folio chrome and alert folding on public /lake."""
+    data = _install_folio_chrome(data, "lake")
+    data = _set_html_attr(data, b"data-concept", b"a")
+    data = _set_html_attr(data, b"data-page", b"lake")
+    data = _apply_preview_dateline(_apply_chrome(data))
+    if b"cb-mast-reveal" not in data:
+        data = data.replace(b"</head>", b"  " + _MASTHEAD_PLAY + b"</head>", 1)
+    if b"details.al-zones" not in data:
+        data = data.replace(b"</body>", _LAKE_ALERT_JS + b"\n</body>", 1)
+    return data
+
+
 # /catch-wall, /coastal-life and /photos share catch-wall.html. Give each its own
 # share title and URL by swapping only these three tags; the page body is unchanged.
 _SHARE_META = {
@@ -2102,7 +2297,7 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.send_error(404, "not found")
             robots = "index, follow" if public else "noindex, nofollow"
             if parsed.path == "/lake":
-                data = _apply_chrome((ROOT / "lake.html").read_bytes())
+                data = _paint_public_lake((ROOT / "lake.html").read_bytes())
                 if not public:
                     data = data.replace(
                         b'name="robots" content="index, follow"',
@@ -2140,7 +2335,12 @@ class Handler(SimpleHTTPRequestHandler):
             # (adsOn and mode != paused) and place the slot below advisories.
             body = brief.page(b, include_fresh=include_fresh, public=public, ads_on=False)
             robots = "index, follow" if public else "noindex, nofollow"
-            return self._send_private(None, "text/html; charset=utf-8", body.encode(), robots=robots)
+            return self._send_private(
+                None,
+                "text/html; charset=utf-8",
+                _paint_public_brief(body.encode("utf-8")),
+                robots=robots,
+            )
         if parsed.path in ("/lab/tiles", "/lab/tiles.js"):
             # Tile design prototype, off unless TILES_LAB_ENABLED=1. Not linked from the site.
             if not (_flag("TILES_LAB_ENABLED") or self._preview_ok()):
