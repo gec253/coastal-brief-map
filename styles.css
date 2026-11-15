@@ -3431,7 +3431,8 @@ html[data-home="magazine"] .home-photo-jump {
 
 /* =====================================================================
    Chartroom Folio (public homepage). Scoped to html[data-home="folio"]
-   so Catch Wall, lake pages, and briefs are unchanged.
+   so Catch Wall and briefs are unchanged. Public /lake shares a small
+   chrome block via html[data-page="lake"] at the end of this file.
    ===================================================================== */
 /* Chartroom Folio — private /preview/identity only.
    Scoped to html[data-home="folio"] so public pages are untouched. */
@@ -4176,4 +4177,76 @@ html[data-home="folio"][data-theme="dark"] .folio-water-card:not(.is-featured) .
   html[data-home="folio"] .folio-water-card {
     transition: none;
   }
+}
+
+/* Public /lake shares Folio chrome (masthead motto, tighter phone nameplate,
+   folded alert zones) without data-home="folio", so homepage instrument and
+   On the Water rules do not leak onto the lake instruments. */
+html[data-page="lake"] .mast-motto {
+  margin: 4px auto 6px;
+  max-width: 36rem;
+  height: 1.2em;
+  font-family: var(--f-ui);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--id-ivory-2, #D4C6AE);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 760px) {
+  html[data-page="lake"] .masthead { padding: 2px 0 0; }
+  html[data-page="lake"] .mast-top { min-height: 0; }
+  html[data-page="lake"][data-concept="a"] .mast-mission { margin-top: 2px; }
+  html[data-page="lake"][data-concept="a"] .mast-wave,
+  html[data-page="lake"][data-concept="a"] .mast-wave-svg {
+    margin-top: 2px;
+    height: 12px;
+  }
+  html[data-page="lake"] .mast-motto { margin: 2px auto 8px; }
+  html[data-page="lake"] .compact-bar {
+    position: sticky;
+    top: 0;
+    transform: none;
+    pointer-events: auto;
+  }
+}
+html[data-page="lake"] .dash-alert .al-ev { font-weight: 700; }
+html[data-page="lake"] .al-zones {
+  margin: 2px 0 0;
+  color: var(--d-ink-2, #3E5868);
+}
+html[data-page="lake"] .al-zones > summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  cursor: pointer;
+  font-size: 0.84rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--d-ink-2, #3E5868);
+  list-style: none;
+}
+html[data-page="lake"] .al-zones > summary::-webkit-details-marker { display: none; }
+html[data-page="lake"] .al-zones > summary::after { content: " ▾"; font-size: 0.75em; }
+html[data-page="lake"] .al-zones[open] > summary::after { content: " ▴"; }
+html[data-page="lake"] .al-zones > summary:focus-visible {
+  outline: 3px solid var(--seaglass, #5BA8A0);
+  outline-offset: 2px;
+}
+html[data-page="lake"] .al-zones p {
+  margin: 0 0 6px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--d-ink-2, #3E5868);
+}
+html[data-page="lake"] #fw-alert,
+html[data-page="lake"] .dash-alert {
+  min-height: 0;
+  align-content: unset;
 }

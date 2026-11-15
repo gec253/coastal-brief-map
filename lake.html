@@ -30,7 +30,7 @@
     .fw-grid { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
     @media (min-width: 761px) { .fw-grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); } .fw-hero { grid-row: span 3; } }
     /* reserved loaded heights per breakpoint (measured), so readings arriving don't push content */
-    .dash { --fh: 716px; --ft: 182px; --fr: 270px; --fn: 241px; --fg: 288px; --fi: 220px; }
+    .dash { --rh-al: 0px; --fh: 716px; --ft: 182px; --fr: 270px; --fn: 241px; --fg: 288px; --fi: 220px; }
     @media (max-width: 1099px) { .dash { --fh: 736px; --fn: 260px; --fg: 269px; } }
     @media (max-width: 919px) { .dash { --fh: 798px; --ft: 201px; --fr: 289px; --fn: 283px; --fg: 288px; } }
     @media (max-width: 839px) { .dash { --fh: 844px; --fr: 313px; --fn: 306px; } }
@@ -40,7 +40,9 @@
     @media (max-width: 499px) { .dash { --fh: 583px; --fr: 274px; --fn: 256px; --fg: 265px; } }
     @media (max-width: 430px) { .dash { --fh: 584px; --ft: 198px; --fr: 287px; --fn: 258px; --fg: 284px; } }
     @media (max-width: 370px) { .dash { --fh: 572px; --fr: 310px; } }
-    .fw-hero { min-height: var(--fh); } #fw-temp { min-height: var(--ft); } #fw-release { min-height: var(--fr); } #fw-rain { min-height: var(--fn); }
+    /* #fw-lake is also .inst.is-loading (160px in styles.css), which otherwise beats .fw-hero. */
+    #fw-lake, .fw-hero, #fw-lake.is-loading, .fw-hero.is-loading { min-height: var(--fh); }
+    #fw-temp { min-height: var(--ft); } #fw-release { min-height: var(--fr); } #fw-rain { min-height: var(--fn); }
     #fw-river .fw-g { min-height: var(--fg); } #fw-inflows .fw-g { min-height: var(--fi); }
     .fw-big { font-family: var(--f-num); font-weight: 600; font-size: 3.6rem; line-height: 0.95; color: var(--d-ink); font-variant-numeric: tabular-nums; }
     .fw-big small { font-size: 1.3rem; margin-left: 4px; color: var(--d-ink-2); }
@@ -92,6 +94,15 @@
     .fw-regions a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; border: 1px solid var(--d-edge); border-radius: 999px; background: var(--d-inst); color: var(--d-ink); text-decoration: none; font-size: 0.9rem; font-weight: 600; }
     .fw-regions a[aria-current="page"] { border-color: var(--d-ink); box-shadow: inset 0 0 0 1px var(--d-ink); }
     .fw-regions a:focus-visible { outline: 3px solid var(--seaglass); outline-offset: 2px; }
+
+    #fw-alert, .dash-alert { min-height: 0; align-content: unset; }
+    .fw-preview {
+      display: block; margin: 0 0 6px; padding: 0; border-radius: 0;
+      background: none; color: var(--copper-ink, #8E4F2A);
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+    [data-theme="dark"] .fw-preview { color: var(--copper-lt, #C98657); }
   </style>
 </head>
 <body>
@@ -162,7 +173,7 @@
           </div>
         </div>
       </div>
-      <div class="dash-alert is-clear is-pending" id="fw-alert" role="status" style="min-height:var(--rh-al)"><div class="al-item"><span class="al-dot"></span><span class="al-ev">Checking NWS alerts…</span><span class="al-meta">Watches, warnings, and advisories at the dam.</span></div></div>
+      <div class="dash-alert is-clear is-pending" id="fw-alert" role="status"><div class="al-item"><span class="al-dot"></span><span class="al-ev">Checking NWS alerts…</span><span class="al-meta">Watches, warnings, and advisories at the dam.</span></div></div>
 
       <div class="fw-grid" id="fw-grid">
         <article class="inst fw-hero is-loading" id="fw-lake" data-title="Lake level"></article>
