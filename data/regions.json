@@ -1294,6 +1294,137 @@
           "url": "https://epec.saw.usace.army.mil/jord.htm"
         }
       ]
+    },
+    {
+      "id": "cape-fear-river",
+      "enabled": false,
+      "draft": false,
+      "previewReady": true,
+      "waterType": "freshwater",
+      "instrumentSet": "freshwater-river",
+      "name": "Cape Fear River (Lillington to Lock 1)",
+      "area": "Harnett, Cumberland, Bladen & Columbus counties",
+      "anchor": {
+        "label": "Cape Fear River at Fayetteville (USGS 02104000)",
+        "lat": 35.0497222,
+        "lon": -78.85638889
+      },
+      "map": {
+        "center": [
+          35.05,
+          -78.86
+        ],
+        "zoom": 8
+      },
+      "notes": "Private preview only (cookie-gated). Main stem from Lillington to Lock 1 near Kelly. Sources checked live 15 Nov 2026; see docs/FRESHWATER_NEXT.md on data/expansion-audit. Not a tributary page. USGS gage height is shown for observed stage. Huske Lock NWPS/AHPS stages are a different datum: Please subtract 32.09 ft from the AHPS levels to match the reports from the USGS location number 02105500. Water temp is shown only if a current USGS 00010 exists (Lillington 00010 ended 10 Oct 2024).",
+      "river": [
+        {
+          "usgs": "02102500",
+          "nwps": "LLLN7",
+          "label": "Cape Fear River at Lillington",
+          "flow": true,
+          "regulated": true,
+          "regulatedNote": "Regulated: stage and flow are influenced by Jordan Lake and lock-and-dam operations.",
+          "floodStages": {
+            "action": 13,
+            "minor": 14,
+            "moderate": 19,
+            "major": 27
+          }
+        },
+        {
+          "usgs": "02104000",
+          "nwps": "FAYN7",
+          "label": "Cape Fear River at Fayetteville",
+          "flow": true,
+          "regulated": true,
+          "regulatedNote": "Regulated: stage and flow are influenced by Jordan Lake and lock-and-dam operations.",
+          "floodStages": {
+            "action": 35,
+            "minor": 35,
+            "moderate": 48,
+            "major": 58
+          }
+        },
+        {
+          "usgs": "02105500",
+          "nwps": "STPN7",
+          "label": "Cape Fear River at W.O. Huske Lock near Tarheel",
+          "flow": true,
+          "regulated": true,
+          "regulatedNote": "Regulated: stage and flow are influenced by Jordan Lake and lock-and-dam operations.",
+          "nwpsMinusUsgsFt": 32.09,
+          "note": "Please subtract 32.09 ft from the AHPS levels to match the reports from the USGS location number 02105500.",
+          "floodStages": {
+            "action": 41,
+            "minor": 42,
+            "moderate": 55,
+            "major": 65
+          }
+        },
+        {
+          "usgs": "02105769",
+          "nwps": "CPFN7",
+          "label": "Cape Fear River at Lock 1 near Kelly",
+          "flow": true,
+          "regulated": true,
+          "regulatedNote": "Regulated: stage and flow are influenced by Jordan Lake and lock-and-dam operations.",
+          "floodStages": {
+            "action": 22,
+            "minor": 24,
+            "moderate": 26,
+            "major": 28
+          }
+        }
+      ],
+      "waterTemp": {
+        "status": "none",
+        "sites": [
+          "02102500",
+          "02105769"
+        ],
+        "note": "No current USGS water-temperature observation on the Cape Fear main stem. Lillington USGS 00010 was discontinued on 10 Oct 2024; Lock 1 00010 is not reporting a current value."
+      },
+      "forecast": {
+        "label": "Fayetteville",
+        "lat": 35.0497222,
+        "lon": -78.85638889,
+        "gridId": "RAH",
+        "gridX": 71,
+        "gridY": 24,
+        "office": "NWS Raleigh (RAH)"
+      },
+      "alertZones": [
+        "NCZ077",
+        "NCZ088",
+        "NCZ096"
+      ],
+      "alertPoint": [
+        35.0497222,
+        -78.85638889
+      ],
+      "links": [
+        {
+          "label": "NCWRC boating access areas (ramps)",
+          "url": "https://www.ncwildlife.gov/boating/boating-access-areas"
+        },
+        {
+          "label": "NCWRC fishing regulations",
+          "url": "https://www.ncwildlife.gov/hunt/fishing-hunting-trapping-regulations"
+        },
+        {
+          "label": "USGS Cape Fear River at Fayetteville",
+          "url": "https://waterdata.usgs.gov/monitoring-location/02104000/"
+        },
+        {
+          "label": "NWS NWPS \u00b7 W.O. Huske Lock (STPN7)",
+          "url": "https://water.noaa.gov/gauges/stpn7"
+        },
+        {
+          "label": "NWS NWPS river forecasts",
+          "url": "https://water.noaa.gov/"
+        }
+      ]
     }
   ]
 }
