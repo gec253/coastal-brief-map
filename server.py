@@ -2173,6 +2173,8 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 <a class="card" href="/preview/brief/nags-head"><b>Preview brief · Nags Head</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
 <a class="card" href="/preview/brief/emerald-isle"><b>Preview brief · Emerald Isle</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
 <a class="card" href="/preview/brief/topsail"><b>Preview brief · Topsail</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
+<a class="card" href="/preview/brief/jordan-lake"><b>Preview brief · Jordan Lake</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
+<a class="card" href="/preview/brief/neuse-river"><b>Preview brief · Neuse River</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
 <a class="card" href="/lab/wind"><b>Wind flow</b><span>Animated model wind (NOAA GFS forecast)</span></a>
 <a class="card" href="/lab/tiles"><b>Tile designs</b><span>The instrument tile prototype</span></a>
 <a class="card" href="/preview/masthead?c=c"><b>Masthead concepts</b><span>Three directions for a cinematic gold wave-to-masthead reveal (A editorial, B nautical, C hybrid). Replay from the bar at the bottom.</span></a>
@@ -2279,7 +2281,7 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.send_error(404, "not found")
             return self._json_private(photos.diagnostics())
         if parsed.path.startswith("/preview/brief/"):
-            # Private preview Morning Briefs (Wilmington, Nags Head, Emerald Isle, Topsail). Same cookie as
+            # Private preview Morning Briefs (coastal four, plus Jordan Lake and Neuse River). Same cookie as
             # /preview; 404 without it. Built in memory, never stored or archived, never on /brief.
             if not self._preview_ok():
                 return self.send_error(404, "not found")

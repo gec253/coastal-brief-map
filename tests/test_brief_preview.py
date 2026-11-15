@@ -54,7 +54,7 @@ class Unchanged(unittest.TestCase):
             self.assertEqual(brief.get(rid, include_fresh=True)[0], 404, rid)
 
     def test_live_regions_have_no_preview(self):
-        for rid in ("crystal-coast", "hatteras", "falls-lake", "jordan-lake", "bogus"):
+        for rid in ("crystal-coast", "hatteras", "falls-lake", "bogus"):
             self.assertFalse(brief_preview.available(rid), rid)
         for rid in NEW:
             self.assertTrue(brief_preview.available(rid), rid)
