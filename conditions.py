@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -236,6 +237,111 @@ def first_row(rows, key):
             return rec
     return None
 
+def ndbc_latest_obs(station_id: str):
+    """Parse NDBC latest_obs text when realtime2 is not published.
+
+    Some CORMP C-MAN stations (for example MBIN7) appear in latest_obs but
+    return 404 on realtime2. Units in latest_obs are already English (kt, °F, inHg),
+    unlike realtime2 (m/s, °C, hPa).
+    """
+    url = "https://www.ndbc.noaa.gov/data/latest_obs/%s.txt" % station_id.lower()
+    body = get_json(url, TTL_NDBC)
+    if not body:
+        return None, url
+    try:
+        text = body.decode("utf-8", "replace")
+    except Exception:
+        return None, url
+    parsed = parse_ndbc_latest_obs(text)
+    if not parsed:
+        return None, url
+    parsed["url"] = url
+    return parsed, url
+
+
+def parse_ndbc_latest_obs(text: str):
+    """Return a dict with time (UTC) and English-unit fields, or None."""
+    if not text or "Station" not in text:
+        return None
+    tm = re.search(r"(\d{3,4})\s+GMT\s+(\d{1,2})/(\d{1,2})/(\d{2,4})", text)
+    if not tm:
+        return None
+    hhmm, mon, day, year = tm.group(1), int(tm.group(2)), int(tm.group(3)), int(tm.group(4))
+    if year < 100:
+        year += 2000
+    hhmm = hhmm.zfill(4)
+    try:
+        dt = datetime(year, mon, day, int(hhmm[:2]), int(hhmm[2:]), tzinfo=timezone.utc)
+    except ValueError:
+        return None
+    out = {"_dt": dt}
+    wm = re.search(r"Wind:\s+[A-Z]{1,3}\s*\((\d+(?:\.\d+)?)\s*°\)\s*,\s*(\d+(?:\.\d+)?)\s*kt", text)
+    if wm:
+        out["WDIR"] = float(wm.group(1))
+        out["WSPD_kt"] = float(wm.group(2))
+    gm = re.search(r"Gust:\s*(\d+(?:\.\d+)?)\s*kt", text)
+    if gm:
+        out["GST_kt"] = float(gm.group(1))
+    pm = re.search(r"Pres:\s*(\d+(?:\.\d+)?)", text)
+    if pm:
+        out["PRES_inHg"] = float(pm.group(1))
+        if re.search(r"Pres:\s*\d+(?:\.\d+)?\s+rising", text, re.I):
+            out["PRES_trend"] = "rising"
+        elif re.search(r"Pres:\s*\d+(?:\.\d+)?\s+falling", text, re.I):
+            out["PRES_trend"] = "falling"
+        elif re.search(r"Pres:\s*\d+(?:\.\d+)?\s+steady", text, re.I):
+            out["PRES_trend"] = "steady"
+    am = re.search(r"Air Temp:\s*(-?\d+(?:\.\d+)?)\s*°\s*F", text)
+    if am:
+        out["ATMP_F"] = float(am.group(1))
+    wtm = re.search(r"Water Temp:\s*(-?\d+(?:\.\d+)?)\s*°\s*F", text)
+    if wtm:
+        out["WTMP_F"] = float(wtm.group(1))
+    return out
+
+
+def ndbc_reading_from_latest_obs(kind: str, parsed: dict, url: str):
+    """Map parse_ndbc_latest_obs fields (English units) into a reading."""
+    dt = parsed.get("_dt")
+    if not dt:
+        return None
+    if kind == "wind":
+        w = parsed.get("WSPD_kt")
+        if w is None:
+            return None
+        g, d = parsed.get("GST_kt"), parsed.get("WDIR")
+        return {
+            "time": dt, "url": url,
+            "values": {"speedKt": r1(w), "gustKt": r1(g) if g is not None else None,
+                       "dirDeg": d, "dirCompass": compass(d)},
+            "raw": {"WSPD_kt": w, "GST_kt": g, "WDIR_degT": d},
+            "rawUnits": "knots, degrees true (NDBC latest_obs English units)",
+        }
+    if kind in ("waterTemp", "waterTempOffshore"):
+        f = parsed.get("WTMP_F")
+        if f is None:
+            return None
+        return {"time": dt, "url": url, "values": {"f": r1(f), "c": r1((f - 32) * 5 / 9)},
+                "raw": {"WTMP_F": f}, "rawUnits": "degrees Fahrenheit (NDBC latest_obs English units)"}
+    if kind == "airTemp":
+        f = parsed.get("ATMP_F")
+        if f is None:
+            return None
+        return {"time": dt, "url": url, "values": {"f": r1(f), "c": r1((f - 32) * 5 / 9)},
+                "raw": {"ATMP_F": f}, "rawUnits": "degrees Fahrenheit (NDBC latest_obs English units)"}
+    if kind == "pressure":
+        inches = parsed.get("PRES_inHg")
+        if inches is None:
+            return None
+        hpa = inches / HPA_TO_INHG
+        trend = parsed.get("PRES_trend")
+        return {"time": dt, "url": url,
+                "values": {"inHg": round(inches, 2), "hPa": r1(hpa),
+                           "change3hHPa": None, "change3hInHg": None,
+                           "trend": trend, "trendBasis": "NDBC latest_obs pressure word" if trend else None},
+                "raw": {"PRES_inHg": inches}, "rawUnits": "inches of mercury (NDBC latest_obs English units)"}
+    return None
+
 
 def ndbc_reading(kind: str, sid: str):
     if kind == "swell":
@@ -265,6 +371,9 @@ def ndbc_reading(kind: str, sid: str):
         }
     rows, url = ndbc_rows(sid, "txt")
     if not rows:
+        parsed, lurl = ndbc_latest_obs(sid)
+        if parsed:
+            return ndbc_reading_from_latest_obs(kind, parsed, lurl)
         return None
     if kind == "wind":
         rec = first_row(rows, "WSPD")

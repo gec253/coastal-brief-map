@@ -2186,7 +2186,7 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 .pv a.card b{display:block;font-size:1.05rem}.pv a.card span{font-size:.86rem;color:var(--d-ink-2)}
 .pv .badge{display:inline-block;font:700 .7rem/1.6 var(--f-ui);letter-spacing:.1em;text-transform:uppercase;color:#fff;background:#8c2f23;padding:2px 8px;border-radius:3px}</style></head>
 <body><main class="pv"><span class="badge">Private preview · this browser only</span><h1>Previews</h1>
-<p>These pages are unlocked for this browser for %d days. The wind and tile labs still return “not found” to the public. The Morning Brief, the public freshwater pages and every saltwater dashboard (including Wilmington, Nags Head, Emerald Isle and Topsail) are public. Cookie-gated previews are listed below.</p>
+<p>These pages are unlocked for this browser for %d days. The wind and tile labs still return “not found” to the public. The Morning Brief, the public freshwater pages and the public saltwater dashboards (Crystal Coast, Hatteras, Wilmington, Nags Head, Emerald Isle and Topsail) are public. Carolina Beach / Kure Beach, Corolla / Duck and the Cape Fear River stay on this preview hub.</p>
 <a class="card" href="/lake"><b>Falls Lake</b><span>Freshwater dashboard: lake level vs guide curve, dam release, inflows, rain, river gauges</span></a>
 <a class="card" href="/lake?region=jordan-lake"><b>Jordan Lake</b><span>Pool vs 216.0 ft guide curve, release plus local runoff, Haw inflow</span></a>
 <a class="card" href="/lake?region=neuse-river"><b>Neuse River</b><span>Falls Dam to Goldsboro: stage, flow and NWS flood stages (Smithfield is stage only)</span></a>
@@ -2197,6 +2197,10 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 <a class="card" href="/preview/brief/nags-head"><b>Preview brief · Nags Head</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
 <a class="card" href="/preview/brief/emerald-isle"><b>Preview brief · Emerald Isle</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
 <a class="card" href="/preview/brief/topsail"><b>Preview brief · Topsail</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
+<a class="card" href="/?region=carolina-kure"><b>Preview conditions · Carolina Beach / Kure Beach</b><span>Private dashboard preview. Cookie-gated; not in the public region list.</span></a>
+<a class="card" href="/preview/brief/carolina-kure"><b>Preview brief · Carolina Beach / Kure Beach</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
+<a class="card" href="/?region=corolla-duck"><b>Preview conditions · Corolla / Duck</b><span>Private dashboard preview, centered on Duck. Cookie-gated; not in the public region list.</span></a>
+<a class="card" href="/preview/brief/corolla-duck"><b>Preview brief · Corolla / Duck</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
 <a class="card" href="/preview/brief/jordan-lake"><b>Preview brief · Jordan Lake</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
 <a class="card" href="/preview/brief/neuse-river"><b>Preview brief · Neuse River</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
 <a class="card" href="/lake?region=cape-fear-river"><b>Cape Fear River</b><span>Private preview: Lillington to Lock 1, main-stem stage and flow, NWPS forecasts. Cookie-gated, not public.</span></a>

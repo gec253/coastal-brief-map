@@ -35,7 +35,7 @@ import conditions
 import preview_alerts
 import preview_copy
 
-REGIONS = ("wilmington", "nags-head", "emerald-isle", "topsail")
+REGIONS = ("wilmington", "nags-head", "emerald-isle", "topsail", "carolina-kure", "corolla-duck")
 FRESH_REGIONS = ("jordan-lake", "neuse-river", "cape-fear-river")
 TTL_S = 15 * 60
 _cache: dict[str, tuple[float, dict]] = {}
@@ -80,10 +80,27 @@ def compose(rid: str, now: datetime | None = None) -> dict:
     return _compose_salt(rid, now)
 
 
+_ASSEMBLE_GATE = threading.Lock()
+
+
 def _compose_salt(rid: str, now: datetime) -> dict:
-    body = brief.build_salt(rid, now)
+    # brief.build_salt calls conditions.assemble(rid) without preview=True, which
+    # 404s cookie-gated regions. Wrap assemble for this build only.
+    with _ASSEMBLE_GATE:
+        orig = conditions.assemble
+
+        def _preview_assemble(region_id=None, preview=False):
+            if region_id and (preview or conditions.is_preview_salt_region(region_id)):
+                return orig(region_id, preview=True)
+            return orig(region_id, preview=preview)
+
+        conditions.assemble = _preview_assemble
+        try:
+            body = brief.build_salt(rid, now)
+            st, payload = conditions.assemble(rid, preview=True)
+        finally:
+            conditions.assemble = orig
     cfg = _cfg(rid)
-    st, payload = conditions.assemble(rid)
     if st != 200:
         payload = {}
     body = preview_copy.relabel_salt(rid, body, payload or {}, cfg)
