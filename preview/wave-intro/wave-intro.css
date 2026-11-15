@@ -67,8 +67,9 @@ html.intro-seen .wave-intro,
 }
 
 .wi-line-brass {
+  stroke: #C4A36A;
   stroke: url(#wi-aged-brass);
-  stroke-width: 0.9px;
+  stroke-width: 1.25px;
   opacity: 1;
 }
 
@@ -76,9 +77,10 @@ html.intro-seen .wave-intro,
   appearance: none;
   position: absolute;
   z-index: 2;
-  top: 16px;
-  left: 16px;
+  top: auto;
   right: auto;
+  bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  left: max(16px, env(safe-area-inset-left, 0px));
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -157,17 +159,22 @@ html.intro-seen .wave-intro,
 
 @media (max-width: 639px) {
   .wi-skip {
-    top: 12px;
-    left: 12px;
+    top: auto;
     right: auto;
+    bottom: max(12px, env(safe-area-inset-bottom, 0px));
+    left: max(12px, env(safe-area-inset-left, 0px));
   }
 }
 
 /* Aged-brass finish on the real masthead rule, so the handoff is invisible.
    Purely decorative (the rule is already aria-hidden). No layout changes. */
 html[data-wave-intro] .wave-settle {
+  stroke: #C4A36A;
   stroke: url(#wi-rule-brass);
-  stroke-width: 1.15px;
+  stroke-width: 1.25px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
   animation: none !important;
   stroke-dashoffset: 0 !important;
 }
@@ -185,4 +192,10 @@ html[data-wave-intro].intro-play:not(.intro-seen) .wave-swell,
 html[data-wave-intro].intro-play:not(.intro-seen) .wave-glint,
 html[data-wave-intro].intro-play:not(.intro-seen) .mast-sheen {
   opacity: 0 !important;
+}
+
+/* Once the brass line has flattened onto the rule, show the real path
+   and hide the overlay stroke so the last frames match the handoff. */
+html[data-wave-intro].intro-play.intro-rule-live:not(.intro-seen) .wave-settle {
+  opacity: 1 !important;
 }

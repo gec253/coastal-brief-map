@@ -11,12 +11,12 @@ _OVERLAY = """
 <div id="wave-intro" class="wave-intro" role="dialog" aria-label="Site introduction">
   <svg class="wi-svg" viewBox="0 0 1000 1000" preserveAspectRatio="none" focusable="false" aria-hidden="true">
     <defs>
-      <linearGradient id="wi-aged-brass" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0" stop-color="#8C6A3C"/>
+      <linearGradient id="wi-aged-brass" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="100%" y2="0">
+        <stop offset="0" stop-color="#A67C45"/>
         <stop offset="0.35" stop-color="#C4A36A"/>
-        <stop offset="0.5" stop-color="#B08A52"/>
+        <stop offset="0.5" stop-color="#D0B07A"/>
         <stop offset="0.72" stop-color="#C4A36A"/>
-        <stop offset="1" stop-color="#8C6A3C"/>
+        <stop offset="1" stop-color="#A67C45"/>
       </linearGradient>
     </defs>
     <path class="wi-sheet" d="M -140 -80 H 1140 V 1400 H -140 Z"/>

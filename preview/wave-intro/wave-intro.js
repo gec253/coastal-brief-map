@@ -32,11 +32,13 @@
   // asymmetric, modest amplitude — not a repeating sine and not a break.
   var XS = [-140, 40, 200, 380, 560, 740, 900, 1140];
   // One long coastal swell and a quieter following ripple, not a repeating sine.
-  var BASE = [14, 28, 40, 8, -44, -16, 12, 18];
+  // Peak-to-trough about 6% of the viewBox height; wavelength wider than
+  // the viewport, so the edge is one long shallow swell, not a hump.
+  var BASE = [-8, 10, 26, 30, 12, -6, -24, -16];
   var LAYERS = [
-    { yOff: 32, amp: 0.55, drift: 0.18, phase: 0.41, shift: 130 },
-    { yOff: 16, amp: 0.78, drift: -0.12, phase: 0.67, shift: -90 },
-    { yOff: 0, amp: 1, drift: 0.08, phase: 0.1, shift: 0 }
+    { yOff: 6, amp: 0.92, drift: 0.08, phase: 0.41, shift: 40 },
+    { yOff: 12, amp: 0.85, drift: -0.06, phase: 0.67, shift: -30 },
+    { yOff: 0, amp: 1, drift: 0.04, phase: 0.1, shift: 0 }
   ];
   var MORPH = [
     [0.31, 0.17, 0.41, 0.22],
@@ -51,11 +53,11 @@
 
 
   var BRASS_STOPS = [
-    ["0", "#8C6A3C"],
+    ["0", "#A67C45"],
     ["0.35", "#C4A36A"],
-    ["0.5", "#B08A52"],
+    ["0.5", "#D0B07A"],
     ["0.72", "#C4A36A"],
-    ["1", "#8C6A3C"]
+    ["1", "#A67C45"]
   ];
 
   function svgEl(name) {
@@ -71,9 +73,10 @@
     }
     var g = svgEl("linearGradient");
     g.setAttribute("id", id);
+    g.setAttribute("gradientUnits", "userSpaceOnUse");
     g.setAttribute("x1", "0");
     g.setAttribute("y1", "0");
-    g.setAttribute("x2", "1");
+    g.setAttribute("x2", "100%");
     g.setAttribute("y2", "0");
     var i, s;
     for (i = 0; i < BRASS_STOPS.length; i++) {
@@ -225,12 +228,11 @@
   function pointY(i, raw, layer) {
     var m = MORPH[i];
     var wobble =
-      8 * Math.sin((raw * m[0] + m[2]) * Math.PI * 2) +
-      5 * Math.sin((raw * m[1] + m[3] + layer.phase) * Math.PI * 2);
-    var drift = layer.drift * raw * 18;
-    // Gentle left-to-right tilt so the front is slightly diagonal,
-    // not a level curtain.
-    var tilt = (XS[i] / 1000 - 0.36) * 36;
+      3 * Math.sin((raw * m[0] + m[2]) * Math.PI * 2) +
+      2 * Math.sin((raw * m[1] + m[3] + layer.phase) * Math.PI * 2);
+    var drift = layer.drift * raw * 8;
+    // Slight left-to-right tilt, kept small so it doesn't read as a blob.
+    var tilt = (XS[i] / 1000 - 0.36) * 10;
     var env = 0.92 + 0.08 * Math.cos(raw * 1.05 + layer.phase);
     return baseAt(XS[i] + layer.shift) * layer.amp * env + wobble * layer.amp + drift + tilt + layer.yOff;
   }
@@ -255,12 +257,17 @@
     return d;
   }
 
-  function settleT(raw) {
-    // Flatten the brass line onto the measured rule and hold still
-    // for the last beats so the handoff frame can match.
-    if (raw <= 0.36) return 0;
-    if (raw >= 0.84) return 1;
-    return easeTravel((raw - 0.36) / 0.48);
+  function settleTFromEdge(ys) {
+    // Flatten in place as the crest approaches the rule, finishing
+    // before any trough can cross the tagline beneath it.
+    if (!ruleBox) return 0;
+    var maxY = ys[0], i;
+    for (i = 1; i < ys.length; i++) if (ys[i] > maxY) maxY = ys[i];
+    var start = ruleBox.y - 20;
+    var end = ruleBox.y - 2;
+    if (maxY <= start) return 0;
+    if (maxY >= end) return 1;
+    return easeTravel((maxY - start) / (end - start));
   }
 
   function morphToRule(xs, ys, t) {
@@ -280,7 +287,9 @@
     // room for amplitude so t=0 is fully covered and t=1 is clear.
     // Line is already kissing the top at t=0, and leaves the bottom
     // near the end so the last beats are a settle, not a blank hold.
-    var front = 28 + eased * 1060;
+    // t=0: the whole edge sits above the viewport (header stays covered).
+    // The edge is off the bottom by ~1050ms (eased ≈ 0.96).
+    var front = -72 + eased * 1180;
     var i, ys = [];
     for (i = 0; i < XS.length; i++) ys.push(front + pointY(i, raw, layer));
     return ys;
@@ -292,10 +301,10 @@
     if (raw > 1) raw = 1;
     if (!ruleBox) mapRule();
     var eased = easeTravel(raw);
-    var st = settleT(raw);
     var ivoryYs = layerYs(raw, eased, LAYERS[2]);
     var seaYs = layerYs(raw, eased, LAYERS[1]);
     var brassYs = layerYs(raw, eased, LAYERS[0]);
+    var st = settleTFromEdge(brassYs);
     var ivory = { xs: XS.slice(), ys: ivoryYs };
     var sea = { xs: XS.slice(), ys: seaYs };
     var brass = morphToRule(XS.slice(), brassYs, st);
@@ -306,20 +315,31 @@
     if (lineBrass) {
       lineBrass.setAttribute("d", curveD(brass.xs, brass.ys));
       // Thickness eases onto the measured rule; the line itself never fades.
-      var startW = 0.9;
-      var endW = ruleBox ? ruleBox.thickness : 1.15;
+      var startW = 1.15;
+      var endW = ruleBox ? ruleBox.thickness : 1.25;
       lineBrass.style.strokeWidth = (startW + (endW - startW) * st) + "px";
-      lineBrass.style.opacity = "1";
+      // Once flattened, hand off to the real rule in the same frame so the
+      // last overlay frames and the first post-intro frame are the same paint.
+      if (st >= 1) {
+        lineBrass.style.opacity = "0";
+        document.documentElement.classList.add("intro-rule-live");
+      } else {
+        lineBrass.style.opacity = "1";
+        document.documentElement.classList.remove("intro-rule-live");
+      }
     }
-    // Ivory and sea trail the departing sheet and fade with it.
-    // The brass heritage line stays until the handoff frame.
-    var trailFade = raw < 0.86 ? 1 : 1 - (raw - 0.86) / 0.14;
+    // Ivory and sea leave with the sheet as it exits (~1050ms).
+    var trailFade = raw < 0.78 ? 1 : raw >= 0.86 ? 0 : 1 - (raw - 0.78) / 0.08;
     if (lineIvory) lineIvory.style.opacity = String(0.96 * trailFade);
     if (lineSea) lineSea.style.opacity = String(0.55 * trailFade);
     if (svg) svg.style.opacity = "1";
     if (skip) {
+      // Stay on navy at the bottom-left; fade before the edge reaches them.
+      var lead = ivoryYs[0], li;
+      for (li = 1; li < ivoryYs.length; li++) if (ivoryYs[li] < lead) lead = ivoryYs[li];
       var s = 1;
-      if (raw > 0.22) s = raw >= 0.4 ? 0 : 1 - (raw - 0.22) / 0.18;
+      if (lead >= 820) s = 0;
+      else if (lead > 640) s = 1 - (lead - 640) / 180;
       skip.style.opacity = String(s);
       skip.style.pointerEvents = s < 0.05 ? "none" : "auto";
     }
