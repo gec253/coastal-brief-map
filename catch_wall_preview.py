@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parent
 DIR = ROOT / "preview" / "catch-wall"
 ROUTE = "/preview/catch-wall"
 SUBMIT_HREF = "/catch-wall"  # existing public page; its "Share your catch" button opens the existing form
-NO_PHOTOGRAPHER = "Catch Wall community photo \u00b7 Photographer not recorded"
+NO_PHOTOGRAPHER = "Community photo \u00b7 Catch Wall"
 VARIANTS = ("400", "800", "1600")
 
 # Mosaic shapes cycle per section. Each is a crop (aspect ratio) plus a placement.
