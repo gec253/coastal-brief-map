@@ -37,9 +37,10 @@ PROD_PHOTOS_URL = "https://thecoastalbrief.com/api/photos?view=all"
 _CACHE_FRESH_S = 60.0
 _CACHE_TTL_S = 300.0
 _FETCH_TIMEOUT_S = 1.0
-_PUBLIC_CACHE: dict = {"t": 0.0, "photos": []}
+_PUBLIC_CACHE: dict = {"t": 0.0, "photos": [], "ok": True, "filled": False}
 _CACHE_LOCK = threading.Lock()
 _REFRESHING = False
+_REFRESH_DONE = threading.Event()
 _MEDIA_CACHE: dict[tuple[str, str], bytes] = {}
 _MEDIA_LOCK = threading.Lock()
 _MEDIA_RE = re.compile(
@@ -57,21 +58,37 @@ def parse_water(raw: str | None) -> str:
     return w if w in ("all", "salt", "fresh") else "all"
 
 
-def _cache_snapshot() -> tuple[float, list[dict]]:
+def _cache_snapshot() -> tuple[float, list[dict], bool, bool]:
     with _CACHE_LOCK:
-        return _PUBLIC_CACHE["t"], [dict(p) for p in _PUBLIC_CACHE["photos"]]
+        return (
+            _PUBLIC_CACHE["t"],
+            [dict(p) for p in _PUBLIC_CACHE["photos"]],
+            bool(_PUBLIC_CACHE.get("ok", True)),
+            bool(_PUBLIC_CACHE.get("filled")),
+        )
 
 
-def _store_cache(photos_out: list[dict]) -> None:
+def _store_cache(photos_out: list[dict], ok: bool = True) -> None:
     with _CACHE_LOCK:
-        _PUBLIC_CACHE["t"] = time.time()
+        # A failed fill is immediately stale so the next request retries in the background.
+        now = time.time()
+        _PUBLIC_CACHE["t"] = now if ok else now - _CACHE_FRESH_S - 1
         _PUBLIC_CACHE["photos"] = [dict(p) for p in photos_out]
+        _PUBLIC_CACHE["ok"] = bool(ok)
+        _PUBLIC_CACHE["filled"] = True
         snapshot = [dict(p) for p in photos_out]
     # Drop any cached derivative that is no longer the featured approved photo.
     _evict_stale_media(snapshot)
 
 
-def _fetch_public_approved_sync() -> list[dict]:
+def _allow_self_fetch() -> bool:
+    """Lab-only fallback. Never self-fetch when a backend is configured, or on Render."""
+    if photos.on_render() or photos.backend():
+        return False
+    return True
+
+
+def _self_fetch_approved() -> list[dict] | None:
     try:
         req = Request(
             PROD_PHOTOS_URL,
@@ -79,14 +96,42 @@ def _fetch_public_approved_sync() -> list[dict]:
         )
         with urlopen(req, timeout=_FETCH_TIMEOUT_S) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-        photos_out = [dict(p) for p in (data.get("photos") or [])]
-        _store_cache(photos_out)
-        _warm_featured_media(photos_out)
-        return [dict(p) for p in photos_out]
+        return [dict(p) for p in (data.get("photos") or [])]
     except Exception as exc:  # noqa: BLE001 — page must still render
         sys.stderr.write("catch-wall public photos: %s\n" % exc)
-        _, stale = _cache_snapshot()
-        return stale
+        return None
+
+
+def _refresh_sync() -> None:
+    """Fill the SWR cache from the configured backend, or the lab-only self-fetch."""
+    if photos.backend():
+        # Bypass photos.py's 60s cache so our SWR refresh always does a live read.
+        photos._pub_cache.pop((None, False), None)
+        data = photos.public_photos("all")
+        if data.get("ok") is False:
+            _, stale, _, filled = _cache_snapshot()
+            if filled and stale:
+                # Keep the last good list; do not replace it with an empty error.
+                return
+            _store_cache([], ok=False)
+            return
+        photos_out = [dict(p) for p in (data.get("photos") or [])]
+        _store_cache(photos_out, ok=True)
+        return
+    if _allow_self_fetch():
+        photos_out = _self_fetch_approved()
+        if photos_out is None:
+            _, stale, _, filled = _cache_snapshot()
+            if filled:
+                return
+            _store_cache([], ok=False)
+            return
+        _store_cache(photos_out, ok=True)
+        return
+    _, stale, _, filled = _cache_snapshot()
+    if filled:
+        return
+    _store_cache([], ok=False)
 
 
 def _kick_refresh() -> None:
@@ -96,20 +141,43 @@ def _kick_refresh() -> None:
         if _REFRESHING:
             return
         _REFRESHING = True
+        _REFRESH_DONE.clear()
 
     def run() -> None:
         global _REFRESHING
         try:
-            _fetch_public_approved_sync()
+            _refresh_sync()
         finally:
             with _CACHE_LOCK:
                 _REFRESHING = False
+            _REFRESH_DONE.set()
+        _, photos_out, ok, filled = _cache_snapshot()
+        if filled and ok and photos_out:
+            _warm_featured_media(photos_out)
 
     threading.Thread(target=run, daemon=True, name="cw-photo-cache").start()
 
 
+def _refresh_bounded(timeout: float) -> tuple[list[dict], bool, bool]:
+    """Wait up to timeout for a cold fill. Never block a request longer than that."""
+    _kick_refresh()
+    _REFRESH_DONE.wait(timeout)
+    _, photos, ok, filled = _cache_snapshot()
+    if filled:
+        return photos, ok, (not ok and not photos)
+    return [], False, True
+
+
 def warm_cache() -> None:
     """Start a background fill so the first public request is not a blocking GET."""
+    _kick_refresh()
+
+
+def invalidate() -> None:
+    """Mark the list stale and refresh in the background. Called from photos._bust_cache."""
+    with _CACHE_LOCK:
+        if _PUBLIC_CACHE.get("filled") and _PUBLIC_CACHE["t"]:
+            _PUBLIC_CACHE["t"] = min(_PUBLIC_CACHE["t"], time.time() - _CACHE_FRESH_S - 1)
     _kick_refresh()
 
 
@@ -142,7 +210,7 @@ def _evict_stale_media(photos: list[dict]) -> None:
 def media_bytes(photo_id: str, variant: str) -> bytes | None:
     """Return cached bytes only for the current featured, approved photo."""
     pid = (photo_id or "").lower()
-    _, photos = _cache_snapshot()
+    _, photos, _, _ = _cache_snapshot()
     if pid not in _approved_ids(photos) or pid != _featured_id(photos):
         return None
     with _MEDIA_LOCK:
@@ -168,7 +236,7 @@ def _fetch_media(photo_id: str, variant: str, url: str) -> None:
         if len(body) < 100 or not body.startswith(b"RIFF"):
             return
         pid = (photo_id or "").lower()
-        _, photos = _cache_snapshot()
+        _, photos, _, _ = _cache_snapshot()
         if pid not in _approved_ids(photos) or pid != _featured_id(photos):
             return
         with _MEDIA_LOCK:
@@ -210,29 +278,32 @@ def localize_featured(photo: dict | None) -> dict | None:
     return p
 
 
-def _fetch_public_approved() -> list[dict]:
-    """Unauthenticated GET of the public gallery when this process has no storage backend."""
-    stamped, photos = _cache_snapshot()
+def _gallery_state() -> dict:
+    """Read through the SWR cache. After warmup, never waits on the backend."""
+    stamped, photos, ok, filled = _cache_snapshot()
     age = time.time() - stamped if stamped else 1e9
-    if stamped and age < _CACHE_FRESH_S:
-        return photos
-    if stamped and age < _CACHE_TTL_S:
+    if filled and age < _CACHE_FRESH_S:
+        return {"photos": photos, "ok": ok, "unavailable": (not ok and not photos)}
+    if filled:
         _kick_refresh()
-        return photos
-    if stamped:
-        # Past TTL: still serve stale immediately; refresh in the background.
-        _kick_refresh()
-        return photos
-    return _fetch_public_approved_sync()
+        return {"photos": photos, "ok": ok, "unavailable": (not ok and not photos)}
+    photos, ok, unavailable = _refresh_bounded(_FETCH_TIMEOUT_S)
+    return {"photos": photos, "ok": ok, "unavailable": unavailable}
+
+
+def _fetch_public_approved() -> list[dict]:
+    """Back-compat wrapper used by tests: photos from the SWR cache."""
+    return _gallery_state()["photos"]
 
 
 def load_approved(live: list[dict] | None = None) -> list[dict]:
+    return load_state(live)["photos"]
+
+
+def load_state(live: list[dict] | None = None) -> dict:
     if live is not None:
-        return [dict(p) for p in live]
-    data = photos.public_photos("all")
-    if data.get("configured"):
-        return [dict(p) for p in (data.get("photos") or [])]
-    return _fetch_public_approved()
+        return {"photos": [dict(p) for p in live], "ok": True, "unavailable": False}
+    return _gallery_state()
 
 
 def _matches(p: dict, view: str, water: str) -> bool:
@@ -275,9 +346,10 @@ def tile_kind(p: dict) -> str:
 
 
 def assemble(view: str, water: str, live: list[dict] | None = None) -> dict:
+    state = load_state(live)
     seen: set[str] = set()
     unique = []
-    for p in load_approved(live):
+    for p in state["photos"]:
         pid = str(p.get("id") or "")
         if not pid or pid in seen:
             continue
@@ -286,13 +358,15 @@ def assemble(view: str, water: str, live: list[dict] | None = None) -> dict:
     filtered = [p for p in unique if _matches(p, view, water)]
     featured, rest = pick_featured(filtered)
     featured = localize_featured(featured)
+    unavailable = bool(state.get("unavailable")) and featured is None and not rest
     return {
         "view": view,
         "water": water,
         "featured": featured,
         "rest": rest,
         "photos": ([featured] if featured else []) + rest,
-        "invite": featured is None or not rest,
+        "unavailable": unavailable,
+        "invite": (not unavailable) and (featured is None or not rest),
     }
 
 
@@ -432,6 +506,15 @@ def featured_preload_html(model: dict) -> str:
     )
 
 
+def unavailable_html() -> str:
+    return (
+        '<aside class="cw-invite" role="status">'
+        "<h3>Photos are unavailable right now</h3>"
+        "<p>The Catch Wall will be back shortly. Please try again in a moment.</p>"
+        "</aside>"
+    )
+
+
 def invite_html(view: str) -> str:
     if view == "life":
         body = (
@@ -463,7 +546,9 @@ def gallery_html(model: dict) -> str:
         stage_cls += " is-single"
     if featured:
         parts.append(_photo_figure(featured, 0, True))
-    if model.get("invite"):
+    if model.get("unavailable"):
+        parts.append(unavailable_html())
+    elif model.get("invite"):
         parts.append(invite_html(model["view"]))
     grid = []
     for i, p in enumerate(rest, start=1 if featured else 0):

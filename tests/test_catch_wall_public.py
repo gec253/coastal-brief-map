@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import time
 import threading
 import unittest
 from unittest.mock import patch
@@ -110,11 +111,13 @@ class Assemble(unittest.TestCase):
         self.assertIn("min-width: 860px", html)
 
     def test_configured_empty_does_not_fall_back_to_production(self):
-        with patch.object(photos, "public_photos", return_value={"configured": True, "photos": []}):
-            with patch.object(cw, "_fetch_public_approved") as fetch:
-                rows = cw.load_approved()
-                self.assertEqual(rows, [])
-                fetch.assert_not_called()
+        _reset_cw_cache()
+        with patch.object(photos, "backend", return_value=object()):
+            with patch.object(photos, "public_photos", return_value={"ok": True, "configured": True, "photos": []}):
+                with patch.object(cw, "_self_fetch_approved") as fetch:
+                    rows = cw.load_approved()
+                    self.assertEqual(rows, [])
+                    fetch.assert_not_called()
 
     def test_no_samples_or_open_frames_in_html(self):
         model = cw.assemble("catch", "all", live=PHOTOS)
@@ -166,12 +169,23 @@ class Assemble(unittest.TestCase):
                 cw._MEDIA_CACHE.pop((pid, "800"), None)
                 cw._MEDIA_CACHE.pop((pid, "400"), None)
 
+def _reset_cw_cache():
+    if cw._REFRESHING:
+        cw._REFRESH_DONE.wait(6.0)
+    with cw._CACHE_LOCK:
+        cw._PUBLIC_CACHE.update({"t": 0.0, "photos": [], "ok": True, "filled": False})
+    with cw._MEDIA_LOCK:
+        cw._MEDIA_CACHE.clear()
+    photos._pub_cache.clear()
+
+
 class PhotoCache(unittest.TestCase):
-    def tearDown(self):
-        cw._store_cache([])
-        cw._PUBLIC_CACHE["t"] = 0.0
-        with cw._MEDIA_LOCK:
-            cw._MEDIA_CACHE.clear()
+    def setUp(self):
+        _reset_cw_cache()
+        self._backend = patch.object(photos, "backend", return_value=None)
+        self._backend.start()
+        self.addCleanup(self._backend.stop)
+        self.addCleanup(_reset_cw_cache)
 
     def test_photo_cache_serves_stale_without_blocking(self):
         calls = []
@@ -223,7 +237,11 @@ class PublicPages(unittest.TestCase):
         cls.server = server
         cls._orig_get_ads = server.get_ads
         server.get_ads = lambda force=False: {"adsOn": False, "mode": "paused"}
-        cls._live = patch.object(cw, "load_approved", side_effect=lambda live=None: list(PHOTOS) if live is None else [dict(p) for p in live])
+        def _state(live=None):
+            rows = list(PHOTOS) if live is None else [dict(p) for p in live]
+            return {"photos": rows, "ok": True, "unavailable": False}
+
+        cls._live = patch.object(cw, "load_state", side_effect=_state)
         cls._live.start()
         cls.httpd = ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
         cls.port = cls.httpd.server_address[1]
@@ -332,7 +350,7 @@ class PublicPages(unittest.TestCase):
         self.assertEqual(status, 404)
 
     def test_empty_catch_wall_shows_invitation(self):
-        with patch.object(cw, "load_approved", return_value=[]):
+        with patch.object(cw, "load_state", return_value={"photos": [], "ok": True, "unavailable": False}):
             status, body, _ = self._get("/catch-wall")
         self.assertEqual(status, 200)
         self.assertIn("A place for real photographs", body)
@@ -381,3 +399,184 @@ class PublicPages(unittest.TestCase):
             cw._store_cache([])
             cw._PUBLIC_CACHE["t"] = 0.0
 
+
+class _ConfigurableBackend:
+    name = "supabase"
+
+    def __init__(self, rows, delay=0.0, fail=False):
+        self.rows = list(rows)
+        self.delay = delay
+        self.fail = fail
+        self.calls = 0
+
+    def select(self, status=None, category=None, featured=None, limit=200, row_id=None):
+        self.calls += 1
+        if self.delay:
+            time.sleep(self.delay)
+        if self.fail:
+            raise photos.StorageError("down")
+        rows = [
+            r for r in self.rows
+            if (not status or r.get("status") == status)
+            and (not category or r.get("category") == category)
+            and (featured is None or bool(r.get("featured")) == featured)
+            and (not row_id or r.get("id") == row_id)
+        ]
+        return rows[:limit]
+
+    def public_url(self, key):
+        return "https://example.supabase.co/storage/v1/object/public/photos-approved/" + key
+
+
+def _db_row(photo, **extra):
+    water = photo.get("water") or "saltwater"
+    row = {
+        "id": photo["id"],
+        "status": "approved",
+        "category": photo.get("category") or "fishing",
+        "water_type": water,
+        "width": photo.get("w") or 1600,
+        "height": photo.get("h") or 1200,
+        "display_name": photo.get("name") or "",
+        "anonymous": False,
+        "species": photo.get("species") or "",
+        "location": photo.get("location") or "",
+        "region_id": "",
+        "taken_on": "",
+        "caption": "",
+        "featured": photo["id"] == RED_DRUM_ID,
+    }
+    row.update(extra)
+    return row
+
+
+class ConfiguredPath(unittest.TestCase):
+    """SWR on the configured public_photos path: bounded cold miss, stale warm, takedown."""
+
+    @classmethod
+    def setUpClass(cls):
+        for k in ("MORNING_BRIEF_ENABLED", "FRESHWATER_ENABLED", "PREVIEW_KEY"):
+            os.environ.pop(k, None)
+        import server
+        cls.server = server
+        cls._orig_get_ads = server.get_ads
+        server.get_ads = lambda force=False: {"adsOn": False, "mode": "paused"}
+        cls.httpd = ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
+        cls.port = cls.httpd.server_address[1]
+        threading.Thread(target=cls.httpd.serve_forever, daemon=True).start()
+        cls.base = "http://127.0.0.1:%d" % cls.port
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.httpd.shutdown()
+        cls.httpd.server_close()
+        cls.server.get_ads = cls._orig_get_ads
+        _reset_cw_cache()
+
+    def setUp(self):
+        _reset_cw_cache()
+        self.backend = _ConfigurableBackend([_db_row(p) for p in PHOTOS])
+        self._backend_patch = patch.object(photos, "backend", side_effect=lambda: self.backend)
+        self._backend_patch.start()
+        self._self_fetch = patch.object(cw, "_self_fetch_approved")
+        self._self_fetch_mock = self._self_fetch.start()
+        self._warm = patch.object(cw, "_warm_featured_media")
+        self._warm.start()
+        self.addCleanup(self._backend_patch.stop)
+        self.addCleanup(self._self_fetch.stop)
+        self.addCleanup(self._warm.stop)
+        self.addCleanup(_reset_cw_cache)
+
+    def _get(self, path):
+        import urllib.request
+        import urllib.error
+        req = urllib.request.Request(self.base + path)
+        try:
+            with urllib.request.urlopen(req, timeout=15) as r:
+                hdrs = {k.lower(): v for k, v in r.headers.items()}
+                return r.status, r.read().decode("utf-8", "replace"), hdrs
+        except urllib.error.HTTPError as e:
+            hdrs = {k.lower(): v for k, v in e.headers.items()}
+            return e.code, e.read().decode("utf-8", "replace"), hdrs
+
+    def test_slow_select_does_not_block_html(self):
+        self.backend.delay = 5.0
+        t0 = time.monotonic()
+        status, body, _ = self._get("/catch-wall")
+        elapsed = time.monotonic() - t0
+        self.assertEqual(status, 200)
+        self.assertLess(elapsed, 1.2)
+        self.assertIn("Photos are unavailable right now", body)
+        self.assertNotIn("just getting started", body)
+        self._self_fetch_mock.assert_not_called()
+
+        # After warmup the same slow backend is served from the SWR cache.
+        self.assertTrue(cw._REFRESH_DONE.wait(6.0))
+        self.backend.delay = 5.0
+        t0 = time.monotonic()
+        status, body, _ = self._get("/catch-wall")
+        elapsed = time.monotonic() - t0
+        self.assertEqual(status, 200)
+        self.assertLess(elapsed, 0.3)
+        self.assertIn("Red Drum", body)
+        self.assertNotIn("Photos are unavailable right now", body)
+        self.assertNotIn("just getting started", body)
+
+    def test_storage_error_shows_unavailable_and_keeps_stale(self):
+        self.backend.fail = True
+        t0 = time.monotonic()
+        status, body, _ = self._get("/catch-wall")
+        elapsed = time.monotonic() - t0
+        self.assertEqual(status, 200)
+        self.assertLess(elapsed, 1.2)
+        self.assertIn("Photos are unavailable right now", body)
+        self.assertNotIn("just getting started", body)
+
+        # A later success fills the cache; a subsequent StorageError keeps that list.
+        self.backend.fail = False
+        cw.invalidate()
+        self.assertTrue(cw._REFRESH_DONE.wait(2.0))
+        status, body, _ = self._get("/catch-wall")
+        self.assertIn("Red Drum", body)
+        self.assertNotIn("Photos are unavailable right now", body)
+
+        photos._pub_cache.clear()
+        self.backend.fail = True
+        cw.invalidate()
+        self.assertTrue(cw._REFRESH_DONE.wait(2.0))
+        t0 = time.monotonic()
+        status, body, _ = self._get("/catch-wall")
+        elapsed = time.monotonic() - t0
+        self.assertEqual(status, 200)
+        self.assertLess(elapsed, 0.3)
+        self.assertIn("Red Drum", body)
+        self.assertNotIn("Photos are unavailable right now", body)
+        self.assertNotIn("just getting started", body)
+
+    def test_bust_cache_evicts_removed_featured_media(self):
+        cw.warm_cache()
+        self.assertTrue(cw._REFRESH_DONE.wait(2.0))
+        pid = RED_DRUM_ID
+        with cw._MEDIA_LOCK:
+            cw._MEDIA_CACHE[(pid, "800")] = b"RIFF" + b"x" * 200
+        status, _, _ = self._get("/catch-wall-media/%s/800.webp" % pid)
+        self.assertEqual(status, 200)
+
+        # Takedown: approved list no longer includes the Red Drum.
+        self.backend.rows = [_db_row(p) for p in PHOTOS if p["id"] != pid]
+        photos._bust_cache()
+        self.assertTrue(cw._REFRESH_DONE.wait(2.0))
+        status, _, _ = self._get("/catch-wall-media/%s/800.webp" % pid)
+        self.assertEqual(status, 404)
+        self.assertIsNone(cw.media_bytes(pid, "800"))
+        self._self_fetch_mock.assert_not_called()
+
+    def test_self_fetch_is_off_on_render(self):
+        _reset_cw_cache()
+        with patch.object(photos, "backend", return_value=None):
+            with patch.object(photos, "on_render", return_value=True):
+                with patch.object(cw, "_self_fetch_approved") as fetch:
+                    state = cw.load_state()
+        self.assertTrue(state["unavailable"])
+        self.assertEqual(state["photos"], [])
+        fetch.assert_not_called()

@@ -663,6 +663,11 @@ def public_photos(view: str, featured_only: bool = False):
 
 def _bust_cache():
     _pub_cache.clear()
+    try:
+        import catch_wall_public
+        catch_wall_public.invalidate()
+    except Exception:
+        pass
 
 
 # ---------------------------------------------------------------- admin auth
