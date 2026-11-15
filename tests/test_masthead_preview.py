@@ -136,11 +136,21 @@ class MastheadPreview(unittest.TestCase):
         self.assertNotIn(b"/preview/masthead.css", body)
         self.assertNotIn(b'id="mast-preview-dock"', body)
 
-    def test_other_public_pages_have_no_concept_markup(self):
+    def test_other_public_pages_have_no_preview_markup(self):
+        # Catch Wall now uses public Folio chrome (data-concept, data-home).
+        # Comparison previews and private docks must still stay off these pages.
+        preview_only = (
+            b"data-preview",
+            b"mast-preview-dock",
+            b"/preview/masthead.css",
+            b"/preview/home.css",
+            b"home-photo",
+            b"featured-photos",
+        )
         for path in ("/catch-wall", "/coastal-life", "/photos"):
             status, body, _ = self._req(path)
             self.assertEqual(status, 200, path)
-            for marker in CONCEPT_MARKERS:
+            for marker in preview_only:
                 self.assertNotIn(marker, body, "%s %s" % (path, marker))
 
     def test_preview_404_without_key_or_cookie(self):

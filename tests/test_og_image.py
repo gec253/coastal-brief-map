@@ -106,16 +106,14 @@ class OgMastheadMeta(unittest.TestCase):
             "/coastal-life": ("Coastal Life \u2014 The Coastal Brief", "https://thecoastalbrief.com/coastal-life"),
             "/photos": ("Photos \u2014 Catch Wall &amp; Coastal Life \u2014 The Coastal Brief", "https://thecoastalbrief.com/photos"),
         }
-        bodies = {}
         for path, (title, url) in want.items():
             status, body = self._get(path)
             self.assertEqual(status, 200, path)
             self.assertIn('property="og:title" content="%s"' % title, body, path)
             self.assertIn('name="twitter:title" content="%s"' % title, body, path)
             self.assertIn('property="og:url" content="%s"' % url, body, path)
-            # Only the head tags differ; the page body is the same file.
-            bodies[path] = body.split("</head>", 1)[1]
-        self.assertEqual(len(set(bodies.values())), 1)
+            self.assertIn('id="share-dlg"', body, path)
+            self.assertIn("stay the property of the people who took them", body, path)
 
     def test_og_render_sources_are_not_served(self):
         for path in ("/branding/og-masthead.html", "/branding/render-og-masthead.js"):
