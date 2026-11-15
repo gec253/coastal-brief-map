@@ -11,16 +11,16 @@
     3906
   ],
   "levels_black": {
-    "R": 14,
-    "G": 14,
-    "B": 6
+    "R": 12,
+    "G": 12,
+    "B": 5
   },
   "levels_white": {
     "R": 248,
     "G": 252,
     "B": 248
   },
-  "gamma": 1.04,
+  "gamma": 1.07,
   "saturation": 0.92,
   "resample": "LANCZOS",
   "outputs": {

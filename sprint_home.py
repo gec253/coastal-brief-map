@@ -266,10 +266,13 @@ def _tide_tile(tides: dict) -> dict:
     hm, ampm = clock.split(" ") if " " in clock else (clock, "")
     nxt = evs[1] if len(evs) > 1 else None
     sub = "%s ft %s" % (_fmt(ev.get("v"), 1), tides.get("datum") or "") if _num(ev.get("v")) else ""
+    then = ""
     if nxt:
-        sub += (" · then %s %s" % ("high" if nxt.get("type") == "H" else "low", homepage_boot._clock(nxt["t"])))
+        then = "Then %s %s ET%s" % ("high" if nxt.get("type") == "H" else "low", homepage_boot._clock(nxt["t"]),
+                                    (" · %s ft" % _fmt(nxt.get("v"), 1)) if _num(nxt.get("v")) else "")
     t = _tile(id="tide", name="Next high" if ev.get("type") == "H" else "Next low", kind="Predicted",
               num=hm, unit=ampm + " ET", sub=sub.strip(), src=src, when="")
+    t["then"] = then
     obs = tides.get("observed")
     if isinstance(obs, dict) and obs.get("status") in ("ok", "stale"):
         lt = obs.get("latest") or {}
@@ -279,6 +282,9 @@ def _tide_tile(tides: dict) -> dict:
                 line += ", %+.1f vs predicted" % lt["diff"]
             t["obs"] = line
             t["when"] = "· observed level preliminary, " + et_time(obs.get("time"))
+            ot = homepage_boot._to_dt(obs.get("time"))
+            if ot:
+                t["obs_pt"] = (ot.timestamp() * 1000, float(lt["v"]))
     t["curve"] = tides.get("curve") or []
     t["events"] = tides.get("events") or []
     return t
@@ -436,11 +442,11 @@ def model(region_id: str | None = None) -> dict:
             import freshwater
             status, payload = freshwater.assemble(rid)
             if status == 200 and (payload or {}).get("ok"):
-                return fresh_model(payload)
+                return dict(fresh_model(payload), test=bool(payload.get("testData")))
         else:
             status, payload = conditions.assemble(rid)
             if status == 200 and (payload or {}).get("ok"):
-                return salt_model(payload)
+                return dict(salt_model(payload), test=bool(payload.get("testData")))
     except Exception:
         pass
     return {"ok": False, "water": "salt", "region": {"id": rid or "", "name": ""}, "tiles": [], "more": [],
@@ -580,28 +586,72 @@ def _dial(deg) -> str:
     ) % (x, y)
 
 
+def hilo_curve(events: list, t0: float, t1: float, step_ms: float = 360e3) -> list:
+    """Cosine interpolation between consecutive official NOAA highs and lows. Passes exactly through each
+    extreme; nothing is drawn outside the span the extremes cover (no extrapolation)."""
+    ev = sorted(([float(e["t"]), float(e["v"])] for e in events or [] if _num(e.get("t")) and _num(e.get("v"))), key=lambda x: x[0])
+    out = []
+    for (ta, va), (tb, vb) in zip(ev, ev[1:]):
+        if tb <= t0 or ta >= t1 or tb <= ta:
+            continue
+        x = max(ta, t0)
+        while x < min(tb, t1):
+            f = (x - ta) / (tb - ta)
+            out.append([x, va + (vb - va) * (1 - math.cos(math.pi * f)) / 2])
+            x += step_ms
+    for tx, vx in ev:  # make sure each real extreme in the window is an exact vertex
+        if t0 <= tx <= t1:
+            out.append([tx, vx])
+    out.sort(key=lambda p: p[0])
+    return out
+
+
 def _tide_spark(t: dict) -> str:
-    curve = [c for c in (t.get("curve") or []) if isinstance(c, (list, tuple)) and len(c) == 2 and _num(c[1])]
-    if len(curve) < 10:
-        return ""
     now = _now_ms()
     t0, t1 = now - 3 * 3600e3, now + 12 * 3600e3
+    curve = [c for c in (t.get("curve") or []) if isinstance(c, (list, tuple)) and len(c) == 2 and _num(c[1])]
     pts = [c for c in curve if t0 <= c[0] <= t1]
+    method = "6-minute NOAA predictions"
     if len(pts) < 10:
-        return ""
-    lo = min(p[1] for p in pts)
-    hi = max(p[1] for p in pts)
+        pts = hilo_curve(t.get("events") or [], t0, t1)
+        method = "interpolated between NOAA predicted highs and lows"
+        if len(pts) < 10 or not (pts[0][0] <= now <= pts[-1][0]):
+            return ""
+    evs = [e for e in (t.get("events") or []) if _num(e.get("t")) and _num(e.get("v")) and t0 <= e["t"] <= t1]
+    ob = t.get("obs_pt") if t.get("obs_pt") and t0 <= t["obs_pt"][0] <= t1 else None
+    vals = [p[1] for p in pts] + [e["v"] for e in evs] + ([ob[1]] if ob else [])
+    lo, hi = min(vals), max(vals)
     span = (hi - lo) or 1
-    W, H = 160.0, 34.0
-    path = " ".join(
-        ("M" if i == 0 else "L") + "%.1f %.1f" % ((p[0] - t0) / (t1 - t0) * W, H - 3 - (p[1] - lo) / span * (H - 6))
-        for i, p in enumerate(pts)
-    )
-    nx = (now - t0) / (t1 - t0) * W
+    W, H = 200.0, 56.0
+    X = lambda x: (x - t0) / (t1 - t0) * W
+    Y = lambda v: H - 8 - (v - lo) / span * (H - 18)
+    path = " ".join(("M" if i == 0 else "L") + "%.1f %.1f" % (X(p[0]), Y(p[1])) for i, p in enumerate(pts))
+    # predicted level at now, for the now dot (linear between the two bracketing points)
+    yn = None
+    for a, b in zip(pts, pts[1:]):
+        if a[0] <= now <= b[0]:
+            yn = a[1] + (b[1] - a[1]) * ((now - a[0]) / ((b[0] - a[0]) or 1))
+            break
+    marks = []
+    for e in evs:
+        if e["t"] > now:
+            marks.append('<circle cx="%.1f" cy="%.1f" r="2.6" class="s-ev"/>' % (X(e["t"]), Y(e["v"])))
+            marks.append('<text x="%.1f" y="%.1f" class="s-lab" text-anchor="middle">%s</text>' % (
+                min(max(X(e["t"]), 8), W - 8), Y(e["v"]) - 5 if e.get("type") == "H" else Y(e["v"]) + 11, "H" if e.get("type") == "H" else "L"))
+    nowm = '<path d="M%.1f 2V%.1f" class="s-now"/>' % (X(now), H - 2)
+    if yn is not None:
+        nowm += '<circle cx="%.1f" cy="%.1f" r="3" class="s-nowdot"/>' % (X(now), Y(yn))
+    obs = ('<circle cx="%.1f" cy="%.1f" r="3.4" class="s-obs"/>' % (X(ob[0]), Y(ob[1]))) if ob else ""
+    label = "Tide curve, %s, from 3 hours ago to 12 hours ahead%s." % (method, "; dot marks the latest observed level" if ob else "")
+    legend = '<span class="s-k s-k-pred">Predicted%s</span>' % ("" if method.startswith("6-minute") else " · interpolated from NOAA highs and lows")
+    if ob:
+        legend += '<span class="s-k s-k-obs">Observed</span>'
+    legend += '<span class="s-k s-k-now">Now</span>'
     return (
-        '<svg class="t-spark" viewBox="0 0 160 34" preserveAspectRatio="none" aria-hidden="true" focusable="false">'
-        '<path d="%s" class="s-line"/><path d="M%.1f 0V34" class="s-now"/></svg>'
-    ) % (path, nx)
+        '<figure class="t-tide"><svg class="t-spark" viewBox="0 0 200 56" role="img" aria-label="%s" focusable="false">'
+        '<path d="M0 %.1fH200" class="s-base"/><path d="%s" class="s-line"/>%s%s%s</svg>'
+        '<figcaption class="s-legend">%s</figcaption></figure>'
+    ) % (_esc(label, True), H - 1, path, "".join(marks), nowm, obs, legend)
 
 
 OFFSHORE_ICON = (
@@ -649,6 +699,8 @@ def tile_html(t: dict, big: bool = False) -> str:
             out.append('<p class="t-sub t-obs">%s</p>' % _esc(t["obs"]))
         if t.get("fc"):
             out.append('<p class="t-sub t-fcline"><span class="t-chip k-fc">Forecast</span> %s</p>' % _esc(t["fc"].replace("Forecast ", "")))
+        if t.get("then"):
+            out.append('<p class="t-sub t-then">%s</p>' % _esc(t["then"]))
         if t["id"] == "tide":
             out.append(_tide_spark(t))
     if st == "off" and t.get("note"):
@@ -668,9 +720,7 @@ FLAG_EVENTS = {
     "Small Craft Advisory": "pennant",
     "Gale Warning": "pennant2",
     "Storm Warning": "square",
-    "Tropical Storm Warning": "square",        # traditional display; see NOTES.md (not shown on the NWS CWD chart)
     "Hurricane Warning": "square2",
-    "Hurricane Force Wind Warning": "square2",  # traditional display; see NOTES.md (not shown on the NWS CWD chart)
 }
 FLAG_LABELS = {
     "pennant": "one red pennant",
@@ -717,15 +767,36 @@ def flag_svg(kind: str | None) -> str:
     ) % (FLAG_LABELS[kind], mast, body)
 
 
+def severity(event: str) -> str:
+    """Banner tone from the NWS product type in the event name. Colour only where it means something."""
+    e = event or ""
+    if e.endswith("Warning"):
+        return "warn"
+    if e.endswith("Advisory"):
+        return "adv"
+    if e.endswith("Watch"):
+        return "watch"
+    return "stmt"
+
+
+SEV_LABEL = {"warn": "Warning", "adv": "Advisory", "watch": "Watch", "stmt": "Statement"}
+
+
 def alerts_html(a: dict, pennants: bool = False, raw: dict | None = None) -> str:
     st = a["state"]
     rows = []
+    sevs = []
     for it in a["items"]:
-        rows.append('<p class="al-row"><b>%s</b>%s</p>' % (
-            _esc(it["event"]), (' <span>%s</span>' % _esc(it["meta"])) if it["meta"] else ""))
+        sv = severity(it["event"]) if st == "active" else ""
+        sevs.append(sv)
+        rows.append('<p class="al-row%s">%s<b>%s</b>%s</p>' % (
+            (" sev-" + sv) if sv else "",
+            ('<span class="al-sev">%s</span>' % SEV_LABEL[sv]) if sv else "",
+            _esc(it["event"]), (' <span class="al-meta">%s</span>' % _esc(it["meta"])) if it["meta"] else ""))
+    top = next((x for x in ("warn", "adv", "watch", "stmt") if x in sevs), "")
     flag = flag_svg(flag_for(raw)) if pennants else ""
-    return '<div class="al al-%s%s" role="status">%s<div class="al-rows">%s</div><a class="al-link" href="%s" rel="noopener">NWS details</a></div>' % (
-        st, " has-flag" if flag else "", flag, "".join(rows), homepage_boot.NWS_DETAILS)
+    return '<div class="al al-%s%s%s" role="status">%s<div class="al-rows">%s</div><a class="al-link" href="%s" rel="noopener">NWS details</a></div>' % (
+        st, (" al-" + top) if top else "", " has-flag" if flag else "", flag, "".join(rows), homepage_boot.NWS_DETAILS)
 
 
 def forecast_html(f: dict | None, water: str) -> str:
@@ -753,6 +824,31 @@ def _extras(m: dict, more: str, variant: str) -> tuple[str, str]:
     return (more, fc)
 
 
+TEST_BANNER = ('<p class="test-banner" role="note"><b>TEST DATA</b> Simulated readings, tide and alerts for design review. '
+               'Not live, not a forecast.</p>')
+
+
+def strip_item(t: dict) -> str:
+    """One cell of the secondary strip: label, reading, kind, station and time. Same fields as a tile, less chrome."""
+    st = t["state"]
+    if st == "off":
+        val = '<span class="sx-v num-off">—</span>'
+        sub = _esc(t["off"] or NOT_REPORTING)
+    else:
+        val = '<span class="sx-v">%s%s%s</span>' % (
+            ('<span class="sx-dir">%s</span> ' % _esc(t["dir"])) if t["dir"] else "",
+            _esc(t["num"]) if t["num"] else "—",
+            (' <span class="sx-u">%s</span>' % _esc(t["unit"])) if t["unit"] else "")
+        sub = " · ".join(_esc(x) for x in (t.get("note"), t["sub"]) if x)
+    chip = ('<span class="t-chip c-stale" title="Older than this station\'s normal reporting gap">Stale · %s</span>' % _esc(t["when"])
+            if st == "stale" else '<span class="sx-kind">%s</span>' % _esc(t["kind"]))
+    fc = ('<span class="sx-fc"><span class="t-chip k-fc">Forecast</span> %s</span>' % _esc(t["fc"].replace("Forecast ", ""))) if t.get("fc") else ""
+    src = " ".join(x for x in (_esc(t["src"]) if t["src"] else "", _esc(t["when"]) if t["when"] and st != "stale" else "") if x)
+    return ('<div class="sx sx-%s%s" role="group" aria-label="%s"><p class="sx-h"><span class="sx-k">%s</span>%s</p>%s'
+            '<p class="sx-sub">%s</p>%s<p class="sx-src">%s</p></div>') % (
+        _esc(t["id"], True), " is-off" if st == "off" else "", _esc(t["name"], True), _esc(t["name"]), chip, val, sub, fc, src)
+
+
 def conditions_html(m: dict, *, variant: str) -> str:
     reg = m.get("region") or {}
     rid = reg.get("id") or ""
@@ -763,7 +859,12 @@ def conditions_html(m: dict, *, variant: str) -> str:
     else:
         body = alerts_html(m["alerts"], pennants=variant in ("heritage", "hybrid"), raw=m.get("alerts_raw"))
         tiles = '<div class="cg-grid">%s</div>' % "".join(tile_html(t) for t in m["tiles"])
-        more = ('<div class="cg-more" role="group" aria-label="Also observed"><p class="cg-more-k">Also observed</p>%s</div>' % "".join(tile_html(t) for t in m["more"])) if m["more"] else ""
+        if variant == "hybrid":
+            more = ('<div class="cg-strip" role="group" aria-label="Also observed"><p class="cg-more-k">Also observed</p>%s</div>' % "".join(strip_item(t) for t in m["more"])) if m["more"] else ""
+        else:
+            more = ('<div class="cg-more" role="group" aria-label="Also observed"><p class="cg-more-k">Also observed</p>%s</div>' % "".join(tile_html(t) for t in m["more"])) if m["more"] else ""
+    if m.get("test"):
+        body = TEST_BANNER + body
     links = []
     for r_id, name, cur in region_links(rid):
         links.append('<a href="?region=%s"%s>%s</a>' % (_esc(r_id, True), ' aria-current="true"' if cur else "", _esc(name)))
@@ -797,13 +898,20 @@ def _today() -> str:
 def masthead_html(variant: str) -> str:
     return (
         '<header class="mh mh-%s"><p class="pv-flag">Private concept · %s</p>'
-        '<div class="mh-bar">'
-        '<nav class="mh-nav" aria-label="Sections"><a href="/brief">Morning Brief</a><a href="/lake">Lakes &amp; rivers</a><a href="/catch-wall">Catch Wall</a></nav></div>'
-        '<div class="mh-plate"><h1 class="mh-name"><a href="/">The Coastal Brief</a></h1>'
-        '<svg class="mh-rule" viewBox="0 0 1200 4" preserveAspectRatio="none" aria-hidden="true" focusable="false">'
-        '<line class="wave-settle" x1="0" y1="2" x2="1200" y2="2"/></svg>'
-        '<p class="mh-date"><time>%s</time><span class="mh-motto">From the rivers to the sounds to the sea</span></p></div>'
-        "</header>"
+        + ('<div class="mh-plate"><p class="mh-date"><time>%s</time><span class="mh-motto">From the rivers to the sounds to the sea</span></p>'
+           '<h1 class="mh-name"><a href="/">The Coastal Brief</a></h1>'
+           '<svg class="mh-rule" viewBox="0 0 1200 4" preserveAspectRatio="none" aria-hidden="true" focusable="false">'
+           '<line class="wave-settle" x1="0" y1="2" x2="1200" y2="2"/></svg>'
+           '<nav class="mh-sec" aria-label="Sections"><a href="/">Saltwater</a><a href="/lake">Freshwater</a>'
+           '<a href="/brief">Morning Brief</a><a href="/catch-wall">Catch Wall</a></nav></div>'
+           if variant == "hybrid" else
+           '<div class="mh-bar">'
+           '<nav class="mh-nav" aria-label="Sections"><a href="/brief">Morning Brief</a><a href="/lake">Lakes &amp; rivers</a><a href="/catch-wall">Catch Wall</a></nav></div>'
+           '<div class="mh-plate"><h1 class="mh-name"><a href="/">The Coastal Brief</a></h1>'
+           '<svg class="mh-rule" viewBox="0 0 1200 4" preserveAspectRatio="none" aria-hidden="true" focusable="false">'
+           '<line class="wave-settle" x1="0" y1="2" x2="1200" y2="2"/></svg>'
+           '<p class="mh-date"><time>%s</time><span class="mh-motto">From the rivers to the sounds to the sea</span></p></div>')
+        + "</header>"
     ) % (variant, _esc(TITLES[variant]), _esc(_today()))
 
 
@@ -1020,12 +1128,19 @@ MZ_CTA = ('<aside class="mz mz-cta"><p class="mz-cta-k">Catch Wall</p><p class="
           '<a class="mz-cta-a" href="/catch-wall">Share yours on the Catch Wall</a></aside>')
 
 
+BRAND_LINE = ('<div class="bl"><p class="bl-p"><span class="bl-k">The Coastal Brief —</span> '
+              '<span class="bl-t">Know the Water. Live the Coast.</span></p></div>')
+
+
 def page_hybrid(m: dict, P: dict) -> str:
     fresh = m.get("water") == "fresh"
     lake = fresh and _is_lake((m.get("region") or {}).get("id") or "")
     falls = P.get("falls")
-    if lake:      # lakes: Falls Lake pier leads; Weldon (a river frame) moves to the wide mosaic cell
-        hero, wide = (falls or P["fresh"] or P["bodie"]), P["fresh"]
+    rid = (m.get("region") or {}).get("id") or ""
+    if lake and rid == "falls-lake":   # Falls Lake leads only on its own page
+        hero, wide = falls, P["fresh"]
+    elif lake:    # other lakes: no lake hero (thin brass line); never a photo of a different lake as the lead
+        hero, wide = None, P["fresh"]
     elif fresh:   # rivers: Weldon (Roanoke River) leads; the Falls Lake frame takes the wide cell
         hero, wide = (P["fresh"] or falls or P["bodie"]), falls or P["bodie"]
     else:
@@ -1041,8 +1156,9 @@ def page_hybrid(m: dict, P: dict) -> str:
     seen, cells = set(), []
     for sh, x in placed:
         c = caption(x)
-        cells.append(_mosaic_cell(x, sh, MZ_SIZES[sh], cap="" if c in seen else c))
-        seen.add(c)
+        key = re.sub(r"\s+", "", c).casefold()   # "Rx Chicken& Oysters" == "Rx Chicken & Oysters"
+        cells.append(_mosaic_cell(x, sh, MZ_SIZES[sh], cap="" if key in seen else c))
+        seen.add(key)
     cells.append(MZ_CTA)
     grid_cls = "mz-grid" + ("" if full else " mz-loose mz-n%d" % len(placed))
     if hero:
@@ -1057,6 +1173,7 @@ def page_hybrid(m: dict, P: dict) -> str:
     return (
         conditions_html(m, variant="hybrid")
         + horizon
+        + BRAND_LINE
         + '<section class="mzs" aria-labelledby="mz-h"><p class="kicker"><span class="dm dm-sq" aria-hidden="true"></span>Catch Wall · Coastal Life</p>'
         + '<h2 id="mz-h" class="mzs-h">From the docks, sounds and rivers</h2>'
         + '<p class="mzs-dek">Approved community photographs, shown as they were submitted.</p>'

@@ -42,21 +42,21 @@ The `<img>` tags declare the original 1600×1200 ratio as width/height, so the l
 - **Changes made (this is an adaptation):**
   - **Crop:** x=2466, y=186, w=5208, h=3906 in original pixels (4:3), centred on the pier, the people, the still water and the woods. It removes the photographer's watermark at lower left and the rocky low-water foreground. Part of the riprap shoreline at the pier's right still shows at the bottom right.
   - **Colour:** gentle neutral correction back toward natural, done the same way across the whole frame:
-    - per-channel levels, black point R14 G14 B6 and white point R248 G252 B248
-    - gamma 1.04
+    - per-channel levels, black point R12 G12 B5 and white point R248 G252 B248
+    - gamma 1.07 (v7final: a very subtle extra lift to shadows and midtones, from R14 G14 B6 / gamma 1.04)
     - saturation 0.92, a luma-preserving blend toward Rec.709 grey
   - No added saturation, sharpening, vignette, filters or local edits. Resized with Lanczos.
   - The exact parameters are in `falls-lake-grade-params.json`, and the script that applied them is `falls_lake_grade.py`.
 - **License of the adaptation:** the cropped and colour-adjusted image is itself licensed **CC BY-SA 2.0** (share-alike). Anyone may reuse it under the same terms, with attribution to Sergiy Galyonkin and a note of the changes.
-- **Where it appears:** it is the hero photo on lake views (Falls Lake, Jordan Lake) and fills the wide mosaic cell on river views (Neuse River). It is not used on saltwater views.
+- **Where it appears:** it is the hero photo on the Falls Lake view only (Jordan Lake shows no lake hero) and fills the wide mosaic cell on river views (Neuse River). It is not used on saltwater views.
 - **Derivatives in `photos/`:**
 
 | file | size | sha256 |
 |---|---|---|
-| falls-lake-pier-800.avif | 800×600 | 2401daac45df086b2bfa69364716f9e54025c4e23308594d27b80f37238cd097 |
-| falls-lake-pier-800.webp | 800×600 | aef79e9e513d3f51d81c07bd88ad931217fc4e91bfa1c2b74f4d241d774737f4 |
-| falls-lake-pier-1280.avif | 1280×960 | 5bf75a502249f4f0e28eea7fadac3be09d2f5bee3f5474f93e8e82b99bfb1f4a |
-| falls-lake-pier-1280.webp | 1280×960 | 02a4b3ebfe86b99be857fa1601bd2b930523c8df97a4aaf52c4086fabaf338e0 |
+| falls-lake-pier-800.avif | 800×600 | 63d7d5f7784bcfa2c1bbd28a043b6745cf2f1c532ac26e80181ce2aa968dfdea |
+| falls-lake-pier-800.webp | 800×600 | 0b6bdd0ee2ba3425dfa7b6372214f85c20047e7a8aed369c24b20d4f656e44d7 |
+| falls-lake-pier-1280.avif | 1280×960 | a58b58dd560d0a068e91e69c16ce970b1a0bd97c6fe32c9761687de7e52128dc |
+| falls-lake-pier-1280.webp | 1280×960 | 92450b1bd5ff2e8eaef083bc7d2137aef83d026116b3b5c67079f0d0eff95500 |
 
 ## Community photos (served from the existing approved store, not copied here)
 

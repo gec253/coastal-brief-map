@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import math
 import re
 import sys
 import threading
@@ -41,7 +42,8 @@ def tides(curve=True, observed=True):
         "events": [{"t": t0 + 3600e3, "v": 3.4, "type": "H"}, {"t": t0 + 7 * 3600e3, "v": 0.6, "type": "L"}],
     }
     if curve:
-        out["curve"] = [[t0 + (i - 30) * 360e3, 1 + (i % 40) / 20.0] for i in range(200)]
+        out["curve"] = [[t0 + (i - 30) * 360e3, 2.0 + 1.4 * math.cos(2 * math.pi * ((i - 30) * 360e3 - 3600e3) / 44712e3)]
+                        for i in range(200)]
     if observed:
         out["observed"] = {"status": "ok", "time": iso(5), "latest": {"v": 2.9, "predicted": 2.3, "diff": 0.6}}
     return out
@@ -60,7 +62,7 @@ def salt(region_id, **kw):
     }
     R.update(kw.pop("readings", {}))
     p = {
-        "ok": True, "generatedAt": iso(1), "region": {"id": region_id, "name": region_id.title()},
+        "ok": True, "testData": True, "generatedAt": iso(1), "region": {"id": region_id, "name": region_id.title()},
         "readings": R, "tides": kw.pop("tides", tides()),
         "marine": {"status": "ok", "office": "NWS MHX", "zone": "AMZ158", "updated": iso(30),
                    "periods": [{"name": "Tonight", "text": "N winds 10 to 15 kt. Seas 2 to 3 ft."}]},
@@ -73,7 +75,7 @@ def salt(region_id, **kw):
 def fresh_jordan():
     t = "2026-11-15T13:45:00-05:00"
     return {
-        "ok": True, "generatedAt": iso(1), "region": {"id": "jordan-lake", "name": "Jordan Lake"},
+        "ok": True, "testData": True, "generatedAt": iso(1), "region": {"id": "jordan-lake", "name": "Jordan Lake"},
         "lake": {"usgs": "02098197", "datum": "NGVD29", "elevation": {"value": 212.12, "time": t, "stale": False},
                  "guideCurveFt": 216.0, "vsGuideFt": -3.88, "change24hFt": -0.05, "change7dFt": -0.3},
         "waterTemp": {"status": "unavailable", "f": None, "note": "No USGS water-temperature sensor at Jordan Lake dam (02098197)."},
@@ -323,10 +325,12 @@ class Refinement(unittest.TestCase):
         self.assertEqual(f(alerts("Small Craft Advisory")), "pennant")
         self.assertEqual(f(alerts("Gale Warning")), "pennant2")
         self.assertEqual(f(alerts("Storm Warning")), "square")
-        self.assertEqual(f(alerts("Tropical Storm Warning")), "square")
         self.assertEqual(f(alerts("Hurricane Warning")), "square2")
-        self.assertEqual(f(alerts("Hurricane Force Wind Warning")), "square2")
-        self.assertEqual(f(alerts("Tropical Storm Warning", "Hurricane Force Wind Warning")), "square2")
+        # not on the official NWS Coastal Warning Display chart: banner only, no flag
+        self.assertIsNone(f(alerts("Tropical Storm Warning")))
+        self.assertIsNone(f(alerts("Hurricane Force Wind Warning")))
+        self.assertIsNone(f(alerts("Tropical Storm Warning", "Hurricane Force Wind Warning")))
+        self.assertEqual(f(alerts("Tropical Storm Warning", "Small Craft Advisory")), "pennant")
         self.assertEqual(f(alerts("Small Craft Advisory", "Gale Warning")), "pennant2")  # highest wins
         for e in ("Tropical Storm Watch", "Winter Storm Warning", "Hurricane Force Wind Watch", "Hurricane Watch",
                   "tropical storm warning", "Tropical Storm Warning (test)", "Extreme Wind Warning", "High Wind Warning",
@@ -341,10 +345,17 @@ class Refinement(unittest.TestCase):
         h = render("hybrid", salt("wilmington", alerts=alerts("Gale Warning")))
         self.assertIn('aria-label="Coastal warning display: two red pennants"', h)
         self.assertEqual(h.count('class="al-flag"'), 1)
-        h = render("hybrid", salt("wilmington", alerts=alerts("Tropical Storm Warning")))
+        for e in ("Tropical Storm Warning", "Hurricane Force Wind Warning"):
+            h = render("hybrid", salt("wilmington", alerts=alerts(e)))
+            self.assertNotIn('class="al-flag"', h, e)
+            self.assertIn('class="al al-active al-warn"', h)         # authoritative warning banner
+            self.assertIn('<span class="al-sev">Warning</span><b>%s</b>' % e, h)
+        h = render("hybrid", salt("wilmington", alerts=alerts("Storm Warning")))
         self.assertIn('aria-label="Coastal warning display: a square red flag with a black center"', h)
-        h = render("hybrid", salt("wilmington", alerts=alerts("Hurricane Force Wind Warning")))
+        h = render("hybrid", salt("wilmington", alerts=alerts("Hurricane Warning")))
         self.assertIn('aria-label="Coastal warning display: two square red flags with black centers"', h)
+        h = render("hybrid", salt("wilmington", alerts=alerts("Small Craft Advisory")))
+        self.assertIn("al-adv", h)
         for e in ("Tropical Storm Watch", "Rip Current Statement"):
             h = render("hybrid", salt("wilmington", alerts=alerts(e)))
             self.assertIn(e, h)
@@ -373,7 +384,8 @@ class Refinement(unittest.TestCase):
         cg = h[h.index("data-conditions"):h.index("</section>", h.index("data-conditions"))]
         self.assertNotIn("<details", cg)
         self.assertIn("N winds 10 to 15 kt", cg)
-        self.assertLess(cg.index('class="fc"'), cg.index('class="cg-more"'))
+        self.assertLess(cg.index('class="fc"'), cg.index('class="cg-strip"'))
+        self.assertNotIn('class="cg-more"', cg)   # secondary readings are one strip, not separate cards
         self.assertIn('<nav class="rr" aria-label="Choose your water">', h)
         groups = [("Saltwater", [("wilmington", "Wilmington", True)]), ("Freshwater", [("jordan-lake", "Jordan Lake", False)])]
         with mock.patch.object(sprint_home, "region_groups", return_value=groups):
@@ -411,7 +423,9 @@ class Refinement(unittest.TestCase):
         self.assertEqual(len(caps), len(set(caps)), caps)
         # stored caption, no override; a repeated stored caption is shown only once
         self.assertNotIn("At Rx Chicken", mz)
-        self.assertEqual(mz.count("Rx Chicken &amp; Oysters · Wilmington · Wrightsville Beach"), 1)
+        # "Rx Chicken& Oysters" and "Rx Chicken & Oysters" are one place: the location shows once (the first frame)
+        self.assertEqual(len(re.findall(r'<span class="mz-cap">Rx Chicken ?&amp; Oysters', mz)), 1)
+        self.assertIn('<span class="mz-cap">Rx Chicken&amp; Oysters · Wilmington · Wrightsville Beach</span>', mz)
         self.assertEqual(mz.count("Share yours on the Catch Wall"), 1)
         # the stored record is untouched
         self.assertEqual(LIFE2["caption"], "")
@@ -430,7 +444,12 @@ class Refinement(unittest.TestCase):
         cap = "Fishing pier, Falls Lake, North Carolina"
         cred = ('Photo: <a class="cr-a" href="https://www.flickr.com/photos/sergesegal/52741376400/" rel="noopener">Sergiy Galyonkin</a>, '
                 '<a class="cr-a" href="https://creativecommons.org/licenses/by-sa/2.0/" rel="noopener license">CC BY-SA 2.0</a> (cropped and adjusted)')
-        for rid in ("jordan-lake", "falls-lake"):
+        pl = fresh_jordan()
+        h = render("hybrid", pl, photos=ALL_PHOTOS, fresh=True)
+        self.assertNotIn('<section class="hz', h)          # jordan-lake: no lake hero, never a different lake
+        self.assertIn('class="hz-none"', h)
+        self.assertNotIn("falls-lake-pier", h.split('<section class="mzs"')[0])
+        for rid in ("falls-lake",):
             pl = fresh_jordan()
             pl["region"] = {"id": rid, "name": rid.replace("-", " ").title()}
             h = render("hybrid", pl, photos=ALL_PHOTOS, fresh=True)
@@ -467,6 +486,52 @@ class Refinement(unittest.TestCase):
         h = render("hybrid", salt("wilmington"), photos=ALL_PHOTOS)
         self.assertNotIn("falls-lake-pier", h)
         self.assertNotIn('class="cr-a"', h.split("</style>", 1)[-1])
+
+    def test_test_data_banner_on_fixtures_only(self):
+        h = render("hybrid", salt("wilmington", alerts=alerts("Gale Warning")))
+        self.assertIn('<p class="test-banner" role="note"><b>TEST DATA</b>', h)
+        self.assertIn("TEST DATA", render("hybrid", fresh_jordan(), fresh=True))
+        live = salt("wilmington")
+        live.pop("testData")
+        self.assertNotIn("test-banner\"", render("hybrid", live))
+
+    def test_tide_curve_uses_real_predictions_or_hilo_interpolation(self):
+        # 6-minute predictions are plotted as given
+        h = render("hybrid", salt("wilmington"))
+        tt = tile(h, "tide")
+        self.assertIn('class="s-line"', tt)
+        self.assertIn("6-minute NOAA predictions", tt)
+        self.assertIn('class="s-now"', tt)
+        self.assertIn('class="s-obs"', tt)                  # fixture has an observed level with a time
+        self.assertIn("Then low", tt)
+        # hi/lo only: cosine interpolation that passes exactly through each real extreme
+        t0 = NOW * 1000
+        evs = [{"t": t0 - 5 * 3600e3, "v": 0.5, "type": "L"}, {"t": t0 + 1 * 3600e3, "v": 3.9, "type": "H"},
+               {"t": t0 + 7.2 * 3600e3, "v": 0.7, "type": "L"}, {"t": t0 + 13.5 * 3600e3, "v": 3.4, "type": "H"}]
+        pts = sprint_home.hilo_curve(evs, t0 - 3 * 3600e3, t0 + 12 * 3600e3)
+        for e in evs[1:3]:
+            self.assertIn([e["t"], e["v"]], pts)
+        self.assertTrue(all(0.5 <= v <= 3.9 for _, v in pts))
+        hl = tides(curve=False, observed=False)
+        hl["events"] = evs
+        tt = tile(render("hybrid", salt("topsail", tides=hl)), "tide")
+        self.assertIn("interpolated from NOAA highs and lows", tt)
+        self.assertIn("Predicted", tt)
+        self.assertNotIn('class="s-obs"', tt)               # no observation, no observed mark
+        # predictions missing: text only, no curve
+        tt = tile(render("hybrid", salt("topsail", tides={"status": "unavailable"})), "tide")
+        self.assertNotIn("t-spark", tt)
+        self.assertIn(sprint_home.TIDE_OFF, tt)
+        # extremes that do not bracket now: no extrapolated curve
+        late = tides(curve=False, observed=False)
+        late["events"] = [{"t": t0 + 3600e3, "v": 3.0, "type": "H"}, {"t": t0 + 7 * 3600e3, "v": 0.4, "type": "L"}]
+        self.assertNotIn("t-spark", tile(render("hybrid", salt("topsail", tides=late)), "tide"))
+
+    def test_brand_line_once(self):
+        h = render("hybrid", salt("wilmington"))
+        body = re.sub(r"<[^>]+>", "", h[h.index("<body"):])
+        self.assertEqual(body.count("The Coastal Brief — Know the Water. Live the Coast."), 1)
+        self.assertEqual(body.count("Know the Water"), 1)
 
     def test_photo_path_is_strict(self):
         self.assertIsNotNone(sprint_home.photo_path("/preview/sprint-home/photos/bodie-sunrise-800.avif"))
