@@ -3,24 +3,40 @@
 The visible alerts line and the Captain's Take use these names. Zone codes
 stay in the sources panel (#mb-sources) and the #cb-reading-sources JSON.
 
-Names are properties.name exactly as returned by api.weather.gov on
-15 Nov 2026 (America/New_York). Fetches were read-only GETs with
-User-Agent TheCoastalBrief/1.0 (+https://thecoastalbrief.com; coastal
-conditions site). Do not invent or tidy a name.
+Names are properties.name as returned by api.weather.gov on 15 Nov 2026
+(America/New_York). Fetches were read-only GETs with User-Agent
+TheCoastalBrief/1.0 (+https://thecoastalbrief.com; coastal conditions
+site). Do not invent a name.
 
 Coverage: every zone used by the six preview briefs (wilmington,
 nags-head, emerald-isle, topsail, neuse-river, jordan-lake), plus Cape
 Fear's Harnett, Cumberland and Bladen forecast and county zones.
 
-Display rule, applied only when formatting a list: if the official name
-does not already contain "County" and the zone is a county zone, or a
-public forecast zone whose official name is a single token (for example
-"Wake"), show "{name} County". Qualified forecast names such as
-"West Carteret" and marine names are shown exactly. When a forecast
-zone and a county zone normalize to the same county, the county is
-listed once. Unknown codes fall back to the code, never a guessed name.
+Display rules
+-------------
+Counties: a bare county is an NWS county zone, or a public forecast
+zone whose official name is a single token (for example "Wake"). When
+two or more of those resolve in the list, they are grouped as
+"{A, B and C} counties" (or "{A and B} counties"). A single county
+stays "{Name} County". A forecast zone and a county zone that name
+the same county are shown once. Qualified land zones keep their
+official name unchanged (for example "West Carteret", "Coastal New
+Hanover", "Northern Outer Banks", "Coastal Onslow").
+
+Marine names stay official. The only normalization is casing and
+spacing where NWS is inconsistent: standalone "NM" is written "nm".
+"out to" and "out" are left as NWS published them; adding or removing
+"to" would be rewording.
+
+List joining: one style everywhere, no Oxford comma ("A, B and C").
+Non-county items (marine zones, qualified land zones, and unknown
+codes) stay in first-seen order. Grouped counties are one list item
+placed after those zone names. Unknown codes fall back to the code,
+never a guessed name.
 """
 from __future__ import annotations
+
+import re
 
 # Fetched 15 Nov 2026 from the source URL in each entry.
 ZONE_NAMES: dict[str, dict[str, str]] = {
@@ -174,50 +190,95 @@ def official_name(code: str) -> str | None:
     return rec["name"] if rec else None
 
 
-def display_name(code: str) -> str:
-    """Name shown in alert copy. Unknown codes fall back to the code."""
-    raw = (code or "").strip().upper()
-    rec = ZONE_NAMES.get(raw)
-    if not rec:
-        return (code or "").strip() or raw
-    name = rec["name"]
-    if "county" in name.lower():
-        return name
-    if rec["type"] == "county" or (rec["type"] == "public" and " " not in name):
-        return name + " County"
-    return name
+def normalize_marine_name(name: str) -> str:
+    """Lowercase standalone NM (nautical miles). Leave 'out to' / 'out' as published."""
+    return re.sub(r"\bNM\b", "nm", name or "")
 
 
-def _norm_county(name: str) -> str:
-    s = (name or "").strip().lower()
-    if s.endswith(" county"):
+def _is_bare_county(rec: dict) -> bool:
+    """True for a county zone, or a public forecast zone named only as a county."""
+    name = (rec.get("name") or "").strip()
+    if rec.get("type") == "county":
+        return True
+    if rec.get("type") == "public" and " " not in name and "county" not in name.lower():
+        return True
+    return False
+
+
+def _county_short(name: str) -> str:
+    s = (name or "").strip()
+    if s.lower().endswith(" county"):
         s = s[:-7].strip()
     return s
 
 
-def format_alert_areas(codes) -> str:
-    """Plain-English list of official display names.
-
-    De-duplicates a forecast zone and a county zone that name the same
-    county. Preserves first-seen order. Unknown codes are kept as codes.
-    Returns 'this area' when the list is empty.
-    """
-    names = []
-    seen = set()
-    for raw in codes or []:
-        code = (raw or "").strip()
-        if not code:
-            continue
-        name = display_name(code)
-        key = _norm_county(name)
-        if key in seen:
-            continue
-        seen.add(key)
-        names.append(name)
+def join_names(items) -> str:
+    """Plain-English list with no Oxford comma: 'A and B', 'A, B and C'."""
+    names = [n for n in (items or []) if n]
     if not names:
         return "this area"
     if len(names) == 1:
         return names[0]
     if len(names) == 2:
         return "%s and %s" % (names[0], names[1])
-    return "%s, and %s" % (", ".join(names[:-1]), names[-1])
+    return "%s and %s" % (", ".join(names[:-1]), names[-1])
+
+
+def county_group(shorts) -> str:
+    """One county is 'Chatham County'; two or more are 'Wake, Johnston and Wayne counties'."""
+    names = [s for s in (shorts or []) if s]
+    if not names:
+        return ""
+    if len(names) == 1:
+        s = names[0]
+        return s if s.lower().endswith("county") else s + " County"
+    return join_names(names) + " counties"
+
+
+def display_name(code: str) -> str:
+    """Name shown for a single code. Unknown codes fall back to the code."""
+    raw = (code or "").strip().upper()
+    rec = ZONE_NAMES.get(raw)
+    if not rec:
+        return (code or "").strip() or raw
+    if rec["type"] == "coastal":
+        return normalize_marine_name(rec["name"])
+    if _is_bare_county(rec):
+        return county_group([_county_short(rec["name"])])
+    return rec["name"]
+
+
+def format_alert_areas(codes) -> str:
+    """Plain-English list of official display names.
+
+    Non-county items stay in first-seen order. Bare counties are
+    de-duplicated and emitted as one list item after those zone names.
+    Unknown codes are kept as codes. Returns 'this area' when empty.
+    """
+    non_county = []
+    counties = []
+    seen_other = set()
+    seen_county = set()
+    for raw in codes or []:
+        code = (raw or "").strip()
+        if not code:
+            continue
+        rec = ZONE_NAMES.get(code.upper())
+        if rec and _is_bare_county(rec):
+            short = _county_short(rec["name"])
+            key = short.lower()
+            if key in seen_county:
+                continue
+            seen_county.add(key)
+            counties.append(short)
+            continue
+        name = display_name(code)
+        key = name.lower()
+        if key in seen_other:
+            continue
+        seen_other.add(key)
+        non_county.append(name)
+    items = list(non_county)
+    if counties:
+        items.append(county_group(counties))
+    return join_names(items)

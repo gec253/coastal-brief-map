@@ -232,7 +232,7 @@ class JordanGate(unittest.TestCase):
         self.assertTrue(g["ok"], g["errors"])
         mon = _by_id(g, "moncure-runoff")
         self.assertEqual(mon["status"], "pass")
-        self.assertIn("release plus runoff at Moncure, not official gate outflow", mon["reason"])
+        self.assertIn("Haw River flow at Moncure, not official dam discharge", mon["reason"])
         self.assertEqual(_by_id(g, "water-temp")["status"], "n/a")
         self.assertEqual(_by_id(g, "official-outflow")["status"], "n/a")
         self.assertEqual(_by_id(g, "lake-elev")["status"], "pass")
@@ -247,7 +247,7 @@ class JordanGate(unittest.TestCase):
         g = river_gate.evaluate("jordan-lake", _jordan(rel_h=4.2), NOW)
         self.assertFalse(g["ok"])
         self.assertEqual(_by_id(g, "moncure-runoff")["status"], "stale")
-        self.assertIn("not official gate outflow", _by_id(g, "moncure-runoff")["reason"])
+        self.assertIn("not official dam discharge", _by_id(g, "moncure-runoff")["reason"])
 
     def test_missing_moncure_fails(self):
         payload = _jordan()
@@ -305,8 +305,14 @@ class Banner(unittest.TestCase):
             b = brief_preview.compose("jordan-lake", NOW)
         text = brief_preview.banner_check(b)
         self.assertTrue(text.startswith("Data checks: would pass"), text)
-        self.assertIn("release plus runoff at Moncure, not official gate outflow", text)
+        self.assertIn("Haw River flow at Moncure, not official dam discharge", text)
+        self.assertNotIn("gate outflow", text)
+        self.assertNotIn("release plus runoff at Moncure", text)
         self.assertIn("water temp not applicable", text)
+        html = brief_preview.page(b)
+        self.assertIn("Haw River flow at Moncure, not official dam discharge", html)
+        self.assertNotIn("gate outflow", html)
+        self.assertNotIn("release plus runoff at Moncure", html)
 
     def test_coastal_banner_still_uses_brief_validate(self):
         # A coastal preview must not pick up the freshwater gate, and its

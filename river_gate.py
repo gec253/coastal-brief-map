@@ -36,7 +36,7 @@ above the Deep River confluence, so the major named tributary is not in the
 number, but local runoff is (the station note already says "release plus runoff").
 The official tailrace gauge (USGS 02098198) is discontinued, and the USACE daily
 outflow report can lag, so it is not a trustworthy live source. Every reason
-string must say "release plus runoff at Moncure, not official gate outflow."
+string must say "Haw River flow at Moncure, not official dam discharge."
 """
 from __future__ import annotations
 
@@ -68,7 +68,7 @@ NEUSE_FORECAST_LIDS = ("CLYN7", "SMFN7", "GLDN7")
 
 JORDAN_LAKE_USGS = "02098197"
 JORDAN_MONCURE_USGS = "02098206"
-JORDAN_MONCURE_LABEL = "release plus runoff at Moncure, not official gate outflow"
+JORDAN_MONCURE_LABEL = "Haw River flow at Moncure, not official dam discharge"
 
 
 def _parse(iso) -> datetime | None:
