@@ -423,9 +423,10 @@ class CaptainsTakeAndSources(unittest.TestCase):
         self.assertEqual(html.count('id="mb-sources"'), 1)
         self.assertEqual(html.count('<details class="mb-sources"'), 1)
         self.assertIn("<summary>Sources and times</summary>", html)
-        glance = html.find('class="mb-glance"')
+        adv = html.find('class="mb-adv')
+        glance = html.find('class="mb-glance')
         take = html.find("mb-summary mb-take")
-        self.assertTrue(0 < glance < take)
+        self.assertTrue(0 < adv < take < glance, (adv, take, glance))
         self.assertNotIn("bite", html.lower())
         self.assertNotIn("fishing forecast", html.lower())
 

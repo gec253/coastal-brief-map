@@ -731,11 +731,13 @@ def _wrap_reading_times(out: str) -> str:
     return re.sub(pat, repl, out, count=1, flags=re.S)
 
 
-def _move_take_after_glance(out: str) -> str:
-    """Keep exactly one Captain's Take immediately after the glance cards.
+def _move_take_after_advisories(out: str) -> str:
+    """Keep exactly one Captain's Take immediately after the advisories
+    strip and before the glance cards, so the briefing reaches the fold.
 
     Prefers the Data component (section.mb-summary.mb-take with JSON) and
-    drops the brief.page bottom take if it is still present.
+    drops the brief.page bottom take if it is still present. Text, data-kind
+    and data-sources are left unchanged.
     """
     takes = list(re.finditer(
         r'\s*<section class="(?:mb-summary )?mb-take\b[^"]*"[^>]*>.*?</section>',
@@ -748,13 +750,15 @@ def _move_take_after_glance(out: str) -> str:
     for m in reversed(takes):
         out = out[:m.start()] + out[m.end():]
     for pat in (
-        r'(<section class="mb-glance"[^>]*>.*?</section>)',
-        r'(<section class="mb-adv"[^>]*>.*?</section>)',
-        r'(<section class="mb-issue"[^>]*>.*?</section>)',
+        r'(<section class="mb-adv\b[^"]*"[^>]*>.*?</section>)',
+        r'(<section class="mb-issue\b[^"]*"[^>]*>.*?</section>)',
     ):
         n = re.search(pat, out, flags=re.S)
         if n:
             return out[:n.end()] + "\n  " + block + out[n.end():]
+    g = re.search(r'<section class="mb-glance\b[^"]*"[^>]*>.*?</section>', out, flags=re.S)
+    if g:
+        return out[:g.start()] + "\n  " + block + "\n  " + out[g.start():]
     return out + "\n  " + block
 
 
@@ -764,7 +768,7 @@ def _apply_polish(out: str) -> str:
     out = _compact_tools(out)
     out = _compact_regions(out)
     out = _wrap_reading_times(out)
-    out = _move_take_after_glance(out)
+    out = _move_take_after_advisories(out)
     if _DETAILS_SCRIPT_FROM in out:
         out = out.replace(_DETAILS_SCRIPT_FROM, _DETAILS_SCRIPT_TO, 1)
     # Mark glance tiles whose value is already the locked placeholder.
