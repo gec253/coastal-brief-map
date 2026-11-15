@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import brief  # noqa: E402
 import brief_preview  # noqa: E402
+import preview_alerts  # noqa: E402
 import river_gate  # noqa: E402
 
 NOW = datetime(2026, 11, 15, 15, 0, tzinfo=timezone.utc)  # 10:00 AM ET
@@ -70,7 +71,7 @@ def _neuse(hours=0.7, forecast_h=3.0, drop=None, alerts="ok", nwps_status="ok"):
         "river": blocks,
         "forecast": {"status": "ok", "updated": _iso(1.0), "periods": [
             {"name": "Today", "tempF": 57, "short": "Sunny", "windDir": "NW", "windMph": "2 to 6 mph"}]},
-        "alerts": {"status": alerts, "items": []},
+        "alerts": ({**preview_alerts.ok_coverage("neuse-river"), "status": alerts} if alerts == "ok" else {"status": alerts, "items": [], "coverage": []}),
     }
 
 
@@ -90,7 +91,7 @@ def _jordan(elev_h=0.6, rel_h=0.9, alerts="ok"):
         "river": [],
         "forecast": {"status": "ok", "updated": _iso(1.0), "periods": [
             {"name": "Today", "tempF": 57, "short": "Sunny", "windDir": "NW", "windMph": "2 to 7 mph"}]},
-        "alerts": {"status": alerts, "items": []},
+        "alerts": ({**preview_alerts.ok_coverage("jordan-lake"), "status": alerts} if alerts == "ok" else {"status": alerts, "items": [], "coverage": []}),
     }
 
 
@@ -231,7 +232,7 @@ class JordanGate(unittest.TestCase):
         self.assertTrue(g["ok"], g["errors"])
         mon = _by_id(g, "moncure-runoff")
         self.assertEqual(mon["status"], "pass")
-        self.assertIn("release plus runoff at Moncure, not official gate outflow", mon["reason"])
+        self.assertIn("Haw River flow at Moncure, not official dam discharge", mon["reason"])
         self.assertEqual(_by_id(g, "water-temp")["status"], "n/a")
         self.assertEqual(_by_id(g, "official-outflow")["status"], "n/a")
         self.assertEqual(_by_id(g, "lake-elev")["status"], "pass")
@@ -246,7 +247,7 @@ class JordanGate(unittest.TestCase):
         g = river_gate.evaluate("jordan-lake", _jordan(rel_h=4.2), NOW)
         self.assertFalse(g["ok"])
         self.assertEqual(_by_id(g, "moncure-runoff")["status"], "stale")
-        self.assertIn("not official gate outflow", _by_id(g, "moncure-runoff")["reason"])
+        self.assertIn("not official dam discharge", _by_id(g, "moncure-runoff")["reason"])
 
     def test_missing_moncure_fails(self):
         payload = _jordan()
@@ -304,8 +305,14 @@ class Banner(unittest.TestCase):
             b = brief_preview.compose("jordan-lake", NOW)
         text = brief_preview.banner_check(b)
         self.assertTrue(text.startswith("Data checks: would pass"), text)
-        self.assertIn("release plus runoff at Moncure, not official gate outflow", text)
+        self.assertIn("Haw River flow at Moncure, not official dam discharge", text)
+        self.assertNotIn("gate outflow", text)
+        self.assertNotIn("release plus runoff at Moncure", text)
         self.assertIn("water temp not applicable", text)
+        html = brief_preview.page(b)
+        self.assertIn("Haw River flow at Moncure, not official dam discharge", html)
+        self.assertNotIn("gate outflow", html)
+        self.assertNotIn("release plus runoff at Moncure", html)
 
     def test_coastal_banner_still_uses_brief_validate(self):
         # A coastal preview must not pick up the freshwater gate, and its
@@ -386,6 +393,60 @@ class ValidateUnchanged(unittest.TestCase):
         self.assertIn("lake level", ",".join(summary["missingCore"]))
         self.assertIn("dam release", ",".join(summary["missingCore"]))
         self.assertIn("water temp", ",".join(summary["missingCore"]))
+
+
+
+class AlertCoverage(unittest.TestCase):
+    def test_neuse_full_coverage_passes(self):
+        payload = _neuse()
+        payload["alerts"] = preview_alerts.ok_coverage("neuse-river")
+        g = river_gate.evaluate("neuse-river", payload, NOW)
+        self.assertTrue(g["ok"], g["errors"])
+        c = _by_id(g, "alerts")
+        self.assertEqual(c["status"], "pass")
+        self.assertIn("Wake, Johnston and Wayne counties", c["reason"])
+
+    def test_neuse_partial_zone_coverage_fails(self):
+        payload = _neuse()
+        payload["alerts"] = preview_alerts.failed_coverage("neuse-river", ["NCC191"])
+        g = river_gate.evaluate("neuse-river", payload, NOW)
+        self.assertFalse(g["ok"])
+        c = _by_id(g, "alerts")
+        self.assertEqual(c["status"], "failed-fetch")
+        self.assertIn("Wayne County (NCC191)", c["reason"])
+        self.assertIn("Wake, Johnston and Wayne counties", c["reason"])
+        self.assertIn("NCZ041", c["reason"])
+        self.assertTrue(any("Wayne County (NCC191)" in e for e in g["errors"]))
+
+    def test_neuse_missing_coverage_fails(self):
+        payload = _neuse()
+        payload["alerts"] = {"status": "ok", "items": [], "coverage": []}
+        g = river_gate.evaluate("neuse-river", payload, NOW)
+        self.assertFalse(g["ok"])
+        self.assertIn("Wake County (NCZ041)", _by_id(g, "alerts")["reason"])
+
+    def test_jordan_full_coverage_passes(self):
+        payload = _jordan()
+        payload["alerts"] = preview_alerts.ok_coverage("jordan-lake")
+        g = river_gate.evaluate("jordan-lake", payload, NOW)
+        self.assertTrue(g["ok"], g["errors"])
+        self.assertIn("Chatham and Durham counties", _by_id(g, "alerts")["reason"])
+
+    def test_jordan_partial_zone_coverage_fails(self):
+        payload = _jordan()
+        payload["alerts"] = preview_alerts.failed_coverage("jordan-lake", ["NCZ040"])
+        g = river_gate.evaluate("jordan-lake", payload, NOW)
+        self.assertFalse(g["ok"])
+        c = _by_id(g, "alerts")
+        self.assertIn("Chatham County (NCZ040)", c["reason"])
+        self.assertIn("NCC037", c["reason"])
+        self.assertIn("Chatham and Durham counties", c["reason"])
+        payload["alerts"] = preview_alerts.failed_coverage("jordan-lake", ["NCC063"])
+        g = river_gate.evaluate("jordan-lake", payload, NOW)
+        self.assertFalse(g["ok"])
+        c = _by_id(g, "alerts")
+        self.assertIn("Durham County (NCC063)", c["reason"])
+        self.assertIn("NCZ025", c["reason"])
 
 
 if __name__ == "__main__":

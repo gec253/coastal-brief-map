@@ -1,0 +1,283 @@
+/* Private /preview/brief/* presentation only. Scoped to body.mb-preview-brief.
+   Public /brief and other pages never load this file. */
+
+/* ---- Compact mobile header: icon tools ---- */
+body.mb-preview-brief .mb-top-row {
+  min-height: 48px;
+  padding: 2px 10px 2px 14px;
+  gap: 8px;
+}
+body.mb-preview-brief .mb-tools {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+body.mb-preview-brief .mb-print,
+body.mb-preview-brief .theme-toggle {
+  appearance: none;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid rgba(243, 230, 208, 0.35);
+  border-radius: 8px;
+  background: transparent;
+  color: #F3E6D0;
+  cursor: pointer;
+  line-height: 0;
+}
+body.mb-preview-brief .mb-print svg,
+body.mb-preview-brief .theme-toggle svg {
+  width: 20px;
+  height: 20px;
+}
+body.mb-preview-brief .theme-toggle .mb-icon-moon { display: block; }
+body.mb-preview-brief .theme-toggle .mb-icon-sun { display: none; }
+html[data-theme="dark"] body.mb-preview-brief .theme-toggle .mb-icon-sun { display: block; }
+html[data-theme="dark"] body.mb-preview-brief .theme-toggle .mb-icon-moon { display: none; }
+body.mb-preview-brief .mb-print:hover,
+body.mb-preview-brief .theme-toggle:hover {
+  background: rgba(196, 163, 106, 0.18);
+}
+body.mb-preview-brief .mb-print:focus-visible,
+body.mb-preview-brief .theme-toggle:focus-visible {
+  outline: 3px solid #C4A36A;
+  outline-offset: 2px;
+  background: rgba(196, 163, 106, 0.18);
+}
+
+/* ---- Compact region selector: one 44px row ---- */
+body.mb-preview-brief .mb-regions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 0;
+  min-height: 44px;
+}
+body.mb-preview-brief .mb-rv-label {
+  flex: 0 0 auto;
+  margin: 0;
+  font: 700 0.68rem/1 var(--f-ui);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+body.mb-preview-brief .mb-region-select {
+  appearance: none;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  min-height: 44px;
+  height: 44px;
+  margin: 0;
+  padding: 0 2.2rem 0 12px;
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  color: var(--ink);
+  background-color: var(--card);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%230B2A3D' stroke-width='1.6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 10px 6px;
+  font: 600 0.95rem/1.2 var(--f-ui);
+  cursor: pointer;
+}
+html[data-theme="dark"] body.mb-preview-brief .mb-region-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23F6F1E7' stroke-width='1.6'/%3E%3C/svg%3E");
+}
+body.mb-preview-brief .mb-region-select:focus-visible {
+  outline: 3px solid #C4A36A;
+  outline-offset: 2px;
+}
+
+/* ---- Issue line stays visible; reading times fold on phones ---- */
+body.mb-preview-brief .mb-issue {
+  min-height: 0;
+  padding: 10px 14px;
+}
+body.mb-preview-brief .mb-sources {
+  margin: 8px 0 0;
+}
+body.mb-preview-brief .mb-sources > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0 2px;
+  cursor: pointer;
+  list-style: none;
+  font: 700 0.72rem/1.2 var(--f-ui);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+  border-top: 1px solid var(--edge);
+}
+body.mb-preview-brief .mb-sources > summary::-webkit-details-marker { display: none; }
+body.mb-preview-brief .mb-sources > summary::marker { content: ""; }
+body.mb-preview-brief .mb-sources > summary::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-right: 1.5px solid var(--ink-2);
+  border-bottom: 1.5px solid var(--ink-2);
+  transform: rotate(-45deg);
+  margin-top: -2px;
+}
+body.mb-preview-brief .mb-sources[open] > summary::before {
+  transform: rotate(45deg);
+  margin-top: -6px;
+}
+body.mb-preview-brief .mb-sources > summary:focus-visible {
+  outline: 3px solid #C4A36A;
+  outline-offset: 2px;
+}
+body.mb-preview-brief .mb-sources .mb-fresh {
+  margin-top: 6px;
+  padding-bottom: 2px;
+}
+
+/* ---- Shared Captain's Take: brass hairline, small-caps kicker, comfortable measure ---- */
+body.mb-preview-brief section.mb-take,
+html[data-water="freshwater"] body.mb-preview-brief section.mb-take,
+html[data-theme="dark"] body.mb-preview-brief section.mb-take,
+html[data-theme="dark"][data-water="freshwater"] body.mb-preview-brief section.mb-take {
+  margin: 16px 0 0;
+  padding: 14px 0 2px;
+  max-width: 38rem;
+  border: none;
+  border-top: 1px solid #C4A36A;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+body.mb-preview-brief .mb-take-k {
+  margin: 0 0 8px;
+  font: 700 0.72rem/1.2 var(--f-ui);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+body.mb-preview-brief .mb-take-body p {
+  font: 500 1.12rem/1.5 var(--f-display);
+  font-variation-settings: "opsz" 36;
+  max-width: 38rem;
+}
+body.mb-preview-brief .mb-take-note {
+  color: var(--ink-2);
+  font: 400 0.82rem/1.4 var(--f-ui);
+}
+
+/* ---- Missing-data typography. Data owns the wording; these are styles only. ---- */
+body.mb-preview-brief .mb-summary {
+  margin: 12px 0 4px;
+  max-width: 40rem;
+  font: 500 1.02rem/1.5 var(--f-display);
+  font-variation-settings: "opsz" 28;
+  color: var(--ink);
+}
+body.mb-preview-brief .mb-stage-note {
+  margin: 8px 0 0;
+  padding: 0 0 0 10px;
+  max-width: 40rem;
+  border-left: 1px solid #C4A36A;
+  font: italic 500 0.9rem/1.45 var(--f-display);
+  color: var(--ink-2);
+}
+body.mb-preview-brief .mb-miss,
+body.mb-preview-brief .mb-stale-note {
+  color: var(--ink-2);
+  font-size: 0.92rem;
+  line-height: 1.45;
+  margin: 12px 0 0;
+}
+body.mb-preview-brief .mb-stale {
+  color: var(--copper-ink);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+body.mb-preview-brief .mb-unavail,
+body.mb-preview-brief .mb-miss-sec {
+  margin: 16px 0 0;
+  padding: 10px 0 0;
+  border-top: 1px solid var(--edge);
+  color: var(--ink-2);
+  font-size: 0.92rem;
+  line-height: 1.45;
+  background: transparent;
+}
+body.mb-preview-brief .mb-miss-sec h2,
+body.mb-preview-brief .mb-unavail > p > b,
+body.mb-preview-brief .mb-miss-sec > p > b {
+  display: block;
+  margin: 0 0 8px;
+  font: 700 0.72rem/1.3 var(--f-ui);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+body.mb-preview-brief .mb-unavail ul,
+body.mb-preview-brief .mb-miss-sec ul,
+body.mb-preview-brief .mb-miss ul {
+  margin: 0;
+  padding: 0 0 0 1.1em;
+}
+body.mb-preview-brief .mb-unavail li,
+body.mb-preview-brief .mb-miss-sec li,
+body.mb-preview-brief .mb-miss li {
+  margin: 0 0 0.4em;
+}
+body.mb-preview-brief .mb-unavail li b,
+body.mb-preview-brief .mb-miss-sec li b,
+body.mb-preview-brief .mb-miss li b {
+  display: inline;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+}
+
+/* Tile placeholder "Not available": smaller, muted, wraps at 390.
+   Hooks: .mb-gc.is-na, .mb-gv.mb-na, .mb-placeholder — ready for Data's markup. */
+body.mb-preview-brief .mb-gc.is-na .mb-gv,
+body.mb-preview-brief .mb-gv.mb-na,
+body.mb-preview-brief .mb-placeholder {
+  font-family: var(--f-ui);
+  font-weight: 600;
+  font-variant-numeric: normal;
+  color: var(--ink-2);
+  line-height: 1.3;
+  min-height: 0;
+  flex-wrap: wrap;
+  white-space: normal;
+}
+body.mb-preview-brief .mb-gc.is-na .mb-gv b,
+body.mb-preview-brief .mb-gv.mb-na b,
+body.mb-preview-brief .mb-placeholder {
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  max-width: 100%;
+  white-space: normal;
+}
+
+/* Observed / predicted / forecast labels stay distinct (tokens unchanged). */
+
+@media print {
+  body.mb-preview-brief .mb-sources > *:not(summary) {
+    display: block !important;
+  }
+  body.mb-preview-brief .mb-sources .mb-fresh {
+    display: flex !important;
+  }
+  body.mb-preview-brief .mb-tools { display: none !important; }
+}

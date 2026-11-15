@@ -1,8 +1,8 @@
 """Quality gate for private freshwater preview Morning Briefs.
 
-Used only by brief_preview for Jordan Lake and the Neuse River. It does not change
-brief.validate, the public Falls Lake brief, coastal briefs, the 5:15 AM schedule,
-or the archive.
+Used only by brief_preview for Jordan Lake, the Neuse River, and the Cape Fear
+River preview. It does not change brief.validate, the public Falls Lake brief,
+coastal briefs, the 5:15 AM schedule, or the archive.
 
 Limits (hours) and why
 ----------------------
@@ -36,12 +36,14 @@ above the Deep River confluence, so the major named tributary is not in the
 number, but local runoff is (the station note already says "release plus runoff").
 The official tailrace gauge (USGS 02098198) is discontinued, and the USACE daily
 outflow report can lag, so it is not a trustworthy live source. Every reason
-string must say "release plus runoff at Moncure, not official gate outflow."
+string must say "Haw River flow at Moncure, not official dam discharge."
 """
 from __future__ import annotations
 
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
+
+import preview_alerts
 
 ET = ZoneInfo("America/New_York")
 
@@ -64,9 +66,24 @@ NEUSE_STAGE_ONLY = {"usgs": "02087570", "nwps": "SMFN7", "label": "Neuse River a
 # Lids that issue a routine year-round NWPS forecast on this reach.
 NEUSE_FORECAST_LIDS = ("CLYN7", "SMFN7", "GLDN7")
 
+# Cape Fear main stem: four USGS stage+flow gauges. Two or more must be fresh.
+# All four NWPS lids issue routine year-round forecasts (verified 15 Nov 2026).
+CAPE_FEAR_GAUGES = (
+    {"usgs": "02102500", "nwps": "LLLN7", "label": "Cape Fear River at Lillington",
+     "regulated": True},
+    {"usgs": "02104000", "nwps": "FAYN7", "label": "Cape Fear River at Fayetteville",
+     "regulated": True},
+    {"usgs": "02105500", "nwps": "STPN7", "label": "Cape Fear River at W.O. Huske Lock near Tarheel",
+     "regulated": True},
+    {"usgs": "02105769", "nwps": "CPFN7", "label": "Cape Fear River at Lock 1 near Kelly",
+     "regulated": True},
+)
+CAPE_FEAR_FORECAST_LIDS = ("LLLN7", "FAYN7", "STPN7", "CPFN7")
+HUSKE_USGS = "02105500"
+
 JORDAN_LAKE_USGS = "02098197"
 JORDAN_MONCURE_USGS = "02098206"
-JORDAN_MONCURE_LABEL = "release plus runoff at Moncure, not official gate outflow"
+JORDAN_MONCURE_LABEL = "Haw River flow at Moncure, not official dam discharge"
 
 
 def _parse(iso) -> datetime | None:
@@ -137,11 +154,36 @@ def _find_river(payload: dict, usgs: str) -> dict:
     return {}
 
 
-def _alerts_check(payload: dict) -> dict:
+def _alerts_check(payload: dict, rid: str = "") -> dict:
+    """Every listed zone must succeed; partial coverage is a failure."""
     al = payload.get("alerts")
+    counties = preview_alerts.ALERT_COUNTIES.get(rid) or ()
     if al is None:
         return _check("alerts", "NWS alerts check", "failed-fetch",
                       "NWS alerts check is missing from the payload.", kind="observed")
+    if counties:
+        areas = preview_alerts.areas_phrase(counties)
+        ids = preview_alerts.zone_ids(counties)
+        cov = {c.get("id"): c for c in (al.get("coverage") or [])}
+        failed = []
+        for c in counties:
+            for zid in (c["id"], c.get("ncc")):
+                if not zid:
+                    continue
+                entry = cov.get(zid)
+                if not entry or entry.get("status") != "ok":
+                    failed.append("%s (%s)" % (c["name"], zid))
+        if failed:
+            reason = (
+                "NWS alerts check failed for %s; checked %s (%s)."
+                % (", ".join(failed), areas, ", ".join(ids))
+            )
+            return _check("alerts", "NWS alerts check", "failed-fetch", reason, kind="observed")
+        n = len(al.get("items") or [])
+        return _check("alerts", "NWS alerts check", "pass",
+                      "NWS alerts check succeeded for %s (%s)." % (
+                          areas, "no active alerts" if n == 0 else "%d active" % n),
+                      kind="observed")
     status = al.get("status")
     if status == "ok":
         n = len(al.get("items") or [])
@@ -215,14 +257,16 @@ def _gauge_stage_flow(block: dict, spec: dict, now: datetime, stage_only: bool =
     return out
 
 
-def _neuse_forecast(payload: dict, now: datetime) -> dict:
+def _routine_forecast(payload: dict, now: datetime, lids: tuple[str, ...], place: str) -> dict:
+    """Most recent routine NWPS forecast among the given lids. Labeled as a forecast."""
     best = None
     failed = 0
     saw_ok = 0
+    lid_set = set(lids)
     for block in (payload.get("river") or []):
         nw = block.get("nwps") or {}
         lid = nw.get("lid") or ""
-        if lid not in NEUSE_FORECAST_LIDS:
+        if lid not in lid_set:
             continue
         if nw.get("status") in ("failed-fetch", "unavailable", "error"):
             failed += 1
@@ -253,11 +297,16 @@ def _neuse_forecast(payload: dict, now: datetime) -> dict:
                       time=fc.get("issued"), age_h=age, station=lid, kind="forecast")
     if failed and not saw_ok:
         return _check("nwps-forecast", "NWPS river forecast", "failed-fetch",
-                      "NWPS forecast fetch failed at the routine-forecast gauges (CLYN7, SMFN7, GLDN7).",
+                      "NWPS forecast fetch failed at the routine-forecast gauges (%s)."
+                      % ", ".join(lids),
                       kind="forecast")
     return _check("nwps-forecast", "NWPS river forecast", "missing",
-                  "No recent NWS NWPS forecast at Clayton, Smithfield or Goldsboro (routine-forecast gauges).",
+                  "No recent NWS NWPS forecast at %s (routine-forecast gauges)." % place,
                   kind="forecast")
+
+
+def _neuse_forecast(payload: dict, now: datetime) -> dict:
+    return _routine_forecast(payload, now, NEUSE_FORECAST_LIDS, "Clayton, Smithfield or Goldsboro")
 
 
 def evaluate_neuse(payload: dict, now: datetime) -> list[dict]:
@@ -292,7 +341,7 @@ def evaluate_neuse(payload: dict, now: datetime) -> list[dict]:
                 c["status"] = "optional"
         checks.append(c)
     checks.append(_neuse_forecast(payload, now))
-    checks.append(_alerts_check(payload))
+    checks.append(_alerts_check(payload, "neuse-river"))
     checks.append(_water_temp_na("No active USGS water-temperature sensor on the Neuse main stem (not a failure)."))
     checks.append(_optional_weather(payload, now))
     checks.append(_check("rain", "Rain", "n/a",
@@ -301,6 +350,42 @@ def evaluate_neuse(payload: dict, now: datetime) -> list[dict]:
     checks.append(_check("nwps-neun7", "NWPS forecast at NEUN7", "n/a",
                          "NWS publishes no routine forecast at NEUN7 (below Falls Dam); not a failure.",
                          core=False, station="NEUN7", kind="n/a"))
+    return checks
+
+
+def evaluate_cape_fear(payload: dict, now: datetime) -> list[dict]:
+    checks = []
+    fresh_gauges = []
+    for spec in CAPE_FEAR_GAUGES:
+        block = _find_river(payload, spec["usgs"])
+        parts = _gauge_stage_flow(block, spec, now, stage_only=False)
+        checks.extend(parts)
+        stage_ok = any(c["id"] == "stage-%s" % spec["usgs"] and c["status"] == "pass" for c in parts)
+        flow_ok = any(c["id"] == "flow-%s" % spec["usgs"] and c["status"] == "pass" for c in parts)
+        if stage_ok and flow_ok:
+            fresh_gauges.append(spec["usgs"])
+    n = len(fresh_gauges)
+    ids = ", ".join(s["usgs"] for s in CAPE_FEAR_GAUGES)
+    if n >= 2:
+        checks.append(_check("cape-fear-core-gauges", "Main-stem stage and flow", "pass",
+                             "Fresh stage and flow (observed, regulated) at %d of 4 core gauges (%s)."
+                             % (n, ", ".join(fresh_gauges)),
+                             kind="observed"))
+    else:
+        checks.append(_check("cape-fear-core-gauges", "Main-stem stage and flow", "missing" if n == 0 else "stale",
+                             "Only %d of 4 core gauges (%s) have fresh stage and flow; need 2."
+                             % (n, ids),
+                             kind="observed"))
+    checks.append(_routine_forecast(payload, now, CAPE_FEAR_FORECAST_LIDS,
+                                    "Lillington, Fayetteville, Huske Lock or Lock 1"))
+    checks.append(_alerts_check(payload, "cape-fear-river"))
+    checks.append(_water_temp_na(
+        "No current USGS water-temperature observation on the Cape Fear main stem "
+        "(Lillington 00010 was discontinued in October 2024; not a failure)."))
+    checks.append(_optional_weather(payload, now))
+    checks.append(_check("rain", "Rain", "optional",
+                         "USGS rain at Huske Lock or Lock 1 is not required for this preview gate (optional).",
+                         core=False, kind="observed"))
     return checks
 
 
@@ -337,11 +422,11 @@ def evaluate_jordan(payload: dict, now: datetime) -> list[dict]:
         reason = "Flow at USGS %s (%s) could not be fetched from USGS." % (station, JORDAN_MONCURE_LABEL)
     else:
         reason = "Flow at USGS %s (%s) is missing." % (station, JORDAN_MONCURE_LABEL)
-    checks.append(_check("moncure-runoff", "Release plus runoff (Moncure)", st, reason, core=True,
+    checks.append(_check("moncure-runoff", "Haw River flow at Moncure (USGS 02098206)", st, reason, core=True,
                          value=(flow or {}).get("value") if isinstance(flow, dict) else None,
                          time=t, age_h=age, station=station, kind=_kind_obs(False, JORDAN_MONCURE_LABEL)))
 
-    checks.append(_alerts_check(payload))
+    checks.append(_alerts_check(payload, "jordan-lake"))
     checks.append(_water_temp_na("No USGS water-temperature sensor at Jordan Lake dam 02098197 (not a failure)."))
     checks.append(_optional_weather(payload, now))
 
@@ -388,13 +473,17 @@ def _failing_core(rid: str, checks: list[dict]) -> list[dict]:
     On the Neuse, per-gauge stage/flow on the three discharge sites are evidence
     for the 2-of-3 summary; a single missed gauge must not fail the whole gate.
     """
-    flow_ids = {s["usgs"] for s in NEUSE_FLOW_GAUGES}
+    river_ids = {
+        "neuse-river": {s["usgs"] for s in NEUSE_FLOW_GAUGES},
+        "cape-fear-river": {s["usgs"] for s in CAPE_FEAR_GAUGES},
+    }
     failing = []
     for c in checks:
         if not c.get("core") or c["status"] in ("pass", "n/a", "optional"):
             continue
-        if rid == "neuse-river" and (c["id"].startswith("stage-") or c["id"].startswith("flow-")):
-            if c["id"].split("-", 1)[-1] in flow_ids:
+        ids = river_ids.get(rid)
+        if ids and (c["id"].startswith("stage-") or c["id"].startswith("flow-")):
+            if c["id"].split("-", 1)[-1] in ids:
                 continue
         failing.append(c)
     return failing
@@ -411,6 +500,8 @@ def evaluate(rid: str, payload: dict | None, now: datetime | None = None) -> dic
                          kind="observed")]
     elif rid == "neuse-river":
         checks = evaluate_neuse(payload, now)
+    elif rid == "cape-fear-river":
+        checks = evaluate_cape_fear(payload, now)
     elif rid == "jordan-lake":
         checks = evaluate_jordan(payload, now)
     else:
@@ -422,8 +513,9 @@ def evaluate(rid: str, payload: dict | None, now: datetime | None = None) -> dic
     errors = [c["reason"] for c in failing]
     notes = []
     if not errors:
-        if rid == "neuse-river":
-            summary = next((c for c in checks if c["id"] == "neuse-core-gauges"), None)
+        if rid in ("neuse-river", "cape-fear-river"):
+            key = "neuse-core-gauges" if rid == "neuse-river" else "cape-fear-core-gauges"
+            summary = next((c for c in checks if c["id"] == key), None)
             bits = []
             if summary:
                 bits.append(summary["reason"].rstrip("."))

@@ -21,6 +21,8 @@ import brief  # noqa: E402
 import brief_preview  # noqa: E402
 
 NEW = ["wilmington", "nags-head", "emerald-isle", "topsail"]
+CKD = ["carolina-kure", "corolla-duck"]
+PREVIEW_BRIEFS = NEW + CKD
 KEY = "preview-test-key-24-chars-ok"
 NOW = datetime(2026, 11, 14, 15, 0, tzinfo=timezone.utc)
 
@@ -45,22 +47,36 @@ OFF = {"ok": True, "readings": {"waterTempOffshore": {"status": "ok", "values": 
 class Unchanged(unittest.TestCase):
     def test_enabled_regions_unchanged(self):
         self.assertEqual(brief.enabled_regions(False), ["crystal-coast", "hatteras"])
-        for rid in NEW:
+        for rid in PREVIEW_BRIEFS:
             self.assertNotIn(rid, brief.enabled_regions(True))
             self.assertNotIn(rid, brief.enabled_regions(False))
 
     def test_public_get_still_404(self):
-        for rid in NEW:
+        for rid in PREVIEW_BRIEFS:
             self.assertEqual(brief.get(rid, include_fresh=True)[0], 404, rid)
 
     def test_live_regions_have_no_preview(self):
         for rid in ("crystal-coast", "hatteras", "falls-lake", "bogus"):
             self.assertFalse(brief_preview.available(rid), rid)
-        for rid in NEW:
+        for rid in PREVIEW_BRIEFS:
             self.assertTrue(brief_preview.available(rid), rid)
 
 
 class Compose(unittest.TestCase):
+    def test_cookie_gated_regions_assemble_with_preview_flag(self):
+        seen = []
+        def fake(rid=None, preview=False):
+            seen.append((rid, preview))
+            if not preview:
+                return 404, {"ok": False, "error": "Unknown region."}
+            return 200, OFF
+        with patch("conditions.assemble", side_effect=fake), \
+             patch.object(brief, "build_salt", side_effect=lambda rid, now: seen.append(("build", rid)) or _body(rid)):
+            b = brief_preview.compose("carolina-kure", NOW)
+        self.assertTrue(b["preview"])
+        self.assertIn(("carolina-kure", True), seen)
+        self.assertNotIn(("carolina-kure", False), seen)
+
     def test_never_stores_or_archives(self):
         with patch.object(brief, "build_salt", side_effect=lambda rid, now: _body(rid)), \
              patch("conditions.assemble", return_value=(200, OFF)), \
@@ -72,7 +88,7 @@ class Compose(unittest.TestCase):
         self.assertTrue(b["preview"])
         self.assertNotIn("water temp", b["missing"])
         wt = dict(b["items"])["Water temp"]
-        self.assertIn("Inshore unavailable", wt); self.assertIn("63°F offshore at Nags Head offshore", wt)
+        self.assertIn("Not measured", wt); self.assertIn("63°F", wt); self.assertIn("offshore", wt.lower())
         self.assertIn("Inshore water temp", [k for k, _ in b["unavailable"]])
         self.assertNotIn("None", dict(b["items"])["Pressure"])
         self.assertEqual(b["validation"]["errors"], [])
@@ -83,7 +99,7 @@ class Compose(unittest.TestCase):
             html = brief_preview.page(brief_preview.compose("topsail", NOW))
         self.assertIn("Private preview · not published", html)
         self.assertIn('content="noindex, nofollow"', html)
-        self.assertIn("Unavailable in this area", html)
+        self.assertIn("Not measured in this area", html)
         self.assertIn('href="/preview/brief/wilmington"', html)
         self.assertNotIn('href="/brief?region=', html)
 
@@ -125,7 +141,7 @@ class Gate(unittest.TestCase):
         return r.status, body.decode("utf-8", "replace"), hdrs
 
     def test_404_without_cookie(self):
-        for rid in NEW:
+        for rid in PREVIEW_BRIEFS:
             self.assertEqual(self._get("/preview/brief/" + rid)[0], 404, rid)
             self.assertEqual(self._get("/preview/brief/" + rid, "cb_preview=wrong")[0], 404, rid)
 
@@ -134,7 +150,7 @@ class Gate(unittest.TestCase):
         self.assertEqual(self._get("/preview/brief/wilmington", self.cookie)[0], 404)
 
     def test_200_with_cookie(self):
-        for rid in NEW:
+        for rid in PREVIEW_BRIEFS:
             st, body, h = self._get("/preview/brief/" + rid, self.cookie)
             self.assertEqual(st, 200, rid)
             self.assertIn("Private preview", body)
@@ -146,7 +162,7 @@ class Gate(unittest.TestCase):
             self.assertEqual(self._get("/preview/brief/" + rid, self.cookie)[0], 404, rid)
 
     def test_public_brief_routes_unchanged(self):
-        for rid in NEW:
+        for rid in PREVIEW_BRIEFS:
             for ck in (None, self.cookie):
                 self.assertEqual(self._get("/brief?region=" + rid, ck)[0], 404, rid)
                 self.assertEqual(self._get("/api/brief?region=" + rid, ck)[0], 404, rid)
@@ -155,12 +171,123 @@ class Gate(unittest.TestCase):
     def test_hub_lists_preview_briefs(self):
         st, body, _ = self._get("/preview", self.cookie)
         self.assertEqual(st, 200)
-        for rid in NEW:
+        for rid in PREVIEW_BRIEFS:
             self.assertIn('href="/preview/brief/%s"' % rid, body)
 
     def test_sitemap_has_no_preview_briefs(self):
         st, body, _ = self._get("/sitemap.xml")
         self.assertNotIn("/preview/brief", body)
+
+
+
+class Polish(unittest.TestCase):
+    """Preview-only header, selector, sources panel, and scoping."""
+
+    def _html(self):
+        with patch.object(brief, "build_salt", side_effect=lambda rid, now: _body(rid)), \
+             patch("conditions.assemble", return_value=(200, OFF)):
+            return brief_preview.page(brief_preview.compose("topsail", NOW))
+
+    def test_preview_header_icons_and_region_select(self):
+        html = self._html()
+        self.assertIn('class="mb-page mb-preview-brief"', html)
+        self.assertIn('id="brief-polish"', html)
+        self.assertIn('aria-label="Print"', html)
+        self.assertIn('id="theme-toggle"', html)
+        self.assertIn('aria-label="Switch to dark mode"', html)
+        self.assertNotIn('btn.textContent=dark?"Light mode":"Dark mode"', html)
+        self.assertIn('id="mb-region-select"', html)
+        self.assertIn('<label class="mb-rv-label" for="mb-region-select">Region</label>', html)
+        self.assertIn('href="/preview/brief/wilmington"', html)
+        self.assertIn("min-width: 44px", html)
+        self.assertIn("min-height: 44px", html)
+
+    def test_sources_panel_and_take_order(self):
+        html = self._html()
+        # One sources panel: Design's id/class and open/close script, Data's
+        # full source rows and JSON. Summary is "Sources and times" (the Data
+        # heading) rather than Design's "Reading times", because the panel now
+        # carries the complete source list, not only the freshness list.
+        self.assertEqual(html.count('id="mb-sources"'), 1)
+        self.assertEqual(html.count('<details class="mb-sources"'), 1)
+        self.assertIn('<details class="mb-sources" id="mb-sources">', html)
+        self.assertIn("<summary>Sources and times</summary>", html)
+        self.assertNotIn("<summary>Reading times</summary>", html)
+        self.assertIn('id="cb-reading-sources"', html)
+        self.assertIn("if(src)src.open=true", html)
+        # One Captain's Take after the advisories strip and before the glance cards
+        # (Data heading and note; Design only changes placement).
+        self.assertIn("Captain's Take", html)
+        self.assertIn("Interpretation", html)
+        self.assertIn("Generated by fixed rules from verified readings.", html)
+        self.assertNotIn("Generated by fixed rules from the readings above.", html)
+        self.assertEqual(html.count('<div class="mb-take-body">'), 1)
+        self.assertEqual(html.count('id="cb-captains-take"'), 1)
+        adv = html.find('class="mb-adv')
+        glance = html.find('class="mb-glance')
+        take = html.find("mb-summary mb-take")
+        details = html.find('id="mb-details"')
+        self.assertTrue(0 < adv < take < glance < details, (adv, take, glance, details))
+
+    def test_take_order_on_all_preview_slugs(self):
+        """Every /preview/brief route keeps one Take after advisories, before glance."""
+        import re
+        import freshwater
+        import preview_alerts
+        import server
+        import tests.test_cape_fear as cf
+        import tests.test_fresh_brief_preview as fp
+
+        slugs = list(brief_preview.REGIONS) + list(brief_preview.FRESH_REGIONS)
+        self.assertEqual(slugs, [
+            "wilmington", "nags-head", "emerald-isle", "topsail",
+            "carolina-kure", "corolla-duck",
+            "jordan-lake", "neuse-river", "cape-fear-river",
+        ])
+        hub = re.findall(
+            r'<a class="card" href="/preview/brief/([a-z0-9-]+)"',
+            Path(server.__file__).read_text(encoding="utf-8"),
+        )
+        self.assertEqual(hub, slugs)
+
+        def page_for(rid):
+            if rid in brief_preview.REGIONS:
+                with patch.object(brief, "build_salt", side_effect=lambda r, now: _body(r)), \
+                     patch("conditions.assemble", return_value=(200, OFF)):
+                    return brief_preview.page(brief_preview.compose(rid, NOW))
+            if rid in ("jordan-lake", "neuse-river"):
+                with patch("preview_alerts.fetch_coverage", side_effect=lambda r: preview_alerts.ok_coverage(r)), \
+                     patch.object(freshwater, "assemble", side_effect=fp._assemble):
+                    return brief_preview.page(brief_preview.compose(rid, NOW))
+            with patch.object(freshwater, "assemble", return_value=(200, cf._cape())):
+                return brief_preview.page(brief_preview.compose(rid, NOW))
+
+        for rid in slugs:
+            html = page_for(rid)
+            adv = html.find('class="mb-adv')
+            glance = html.find('class="mb-glance')
+            take = html.find("mb-summary mb-take")
+            details = html.find('id="mb-details"')
+            self.assertEqual(html.count('<div class="mb-take-body">'), 1, rid)
+            self.assertEqual(html.count('id="cb-captains-take"'), 1, rid)
+            self.assertTrue(0 < adv < take < glance, (rid, adv, take, glance))
+            if details != -1:
+                self.assertTrue(take < glance < details, (rid, take, glance, details))
+
+    def test_polish_not_applied_to_public_brief_page(self):
+        with patch.object(brief, "build_salt", side_effect=lambda rid, now: _body(rid)), \
+             patch("conditions.assemble", return_value=(200, OFF)):
+            b = brief_preview.compose("topsail", NOW)
+        public = brief.page(b, include_fresh=False, public=True, ads_on=False)
+        self.assertNotIn("mb-preview-brief", public)
+        self.assertNotIn("brief-polish", public)
+        self.assertNotIn("mb-region-select", public)
+        self.assertNotIn('aria-label="Print"', public)
+        self.assertNotIn("mb-sources", public)
+        self.assertIn('class="mb-print"', public)
+        self.assertIn("Dark mode", public)
+        self.assertIn('class="mb-gkind"', self._html())
+        self.assertIn('class="mb-gkind"', public)
 
 
 if __name__ == "__main__":

@@ -1981,7 +1981,7 @@ _LAKE_ALERT_JS = """<script>
 
 
 
-_LAKE_REGIONS = {b"falls-lake", b"jordan-lake", b"neuse-river"}
+_LAKE_REGIONS = {b"falls-lake", b"jordan-lake", b"neuse-river", b"cape-fear-river"}
 
 
 def _paint_public_lake(data: bytes, region: str = "falls-lake") -> bytes:
@@ -1993,6 +1993,29 @@ def _paint_public_lake(data: bytes, region: str = "falls-lake") -> bytes:
     if rid not in _LAKE_REGIONS:
         rid = b"falls-lake"
     data = _set_html_attr(data, b"data-region", rid)
+    if rid == b"cape-fear-river":
+        data = data.replace(
+            b'var n={ "falls-lake":"Falls Lake"',
+            b'var n={ "cape-fear-river":"Cape Fear River","falls-lake":"Falls Lake"',
+            1,
+        )
+        chip = (
+            b'<a href="/lake?region=cape-fear-river">Cape Fear River</a>\n'
+        )
+        data = data.replace(
+            b'<a href="/lake?region=neuse-river">Neuse River</a>',
+            b'<a href="/lake?region=neuse-river">Neuse River</a>\n            ' + chip,
+            1,
+        )
+        badge = (
+            b'<p class="fw-meta" style="margin:8px 0 0"><span class="badge">Private preview</span> '
+            b'Cookie-gated. Not on the public site, sitemap, or Morning Brief schedule.</p>\n        '
+        )
+        data = data.replace(
+            b'<p class="dash-sub" id="fw-sub">',
+            badge + b'<p class="dash-sub" id="fw-sub">',
+            1,
+        )
     data = _apply_preview_dateline(_apply_chrome(data))
     if b"cb-mast-reveal" not in data:
         data = data.replace(b"</head>", b"  " + _MASTHEAD_PLAY + b"</head>", 1)
@@ -2163,7 +2186,7 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 .pv a.card b{display:block;font-size:1.05rem}.pv a.card span{font-size:.86rem;color:var(--d-ink-2)}
 .pv .badge{display:inline-block;font:700 .7rem/1.6 var(--f-ui);letter-spacing:.1em;text-transform:uppercase;color:#fff;background:#8c2f23;padding:2px 8px;border-radius:3px}</style></head>
 <body><main class="pv"><span class="badge">Private preview · this browser only</span><h1>Previews</h1>
-<p>These pages are unlocked for this browser for %d days. The wind and tile labs still return “not found” to the public. The Morning Brief, the freshwater pages and every saltwater dashboard (including Wilmington, Nags Head, Emerald Isle and Topsail) are public.</p>
+<p>These pages are unlocked for this browser for %d days. The wind and tile labs still return “not found” to the public. The Morning Brief, the public freshwater pages and the public saltwater dashboards (Crystal Coast, Hatteras, Wilmington, Nags Head, Emerald Isle and Topsail) are public. Carolina Beach / Kure Beach, Corolla / Duck and the Cape Fear River stay on this preview hub.</p>
 <a class="card" href="/lake"><b>Falls Lake</b><span>Freshwater dashboard: lake level vs guide curve, dam release, inflows, rain, river gauges</span></a>
 <a class="card" href="/lake?region=jordan-lake"><b>Jordan Lake</b><span>Pool vs 216.0 ft guide curve, release plus local runoff, Haw inflow</span></a>
 <a class="card" href="/lake?region=neuse-river"><b>Neuse River</b><span>Falls Dam to Goldsboro: stage, flow and NWS flood stages (Smithfield is stage only)</span></a>
@@ -2174,8 +2197,14 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 <a class="card" href="/preview/brief/nags-head"><b>Preview brief · Nags Head</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
 <a class="card" href="/preview/brief/emerald-isle"><b>Preview brief · Emerald Isle</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
 <a class="card" href="/preview/brief/topsail"><b>Preview brief · Topsail</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
+<a class="card" href="/?region=carolina-kure"><b>Preview conditions · Carolina Beach / Kure Beach</b><span>Private dashboard preview. Cookie-gated; not in the public region list.</span></a>
+<a class="card" href="/preview/brief/carolina-kure"><b>Preview brief · Carolina Beach / Kure Beach</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
+<a class="card" href="/?region=corolla-duck"><b>Preview conditions · Corolla / Duck</b><span>Private dashboard preview, centered on Duck. Cookie-gated; not in the public region list.</span></a>
+<a class="card" href="/preview/brief/corolla-duck"><b>Preview brief · Corolla / Duck</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
 <a class="card" href="/preview/brief/jordan-lake"><b>Preview brief · Jordan Lake</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
 <a class="card" href="/preview/brief/neuse-river"><b>Preview brief · Neuse River</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
+<a class="card" href="/lake?region=cape-fear-river"><b>Cape Fear River</b><span>Private preview: Lillington to Lock 1, main-stem stage and flow, NWPS forecasts. Cookie-gated, not public.</span></a>
+<a class="card" href="/preview/brief/cape-fear-river"><b>Preview brief · Cape Fear River</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
 <a class="card" href="/lab/wind"><b>Wind flow</b><span>Animated model wind (NOAA GFS forecast)</span></a>
 <a class="card" href="/lab/tiles"><b>Tile designs</b><span>The instrument tile prototype</span></a>
 <a class="card" href="/preview/masthead?c=c"><b>Masthead concepts</b><span>Three directions for a cinematic gold wave-to-masthead reveal (A editorial, B nautical, C hybrid). Replay from the bar at the bottom.</span></a>
@@ -2283,7 +2312,7 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.send_error(404, "not found")
             return self._json_private(photos.diagnostics())
         if parsed.path.startswith("/preview/brief/"):
-            # Private preview Morning Briefs (coastal four, plus Jordan Lake and Neuse River). Same cookie as
+            # Private preview Morning Briefs (coastal four, plus Jordan Lake, Neuse River and Cape Fear). Same cookie as
             # /preview; 404 without it. Built in memory, never stored or archived, never on /brief.
             if not self._preview_ok():
                 return self.send_error(404, "not found")
@@ -2304,6 +2333,16 @@ class Handler(SimpleHTTPRequestHandler):
         if parsed.path in ("/", "/index.html"):
             rid = (parse_qs(parsed.query).get("region") or [""])[0].strip()
             if rid in ("falls-lake", "jordan-lake", "neuse-river") and (freshwater.flag_on() or self._preview_ok()):
+                self.send_response(303)
+                self.send_header("Location", "/lake?region=%s" % rid)
+                self.send_header("Cache-Control", "no-store")
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return
+            # Cookie-gated freshwater preview (Cape Fear River): same cookie as /preview. Public 404s.
+            if freshwater.is_preview_region(rid):
+                if not self._preview_ok():
+                    return self.send_error(404, "not found")
                 self.send_response(303)
                 self.send_header("Location", "/lake?region=%s" % rid)
                 self.send_header("Cache-Control", "no-store")
@@ -2385,14 +2424,19 @@ class Handler(SimpleHTTPRequestHandler):
             return self._fake_storage(parsed)
         if parsed.path in ("/lake", "/lake.js", "/api/freshwater"):
             # Freshwater pages are on by default. FRESHWATER_ENABLED=0/false/off is the kill switch.
+            # Cape Fear River is a cookie-gated preview: public requests 404 even when the flag is on.
             public = freshwater.flag_on()
-            if not (public or self._preview_ok()):
+            q_rid = (parse_qs(parsed.query or "").get("region") or ["falls-lake"])[0].strip() or "falls-lake"
+            preview_fw = freshwater.is_preview_region(q_rid)
+            if preview_fw:
+                if not self._preview_ok():
+                    return self.send_error(404, "not found")
+            elif not (public or self._preview_ok()):
                 return self.send_error(404, "not found")
-            robots = "index, follow" if public else "noindex, nofollow"
+            robots = "noindex, nofollow" if (preview_fw or not public) else "index, follow"
             if parsed.path == "/lake":
-                rid = (parse_qs(parsed.query or "").get("region") or ["falls-lake"])[0]
-                data = _paint_public_lake((ROOT / "lake.html").read_bytes(), region=rid)
-                if not public:
+                data = _paint_public_lake((ROOT / "lake.html").read_bytes(), region=q_rid)
+                if robots.startswith("noindex"):
                     data = data.replace(
                         b'name="robots" content="index, follow"',
                         b'name="robots" content="noindex, nofollow"',
@@ -2400,8 +2444,9 @@ class Handler(SimpleHTTPRequestHandler):
                 return self._send_private(ROOT / "lake.html", "text/html; charset=utf-8", data, robots=robots)
             if parsed.path == "/lake.js":
                 return self._send_private(ROOT / "lake.js", "text/javascript; charset=utf-8", robots=robots)
-            rid = (parse_qs(parsed.query).get("region") or ["falls-lake"])[0]
-            status, payload = freshwater.assemble(rid)
+            status, payload = freshwater.assemble(q_rid)
+            if preview_fw:
+                return self._json_private(payload, status)
             return self._send_json(payload, cache_s=0, status=status)
         if parsed.path in ("/brief", "/api/brief"):
             # Saltwater Morning Brief is on by default. MORNING_BRIEF_ENABLED=0/false/off is the

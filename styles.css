@@ -4313,3 +4313,25 @@ html[data-page="lake"][data-region="neuse-river"] #fw-river-sec {
 @media (min-width: 860px) {
   html[data-page="lake"][data-region="neuse-river"] #fw-river-sec { min-height: 626px; }
 }
+
+/* Cape Fear is a river dashboard, like the Neuse. Hide the lake grid and
+   inflows on first paint and reserve the river section and a two-line title. */
+html[data-page="lake"][data-region="cape-fear-river"] #fw-grid,
+html[data-page="lake"][data-region="cape-fear-river"] #fw-inflows-sec {
+  display: none;
+}
+@media (max-width: 429px) {
+  html[data-page="lake"][data-region="cape-fear-river"] #fw-h { min-height: 50px; }
+}
+html[data-page="lake"][data-region="cape-fear-river"] #fw-river-sec {
+  min-height: 1560px;
+}
+@media (min-width: 640px) {
+  html[data-page="lake"][data-region="cape-fear-river"] #fw-river-sec { min-height: 720px; }
+}
+@media (min-width: 760px) {
+  html[data-page="lake"][data-region="cape-fear-river"] #fw-river-sec { min-height: 680px; }
+}
+@media (min-width: 860px) {
+  html[data-page="lake"][data-region="cape-fear-river"] #fw-river-sec { min-height: 700px; }
+}

@@ -51,6 +51,19 @@ def regions() -> dict:
     return {r["id"]: r for r in cfg.get("regions") or [] if r.get("waterType") == "freshwater"}
 
 
+def is_preview_region(rid: str | None) -> bool:
+    """True if this freshwater region is built but not public (cookie-gated).
+
+    Public Falls, Jordan and Neuse stay enabled. A preview-ready region with
+    enabled=false is served only to a browser holding the preview cookie, the
+    same way not-yet-public saltwater dashboards are gated.
+    """
+    if not rid:
+        return False
+    r = regions().get(rid) or {}
+    return bool(r.get("previewReady")) and not r.get("enabled") and not r.get("draft")
+
+
 def _get_json(url, ttl):
     body = conditions.get_json(url, ttl)
     if not body:
@@ -303,6 +316,10 @@ def _flow_station(spec, iv, now, stats_day):
         out["tileTitle"] = spec["tileTitle"]
     if spec.get("note"):
         out["note"] = spec["note"]
+    if spec.get("regulatedNote"):
+        out["regulatedNote"] = spec["regulatedNote"]
+    if spec.get("nwpsMinusUsgsFt") is not None:
+        out["nwpsMinusUsgsFt"] = spec["nwpsMinusUsgsFt"]
     if spec.get("floodStages"):
         out["floodStages"] = dict(spec["floodStages"])
     if stage_only:
@@ -369,7 +386,12 @@ def assemble(rid):
         if lake.get("rain"):
             lake_params.append(lake["rain"])
         f_iv7 = _POOL.submit(usgs_iv, [lake["usgs"]], lake_params, "P7D")
-    f_ivq = _POOL.submit(usgs_iv, sites, ["00060", "00065"], "P1D") if sites else None
+    wt_cfg = r.get("waterTemp") or {}
+    wt_sites = [s for s in (wt_cfg.get("sites") or []) if s]
+    iv_params = ["00060", "00065"]
+    if wt_sites:
+        iv_params.append("00010")
+    f_ivq = _POOL.submit(usgs_iv, sites, iv_params, "P1D") if sites else None
     f_fc = _POOL.submit(conditions.forecast_block, r["forecast"]) if r.get("forecast") else None
     f_qpf = _POOL.submit(qpf_block, r["forecast"], now) if lake and r.get("forecast") else None
     alert_pt = r.get("alertPoint") or [r["anchor"]["lat"], r["anchor"]["lon"]]
@@ -452,6 +474,22 @@ def assemble(rid):
     release = _attach_nwps(rel, _flow_station(rel, ivq, now, et_today), nw) if rel else None
     river_out = [_attach_nwps(s, _flow_station(s, ivq, now, et_today), nw) for s in river]
     inflow_out = [_flow_station(s, ivq, now, et_today) for s in inflows]
+    if wt_sites and lake_out is None:
+        # River pages: only show a water temperature if a current USGS 00010 exists.
+        # A discontinued or stale series (Lillington 00010 ended in 2024) is not used.
+        best = None
+        for site in wt_sites:
+            pt = latest(ivq.get((site, "00010")), now)
+            if not pt:
+                continue
+            if best is None or pt["time"] > best["time"]:
+                best = dict(pt)
+                best["usgs"] = site
+        if best:
+            water = {"kind": "observed", "usgs": best["usgs"], "status": "ok",
+                     "c": best["value"], "f": round(best["value"] * 9 / 5 + 32, 1),
+                     "time": best["time"], "stale": best["stale"],
+                     "note": "USGS parameter 00010 at %s, provisional. Surface temperatures elsewhere on the river can differ." % best["usgs"]}
     if lake_out is not None and lake:
         lake_out = _attach_nwps(lake, lake_out, nw)
 

@@ -101,6 +101,14 @@ class RegionMapZoomTests(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, proc.stderr or proc.stdout)
         self.assertIn("ok", proc.stdout)
 
+    def test_preview_salt_region_zooms(self) -> None:
+        self.assertEqual(_region("carolina-kure")["map"]["zoom"], 11)
+        self.assertEqual(_region("corolla-duck")["map"]["zoom"], 10)
+        self.assertEqual(_expected_zoom(11, 1280), 11)
+        self.assertEqual(_expected_zoom(11, 390), 10)
+        self.assertEqual(_expected_zoom(10, 1280), 10)
+        self.assertEqual(_expected_zoom(10, 390), 9)
+
 
 if __name__ == "__main__":
     unittest.main()

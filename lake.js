@@ -1,5 +1,6 @@
 /* The Coastal Brief: freshwater pages (on by default; FRESHWATER_ENABLED=0/false/off is the kill switch).
-   Renders /api/freshwater for Falls Lake, Jordan Lake and the Neuse River.
+   Renders /api/freshwater for Falls Lake, Jordan Lake, the Neuse River and the
+   cookie-gated Cape Fear River preview.
    Every number shows its source and time; missing or stale readings are said
    out loud, never filled in. */
 (function () {
@@ -125,6 +126,7 @@
   }
   function gaugeCard(s) {
     const fl = floodOf(s);
+    const offset = s.nwpsMinusUsgsFt;
     let h = '<div class="inst fw-g"><h3>' + esc(s.label) + "</h3>";
     if (s.stageOnly || (!s.flowCfs && s.stageFt)) {
       if (s.stageFt) h += '<div class="fw-mid">' + s.stageFt.value.toFixed(2) + "<small>ft stage</small></div>";
@@ -136,13 +138,32 @@
       h += '<p class="fw-unavail">' + esc(s.flowNote || "Flow not available right now.") + "</p>";
     }
     h += bandHtml(s);
+    if (s.regulated) h += '<p class="fw-meta">' + esc(s.regulatedNote || "Regulated flow.") + "</p>";
+    if (s.note) h += '<p class="fw-meta"><strong>Note:</strong> ' + esc(s.note) + "</p>";
     const n = s.nwps && s.nwps.status === "ok" ? s.nwps : null;
+    const usgsStage = s.stageFt ? s.stageFt.value.toFixed(2) + " ft USGS gage height" : "—";
     if (!(s.stageOnly || (!s.flowCfs && s.stageFt))) {
-      h += '<p class="fw-meta">Stage ' + (s.stageFt ? s.stageFt.value.toFixed(2) + " ft" : "—") + (isNum(fl.minor) ? " · flood stage " + fl.minor + " ft" : "") + (s.stageFt ? " · " + esc(when(s.stageFt.time)) : "") + "</p>";
+      let floodBit = "";
+      if (isNum(fl.minor)) {
+        if (isNum(offset)) {
+          floodBit = " · NWS AHPS flood stage " + fl.minor + " ft (subtract " + offset + " ft to compare with USGS)";
+        } else {
+          floodBit = " · flood stage " + fl.minor + " ft";
+        }
+      }
+      h += '<p class="fw-meta">Stage ' + (s.stageFt ? usgsStage : "—") + floodBit + (s.stageFt ? " · " + esc(when(s.stageFt.time)) : "") + "</p>";
     } else {
-      h += '<p class="fw-meta">' + (isNum(fl.minor) ? "Flood stage " + fl.minor + " ft" : "Stage only") + (s.stageFt ? " · " + esc(when(s.stageFt.time)) : "") + "</p>";
+      let floodBit = isNum(fl.minor) ? "Flood stage " + fl.minor + " ft" : "Stage only";
+      if (isNum(offset) && isNum(fl.minor)) {
+        floodBit = "NWS AHPS flood stage " + fl.minor + " ft (subtract " + offset + " ft to compare with USGS)";
+      }
+      h += '<p class="fw-meta">' + floodBit + (s.stageFt ? " · " + esc(when(s.stageFt.time)) : "") + "</p>";
     }
-    if (n && n.forecast) h += '<p class="fw-meta">' + tag("forecast") + " NWS crest " + n.forecast.crestStage.toFixed(1) + " ft " + esc(when(n.forecast.crestTime)) + (n.forecast.category && n.forecast.category !== "no_flooding" ? " · " + esc(n.forecast.category.replace("_", " ")) : " · no flooding forecast") + "</p>";
+    if (n && n.forecast) {
+      const ahps = isNum(offset) ? " AHPS" : "";
+      const flowEst = isNum(n.forecast.crestFlowCfs) ? " · NWS flow estimate " + cfs(n.forecast.crestFlowCfs) + " cfs" : "";
+      h += '<p class="fw-meta">' + tag("forecast") + " NWS crest " + n.forecast.crestStage.toFixed(1) + " ft" + ahps + " " + esc(when(n.forecast.crestTime)) + flowEst + (n.forecast.category && n.forecast.category !== "no_flooding" ? " · " + esc(n.forecast.category.replace("_", " ")) : " · no flooding forecast") + "</p>";
+    }
     if ((s.flowCfs && s.flowCfs.stale) || (s.stageFt && s.stageFt.stale)) h += '<p class="fw-meta"><strong>Stale reading.</strong></p>';
     if (!s.stageFt && !s.flowCfs) h += unavailable("Not available from USGS right now.");
     h += '<p class="fw-meta"><a href="' + esc(s.url) + '" target="_blank" rel="noopener">USGS ' + esc(s.usgs) + "</a>" + (n ? ' · <a href="' + esc(n.url) + '" target="_blank" rel="noopener">NWPS ' + esc(n.lid) + "</a>" : "") + "</p></div>";
@@ -171,6 +192,9 @@
     }
     if (d.waterTemp && d.region && d.region.instrumentSet === "freshwater-lake") {
       rows.push(["Water temperature", d.waterTemp.usgs ? ("USGS " + d.waterTemp.usgs + " (00010)") : "No USGS sensor at the dam", d.waterTemp.usgs ? "Every 15 min" : "—", d.waterTemp.time ? when(d.waterTemp.time) : "unavailable", L && L.url]);
+    } else if (d.waterTemp && d.region && d.region.instrumentSet === "freshwater-river") {
+      const wtUrl = d.waterTemp.usgs ? ("https://waterdata.usgs.gov/monitoring-location/" + d.waterTemp.usgs + "/") : "";
+      rows.push(["Water temperature", d.waterTemp.usgs ? ("USGS " + d.waterTemp.usgs + " (00010)") : (d.waterTemp.note || "No current USGS 00010 on this reach"), d.waterTemp.usgs ? "Every 15 min" : "—", d.waterTemp.time ? when(d.waterTemp.time) : "unavailable", wtUrl]);
     }
     if (d.rain) {
       rows.push(["Rain, observed", "USGS " + d.rain.usgs + " (00045)", "15-min totals", d.rain.time ? when(d.rain.time) : "unavailable", L && L.url]);
