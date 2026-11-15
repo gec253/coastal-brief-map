@@ -2258,7 +2258,7 @@ class Handler(SimpleHTTPRequestHandler):
             body = catch_wall_public.media_bytes(*parsed_media) if parsed_media else None
             if not body:
                 return self.send_error(404, "not found")
-            return self._send_bytes(body, "image/webp", cache_s=3600)
+            return self._send_bytes(body, "image/webp", cache_s=300)
         if parsed.path.startswith("/featured/"):
             name = posixpath.basename(unquote(parsed.path))
             if not _HOME_PHOTO_RE.match(name):

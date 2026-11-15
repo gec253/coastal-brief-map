@@ -66,6 +66,9 @@ def _store_cache(photos_out: list[dict]) -> None:
     with _CACHE_LOCK:
         _PUBLIC_CACHE["t"] = time.time()
         _PUBLIC_CACHE["photos"] = [dict(p) for p in photos_out]
+        snapshot = [dict(p) for p in photos_out]
+    # Drop any cached derivative that is no longer the featured approved photo.
+    _evict_stale_media(snapshot)
 
 
 def _fetch_public_approved_sync() -> list[dict]:
@@ -114,9 +117,36 @@ def media_url(photo_id: str, variant: str) -> str:
     return "/catch-wall-media/%s/%s.webp" % (photo_id, variant)
 
 
-def media_bytes(photo_id: str, variant: str) -> bytes | None:
+def _approved_ids(photos: list[dict]) -> set[str]:
+    return {str(p.get("id") or "").lower() for p in photos if p.get("id")}
+
+
+def _featured_id(photos: list[dict]) -> str:
+    featured, _ = pick_featured(photos)
+    if not featured:
+        return ""
+    return str(featured.get("id") or "").lower()
+
+
+def _evict_stale_media(photos: list[dict]) -> None:
+    """Keep only the current featured photo's variants. Everything else goes."""
+    keep = _featured_id(photos)
+    if keep not in _approved_ids(photos):
+        keep = ""
     with _MEDIA_LOCK:
-        return _MEDIA_CACHE.get((photo_id, variant))
+        for key in list(_MEDIA_CACHE):
+            if not keep or key[0] != keep:
+                _MEDIA_CACHE.pop(key, None)
+
+
+def media_bytes(photo_id: str, variant: str) -> bytes | None:
+    """Return cached bytes only for the current featured, approved photo."""
+    pid = (photo_id or "").lower()
+    _, photos = _cache_snapshot()
+    if pid not in _approved_ids(photos) or pid != _featured_id(photos):
+        return None
+    with _MEDIA_LOCK:
+        return _MEDIA_CACHE.get((pid, variant))
 
 
 def parse_media_path(path: str) -> tuple[str, str] | None:
@@ -137,13 +167,21 @@ def _fetch_media(photo_id: str, variant: str, url: str) -> None:
             body = resp.read()
         if len(body) < 100 or not body.startswith(b"RIFF"):
             return
+        pid = (photo_id or "").lower()
+        _, photos = _cache_snapshot()
+        if pid not in _approved_ids(photos) or pid != _featured_id(photos):
+            return
         with _MEDIA_LOCK:
-            _MEDIA_CACHE[(photo_id, variant)] = body
+            _MEDIA_CACHE[(pid, variant)] = body
+            for key in list(_MEDIA_CACHE):
+                if key[0] != pid:
+                    _MEDIA_CACHE.pop(key, None)
     except Exception as exc:  # noqa: BLE001
         sys.stderr.write("catch-wall media %s/%s: %s\n" % (photo_id, variant, exc))
 
 
 def _warm_featured_media(photos: list[dict]) -> None:
+    _evict_stale_media(photos)
     featured, _ = pick_featured(photos)
     if not featured:
         return

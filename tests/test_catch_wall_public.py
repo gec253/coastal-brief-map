@@ -134,6 +134,7 @@ class Assemble(unittest.TestCase):
     def test_featured_uses_same_origin_media_when_cached(self):
         photo = dict(PHOTOS[0])
         pid = photo["id"]
+        cw._store_cache(PHOTOS)
         with cw._MEDIA_LOCK:
             cw._MEDIA_CACHE[(pid, "800")] = b"RIFF" + b"x" * 200
             cw._MEDIA_CACHE[(pid, "400")] = b"RIFF" + b"x" * 200
@@ -148,6 +149,7 @@ class Assemble(unittest.TestCase):
                 cw._MEDIA_CACHE.pop((pid, "800"), None)
                 cw._MEDIA_CACHE.pop((pid, "400"), None)
         # Re-do with cache held through assemble
+        cw._store_cache(PHOTOS)
         with cw._MEDIA_LOCK:
             cw._MEDIA_CACHE[(pid, "800")] = b"RIFF" + b"x" * 200
             cw._MEDIA_CACHE[(pid, "400")] = b"RIFF" + b"x" * 200
@@ -168,6 +170,8 @@ class PhotoCache(unittest.TestCase):
     def tearDown(self):
         cw._store_cache([])
         cw._PUBLIC_CACHE["t"] = 0.0
+        with cw._MEDIA_LOCK:
+            cw._MEDIA_CACHE.clear()
 
     def test_photo_cache_serves_stale_without_blocking(self):
         calls = []
@@ -334,3 +338,46 @@ class PublicPages(unittest.TestCase):
         self.assertIn("A place for real photographs", body)
         self.assertNotIn("class=\"cw-feature\"", body)
         self.assertNotIn("cw-open-frames", body)
+
+    def test_removed_photo_media_is_404_after_refresh(self):
+        pid = PHOTOS[0]["id"]
+        cw._store_cache(PHOTOS)
+        with cw._MEDIA_LOCK:
+            cw._MEDIA_CACHE[(pid, "800")] = b"RIFF" + b"x" * 200
+        try:
+            status, body, hdrs = self._get("/catch-wall-media/%s/800.webp" % pid)
+            self.assertEqual(status, 200)
+            self.assertEqual(hdrs.get("cache-control", ""), "public, max-age=300")
+            self.assertIsNotNone(cw.media_bytes(pid, "800"))
+            remaining = [p for p in PHOTOS if p["id"] != pid]
+            cw._store_cache(remaining)
+            status, _, _ = self._get("/catch-wall-media/%s/800.webp" % pid)
+            self.assertEqual(status, 404)
+            self.assertIsNone(cw.media_bytes(pid, "800"))
+        finally:
+            with cw._MEDIA_LOCK:
+                cw._MEDIA_CACHE.clear()
+            cw._store_cache([])
+            cw._PUBLIC_CACHE["t"] = 0.0
+
+    def test_non_approved_media_id_is_404(self):
+        cw._store_cache(PHOTOS)
+        fake = "00000000-0000-0000-0000-000000000099"
+        with cw._MEDIA_LOCK:
+            cw._MEDIA_CACHE[(fake, "800")] = b"RIFF" + b"x" * 200
+        try:
+            status, _, _ = self._get("/catch-wall-media/%s/800.webp" % fake)
+            self.assertEqual(status, 404)
+            self.assertIsNone(cw.media_bytes(fake, "800"))
+            # The current featured catch is still servable.
+            featured = PHOTOS[0]["id"]
+            with cw._MEDIA_LOCK:
+                cw._MEDIA_CACHE[(featured, "800")] = b"RIFF" + b"x" * 200
+            status, _, _ = self._get("/catch-wall-media/%s/800.webp" % featured)
+            self.assertEqual(status, 200)
+        finally:
+            with cw._MEDIA_LOCK:
+                cw._MEDIA_CACHE.clear()
+            cw._store_cache([])
+            cw._PUBLIC_CACHE["t"] = 0.0
+
