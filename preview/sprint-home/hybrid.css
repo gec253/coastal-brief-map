@@ -191,3 +191,18 @@ html[data-water="fresh"] .hz-img::before{background:linear-gradient(180deg,var(-
   .mz-loose.mz-n3 .mz-cta{grid-column:span 2}
   .mz-loose.mz-n0 .mz-cta{grid-column:1/-1}
 }
+/* Falls Lake lake-view horizon (4:3 crop centred on the pier) and linked credits */
+.hz-lake .hz-img{aspect-ratio:4/3}
+html[data-water="fresh"] .hz-lake .hz-img img{object-position:60% 50%}
+.hz-lake .hz-img::before{height:30%}
+.cr-a{display:inline-flex;align-items:center;min-height:44px;min-width:44px;color:inherit;text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:1px}
+.hz-c{line-height:1.2}
+@media (min-width:1000px){
+  .hz-lake .hz-img{aspect-ratio:21/9}
+  html[data-water="fresh"] .hz-lake .hz-img img{object-position:50% 64%}
+}
+@media (max-width:999px){
+  /* phones: keep the pier and people clear; the caption sits under the frame on the band colour */
+  .hz-lake .hz-img::after{height:18%}
+  .hz-lake .hz-cap{position:relative;padding:12px 16px 10px;background:var(--band-2)}
+}

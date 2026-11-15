@@ -51,6 +51,23 @@ BODIE = {
     "source_url": "https://npgallery.nps.gov/AssetDetail/3011f0d3-bb6a-4b82-8fef-ca0b654e8040",
 }
 
+FALLS_SRC = "https://www.flickr.com/photos/sergesegal/52741376400/"
+CC_BY_SA_2 = "https://creativecommons.org/licenses/by-sa/2.0/"
+FALLS = {
+    "id": "falls-lake-pier", "local": True, "w": 1280, "h": 960,
+    "base": PHOTO_ROUTE + "falls-lake-pier", "widths": (800, 1280),
+    "alt": "People on a wooden fishing pier at Falls Lake, with still water and woods beyond",
+    "title": "Fishing pier, Falls Lake, North Carolina",
+    "region": "March 5, 2023",
+    "hz_class": "hz-lake",
+    "credit_line": "Photo: Sergiy Galyonkin, CC BY-SA 2.0 (cropped and adjusted)",
+    "credit_html": (
+        'Photo: <a class="cr-a" href="%s" rel="noopener">Sergiy Galyonkin</a>, '
+        '<a class="cr-a" href="%s" rel="noopener license">CC BY-SA 2.0</a> (cropped and adjusted)'
+    ) % (FALLS_SRC, CC_BY_SA_2),
+    "source_url": FALLS_SRC,
+}
+
 # Copy reused verbatim from the glance contract (section 2.3 / 3.4).
 NOT_REPORTING = "Not reporting"
 GUST_MISSING = "gust not reported"
@@ -885,7 +902,7 @@ def _shell(variant: str, main: str, shot: bool, water: str = "salt") -> bytes:
 %(mast)s
 <main id="main">%(main)s</main>
 <footer class="ft"><div class="ft-in">
-<p>Private concept preview. Readings are live from NOAA, NWS and USGS through the same feed as the homepage. Photographs are approved Catch Wall and Coastal Life submissions, credited as stored, plus one public-domain National Park Service photograph.</p>
+<p>Private concept preview. Readings are live from NOAA, NWS and USGS through the same feed as the homepage. Photographs are approved Catch Wall and Coastal Life submissions, credited as stored, plus a public-domain National Park Service photograph and, on lake and river views, a CC BY-SA 2.0 Flickr photograph of Falls Lake (cropped and colour-adjusted).</p>
 %(replay)s</div></footer>
 <script>
 %(ijs)s
@@ -912,7 +929,27 @@ def _photos():
         "life": photo_by_id(ph, LIFE_PHOTO_ID),
         "life2": photo_by_id(ph, LIFE2_PHOTO_ID),
         "bodie": BODIE if (PHOTO_DIR / "bodie-sunrise-800.avif").is_file() else None,
+        "falls": FALLS if (PHOTO_DIR / "falls-lake-pier-800.avif").is_file() else None,
     }
+
+
+def _is_lake(rid: str) -> bool:
+    """Lake regions carry a "lake" block in the freshwater registry; rivers carry "river"."""
+    try:
+        import freshwater
+        r = freshwater.regions().get(rid) or {}
+        if "lake" in r or "river" in r:
+            return "lake" in r
+    except Exception:
+        pass
+    return rid.endswith("-lake")
+
+
+def credit_html(p: dict) -> str:
+    """Credit markup. Only our own FALLS constant carries pre-built link markup; everything else is escaped text."""
+    if p is FALLS or (p.get("id") == FALLS["id"] and p.get("credit_html") == FALLS["credit_html"]):
+        return FALLS["credit_html"]
+    return _esc(credit(p))
 
 
 BODIE_SLOT = "Bodie Island Lighthouse at sunrise. Ed's pick, but it is not in the approved Catch Wall or Coastal Life collections yet."
@@ -973,7 +1010,7 @@ def _mosaic_cell(p: dict | None, cls: str, sizes: str, slot: str = "", kicker: s
     return (
         '<figure class="mz %s"><div class="mz-img">%s</div>'
         '<figcaption><span class="mz-cap">%s</span><span class="mz-credit">%s</span></figcaption></figure>'
-    ) % (cls, img_html(p, sizes), _esc(caption(p) if cap is None else cap), _esc(credit(p)))
+    ) % (cls, img_html(p, sizes), _esc(caption(p) if cap is None else cap), credit_html(p))
 
 
 MZ_SIZES = {"mz-a": "(min-width: 1000px) 400px, 50vw", "mz-b": "(min-width: 1000px) 400px, 50vw",
@@ -985,10 +1022,17 @@ MZ_CTA = ('<aside class="mz mz-cta"><p class="mz-cta-k">Catch Wall</p><p class="
 
 def page_hybrid(m: dict, P: dict) -> str:
     fresh = m.get("water") == "fresh"
-    hero = (P["fresh"] or P["bodie"]) if fresh else (P["bodie"] or P["lead"])
+    lake = fresh and _is_lake((m.get("region") or {}).get("id") or "")
+    falls = P.get("falls")
+    if lake:      # lakes: Falls Lake pier leads; Weldon (a river frame) moves to the wide mosaic cell
+        hero, wide = (falls or P["fresh"] or P["bodie"]), P["fresh"]
+    elif fresh:   # rivers: Weldon (Roanoke River) leads; the Falls Lake frame takes the wide cell
+        hero, wide = (P["fresh"] or falls or P["bodie"]), falls or P["bodie"]
+    else:
+        hero, wide = (P["bodie"] or P["lead"]), P["fresh"]
     # Each photo gets the shape that suits it: the portrait diner frame (89eef7f7) takes the tall cell.
     want = [("mz-a", P["lead"]), ("mz-b", P["wide"]), ("mz-c", P["life"]), ("mz-e", P.get("life2")),
-            ("mz-d", P["bodie"] if fresh else P["fresh"])]
+            ("mz-d", wide)]
     placed = [(sh, x) for sh, x in want if x and x is not hero]
     # No placeholders: empty cells are dropped. A full set uses the composed mosaic; fewer falls back to a loose grid.
     full = len(placed) == len(want)
@@ -1003,11 +1047,11 @@ def page_hybrid(m: dict, P: dict) -> str:
     grid_cls = "mz-grid" + ("" if full else " mz-loose mz-n%d" % len(placed))
     if hero:
         horizon = (
-            '<section class="hz" aria-labelledby="hz-h"><div class="hz-img">%s</div>'
+            '<section class="hz%s" aria-labelledby="hz-h"><div class="hz-img">%s</div>'
             '<div class="hz-cap"><h2 id="hz-h" class="hz-t">%s</h2><p class="hz-m">%s</p><p class="hz-c">%s</p></div></section>'
-        ) % (img_html(hero, "100vw"), _esc(hero.get("title") or hero.get("location") or caption(hero)),
+        ) % ((" " + _esc(hero["hz_class"], True)) if hero.get("hz_class") else "", img_html(hero, "100vw"), _esc(hero.get("title") or hero.get("location") or caption(hero)),
              _esc(" · ".join(b for b in (hero.get("species"), hero.get("location") if hero.get("title") else None, hero.get("region")) if b)),
-             _esc(credit(hero)))
+             credit_html(hero))
     else:
         horizon = '<div class="hz-none" aria-hidden="true"></div>'
     return (

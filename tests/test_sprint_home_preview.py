@@ -106,9 +106,10 @@ ALL_PHOTOS = PHOTOS + [LIFE2, FRESH]
 
 
 def render(variant, payload, photos=PHOTOS, fresh=False):
+    fids = {"jordan-lake", "falls-lake", "neuse-river"} if fresh else set()
     with mock.patch.object(sprint_home, "approved_photos", return_value=photos), \
          mock.patch.object(sprint_home, "region_links", return_value=[]), \
-         mock.patch.object(sprint_home, "_freshwater_ids", return_value={"jordan-lake"} if fresh else set()):
+         mock.patch.object(sprint_home, "_freshwater_ids", return_value=fids):
         if fresh:
             import freshwater
             with mock.patch.object(freshwater, "assemble", return_value=(200, payload)):
@@ -421,8 +422,55 @@ class Refinement(unittest.TestCase):
         self.assertIn("mz-loose", h)
         self.assertNotIn("Awaiting", h[h.index('<section class="mzs"'):])
 
+    def _hz(self, h):
+        i = h.index('<section class="hz')
+        return h[i:h.index("</section>", i)]
+
+    def test_falls_lake_is_the_lake_hero(self):
+        cap = "Fishing pier, Falls Lake, North Carolina"
+        cred = ('Photo: <a class="cr-a" href="https://www.flickr.com/photos/sergesegal/52741376400/" rel="noopener">Sergiy Galyonkin</a>, '
+                '<a class="cr-a" href="https://creativecommons.org/licenses/by-sa/2.0/" rel="noopener license">CC BY-SA 2.0</a> (cropped and adjusted)')
+        for rid in ("jordan-lake", "falls-lake"):
+            pl = fresh_jordan()
+            pl["region"] = {"id": rid, "name": rid.replace("-", " ").title()}
+            h = render("hybrid", pl, photos=ALL_PHOTOS, fresh=True)
+            hz = self._hz(h)
+            self.assertIn('class="hz hz-lake"', hz, rid)
+            self.assertIn('<h2 id="hz-h" class="hz-t">%s</h2>' % cap, hz)
+            self.assertIn(cred, hz)
+            self.assertIn("/preview/sprint-home/photos/falls-lake-pier-800.avif", hz)
+            self.assertIn('width="1280" height="960"', hz)
+            self.assertNotIn("Weldon", hz)                 # Weldon is no longer the lake hero
+            self.assertNotIn("Wake County", h)
+            mz = h[h.index('<section class="mzs"'):]
+            self.assertIn("Weldon", mz)                     # ...but stays in the mosaic
+            self.assertEqual(h.count(cap), 1)
+        self.assertTrue((sprint_home.PHOTO_DIR / "falls-lake-pier-1280.webp").is_file())
+        credits = (sprint_home.DIR / "CREDITS.md").read_text()
+        for needle in ("https://www.flickr.com/photos/sergesegal/52741376400/", "Sergiy Galyonkin", "CC BY-SA 2.0",
+                       "54e27cdd2b952fe432de46c362ee237c0d43fe28e2830fa81a75ecc5f7d78f25", "share-alike", cap):
+            self.assertIn(needle, credits)
+        self.assertNotIn("Wake County", credits)
+
+    def test_river_view_keeps_weldon_hero(self):
+        pl = fresh_jordan()
+        pl["region"] = {"id": "neuse-river", "name": "Neuse River"}
+        h = render("hybrid", pl, photos=ALL_PHOTOS, fresh=True)
+        hz = self._hz(h)
+        self.assertIn('<h2 id="hz-h" class="hz-t">Weldon</h2>', hz)
+        self.assertNotIn("hz-lake", hz)
+        mz = h[h.index('<section class="mzs"'):]
+        self.assertIn("Fishing pier, Falls Lake, North Carolina", mz)
+        self.assertIn('href="https://creativecommons.org/licenses/by-sa/2.0/"', mz)
+
+    def test_salt_view_has_no_falls_photo(self):
+        h = render("hybrid", salt("wilmington"), photos=ALL_PHOTOS)
+        self.assertNotIn("falls-lake-pier", h)
+        self.assertNotIn('class="cr-a"', h.split("</style>", 1)[-1])
+
     def test_photo_path_is_strict(self):
         self.assertIsNotNone(sprint_home.photo_path("/preview/sprint-home/photos/bodie-sunrise-800.avif"))
+        self.assertIsNotNone(sprint_home.photo_path("/preview/sprint-home/photos/falls-lake-pier-1280.webp"))
         for bad in ("../server.py", "bodie-sunrise-800.png", "BODIE-800.avif", "x/../../a-800.webp"):
             self.assertIsNone(sprint_home.photo_path("/preview/sprint-home/photos/" + bad), bad)
 

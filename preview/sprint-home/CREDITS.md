@@ -25,6 +25,39 @@ Preview only (`/preview/home-*`, cookie-gated, noindex). Nothing here is deploye
 
 The `<img>` tags declare the original 1600×1200 ratio as width/height, so the layout never shifts.
 
+## Fishing pier, Falls Lake, North Carolina (local files, CC BY-SA 2.0)
+
+- **Title:** "Falls Lake"
+- **Author:** Sergiy Galyonkin
+- **Date:** March 5, 2023
+- **Source:** https://www.flickr.com/photos/sergesegal/52741376400/
+- **License:** Creative Commons Attribution-ShareAlike 2.0 Generic (CC BY-SA 2.0), https://creativecommons.org/licenses/by-sa/2.0/
+- **Original file used:** `/workspace/falls-lake/Falls_Lake_Galyonkin_52741376400.jpg`, 9528 × 6328 px. Ed's pick, supplied through Scout. I downloaded nothing.
+- **Original SHA-256:** 54e27cdd2b952fe432de46c362ee237c0d43fe28e2830fa81a75ecc5f7d78f25 (checked before any processing on Nov 15, 2026)
+- **Caption shown:** "Fishing pier, Falls Lake, North Carolina". The county isn't stated, because Falls Lake spans three counties and the pier's county isn't verified.
+- **Credit shown:** "Photo: Sergiy Galyonkin, CC BY-SA 2.0 (cropped and adjusted)"
+  - "Sergiy Galyonkin" links to the Flickr source.
+  - "CC BY-SA 2.0" links to the license deed.
+  - Both links have 44 px-tall tap areas.
+- **Changes made (this is an adaptation):**
+  - **Crop:** x=2466, y=186, w=5208, h=3906 in original pixels (4:3), centred on the pier, the people, the still water and the woods. It removes the photographer's watermark at lower left and the rocky low-water foreground. Part of the riprap shoreline at the pier's right still shows at the bottom right.
+  - **Colour:** gentle neutral correction back toward natural, done the same way across the whole frame:
+    - per-channel levels, black point R14 G14 B6 and white point R248 G252 B248
+    - gamma 1.04
+    - saturation 0.92, a luma-preserving blend toward Rec.709 grey
+  - No added saturation, sharpening, vignette, filters or local edits. Resized with Lanczos.
+  - The exact parameters are in `falls-lake-grade-params.json`, and the script that applied them is `falls_lake_grade.py`.
+- **License of the adaptation:** the cropped and colour-adjusted image is itself licensed **CC BY-SA 2.0** (share-alike). Anyone may reuse it under the same terms, with attribution to Sergiy Galyonkin and a note of the changes.
+- **Where it appears:** it is the hero photo on lake views (Falls Lake, Jordan Lake) and fills the wide mosaic cell on river views (Neuse River). It is not used on saltwater views.
+- **Derivatives in `photos/`:**
+
+| file | size | sha256 |
+|---|---|---|
+| falls-lake-pier-800.avif | 800×600 | 2401daac45df086b2bfa69364716f9e54025c4e23308594d27b80f37238cd097 |
+| falls-lake-pier-800.webp | 800×600 | aef79e9e513d3f51d81c07bd88ad931217fc4e91bfa1c2b74f4d241d774737f4 |
+| falls-lake-pier-1280.avif | 1280×960 | 5bf75a502249f4f0e28eea7fadac3be09d2f5bee3f5474f93e8e82b99bfb1f4a |
+| falls-lake-pier-1280.webp | 1280×960 | 02a4b3ebfe86b99be857fa1601bd2b930523c8df97a4aaf52c4086fabaf338e0 |
+
 ## Community photos (served from the existing approved store, not copied here)
 
 These are approved Catch Wall and Coastal Life uploads. They are read through the same approved-photo lookup the site already uses.
