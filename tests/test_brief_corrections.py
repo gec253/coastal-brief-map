@@ -415,7 +415,14 @@ class CaptainsTakeAndSources(unittest.TestCase):
         self.assertIn("Haw River flow at Moncure (USGS 02098206)", dict(jb["items"]))
         self.assertIn("1.6 miles below Jordan Lake Dam", dict(jb["items"])["Haw River flow at Moncure (USGS 02098206)"])
         # A single take: the old bottom section is gone
-        self.assertEqual(html.count("mb-take-body"), 1)
+        self.assertEqual(html.count('<div class="mb-take-body">'), 1)
+        self.assertEqual(html.count('id="cb-captains-take"'), 1)
+        self.assertEqual(html.count('id="mb-sources"'), 1)
+        self.assertEqual(html.count('<details class="mb-sources"'), 1)
+        self.assertIn("<summary>Sources and times</summary>", html)
+        glance = html.find('class="mb-glance"')
+        take = html.find("mb-summary mb-take")
+        self.assertTrue(0 < glance < take)
         self.assertNotIn("bite", html.lower())
         self.assertNotIn("fishing forecast", html.lower())
 
