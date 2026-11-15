@@ -72,7 +72,7 @@ class Compose(unittest.TestCase):
         self.assertTrue(b["preview"])
         self.assertNotIn("water temp", b["missing"])
         wt = dict(b["items"])["Water temp"]
-        self.assertIn("Inshore unavailable", wt); self.assertIn("63°F offshore at Nags Head offshore", wt)
+        self.assertIn("Not measured", wt); self.assertIn("63°F", wt); self.assertIn("offshore", wt.lower())
         self.assertIn("Inshore water temp", [k for k, _ in b["unavailable"]])
         self.assertNotIn("None", dict(b["items"])["Pressure"])
         self.assertEqual(b["validation"]["errors"], [])
@@ -83,7 +83,7 @@ class Compose(unittest.TestCase):
             html = brief_preview.page(brief_preview.compose("topsail", NOW))
         self.assertIn("Private preview · not published", html)
         self.assertIn('content="noindex, nofollow"', html)
-        self.assertIn("Unavailable in this area", html)
+        self.assertIn("Not measured in this area", html)
         self.assertIn('href="/preview/brief/wilmington"', html)
         self.assertNotIn('href="/brief?region=', html)
 

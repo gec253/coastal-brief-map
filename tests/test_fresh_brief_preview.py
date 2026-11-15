@@ -21,6 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import brief  # noqa: E402
 import brief_preview  # noqa: E402
+import preview_alerts  # noqa: E402
 import freshwater  # noqa: E402
 
 FRESH = ["jordan-lake", "neuse-river"]
@@ -65,7 +66,7 @@ def _jordan_payload():
         "river": [],
         "forecast": {"status": "ok", "periods": [{"name": "This Afternoon", "tempF": 68, "short": "Sunny",
                                                  "windDir": "SW", "windMph": "5 mph"}]},
-        "alerts": {"status": "ok", "items": []},
+        "alerts": preview_alerts.ok_coverage("jordan-lake"),
     }
 
 
@@ -108,7 +109,7 @@ def _neuse_payload(forecast=True):
         ],
         "forecast": {"status": "ok", "periods": [{"name": "This Afternoon", "tempF": 64, "short": "Partly cloudy",
                                                  "windDir": "SW", "windMph": "6 mph"}]},
-        "alerts": {"status": "ok", "items": []},
+        "alerts": preview_alerts.ok_coverage("neuse-river"),
     }
 
 
@@ -162,14 +163,16 @@ class Compose(unittest.TestCase):
         d = dict(b["items"])
         self.assertIn("212.23 ft (NGVD29)", d["Lake level"])
         self.assertIn("3.77 ft below the 216.0 ft guide curve", d["Lake level"])
-        self.assertIn("release plus local runoff", d["Release plus runoff"].lower())
-        self.assertIn("not the official gate outflow", d["Release plus runoff"])
-        self.assertIn("02098206", d["Release plus runoff"])
+        rel = d.get("Haw River flow at Moncure (USGS 02098206)") or d.get("Release plus runoff")
+        self.assertTrue(rel)
+        self.assertIn("02098206", rel)
+        self.assertIn("1.6 miles below Jordan Lake Dam", rel)
+        self.assertIn("not the official dam discharge", rel.lower())
         self.assertIn("Haw River near Bynum", d["Inflow"])
         self.assertIn("02096960", d["Inflow"])
         self.assertNotIn("Water temp", d)
         self.assertNotIn("water temp", b["missing"])
-        self.assertIn(("Water temp", "No USGS water-temperature sensor at Jordan Lake dam (02098197)."), b["unavailable"])
+        self.assertIn(("Water temp", "Water temp: Not measured. No official sensor in this area."), b["unavailable"])
         blob = " ".join(v for _, v in b["items"]) + " " + " ".join(b["take"])
         self.assertNotIn("Falls Dam", blob)
         self.assertNotIn("Falls Lake", blob)
@@ -194,7 +197,7 @@ class Compose(unittest.TestCase):
         self.assertNotIn("298", d["Neuse River at Smithfield"])
         self.assertIn("2.69 ft stage", d["Neuse River near Goldsboro"])
         self.assertNotIn("Water temp", d)
-        self.assertIn("No active USGS water-temperature sensor on the Neuse main stem", dict(b["unavailable"])["Water temp"])
+        self.assertIn("Not measured. No official sensor in this area.", dict(b["unavailable"])["Water temp"])
         blob = " ".join(v for _, v in b["items"]).lower()
         self.assertNotIn("depth", blob)
         self.assertNotRegex(" ".join(v for _, v in b["items"]), r"\d+°F at the dam")
@@ -214,14 +217,15 @@ class Compose(unittest.TestCase):
         for doc, rid in ((html, "jordan-lake"), (nhtml, "neuse-river")):
             self.assertIn("Private preview · not published", doc)
             self.assertIn('content="noindex, nofollow"', doc)
-            self.assertIn("Unavailable in this area", doc)
+            self.assertIn("Not measured in this area", doc)
             self.assertIn('href="/preview/brief/jordan-lake"', doc)
             self.assertIn('href="/preview/brief/neuse-river"', doc)
             self.assertNotIn('href="/brief?region=%s"' % rid, doc)
             self.assertIn("/preview/brief/%s" % rid, doc)
-        self.assertIn("not the official gate outflow", html)
+        self.assertIn("not the official dam discharge", html.lower())
         self.assertIn("stage only", nhtml.lower())
-        self.assertNotIn("depth", nhtml.lower())
+        self.assertIn("It is not water depth.", nhtml)
+        self.assertNotIn("depth", nhtml.lower().replace("it is not water depth.", ""))
 
 
 class Gate(unittest.TestCase):

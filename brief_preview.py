@@ -29,7 +29,10 @@ import time
 from datetime import datetime, timezone
 
 import brief
+import brief_strings
 import conditions
+import preview_alerts
+import preview_copy
 
 REGIONS = ("wilmington", "nags-head", "emerald-isle", "topsail")
 FRESH_REGIONS = ("jordan-lake", "neuse-river")
@@ -79,24 +82,16 @@ def compose(rid: str, now: datetime | None = None) -> dict:
 def _compose_salt(rid: str, now: datetime) -> dict:
     body = brief.build_salt(rid, now)
     cfg = _cfg(rid)
-    specs = cfg.get("readings") or {}
-    items = list(body["items"])
-    missing = list(body["missing"])
-    unavailable = []  # (label, why) shown with the dashboard's "unavailable" treatment
-    # brief.build_salt already writes "Inshore unavailable" plus the offshore reading when the region
-    # has no inshore sensor; list the region's note so the reader sees why.
-    if _no_sensor(specs.get("waterTemp")):
-        unavailable.append(("Inshore water temp", specs["waterTemp"].get("note") or "No sensor in this area."))
-    # Any other missing reading the region has no sensor for gets its note, never a substitute.
-    for name in list(missing):
-        kind = _MISS_KIND.get(name)
-        if kind and _no_sensor(specs.get(kind)):
-            missing.remove(name)
-            unavailable.append((name.capitalize(), specs[kind].get("note") or "No sensor in this area."))
-    tide = cfg.get("tide") or {}
-    if tide.get("observed") is False:
-        unavailable.append(("Observed water level", "Tide times are NOAA predictions only. " + (tide.get("note") or "")))
-    return _finish(rid, now, body, items, missing, unavailable)
+    st, payload = conditions.assemble(rid)
+    if st != 200:
+        payload = {}
+    body = preview_copy.relabel_salt(rid, body, payload or {}, cfg)
+    take = preview_copy.captains_take(rid, body, payload or {}, cfg, body.get("issuedEt") or brief._et(now).strftime("%a %b %-d, %-I:%M %p ET"))
+    body["captainsTake"] = take
+    body["summary"] = preview_copy.take_text(take)
+    body["readingSources"] = preview_copy.reading_sources(rid, payload or {}, body, cfg, now)
+    body["stageNote"] = False
+    return _finish(rid, now, body, body["items"], body["missing"], body.get("unavailable") or [])
 
 
 def _finish(rid: str, now: datetime, body: dict, items: list, missing: list, unavailable: list,
@@ -234,19 +229,19 @@ def _compose_jordan(d: dict, cfg: dict, now: datetime) -> tuple[list, list, list
         ch = L.get("change24hFt")
         ch_txt = ("%+.2f" % ch) if ch is not None else "n/a"
         items.append(("Lake level",
-                      "%.2f ft (NGVD29), %s; %s ft in 24 h." % (e["value"], vs_txt, ch_txt)))
+                      "%.2f ft (NGVD29), %s; %s ft in 24 h. %s" % (e["value"], vs_txt, ch_txt, preview_copy.JORDAN_GUIDE_NOTE)))
     else:
         missing.append("lake level")
     rel = d.get("release") or {}
     if rel.get("flowCfs"):
-        _fresh_add(fresh, "Release plus runoff", rel["flowCfs"], rel.get("usgs"))
+        _fresh_add(fresh, "Haw River at Moncure", rel["flowCfs"], rel.get("usgs"))
         if rel.get("stageFt") and rel["stageFt"].get("time") != rel["flowCfs"].get("time"):
             _fresh_add(fresh, "Stage at Moncure", rel["stageFt"], rel.get("usgs"))
         stage_bit = (", %.2f ft stage" % rel["stageFt"]["value"]) if rel.get("stageFt") else ""
         note = rel.get("note") or "Dam release plus local runoff, not the official gate outflow."
-        items.append(("Release plus runoff",
+        items.append((preview_copy.MONCURE_LABEL,
                       "%s at Haw River near Moncure (USGS %s)%s%s. %s" % (
-                          _cfs(rel["flowCfs"]["value"]), rel.get("usgs") or "", stage_bit, _band(rel), note)))
+                          _cfs(rel["flowCfs"]["value"]), rel.get("usgs") or "", stage_bit, _band(rel), preview_copy.MONCURE_SUB)))
     else:
         missing.append("release plus runoff")
         if rel.get("note"):
@@ -287,13 +282,15 @@ def _compose_jordan(d: dict, cfg: dict, now: datetime) -> tuple[list, list, list
     if al.get("items"):
         take.append("Check the %s before an early start." % al["items"][0]["event"])
     if not take:
+        none = preview_alerts.alert_line(al, "jordan-lake")
+        none = none[len("Alerts: "):] if none.startswith("Alerts: ") else none
         if vs is not None and abs(vs) < 0.5:
-            take.append("The lake is close to its 216.0 ft guide curve, and there are no NWS alerts at the dam.")
+            take.append("The lake is close to its 216.0 ft guide curve. " + none)
         elif vs is not None:
-            take.append("The lake is %.1f ft %s its 216.0 ft guide curve, and there are no NWS alerts at the dam."
-                        % (abs(vs), "below" if vs < 0 else "above"))
+            take.append("The lake is %.1f ft %s its 216.0 ft guide curve. %s"
+                        % (abs(vs), "below" if vs < 0 else "above", none))
         else:
-            take.append("No NWS alerts at the dam.")
+            take.append(none)
     return items, fresh, take[:4], missing, unavailable
 
 
@@ -332,7 +329,7 @@ def _compose_neuse(d: dict, cfg: dict, now: datetime) -> tuple[list, list, list,
         take.append("Flow is very low for the date at %s (regulated by Falls Dam)." %
                     ", ".join(b.get("label") or b.get("usgs") for b in low))
     if not take:
-        take.append("No NWS alerts at Clayton, and the gauges are not at action stage.")
+        take.append(preview_alerts.alert_line(al, "neuse-river")[len("Alerts: "):] + " The gauges are not at action stage.")
     return items, fresh, take[:4], missing, unavailable
 
 
@@ -345,11 +342,11 @@ def _glance_jordan(items: list) -> list[dict]:
     if m:
         sub = (vs.group(1) + " ft " + vs.group(2) + " guide") if vs else "NGVD29"
         cells.append({"key": "Lake level", "kind": "observed", "value": m.group(1), "unit": "ft", "sub": sub, "tone": "lake"})
-    rel = d.get("Release plus runoff") or ""
+    rel = d.get(preview_copy.MONCURE_LABEL) or d.get("Release plus runoff") or ""
     m = re.search(r"([\d.]+)\s*cfs", rel)
     if m:
-        cells.append({"key": "Release + runoff", "kind": "observed", "value": m.group(1).rstrip("0").rstrip(".") if "." in m.group(1) else m.group(1),
-                      "unit": "cfs", "sub": "Haw at Moncure, not official outflow", "tone": "lake"})
+        cells.append({"key": "Haw River at Moncure", "kind": "observed", "value": m.group(1).rstrip("0").rstrip(".") if "." in m.group(1) else m.group(1),
+                      "unit": "cfs", "sub": "USGS 02098206 · not official discharge", "tone": "lake"})
     rain = d.get("Rain") or ""
     m = re.search(r"([\d.]+)\s*in last 24 h", rain)
     if m:
@@ -390,20 +387,29 @@ def _compose_fresh(rid: str, now: datetime) -> dict:
     import freshwater
     st, d = freshwater.assemble(rid)
     if st != 200:
-        raise RuntimeError((d or {}).get("error") or "freshwater unavailable")
+        raise RuntimeError((d or {}).get("error") or "freshwater readings were not available")
+    d = preview_alerts.apply_coverage(rid, d)
     cfg = freshwater.regions().get(rid) or {}
     if rid == "jordan-lake":
         items, fresh, take, missing, unavailable = _compose_jordan(d, cfg, now)
+        items, missing, unavailable = preview_copy.polish_fresh_items(rid, items, missing, unavailable, d)
         glance = _glance_jordan(items)
         sources = "USGS, USACE Wilmington District, NWS"
     else:
         items, fresh, take, missing, unavailable = _compose_neuse(d, cfg, now)
+        items, missing, unavailable = preview_copy.polish_fresh_items(rid, items, missing, unavailable, d)
         glance = _glance_neuse(items)
         sources = "USGS, NWS"
+    issued = brief._et(now).strftime("%a %b %-d, %-I:%M %p ET")
+    body_tmp = {"items": items, "missing": missing, "issuedEt": issued}
+    take_model = preview_copy.captains_take(rid, body_tmp, d, cfg, issued)
     body = {"region": d.get("region") or {"id": rid, "name": cfg.get("name"), "area": cfg.get("area"),
                                           "anchor": cfg.get("anchor")},
             "waterType": "freshwater", "items": items, "freshness": fresh, "take": take,
-            "missing": missing, "sources": sources}
+            "missing": missing, "sources": sources,
+            "captainsTake": take_model, "summary": preview_copy.take_text(take_model),
+            "readingSources": preview_copy.reading_sources(rid, d, body_tmp, cfg, now),
+            "stageNote": preview_copy.has_stage(items)}
     return _finish(rid, now, body, items, missing, unavailable, glance=glance, payload=d)
 
 
@@ -417,7 +423,7 @@ def get(rid: str, now: datetime | None = None) -> tuple[int, dict]:
         try:
             b = compose(rid, now)
         except Exception as e:
-            return 503, {"ok": False, "error": "The preview brief could not be built right now (%s)." % (str(e) or type(e).__name__)}
+            return 503, {"ok": False, "error": brief_strings.not_available("Morning Brief") + " (%s)." % (str(e) or type(e).__name__)}
         _cache[rid] = (time.time(), b)
         return 200, b
 
@@ -490,10 +496,5 @@ def page(b: dict) -> str:
     out = out.replace('<p class="mb-why"> · ', '<p class="mb-why">Private preview, built on request · ', 1)
     out = out.replace("<title>Morning Brief", "<title>Preview · Morning Brief", 1)
     out = out.replace("https://thecoastalbrief.com/brief?region=%s" % esc(rid), "https://thecoastalbrief.com/preview/brief/%s" % esc(rid))
-    if b.get("unavailable"):
-        lis = "".join('<li><b>%s:</b> unavailable. %s</li>' % (esc(k), esc(w)) for k, w in b["unavailable"])
-        sec = ('<section class="mb-miss mb-unavail" aria-label="Unavailable in this area"><p><b>Unavailable in this area</b> '
-               '(no honest local sensor, so nothing is shown in its place):</p><ul>%s</ul></section>' % lis)
-        out = out.replace('  <script>\n  (function(){\n    var d=document.getElementById("mb-details");',
-                          sec + '\n  <script>\n  (function(){\n    var d=document.getElementById("mb-details");', 1)
+    out = preview_copy.inject_page(out, b)
     return out

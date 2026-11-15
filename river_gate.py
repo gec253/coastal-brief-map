@@ -43,6 +43,8 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
+import preview_alerts
+
 ET = ZoneInfo("America/New_York")
 
 USGS_FRESH_H = 3.0
@@ -137,11 +139,36 @@ def _find_river(payload: dict, usgs: str) -> dict:
     return {}
 
 
-def _alerts_check(payload: dict) -> dict:
+def _alerts_check(payload: dict, rid: str = "") -> dict:
+    """Every listed zone must succeed; partial coverage is a failure."""
     al = payload.get("alerts")
+    counties = preview_alerts.ALERT_COUNTIES.get(rid) or ()
     if al is None:
         return _check("alerts", "NWS alerts check", "failed-fetch",
                       "NWS alerts check is missing from the payload.", kind="observed")
+    if counties:
+        areas = preview_alerts.areas_phrase(counties)
+        ids = preview_alerts.zone_ids(counties)
+        cov = {c.get("id"): c for c in (al.get("coverage") or [])}
+        failed = []
+        for c in counties:
+            for zid in (c["id"], c.get("ncc")):
+                if not zid:
+                    continue
+                entry = cov.get(zid)
+                if not entry or entry.get("status") != "ok":
+                    failed.append("%s (%s)" % (c["name"], zid))
+        if failed:
+            reason = (
+                "NWS alerts check failed for %s; checked %s (%s)."
+                % (", ".join(failed), areas, ", ".join(ids))
+            )
+            return _check("alerts", "NWS alerts check", "failed-fetch", reason, kind="observed")
+        n = len(al.get("items") or [])
+        return _check("alerts", "NWS alerts check", "pass",
+                      "NWS alerts check succeeded for %s (%s)." % (
+                          areas, "no active alerts" if n == 0 else "%d active" % n),
+                      kind="observed")
     status = al.get("status")
     if status == "ok":
         n = len(al.get("items") or [])
@@ -292,7 +319,7 @@ def evaluate_neuse(payload: dict, now: datetime) -> list[dict]:
                 c["status"] = "optional"
         checks.append(c)
     checks.append(_neuse_forecast(payload, now))
-    checks.append(_alerts_check(payload))
+    checks.append(_alerts_check(payload, "neuse-river"))
     checks.append(_water_temp_na("No active USGS water-temperature sensor on the Neuse main stem (not a failure)."))
     checks.append(_optional_weather(payload, now))
     checks.append(_check("rain", "Rain", "n/a",
@@ -337,11 +364,11 @@ def evaluate_jordan(payload: dict, now: datetime) -> list[dict]:
         reason = "Flow at USGS %s (%s) could not be fetched from USGS." % (station, JORDAN_MONCURE_LABEL)
     else:
         reason = "Flow at USGS %s (%s) is missing." % (station, JORDAN_MONCURE_LABEL)
-    checks.append(_check("moncure-runoff", "Release plus runoff (Moncure)", st, reason, core=True,
+    checks.append(_check("moncure-runoff", "Haw River flow at Moncure (USGS 02098206)", st, reason, core=True,
                          value=(flow or {}).get("value") if isinstance(flow, dict) else None,
                          time=t, age_h=age, station=station, kind=_kind_obs(False, JORDAN_MONCURE_LABEL)))
 
-    checks.append(_alerts_check(payload))
+    checks.append(_alerts_check(payload, "jordan-lake"))
     checks.append(_water_temp_na("No USGS water-temperature sensor at Jordan Lake dam 02098197 (not a failure)."))
     checks.append(_optional_weather(payload, now))
 
