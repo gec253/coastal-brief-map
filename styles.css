@@ -197,9 +197,14 @@ header.site h1 {
   color: #fff;
   border: 0;
   border-radius: 999px;
-  padding: 6px 12px;
+  padding: 8px 12px;
   font-weight: 700;
   cursor: pointer;
+  min-width: 44px;
+  min-height: 44px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Phone: show the cover so page scroll is not stolen by the map */
@@ -207,7 +212,7 @@ header.site h1 {
   .map-shell { height: 400px; }
   .map-cover { display: flex; }
   .map-shell.is-active .map-cover { display: none; }
-  .map-shell.is-active .map-release { display: block; }
+  .map-shell.is-active .map-release { display: inline-flex; }
 }
 
 @media (min-width: 701px) {
@@ -1402,7 +1407,10 @@ a.site-title { display: inline-flex; align-items: center; gap: 10px; }
 .src-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 430px) {
   .inst-swell .src-name,
-  .inst-seas .src-name {
+  .inst-seas .src-name,
+  .inst-wind .src-name,
+  .inst-tide .src-name,
+  #i-harbor .src-name {
     white-space: normal;
     overflow: visible;
     text-overflow: unset;
@@ -2653,8 +2661,8 @@ html[data-concept] .mast-top .mast-kicker {
 }
 html[data-concept] header.site[data-identity] .theme-toggle {
   margin: 0 0 0 auto;
-  min-height: 36px;
-  min-width: 36px;
+  min-height: 44px;
+  min-width: 44px;
   color: var(--id-ivory);
   border-color: rgba(243, 230, 208, 0.45);
   font-size: 0.72rem;
@@ -2781,7 +2789,7 @@ html[data-concept] .mast-mono {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 32px;
+  min-width: 44px;
   min-height: 44px;
   padding: 0 2px;
   font-family: var(--f-display);
@@ -2809,7 +2817,7 @@ html[data-concept] .compact-bar .rn-k { display: none; }
 html[data-concept] .compact-bar .rn-btn {
   width: 100%;
   max-width: 100%;
-  min-height: 36px;
+  min-height: 44px;
   color: var(--id-ivory);
   border-color: rgba(243, 230, 208, 0.35);
   background: transparent;

@@ -90,3 +90,29 @@ class HomepageBoot(unittest.TestCase):
         self.assertNotIn(b"Loading readings", out)
         self.assertNotIn(b"is-booting", out)
         self.assertNotIn(b"<!--boot-json-->", out)
+
+    def test_round0_half_up(self):
+        self.assertEqual(homepage_boot._round0(4.5), 5)
+        self.assertEqual(homepage_boot._round0(58.5), 59)
+        self.assertEqual(homepage_boot._round0(58.4), 58)
+        self.assertIsNone(homepage_boot._round0(None))
+
+    def test_glance_uses_round0(self):
+        d = {
+            "readings": {
+                "wind": {"status": "ok", "values": {"speedKt": 2.5, "gustKt": 4.5, "dirCompass": "WNW"}},
+                "seas": {"status": "ok", "values": {"heightFt": 1.6, "dominantPeriodS": 8.5, "meanDirCompass": "E"}},
+                "waterTemp": {"status": "ok", "values": {"f": 58.5}},
+            },
+            "tides": {"status": "ok", "events": []},
+        }
+        glance = homepage_boot.render_glance_html(d)
+        self.assertIn("gust 5 kt", glance)
+        self.assertIn("59°F", glance)
+        self.assertIn("WNW 3 kt", glance)
+        self.assertIn("9 s", glance)
+        d["readings"]["waterTemp"]["values"]["f"] = 58.4
+        self.assertIn("58°F", homepage_boot.render_glance_html(d))
+        d["readings"]["wind"]["values"]["gustKt"] = None
+        self.assertIn(">observed<", homepage_boot.render_glance_html(d))
+

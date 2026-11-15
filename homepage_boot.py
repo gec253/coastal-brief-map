@@ -5,6 +5,7 @@ Does not change data sources, regions, or assembly rules.
 """
 from __future__ import annotations
 
+import decimal
 import html
 import json
 import re
@@ -80,6 +81,19 @@ def _is_num(v) -> bool:
     return isinstance(v, (int, float)) and v == v and v not in (float("inf"), float("-inf"))
 
 
+def _round0(n):
+    """Nearest int, ties away from zero (decimal ROUND_HALF_UP).
+
+    For the non-negative glance readings (knots, seconds, °F) this matches
+    JS Math.round and Number#toFixed(0): 4.5 → 5, 58.5 → 59, 58.4 → 58.
+    JS Math.round(-2.5) is -2 (ties toward +Infinity); this helper returns
+    -3. Glance values are not negative. None and non-numeric inputs return None.
+    """
+    if n is None or not _is_num(n):
+        return None
+    return int(decimal.Decimal(str(n)).to_integral_value(rounding=decimal.ROUND_HALF_UP))
+
+
 def _fmt(v, d=0) -> str:
     if not _is_num(v):
         return "—"
@@ -123,18 +137,18 @@ def render_glance_html(d: dict) -> str:
     tides = d.get("tides") or {}
     tide_r = {"status": "ok"} if tides.get("status") == "ok" else None
     wind_v = (
-        (("%s " % w["dirCompass"] if w.get("dirCompass") else "") + str(round(w["speedKt"])) + " kt")
+        (("%s " % w["dirCompass"] if w.get("dirCompass") else "") + str(_round0(w["speedKt"])) + " kt")
         if _is_num(w.get("speedKt"))
         else "—"
     )
-    wind_s = ("gust " + str(round(w["gustKt"])) + " kt") if _is_num(w.get("gustKt")) else "observed"
+    wind_s = ("gust " + str(_round0(w["gustKt"])) + " kt") if _is_num(w.get("gustKt")) else "observed"
     seas_v = (_fmt(se["heightFt"], 1) + " ft") if _is_num(se.get("heightFt")) else "—"
     seas_s = (
-        (str(round(se["dominantPeriodS"])) + " s" + ((" · " + se["meanDirCompass"]) if se.get("meanDirCompass") else ""))
+        (str(_round0(se["dominantPeriodS"])) + " s" + ((" · " + se["meanDirCompass"]) if se.get("meanDirCompass") else ""))
         if _is_num(se.get("dominantPeriodS"))
         else "observed"
     )
-    water_v = (str(round(wt["f"])) + "°F") if _is_num(wt.get("f")) else "—"
+    water_v = (str(_round0(wt["f"])) + "°F") if _is_num(wt.get("f")) else "—"
     tide_k = "Next high" if ev and ev.get("type") == "H" else ("Next low" if ev else "Tide")
     tide_v = _clock(ev["t"]) if ev else "—"
     tide_s = (_fmt(ev["v"], 1) + " ft predicted") if ev and _is_num(ev.get("v")) else "predicted"
