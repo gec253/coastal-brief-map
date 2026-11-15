@@ -91,6 +91,32 @@ class HomepageBoot(unittest.TestCase):
         self.assertNotIn(b"is-booting", out)
         self.assertNotIn(b"<!--boot-json-->", out)
 
+    def test_inject_paints_current_region_option(self):
+        src = (ROOT / "index.html").read_bytes()
+        d = {
+            "ok": True,
+            "generatedAt": "2026-11-14T14:18:42Z",
+            "region": {"id": "wilmington", "name": "Wilmington · Wrightsville Beach", "area": "Wrightsville Beach, North Carolina"},
+            "readings": {},
+            "tides": {"status": "ok", "events": []},
+            "alerts": {"status": "ok", "items": []},
+        }
+        listed = {"ok": True, "default": "crystal-coast", "regions": [
+            {"id": "crystal-coast", "name": "Morehead City · Beaufort"},
+            {"id": "wilmington", "name": "Wilmington · Wrightsville Beach"},
+        ]}
+        real_listed = homepage_boot.conditions.listed_regions
+        real_assemble = homepage_boot.conditions.assemble
+        homepage_boot.conditions.listed_regions = lambda preview=False: listed
+        homepage_boot.conditions.assemble = lambda region_id=None, preview=False: (200, d)
+        try:
+            out = homepage_boot.inject(src, "wilmington", preview=False)
+        finally:
+            homepage_boot.conditions.listed_regions = real_listed
+            homepage_boot.conditions.assemble = real_assemble
+        self.assertIn('value="wilmington" selected'.encode() + b">" + "Wilmington · Wrightsville Beach".encode() + b"</option>", out)
+        self.assertNotIn(b'value="crystal-coast">Morehead City', out)
+
     def test_round0_half_up(self):
         self.assertEqual(homepage_boot._round0(4.5), 5)
         self.assertEqual(homepage_boot._round0(58.5), 59)
