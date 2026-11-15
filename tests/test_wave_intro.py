@@ -97,10 +97,11 @@ class WaveIntroPreview(unittest.TestCase):
 
     def test_duration_is_brief(self):
         import wave_intro
-        # Ed (v4): 2.0s hard max in total, aiming for about 1.7-1.9s.
-        self.assertGreaterEqual(wave_intro.DURATION_MS, 1400)
-        self.assertLessEqual(wave_intro.DURATION_MS, 2000)
-        self.assertLessEqual(wave_intro.HARD_MAX_MS, 2000)
+        # Ed (v5): 1.2-1.6s total, hard cap 1.8s even after a stall.
+        self.assertGreaterEqual(wave_intro.DURATION_MS, 1200)
+        self.assertLessEqual(wave_intro.DURATION_MS, 1600)
+        self.assertLessEqual(wave_intro.HARD_MAX_MS, 1800)
+        self.assertGreaterEqual(wave_intro.HARD_MAX_MS, wave_intro.DURATION_MS)
         status, body, _ = self._intro()
         self.assertEqual(status, 200)
         self.assertIn(b"var DURATION = %d" % wave_intro.DURATION_MS, body)
@@ -109,7 +110,7 @@ class WaveIntroPreview(unittest.TestCase):
         self.assertIn(b"getBoundingClientRect", body)
         self.assertIn(b"wave-settle", body)
         self.assertIn(b"mapRule", body)
-        self.assertIn(b"wi-aged-brass", body)
+        self.assertIn(b"wi-brass-fade", body)
 
     def test_playback_rules(self):
         status, body, _ = self._intro()
@@ -127,7 +128,11 @@ class WaveIntroPreview(unittest.TestCase):
         self.assertIn(b'params.get("play") === "1"', body)
         self.assertIn(b'q.get("play") === "1"', body)
         self.assertIn(b"prefers-reduced-motion: reduce", body)
-        self.assertIn(b"var REDUCE_MS = 200", body)
+        # v5: reduced motion paints no overlay at all (the page with its
+        # static rule), decided in the head before first paint.
+        self.assertNotIn(b"REDUCE_MS", body)
+        boot = body[body.find(b'var force = q.get("play") === "1"'):]
+        self.assertRegex(boot, rb'if \(reduce\) \{\s*//[^\n]*\n\s*document\.documentElement\.classList\.add\("intro-seen"\);\s*return;')
         self.assertIn(b"skip.focus()", body)
         self.assertIn(b"Escape", body)
         # ?play=1 is still a review override.
@@ -183,24 +188,42 @@ class WaveIntroPreview(unittest.TestCase):
         # One live swell: a crest that travels across x on its own clock,
         # and a composited fill layer moved only by transform.
         self.assertIn(b"function crestAt(t)", body)
-        self.assertIn(b"function delay(u, t, lag)", body)
+        self.assertIn(b"function delay(u, t, amp)", body)
         self.assertIn(b'class="wi-fill"', body)
         self.assertIn(b"translate3d(0,", body)
         # Stalls are capped so a long first frame never shows as a jump.
         self.assertIn(b"Math.min(dt, Math.max(34, 2 * ema))", body)
-        # The 2.0s cap carries the clock forward instead of cutting the wave.
+        # The 1.8s cap carries the clock forward instead of cutting the wave.
         self.assertIn(b"var floor = DURATION - (HARD_MAX - (now - playT0));", body)
         self.assertNotIn(b"DURATION + 600", body)
-        # The brass line lands on the measured rule and hands off in-frame.
-        self.assertIn(b"smin(brassRaw(x, t), ruleBox.y, SMIN_K)", body)
-        self.assertIn(b"intro-rule-live", body)
-        # v4: a soft, layered leading edge (translucent wash layers and
-        # trailing ripples) instead of a hard mask, with no filters or blur,
-        # and the overlay only leaves once the faintest wash is off-screen.
-        self.assertGreaterEqual(body.count(b'class="wi-wash '), 3)
-        self.assertGreaterEqual(body.count(b"wi-ripple wi-ripple-"), 1)
-        self.assertIn(b"function washY(x, t, f)", body)
-        self.assertIn(b"state.minWash > vh + 1", body)
+        # v5: ONE swell. No stepped translucent wash bands, no trailing
+        # ripples, no mid-sequence rule swap; two or three opaque contours
+        # (navy body + one or two bands) on the same crest.
+        self.assertNotIn(b"wi-wash", body)
+        self.assertNotIn(b"wi-ripple", body)
+        self.assertNotIn(b"washY", body)
+        self.assertNotIn(b"intro-rule-live", body)
+        self.assertNotIn(b"intro-reduce", body)
+        contours = body.count(b'class="wi-contour ') + body.count(b'class="wi-sheet"')
+        self.assertGreaterEqual(contours, 2)
+        self.assertLessEqual(contours, 3)
+        self.assertIn(b"var LAGS = [", body)
+        self.assertIn(b"var AMPS = [", body)
+        self.assertIn(b"function layerY(x, t, k)", body)
+        self.assertNotRegex(css, rb"\.wi-contour[^{]*\{[^}]*(fill-)?opacity")
+        self.assertNotRegex(css, rb"\.wi-sheet[^{]*\{[^}]*(fill-)?opacity")
+        # The real masthead rule is in its final state throughout: never
+        # hidden, faded or swapped while the intro plays; the swell's brass
+        # edge settles onto it through a smooth monotone remap.
+        self.assertNotRegex(css, rb"intro-play[^{]*\.wave-settle")
+        self.assertNotRegex(css, rb"\.wave-settle[^{]*\{[^}]*opacity:\s*0")
+        self.assertNotIn(b"ensureAgedBrass", body)
+        self.assertIn(b"function settle(y)", body)
+        self.assertIn(b"Math.tanh((y - ruleBox.y) / SETTLE_W)", body)
+        # The overlay is removed only once the whole swell is off-screen.
+        self.assertIn(b"state.minTop > vh + 3", body)
+        # The page itself is never restyled by the intro.
+        self.assertNotRegex(css, rb"\.intro-play[^{]*(body|main|header|\.mast)[^{]*\{")
         overlay = body[body.find(b'id="wave-intro"'):body.find(b'id="wi-skip"')]
         for banned in (b"<filter", b"feGaussianBlur", b"<mask", b"blur("):
             self.assertNotIn(banned, overlay)
