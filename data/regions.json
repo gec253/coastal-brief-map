@@ -1552,7 +1552,7 @@
       "waterType": "freshwater",
       "instrumentSet": "freshwater-river",
       "name": "Cape Fear River (Lillington to Lock 1)",
-      "area": "Harnett, Cumberland, Bladen & Columbus counties",
+      "area": "Harnett, Cumberland & Bladen counties",
       "anchor": {
         "label": "Cape Fear River at Fayetteville (USGS 02104000)",
         "lat": 35.0497222,

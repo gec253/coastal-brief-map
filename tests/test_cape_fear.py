@@ -36,6 +36,11 @@ HUSKE_NOTE = (
     "from the USGS location number 02105500."
 )
 ALERT_NAMES = preview_zones.format_alert_areas(preview_alerts.zone_ids(rid="cape-fear-river"))
+
+def _county_names(phrase: str) -> list[str]:
+    s = re.sub(r"\bcounties\b|\bcounty\b", "", phrase or "", flags=re.I)
+    s = s.replace("&", " and ")
+    return [p.strip().lower() for p in re.split(r",| and ", s) if p.strip()]
 ZONE_RE = re.compile(r"\b(?:NCZ|NCC)\d+\b")
 FORECAST_FLOWS = {"02102500": 8888, "02104000": 7777, "02105500": 6666, "02105769": 5555}
 
@@ -77,7 +82,7 @@ def _cape(hours=0.7, forecast_h=3.0, alerts="ok", water_temp=None):
         "region": {
             "id": RID,
             "name": "Cape Fear River (Lillington to Lock 1)",
-            "area": "Harnett, Cumberland, Bladen & Columbus counties",
+            "area": "Harnett, Cumberland & Bladen counties",
             "anchor": freshwater.regions()[RID]["anchor"],
             "waterType": "freshwater",
             "instrumentSet": "freshwater-river",
@@ -139,6 +144,17 @@ class ConfigAndUnchanged(unittest.TestCase):
         self.assertEqual(brief.enabled_regions(True), ["crystal-coast", "hatteras", "falls-lake"])
         self.assertNotIn(RID, brief.enabled_regions(True))
         self.assertNotIn(RID, brief.enabled_regions(False))
+
+
+    def test_header_counties_match_alert_checked_counties(self):
+        """The /lake and brief header names the same counties the alert check covers."""
+        area = freshwater.regions()[RID]["area"]
+        alert_phrase = preview_zones.format_alert_areas(preview_alerts.zone_ids(rid=RID))
+        self.assertEqual(_county_names(area), _county_names(alert_phrase))
+        self.assertEqual(_county_names(area), ["harnett", "cumberland", "bladen"])
+        self.assertNotIn("columbus", " ".join(_county_names(area)))
+        self.assertEqual(area, "Harnett, Cumberland & Bladen counties")
+        self.assertEqual(alert_phrase, ALERT_NAMES)
 
     def test_public_pickers_omit_cape_fear(self):
         for rel in ("lake.html", "region-nav.js", "dashboard.js"):
