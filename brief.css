@@ -489,7 +489,7 @@ a { color: inherit; }
     --hl: transparent;
   }
   body { background: #fff; color: #111; font-size: 11pt; }
-  .mb-top, .mb-tools, .mb-print, .theme-toggle, .mb-ad, .skip, .mb-badge, .mb-details > summary { display: none !important; }
+  .mb-top, .mb-tools, header.site, .compact-bar, .mb-print, .theme-toggle, .mb-ad, .skip, .mb-badge, .mb-details > summary { display: none !important; }
   .mb-details .mb-body { margin-top: 12pt; }
   .mb { max-width: none; padding: 0; }
   .mb h1 { font-size: 22pt; }
@@ -652,4 +652,22 @@ html[data-concept] #rn-btn,
 html[data-concept] .mast-mono {
   box-sizing: border-box;
   min-height: 44px;
+}
+
+html[data-concept] header.site[data-identity] .mb-print {
+  margin: 0 8px 0 auto;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 12px;
+  color: var(--id-ivory, #F3E6D0);
+  border-color: rgba(243, 230, 208, 0.45);
+  font-size: 0.72rem;
+  background: transparent;
+}
+html[data-concept] header.site[data-identity] .mb-print + .theme-toggle { margin-left: 0; }
+html[data-concept] header.site[data-identity] .mb-print:hover,
+html[data-concept] header.site[data-identity] .mb-print:focus-visible {
+  background: rgba(196, 163, 106, 0.18);
+  outline: 3px solid var(--id-brass, #C4A36A);
+  outline-offset: 2px;
 }

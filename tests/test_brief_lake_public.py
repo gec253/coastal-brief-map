@@ -88,6 +88,23 @@ class BriefLakePublic(unittest.TestCase):
         self.assertIn(b'href="/brief.css"', body)
         self.assertNotIn(b'href="/styles.css"', body)
 
+    def test_brief_print_button_is_present_and_hidden_in_print(self):
+        btn = b'<button type="button" class="mb-print" onclick="window.print()">Print</button>'
+        for path in ("/brief?region=crystal-coast", "/brief?region=falls-lake"):
+            status, body = self._get(path)
+            self.assertEqual(status, 200, path)
+            self.assertIn(btn, body, path)
+            self.assertEqual(body.count(b'class="mb-print"'), 1, path)
+        status, body = self._get("/lake")
+        self.assertEqual(status, 200)
+        self.assertNotIn(b'class="mb-print"', body)
+        status, body = self._get("/")
+        self.assertEqual(status, 200)
+        self.assertNotIn(b'class="mb-print"', body)
+        css = (ROOT / "brief.css").read_text()
+        self.assertIn("@media print", css)
+        self.assertRegex(css, r"\.mb-print,\s*\.theme-toggle[^{]*\{\s*display:\s*none")
+
     def test_brief_css_has_fallbacks_nowrap_and_dark_navy(self):
         css = (ROOT / "brief.css").read_text()
         self.assertIn("font-display:optional", css)

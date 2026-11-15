@@ -1812,6 +1812,18 @@ def _folio_chrome(current: str) -> bytes:
     }.get(current)
     if tab:
         header = header.replace(tab[0], tab[1], 1)
+    if current == "brief":
+        toggle = (
+            b'<button type="button" id="theme-toggle" class="theme-toggle" '
+            b'aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>'
+        )
+        if toggle not in header:
+            raise RuntimeError("folio chrome: theme toggle missing")
+        print_btn = (
+            b'<button type="button" class="mb-print" onclick="window.print()">'
+            b"Print</button>\n      "
+        )
+        header = header.replace(toggle, print_btn + toggle, 1)
     return header
 
 
