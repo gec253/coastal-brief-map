@@ -1076,6 +1076,7 @@ import conditions  # noqa: E402
 import homepage_boot  # noqa: E402
 import photos  # noqa: E402
 import catch_wall_public  # noqa: E402
+import catch_wall_preview  # noqa: E402
 import windgrid  # noqa: E402
 import freshwater  # noqa: E402
 import brief  # noqa: E402
@@ -2216,6 +2217,7 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 <a class="card" href="/preview/intro?play=1"><b>Wave intro</b><span>Private signature intro over the public homepage. Plays on a new visit, not within 12 hours or from an in-site link. Use ?play=1 to review. Skip or press Escape.</span></a>
 <a class="card" href="/preview/home-heritage"><b>Homepage concept A · Heritage</b><span>Private sprint concept: Carolina maritime heritage, live instruments first.</span></a>
 <a class="card" href="/preview/home-editorial"><b>Homepage concept B · Editorial</b><span>Private sprint concept: magazine grid, photo-led, live instruments first.</span></a>
+<a class="card" href="/preview/catch-wall"><b>Catch Wall redesign</b><span>Private preview: the Catch Wall as editorial photo pages, saltwater and freshwater side by side.</span></a>
 <a class="card" href="/preview/home-hybrid"><b>Homepage concept C · Hybrid</b><span>Private sprint concept: heritage instruments with an editorial grid.</span></a>
 <a class="card" href="/catch-wall"><b>Catch Wall photo submissions</b><span>Private test: the Share form and the review page work in this browser, even while public uploads stay off. Photos you send wait in the pending queue until you approve them.</span></a>
 <a class="card" href="/preview/photos-check"><b>Photo setup check</b><span>A private status report: storage, image tools, and the pending queue. It never shows keys.</span></a>
@@ -2335,6 +2337,16 @@ class Handler(SimpleHTTPRequestHandler):
             return self._identity_preview_route(parsed)
         if parsed.path == "/preview/intro":
             return self._wave_intro_route(parsed)
+        if parsed.path == catch_wall_preview.ROUTE:
+            # Private Catch Wall redesign. Same cookie as /preview; 404 without it. Presentation only.
+            if not self._preview_ok():
+                return self.send_error(404, "not found")
+            try:
+                data = catch_wall_preview.page()
+            except Exception as e:
+                sys.stderr.write("catch wall preview failed: %s\n" % e)
+                return self.send_error(500, "preview failed")
+            return self._send_private(None, "text/html; charset=utf-8", data)
         if parsed.path in sprint_home.ROUTES:
             return self._sprint_home_route(parsed)
         if parsed.path.startswith(sprint_home.PHOTO_ROUTE):
