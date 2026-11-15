@@ -1549,6 +1549,159 @@ def _folio_rail_html() -> bytes:
 """.encode("utf-8")
 
 
+
+def _folio_water_cards() -> list[dict]:
+    """Credited photographs for On the Water. Skip the pinned Bodie strip already above the map."""
+    cards = []
+    for photo in _load_featured_photos():
+        if photo.get("id") == "bodie-sunrise" or photo.get("pinned") or photo.get("default"):
+            continue
+        cards.append(photo)
+    return cards
+
+
+def _folio_water_html() -> bytes:
+    """Editorial discovery below the map: one featured photo, then compact credited cards."""
+    photos = _folio_water_cards()
+    if not photos:
+        return b""
+
+    items = []
+    for i, photo in enumerate(photos):
+        src = str(photo.get("src") or "").replace("/preview/home/photos/", "/featured/")
+        alt = html.escape(str(photo.get("alt") or ""), quote=True)
+        title = html.escape(str(photo.get("title") or ""))
+        kicker = html.escape(str(photo.get("kicker") or "Place"))
+        credit = html.escape(str(photo.get("credit_line") or photo.get("credit") or "Photograph"))
+        url = html.escape(str(photo.get("source_url") or ""), quote=True)
+        focal = html.escape(str(photo.get("focal") or "50% 50%"), quote=True)
+        iw = int(photo.get("width") or 1600)
+        ih = int(photo.get("height") or 1067)
+        srcset_avif = "%s-w800.avif 800w, %s-w1280.avif 1280w" % (src, src)
+        srcset_webp = "%s-w800.webp 800w, %s-w1280.webp 1280w" % (src, src)
+        credit_html = (
+            '<a href="%s" rel="noopener noreferrer">%s</a>' % (url, credit) if url else credit
+        )
+        featured_cls = " is-featured" if i == 0 else ""
+        sizes = "(min-width: 1100px) 60vw, 100vw" if i == 0 else "120px"
+        items.append("""<li>
+  <article class="folio-water-card%s">
+    <div class="folio-water-frame">
+      <picture>
+        <source type="image/avif" srcset="%s" sizes="%s">
+        <source type="image/webp" srcset="%s" sizes="%s">
+        <img src="%s-w800.webp" alt="%s" width="%d" height="%d" loading="lazy" decoding="async" style="object-position:%s">
+      </picture>
+    </div>
+    <div class="folio-water-copy">
+      <p class="folio-water-k">Place · %s</p>
+      <h3>%s</h3>
+      <p class="folio-water-credit">%s</p>
+    </div>
+  </article>
+</li>
+""" % (featured_cls, srcset_avif, sizes, srcset_webp, sizes, src, alt, iw, ih, focal, kicker, title, credit_html))
+
+    markup = """<section class="folio-water" aria-labelledby="folio-water-h">
+  <p class="folio-water-kicker">From the rivers to the sounds to the sea</p>
+  <h2 class="folio-water-title" id="folio-water-h">On the water</h2>
+  <p class="folio-water-dek">Places, catches, stories, and water culture from the coast and the inland rivers.</p>
+  <ul class="folio-water-grid">
+    %s
+  </ul>
+</section>
+""" % "".join(items)
+    return markup.encode("utf-8")
+
+
+def _folio_fold_alerts(data: bytes) -> bytes:
+    """Collapse long county/zone lists; keep event names, until-lines, and the NWS link."""
+
+    def fold(m: re.Match[bytes]) -> bytes:
+        head, meta = m.group(1), m.group(2).decode("utf-8")
+        if " · " not in meta:
+            return m.group(0)
+        until, zones = meta.split(" · ", 1)
+        parts = [z.strip() for z in zones.split(";") if z.strip()]
+        if len(parts) < 2 and len(zones) < 28:
+            return m.group(0)
+        label = "%d zone%s" % (len(parts), "" if len(parts) == 1 else "s")
+        return (
+            b'<div class="al-item">'
+            + head
+            + b'<span class="al-meta">'
+            + html.escape(until).encode("utf-8")
+            + b"</span>"
+            + b'<details class="al-zones"><summary>'
+            + html.escape(label).encode("utf-8")
+            + b"</summary><p>"
+            + html.escape(zones).encode("utf-8")
+            + b"</p></details></div>"
+        )
+
+    return re.sub(
+        br'<div class="al-item">(<span class="al-dot"></span><span class="al-ev">[^<]*</span>)'
+        br'<span class="al-meta">([^<]*)</span></div>',
+        fold,
+        data,
+    )
+
+
+_FOLIO_MAP_END = b'<p class="fine" id="map-status">Map has not loaded yet.</p>\n    </section>'
+
+_FOLIO_UI_JS = """<script>
+(function(){
+  if (document.documentElement.getAttribute("data-home") !== "folio") return;
+
+  function wrapAlerts(){
+    var box = document.getElementById("dash-alert");
+    if (!box) return;
+    box.querySelectorAll(".al-item").forEach(function(item){
+      if (item.querySelector("details.al-zones")) return;
+      var meta = item.querySelector(".al-meta");
+      if (!meta) return;
+      var raw = (meta.textContent || "").trim();
+      var cut = raw.indexOf(" · ");
+      if (cut < 0) return;
+      var until = raw.slice(0, cut).trim();
+      var zones = raw.slice(cut + 3).trim();
+      if (!zones) return;
+      var parts = zones.split(";").map(function(s){ return s.trim(); }).filter(Boolean);
+      if (parts.length < 2 && zones.length < 28) return;
+      meta.textContent = until;
+      var det = document.createElement("details");
+      det.className = "al-zones";
+      var sum = document.createElement("summary");
+      sum.textContent = parts.length + (parts.length === 1 ? " zone" : " zones");
+      var p = document.createElement("p");
+      p.textContent = zones;
+      det.appendChild(sum);
+      det.appendChild(p);
+      meta.insertAdjacentElement("afterend", det);
+    });
+  }
+
+  function decorateInstruments(){
+    document.querySelectorAll("#conditions .inst").forEach(function(el){
+      if (el.querySelector(".folio-ticks")) return;
+      var t = document.createElement("span");
+      t.className = "folio-ticks";
+      t.setAttribute("aria-hidden", "true");
+      el.appendChild(t);
+    });
+  }
+
+  wrapAlerts();
+  decorateInstruments();
+  document.addEventListener("cb:conditions", function(){ wrapAlerts(); decorateInstruments(); });
+  if ("MutationObserver" in window) {
+    var root = document.getElementById("conditions");
+    if (root) new MutationObserver(decorateInstruments).observe(root, { childList: true, subtree: true });
+  }
+})();
+</script>
+""".encode("utf-8")
+
 def _folio_home_html(
     region_id: str | None = None,
     *,
@@ -1596,15 +1749,14 @@ def _folio_home_html(
         b'<div class="map-placeholder skeleton" id="map-placeholder">Map will load when you scroll here.</div>',
         1,
     )
-    if gated:
-        for a, b in (
-            (b'href="styles.css"', b'href="/styles.css"'),
-            (b'src="region-nav.js"', b'src="/region-nav.js"'),
-            (b'src="dashboard.js"', b'src="/dashboard.js"'),
-            (b'src="app.js"', b'src="/app.js"'),
-            (b'src="coast-strip.js"', b'src="/coast-strip.js"'),
-        ):
-            data = data.replace(a, b)
+    for a, b_ in (
+        (b'href="styles.css"', b'href="/styles.css"'),
+        (b'src="region-nav.js"', b'src="/region-nav.js"'),
+        (b'src="dashboard.js"', b'src="/dashboard.js"'),
+        (b'src="app.js"', b'src="/app.js"'),
+        (b'src="coast-strip.js"', b'src="/coast-strip.js"'),
+    ):
+        data = data.replace(a, b_)
     data = _apply_preview_dateline(_apply_chrome(data))
     data = homepage_boot.inject(data, region_id, preview=assemble_preview)
     photo = _featured_photo(photo_id)
@@ -1613,6 +1765,13 @@ def _folio_home_html(
     if mid < 0:
         raise RuntimeError("folio home: conditions/tide boundary missing")
     data = data[:mid] + b"    " + strip + data[mid:]
+    map_end = data.find(_FOLIO_MAP_END)
+    if map_end < 0:
+        raise RuntimeError("folio home: map section end missing")
+    map_end += len(_FOLIO_MAP_END)
+    data = data[:map_end] + b"\n    " + _folio_water_html() + b"\n" + data[map_end:]
+    data = _folio_fold_alerts(data)
+    data = data.replace(b"</body>", _FOLIO_UI_JS + b"</body>", 1)
     if gated and not shot:
         data = data.replace(b"</body>", _IDENTITY_DOCK.encode("utf-8") + b"\n</body>", 1)
     return data
