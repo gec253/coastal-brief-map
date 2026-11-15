@@ -45,8 +45,8 @@
 
 
   function mapMastHole() {
-    var hole = document.getElementById("wi-mast-hole");
-    if (!hole) return;
+    var wrap = document.querySelector(".wi-veil-cut-wrap");
+    if (!wrap) return;
     var name = document.querySelector(".mast-nameplate") || document.querySelector("header.site h1");
     var motto = document.querySelector(".mast-motto");
     if (!name) return;
@@ -62,14 +62,10 @@
       }
     }
     var padX = 20, padY = 10;
-    var vw = window.innerWidth || 1;
-    var vh = window.innerHeight || 1;
-    // Veil SVG viewBox is 1200 x 1600, drawn at 100% x 200% of the viewport,
-    // so 1200 units = 100vw and 800 units = 100vh.
-    hole.setAttribute("x", ((left - padX) / vw) * 1200);
-    hole.setAttribute("y", ((top - padY) / vh) * 800);
-    hole.setAttribute("width", ((right - left + padX * 2) / vw) * 1200);
-    hole.setAttribute("height", ((bottom - top + padY * 2) / vh) * 800);
+    wrap.style.setProperty("--mast-x", Math.max(0, left - padX) + "px");
+    wrap.style.setProperty("--mast-y", Math.max(0, top - padY) + "px");
+    wrap.style.setProperty("--mast-w", (right - left + padX * 2) + "px");
+    wrap.style.setProperty("--mast-h", (bottom - top + padY * 2) + "px");
   }
 
   function play() {

@@ -11,37 +11,35 @@ _OVERLAY = """
 <div id="wave-intro" class="wave-intro" role="dialog" aria-label="Site introduction">
   <div class="wi-veil" aria-hidden="true">
     <svg class="wi-veil-svg" viewBox="0 0 1200 1600" preserveAspectRatio="none" focusable="false">
-      <defs>
-        <mask id="wi-cut-mask" maskUnits="userSpaceOnUse">
-          <rect x="-80" y="-80" width="1360" height="1760" fill="#fff"/>
-          <rect id="wi-mast-hole" x="0" y="0" width="0" height="0" fill="#000"/>
-        </mask>
-      </defs>
       <path class="wi-veil-sheet wi-veil-solid" d="M -40 -40 H 1240 V 880 C 1100 960, 1000 840, 860 900 C 720 960, 600 840, 460 910 C 300 980, 160 860, -40 940 Z"/>
-      <path class="wi-veil-sheet wi-veil-cut" mask="url(#wi-cut-mask)" d="M -40 -40 H 1240 V 880 C 1100 960, 1000 840, 860 900 C 720 960, 600 840, 460 910 C 300 980, 160 860, -40 940 Z"/>
     </svg>
+    <div class="wi-veil-cut-wrap">
+      <svg class="wi-veil-svg wi-veil-svg-cut" viewBox="0 0 1200 1600" preserveAspectRatio="none" focusable="false">
+        <path class="wi-veil-sheet" d="M -40 -40 H 1240 V 880 C 1100 960, 1000 840, 860 900 C 720 960, 600 840, 460 910 C 300 980, 160 860, -40 940 Z"/>
+      </svg>
+    </div>
   </div>
   <div class="wi-stage" aria-hidden="true">
     <svg class="wi-svg" viewBox="0 0 1200 800" preserveAspectRatio="none" focusable="false">
       <path class="wi-echo" fill="none" d="M -60 428 C 80 428, 160 384, 280 402 C 410 422, 490 474, 630 440 C 750 410, 840 378, 960 364 C 1060 354, 1140 348, 1280 342"/>
       <path class="wi-swell" fill="none" d="M -60 412 C 80 412, 160 368, 280 386 C 410 406, 490 458, 630 424 C 750 394, 840 362, 960 348 C 1060 338, 1140 332, 1280 326"/>
       <g class="wi-rise">
-        <path class="wi-crest wi-crest-a" fill="none" d="M 800 360 C 900 350, 1000 325, 1080 295 C 1120 278, 1155 265, 1180 258"/>
+        <path class="wi-crest wi-crest-a" fill="none" d="M 280 386 C 472 372, 664 337, 817 295 C 894 271, 961 253, 1009 243"/>
       </g>
       <g class="wi-break">
-        <path class="wi-crest wi-crest-b" fill="none" d="M 800 360 C 900 350, 1000 320, 1070 285 C 1110 260, 1145 245, 1175 248 C 1195 250, 1198 265, 1185 278 C 1170 292, 1148 296, 1130 288"/>
+        <path class="wi-crest wi-crest-b" fill="none" d="M 280 386 C 472 372, 664 330, 798 281 C 875 246, 942 225, 1000 229 C 1038 232, 1044 253, 1019 271 C 990 291, 948 296, 913 285"/>
       </g>
       <g class="wi-fall">
-        <path class="wi-crest wi-crest-c" fill="none" d="M 800 360 C 900 352, 1000 328, 1065 300 C 1110 278, 1150 270, 1178 278 C 1195 284, 1192 302, 1172 312 C 1152 322, 1130 320, 1118 312"/>
+        <path class="wi-crest wi-crest-c" fill="none" d="M 280 386 C 472 375, 664 341, 789 302 C 875 271, 952 260, 1006 271 C 1038 280, 1032 305, 994 319 C 956 333, 913 330, 890 319"/>
       </g>
       <g class="wi-engraving">
-        <path class="wi-hatch" fill="none" d="M 1140 268 C 1155 262, 1170 263, 1178 270"/>
-        <path class="wi-hatch" fill="none" d="M 1136 276 C 1150 270, 1164 271, 1172 278"/>
-        <path class="wi-hatch" fill="none" d="M 1134 284 C 1146 278, 1158 279, 1166 285"/>
-        <circle class="wi-spray" cx="1208" cy="238" r="3.2"/>
-        <circle class="wi-spray" cx="1216" cy="250" r="2.6"/>
-        <circle class="wi-spray" cx="1200" cy="232" r="2.4"/>
-        <circle class="wi-spray" cx="1222" cy="242" r="2.2"/>
+        <path class="wi-hatch" fill="none" d="M 933 257 C 961 249, 990 250, 1006 260"/>
+        <path class="wi-hatch" fill="none" d="M 925 268 C 952 260, 979 261, 994 271"/>
+        <path class="wi-hatch" fill="none" d="M 921 280 C 944 271, 967 273, 983 281"/>
+        <circle class="wi-spray" cx="1063" cy="215" r="5.5"/>
+        <circle class="wi-spray" cx="1072" cy="230" r="4.5"/>
+        <circle class="wi-spray" cx="1048" cy="207" r="4.2"/>
+        <circle class="wi-spray" cx="1058" cy="220" r="3.8"/>
       </g>
     </svg>
   </div>

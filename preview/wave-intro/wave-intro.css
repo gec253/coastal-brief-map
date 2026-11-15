@@ -34,7 +34,8 @@ html.intro-seen .wave-intro,
   animation: wi-veil-fade 1900ms linear both;
 }
 
-.wi-veil-svg {
+.wi-veil-svg,
+.wi-veil-svg-cut {
   display: block;
   width: 100%;
   height: 200%;
@@ -49,8 +50,28 @@ html.intro-seen .wave-intro,
   animation: wi-veil-solid 1900ms linear both;
 }
 
-.wi-veil-cut {
+/* Viewport-fixed hole: the wrap does not translate, so the masthead
+   stays uncovered while the navy sheet lifts away from it. */
+.wi-veil-cut-wrap {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
   animation: wi-veil-cut 1900ms linear both;
+  --mast-x: 0px;
+  --mast-y: 0px;
+  --mast-w: 0px;
+  --mast-h: 0px;
+  -webkit-mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
+  -webkit-mask-size: 100% 100%, var(--mast-w) var(--mast-h);
+  -webkit-mask-position: 0 0, var(--mast-x) var(--mast-y);
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-composite: xor;
+  mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
+  mask-size: 100% 100%, var(--mast-w) var(--mast-h);
+  mask-position: 0 0, var(--mast-x) var(--mast-y);
+  mask-repeat: no-repeat;
+  mask-composite: exclude;
 }
 
 .wi-stage {
@@ -100,7 +121,7 @@ html.intro-seen .wave-intro,
 .wi-fall,
 .wi-engraving {
   transform-box: fill-box;
-  transform-origin: 90% 70%;
+  transform-origin: 70% 55%;
 }
 
 .wi-rise { animation: wi-rise 1900ms ease both; }
@@ -110,12 +131,12 @@ html.intro-seen .wave-intro,
 
 .wi-crest {
   stroke: var(--wi-ivory);
-  stroke-width: 2.05;
+  stroke-width: 2.55;
 }
 
 .wi-hatch {
   stroke: var(--wi-ivory);
-  stroke-width: 0.95;
+  stroke-width: 1.2;
   opacity: 0.75;
 }
 
@@ -257,7 +278,7 @@ html.intro-seen .wave-intro,
 }
 
 @keyframes wi-veil-fade {
-  0%, 86% { opacity: 1; }
+  0%, 95% { opacity: 1; }
   100% { opacity: 0; }
 }
 
@@ -269,8 +290,9 @@ html.intro-seen .wave-intro,
 
 html[data-intro-seek] .wave-intro .wi-veil,
 html[data-intro-seek] .wave-intro .wi-veil-svg,
+html[data-intro-seek] .wave-intro .wi-veil-svg-cut,
 html[data-intro-seek] .wave-intro .wi-veil-solid,
-html[data-intro-seek] .wave-intro .wi-veil-cut,
+html[data-intro-seek] .wave-intro .wi-veil-cut-wrap,
 html[data-intro-seek] .wave-intro .wi-swell,
 html[data-intro-seek] .wave-intro .wi-echo,
 html[data-intro-seek] .wave-intro .wi-rise,
@@ -286,8 +308,9 @@ html[data-intro-seek] .wave-intro .wi-skip {
 @media (prefers-reduced-motion: reduce) {
   .wave-intro .wi-veil,
   .wave-intro .wi-veil-svg,
+  .wave-intro .wi-veil-svg-cut,
   .wave-intro .wi-veil-solid,
-  .wave-intro .wi-veil-cut,
+  .wave-intro .wi-veil-cut-wrap,
   .wave-intro .wi-swell,
   .wave-intro .wi-echo,
   .wave-intro .wi-rise,
@@ -300,7 +323,8 @@ html[data-intro-seek] .wave-intro .wi-skip {
   html.intro-reduce:not(.intro-seen) .wi-veil {
     animation: wi-reduce 200ms ease both;
   }
-  html.intro-reduce:not(.intro-seen) .wi-veil-svg {
+  html.intro-reduce:not(.intro-seen) .wi-veil-svg,
+  html.intro-reduce:not(.intro-seen) .wi-veil-svg-cut {
     transform: none;
   }
   html.intro-reduce:not(.intro-seen) .wi-swell,
