@@ -99,6 +99,26 @@ class IdentityPreview(unittest.TestCase):
         photo = body.find(b'<section class="folio-photo"')
         tide = body.find(b'id="tide-search"')
         self.assertTrue(0 < cond < photo < tide, (cond, photo, tide))
+        self.assertIn(b'href="/styles.css"', body)
+        self.assertIn(b'src="/dashboard.js"', body)
+        self.assertIn(b'src="/app.js"', body)
+        # On the Water sits after the map, with credited photos only.
+        water = body.find(b'id="folio-water-h"')
+        mmap = body.find(b'id="map-section"')
+        self.assertTrue(0 < mmap < water, (mmap, water))
+        self.assertIn(b"On the water", body)
+        self.assertIn(b"folio-water-card is-featured", body)
+        water = body[body.find(b'<section class="folio-water"'): body.find(b"</section>", body.find(b'<section class="folio-water"'))]
+        self.assertTrue(water)
+        self.assertNotIn(b"is-placeholder", water)
+        self.assertNotIn(b"Your photo here", water)
+        # Long alert zone lists are folded; names stay in the DOM. NWS link stays.
+        self.assertIn(b"NWS details", body)
+        self.assertIn(b"weather.gov", body)
+        if b"details class=\"al-zones\"" in body:
+            self.assertIn(b"<summary>", body)
+            # Folded until-lines remain in al-meta; zone names live in <details>.
+            self.assertRegex(body, br'<details class="al-zones">.*</details>', re.S)
 
     def test_public_homepage_unchanged_with_preview_cookie(self):
         status, body, hdrs = self._req("/", env={"PREVIEW_KEY": self.KEY}, cookie=self._cookie())
@@ -134,6 +154,26 @@ class IdentityPreview(unittest.TestCase):
         photo = body.find(b'<section class="folio-photo"')
         tide = body.find(b'id="tide-search"')
         self.assertTrue(0 < cond < photo < tide, (cond, photo, tide))
+        self.assertIn(b'href="/styles.css"', body)
+        self.assertIn(b'src="/dashboard.js"', body)
+        self.assertIn(b'src="/app.js"', body)
+        # On the Water sits after the map, with credited photos only.
+        water = body.find(b'id="folio-water-h"')
+        mmap = body.find(b'id="map-section"')
+        self.assertTrue(0 < mmap < water, (mmap, water))
+        self.assertIn(b"On the water", body)
+        self.assertIn(b"folio-water-card is-featured", body)
+        water = body[body.find(b'<section class="folio-water"'): body.find(b"</section>", body.find(b'<section class="folio-water"'))]
+        self.assertTrue(water)
+        self.assertNotIn(b"is-placeholder", water)
+        self.assertNotIn(b"Your photo here", water)
+        # Long alert zone lists are folded; names stay in the DOM. NWS link stays.
+        self.assertIn(b"NWS details", body)
+        self.assertIn(b"weather.gov", body)
+        if b"details class=\"al-zones\"" in body:
+            self.assertIn(b"<summary>", body)
+            # Folded until-lines remain in al-meta; zone names live in <details>.
+            self.assertRegex(body, br'<details class="al-zones">.*</details>', re.S)
 
         status, css, hdrs = self._req("/preview/identity.css", env=env, cookie=ck)
         self.assertEqual(status, 200)
@@ -148,9 +188,11 @@ class IdentityPreview(unittest.TestCase):
         status, body, _ = self._req("/preview/identity", env=env, cookie=ck)
         self.assertEqual(pub_status, 200)
         self.assertEqual(status, 200)
-        for label in (b">Wind<", b">Seas<", b">Water<", b">Next low<", b'data-title="Tide"', b"Observed", b"Forecast", b"Predicted"):
-            self.assertIn(label, pub)
-            self.assertIn(label, body)
+        for label in (b">Wind<", b">Seas<", b">Water<", b'data-title="Tide"', b"Observed", b"Forecast", b"Predicted"):
+            self.assertIn(label, pub, label)
+            self.assertIn(label, body, label)
+        self.assertTrue(b">Next high<" in pub or b">Next low<" in pub)
+        self.assertTrue(b">Next high<" in body or b">Next low<" in body)
         pub_glance = _slice(pub, b'id="glance-strip"', b"</nav>")
         id_glance = _slice(body, b'id="glance-strip"', b"</nav>")
         self.assertTrue(pub_glance)
@@ -162,6 +204,9 @@ class IdentityPreview(unittest.TestCase):
         pub_meta = re.findall(br'class="al-meta">([^<]+)', pub)
         id_meta = re.findall(br'class="al-meta">([^<]+)', body)
         self.assertEqual(pub_meta, id_meta)
+        pub_zones = re.findall(br'<details class="al-zones">.*?<p>([^<]+)</p></details>', pub, re.S)
+        id_zones = re.findall(br'<details class="al-zones">.*?<p>([^<]+)</p></details>', body, re.S)
+        self.assertEqual(pub_zones, id_zones)
         # No invented lake photograph.
         self.assertNotIn(b"falls-lake", _slice(body, b'<section class="folio-photo"', b"</section>").lower())
 
@@ -171,3 +216,33 @@ class IdentityPreview(unittest.TestCase):
         self.assertIn("noindex", hdrs.get("x-robots-tag", ""))
         self.assertIn(b'href="/preview/identity"', body)
         self.assertIn(b"Chartroom Folio", body)
+
+
+    def test_folded_alert_zones_are_in_the_dom(self):
+        status, body, _ = self._req("/")
+        self.assertEqual(status, 200)
+        self.assertIn(b'href="https://www.weather.gov/mhx/"', body)
+        self.assertIn(b"NWS details", body)
+        zones = __import__("re").findall(br'<details class="al-zones"><summary>([^<]+)</summary><p>([^<]+)</p></details>', body)
+        # When alerts have a long zone list, the names are one tap away in <details>.
+        for label, names in zones:
+            self.assertRegex(label, br"\d+ zones?")
+            self.assertGreater(len(names), 8)
+
+    def test_on_the_water_uses_credited_photos(self):
+        status, body, _ = self._req("/")
+        self.assertEqual(status, 200)
+        start = body.find(b'<section class="folio-water"')
+        end = body.find(b"</section>", start)
+        water = body[start:end]
+        self.assertTrue(water)
+        self.assertIn(b"On the water", water)
+        self.assertEqual(water.count(b"folio-water-card is-featured"), 1)
+        self.assertGreaterEqual(water.count(b"folio-water-card"), 2)
+        self.assertNotIn(b"bodie-sunrise", water)
+        self.assertNotIn(b"is-placeholder", water)
+        self.assertNotIn(b"TODO", water)
+        self.assertNotIn(b"lorem", water.lower())
+        self.assertIn(b"Photograph:", water)
+        # After the map, not above it.
+        self.assertTrue(body.find(b'id="map-section"') < start)

@@ -76,6 +76,8 @@ class HomePreview(unittest.TestCase):
         self.assertIn(b'data-home="folio"', body)
         self.assertIn(b"folio-photo", body)
         self.assertIn(b"/featured/bodie-sunrise", body)
+        self.assertIn(b'href="/styles.css"', body)
+        self.assertIn(b'id="folio-water-h"', body)
         self.assertIn(b'id="region-select"', body)
         self.assertIn(b'id="region-nav"', body)
         self.assertIn(b'property="og:image"', body)

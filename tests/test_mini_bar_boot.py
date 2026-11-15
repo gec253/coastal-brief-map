@@ -28,3 +28,13 @@ class MiniBarBoot(unittest.TestCase):
         self.assertNotIn("renderGlance(d)", stripped)
         self.assertIn("renderHeaderBits(d)", stripped)
         self.assertIn('if ($("mini-wind")) $("mini-wind").textContent = mini.wind;', DASH)
+
+
+class GlanceObserver(unittest.TestCase):
+    def test_dashboard_hooks_glance_io_on_skip_repaint(self):
+        src = (Path(__file__).resolve().parents[1] / "dashboard.js").read_text(encoding="utf-8")
+        self.assertIn("function hookGlanceIO()", src)
+        # Called from render() even when homepage_boot already painted glance.
+        render = src[src.find("function render(d, opts)"): src.find("function showError")]
+        self.assertIn("hookGlanceIO()", render)
+        self.assertGreater(render.find("hookGlanceIO()"), render.find("if (!already)"))
