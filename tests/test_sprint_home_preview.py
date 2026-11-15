@@ -441,7 +441,7 @@ class Refinement(unittest.TestCase):
             self.assertIn("/preview/sprint-home/photos/falls-lake-pier-800.avif", hz)
             self.assertIn('width="1280" height="960"', hz)
             self.assertNotIn("Weldon", hz)                 # Weldon is no longer the lake hero
-            self.assertNotIn("Wake County", h)
+            self.assertNotIn(" County", h)  # county not verified; never named
             mz = h[h.index('<section class="mzs"'):]
             self.assertIn("Weldon", mz)                     # ...but stays in the mosaic
             self.assertEqual(h.count(cap), 1)
@@ -450,7 +450,7 @@ class Refinement(unittest.TestCase):
         for needle in ("https://www.flickr.com/photos/sergesegal/52741376400/", "Sergiy Galyonkin", "CC BY-SA 2.0",
                        "54e27cdd2b952fe432de46c362ee237c0d43fe28e2830fa81a75ecc5f7d78f25", "share-alike", cap):
             self.assertIn(needle, credits)
-        self.assertNotIn("Wake County", credits)
+        self.assertNotIn(" County", credits.split("## Fishing pier")[1].split("## Community")[0].replace("three counties", ""))
 
     def test_river_view_keeps_weldon_hero(self):
         pl = fresh_jordan()
