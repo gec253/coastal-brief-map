@@ -2001,6 +2001,18 @@ def _paint_public_lake(data: bytes, region: str = "falls-lake") -> bytes:
 
 
 
+
+def _catch_wall_critical_css() -> bytes:
+    """Inline Folio chrome and Catch Wall CSS to avoid extra render-blocking requests."""
+    chunks = []
+    for name in ("folio-chrome.css", "catch-wall-public.css"):
+        path = ROOT / name
+        if path.is_file():
+            chunks.append(path.read_text(encoding="utf-8"))
+    css = "\n".join(chunks).replace("</", "<\\/")
+    return b'  <style id="catch-wall-css">\n' + css.encode("utf-8") + b"\n  </style>\n"
+
+
 def _paint_public_catch_wall(data: bytes, page: str, water: str = "all") -> bytes:
     """Server-render public /catch-wall, /coastal-life, and /photos from approved photos."""
     view = {"catch-wall": "catch", "coastal-life": "life", "photos": "all"}.get(page, "catch")
@@ -2016,16 +2028,22 @@ def _paint_public_catch_wall(data: bytes, page: str, water: str = "all") -> byte
         data,
         count=1,
     )
-    if b'href="/folio-chrome.css"' not in data:
-        needle = b'<link rel="stylesheet" href="/styles.css">'
-        if needle not in data:
-            raise RuntimeError("public catch wall: styles.css link missing")
-        data = data.replace(needle, needle + b"\n  " + _FOLIO_CHROME_CSS_LINK, 1)
-    inject = catch_wall_public.featured_preload_html(model).encode("utf-8")
-    inject += b'  <link rel="stylesheet" href="/catch-wall-public.css">\n'
+    # LCP hints must precede font preloads and stylesheets, as on the v2 preview.
+    hints = catch_wall_public.featured_preload_html(model).encode("utf-8")
+    viewport = b'<meta name="viewport" content="width=device-width, initial-scale=1">'
+    if hints and viewport in data:
+        data = data.replace(viewport, viewport + b"\n  " + hints.strip(), 1)
+    elif hints:
+        data = data.replace(b"</head>", hints + b"</head>", 1)
+    needle = b'<link rel="stylesheet" href="/styles.css">'
+    if needle not in data:
+        raise RuntimeError("public catch wall: styles.css link missing")
+    # One extra render-blocking file is styles.css; inline Folio and wall CSS
+    # so the page does not pay two more HTTP/1.0 round trips before first paint.
+    if b'id="catch-wall-css"' not in data:
+        data = data.replace(needle, needle + b"\n" + _catch_wall_critical_css(), 1)
     if b"cb-mast-reveal" not in data:
-        inject += _MASTHEAD_PLAY
-    data = data.replace(b"</head>", inject + b"</head>", 1)
+        data = data.replace(b"</head>", b"  " + _MASTHEAD_PLAY + b"</head>", 1)
     start = data.find(b'<div class="gal-head">')
     end = data.find(b"</main>")
     if start < 0 or end < start:
@@ -2235,6 +2253,12 @@ class Handler(SimpleHTTPRequestHandler):
             return self._send_bytes(robots_body(), "text/plain; charset=utf-8", cache_s=300)
         if parsed.path == "/sitemap.xml":
             return self._send_bytes(sitemap_body(), "application/xml; charset=utf-8", cache_s=300)
+        if parsed.path.startswith("/catch-wall-media/"):
+            parsed_media = catch_wall_public.parse_media_path(parsed.path)
+            body = catch_wall_public.media_bytes(*parsed_media) if parsed_media else None
+            if not body:
+                return self.send_error(404, "not found")
+            return self._send_bytes(body, "image/webp", cache_s=3600)
         if parsed.path.startswith("/featured/"):
             name = posixpath.basename(unquote(parsed.path))
             if not _HOME_PHOTO_RE.match(name):
@@ -2778,6 +2802,10 @@ def main():
         get_ads(force=True)
     except Exception as e:
         sys.stderr.write("ads warmup failed: %s\n" % e)
+    try:
+        catch_wall_public.warm_cache()
+    except Exception as e:
+        sys.stderr.write("catch-wall cache warmup failed: %s\n" % e)
     brief.start_scheduler()
     httpd = ThreadingHTTPServer((args.host, args.port), Handler)
     print("Coastal Brief map at http://%s:%s/" % (args.host, args.port), flush=True)

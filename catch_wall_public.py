@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import html
 import json
+import re
 import sys
+import threading
 import time
 from urllib.request import Request, urlopen
 
@@ -31,7 +33,18 @@ RED_DRUM_ID = "3e41ed83-23a3-4032-8a5f-c7957b788e3f"
 EXISTING_VARIANTS = ("400", "800", "1600")
 FEATURED_SIZES = "(min-width: 860px) 55vw, 100vw"
 PROD_PHOTOS_URL = "https://thecoastalbrief.com/api/photos?view=all"
+# Stale-while-revalidate: serve a warm list instantly, refresh in the background.
+_CACHE_FRESH_S = 60.0
+_CACHE_TTL_S = 300.0
+_FETCH_TIMEOUT_S = 1.0
 _PUBLIC_CACHE: dict = {"t": 0.0, "photos": []}
+_CACHE_LOCK = threading.Lock()
+_REFRESHING = False
+_MEDIA_CACHE: dict[tuple[str, str], bytes] = {}
+_MEDIA_LOCK = threading.Lock()
+_MEDIA_RE = re.compile(
+    r"^/catch-wall-media/([0-9a-fA-F-]{8,36})/(400|800|1600)\.webp$"
+)
 
 
 def parse_view(raw: str | None) -> str:
@@ -44,25 +57,135 @@ def parse_water(raw: str | None) -> str:
     return w if w in ("all", "salt", "fresh") else "all"
 
 
-def _fetch_public_approved() -> list[dict]:
-    """Unauthenticated GET of the public gallery when this process has no storage backend."""
-    now = time.time()
-    if now - _PUBLIC_CACHE["t"] < 60:
-        return [dict(p) for p in _PUBLIC_CACHE["photos"]]
+def _cache_snapshot() -> tuple[float, list[dict]]:
+    with _CACHE_LOCK:
+        return _PUBLIC_CACHE["t"], [dict(p) for p in _PUBLIC_CACHE["photos"]]
+
+
+def _store_cache(photos_out: list[dict]) -> None:
+    with _CACHE_LOCK:
+        _PUBLIC_CACHE["t"] = time.time()
+        _PUBLIC_CACHE["photos"] = [dict(p) for p in photos_out]
+
+
+def _fetch_public_approved_sync() -> list[dict]:
     try:
         req = Request(
             PROD_PHOTOS_URL,
             headers={"User-Agent": "CoastalBrief/1.0", "Accept": "application/json"},
         )
-        with urlopen(req, timeout=8) as resp:
+        with urlopen(req, timeout=_FETCH_TIMEOUT_S) as resp:
             data = json.loads(resp.read().decode("utf-8"))
         photos_out = [dict(p) for p in (data.get("photos") or [])]
-        _PUBLIC_CACHE["t"] = now
-        _PUBLIC_CACHE["photos"] = photos_out
+        _store_cache(photos_out)
+        _warm_featured_media(photos_out)
         return [dict(p) for p in photos_out]
     except Exception as exc:  # noqa: BLE001 — page must still render
         sys.stderr.write("catch-wall public photos: %s\n" % exc)
-        return [dict(p) for p in _PUBLIC_CACHE["photos"]]
+        _, stale = _cache_snapshot()
+        return stale
+
+
+def _kick_refresh() -> None:
+    """Refresh the approved list off the request path."""
+    global _REFRESHING
+    with _CACHE_LOCK:
+        if _REFRESHING:
+            return
+        _REFRESHING = True
+
+    def run() -> None:
+        global _REFRESHING
+        try:
+            _fetch_public_approved_sync()
+        finally:
+            with _CACHE_LOCK:
+                _REFRESHING = False
+
+    threading.Thread(target=run, daemon=True, name="cw-photo-cache").start()
+
+
+def warm_cache() -> None:
+    """Start a background fill so the first public request is not a blocking GET."""
+    _kick_refresh()
+
+
+def media_url(photo_id: str, variant: str) -> str:
+    return "/catch-wall-media/%s/%s.webp" % (photo_id, variant)
+
+
+def media_bytes(photo_id: str, variant: str) -> bytes | None:
+    with _MEDIA_LOCK:
+        return _MEDIA_CACHE.get((photo_id, variant))
+
+
+def parse_media_path(path: str) -> tuple[str, str] | None:
+    m = _MEDIA_RE.match(path or "")
+    if not m:
+        return None
+    return m.group(1).lower(), m.group(2)
+
+
+def _fetch_media(photo_id: str, variant: str, url: str) -> None:
+    if not url.startswith("https://"):
+        return
+    if media_bytes(photo_id, variant):
+        return
+    try:
+        req = Request(url, headers={"User-Agent": "CoastalBrief/1.0", "Accept": "image/webp"})
+        with urlopen(req, timeout=3.0) as resp:
+            body = resp.read()
+        if len(body) < 100 or not body.startswith(b"RIFF"):
+            return
+        with _MEDIA_LOCK:
+            _MEDIA_CACHE[(photo_id, variant)] = body
+    except Exception as exc:  # noqa: BLE001
+        sys.stderr.write("catch-wall media %s/%s: %s\n" % (photo_id, variant, exc))
+
+
+def _warm_featured_media(photos: list[dict]) -> None:
+    featured, _ = pick_featured(photos)
+    if not featured:
+        return
+    pid = str(featured.get("id") or "").lower()
+    src = featured.get("src") or {}
+    for key in EXISTING_VARIANTS:
+        href = src.get(key)
+        if pid and href:
+            _fetch_media(pid, key, href)
+
+
+def localize_featured(photo: dict | None) -> dict | None:
+    """Point the featured catch at same-origin derivatives once they are cached."""
+    if not photo:
+        return photo
+    p = dict(photo)
+    pid = str(p.get("id") or "").lower()
+    src = dict(p.get("src") or {})
+    changed = False
+    for key in EXISTING_VARIANTS:
+        if src.get(key) and media_bytes(pid, key):
+            src[key] = media_url(pid, key)
+            changed = True
+    if changed:
+        p["src"] = src
+    return p
+
+
+def _fetch_public_approved() -> list[dict]:
+    """Unauthenticated GET of the public gallery when this process has no storage backend."""
+    stamped, photos = _cache_snapshot()
+    age = time.time() - stamped if stamped else 1e9
+    if stamped and age < _CACHE_FRESH_S:
+        return photos
+    if stamped and age < _CACHE_TTL_S:
+        _kick_refresh()
+        return photos
+    if stamped:
+        # Past TTL: still serve stale immediately; refresh in the background.
+        _kick_refresh()
+        return photos
+    return _fetch_public_approved_sync()
 
 
 def load_approved(live: list[dict] | None = None) -> list[dict]:
@@ -124,6 +247,7 @@ def assemble(view: str, water: str, live: list[dict] | None = None) -> dict:
         unique.append(p)
     filtered = [p for p in unique if _matches(p, view, water)]
     featured, rest = pick_featured(filtered)
+    featured = localize_featured(featured)
     return {
         "view": view,
         "water": water,
