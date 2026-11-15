@@ -501,17 +501,8 @@ def credit(p: dict) -> str:
     return "Community photo · %s" % collection(p)
 
 
-# Preview-only caption overrides, applied at render time. Nothing is written back to submissions,
-# moderation data or Supabase. Each override uses only words from that record's own stored fields.
-PREVIEW_CAPTIONS = {
-    # stored: location "Rx Chicken & Oysters", region "Wilmington · Wrightsville Beach", caption "" (same fields as caec2542)
-    LIFE2_PHOTO_ID: "At Rx Chicken & Oysters",
-}
-
-
 def caption(p: dict) -> str:
-    if str(p.get("id") or "") in PREVIEW_CAPTIONS:
-        return PREVIEW_CAPTIONS[str(p["id"])]
+    """Stored fields only, shown as submitted. No overrides."""
     bits = [b for b in (p.get("title"), p.get("species"), p.get("location"), p.get("region")) if b]
     return " · ".join(bits)
 
@@ -973,7 +964,7 @@ def page_editorial(m: dict, P: dict) -> str:
     )
 
 
-def _mosaic_cell(p: dict | None, cls: str, sizes: str, slot: str = "", kicker: str = AWAITING) -> str:
+def _mosaic_cell(p: dict | None, cls: str, sizes: str, slot: str = "", kicker: str = AWAITING, cap: str | None = None) -> str:
     if not p:
         return (
             '<figure class="mz %s mz-slot"><div class="mz-slot-in"><p class="mz-k">%s</p>'
@@ -982,7 +973,7 @@ def _mosaic_cell(p: dict | None, cls: str, sizes: str, slot: str = "", kicker: s
     return (
         '<figure class="mz %s"><div class="mz-img">%s</div>'
         '<figcaption><span class="mz-cap">%s</span><span class="mz-credit">%s</span></figcaption></figure>'
-    ) % (cls, img_html(p, sizes), _esc(caption(p)), _esc(credit(p)))
+    ) % (cls, img_html(p, sizes), _esc(caption(p) if cap is None else cap), _esc(credit(p)))
 
 
 MZ_SIZES = {"mz-a": "(min-width: 1000px) 400px, 50vw", "mz-b": "(min-width: 1000px) 400px, 50vw",
@@ -1001,7 +992,14 @@ def page_hybrid(m: dict, P: dict) -> str:
     placed = [(sh, x) for sh, x in want if x and x is not hero]
     # No placeholders: empty cells are dropped. A full set uses the composed mosaic; fewer falls back to a loose grid.
     full = len(placed) == len(want)
-    cells = [_mosaic_cell(x, sh, MZ_SIZES[sh]) for sh, x in placed] + [MZ_CTA]
+    # Stored captions as submitted. When two photos share the same stored caption (the two diner frames),
+    # the location is shown once: the later frame keeps its credit but drops the repeated caption.
+    seen, cells = set(), []
+    for sh, x in placed:
+        c = caption(x)
+        cells.append(_mosaic_cell(x, sh, MZ_SIZES[sh], cap="" if c in seen else c))
+        seen.add(c)
+    cells.append(MZ_CTA)
     grid_cls = "mz-grid" + ("" if full else " mz-loose mz-n%d" % len(placed))
     if hero:
         horizon = (

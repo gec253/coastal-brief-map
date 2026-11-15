@@ -408,9 +408,11 @@ class Refinement(unittest.TestCase):
         self.assertEqual(mz.count('<figure class="mz '), 5)
         caps = re.findall(r'<span class="mz-cap">([^<]+)</span>', mz)
         self.assertEqual(len(caps), len(set(caps)), caps)
-        self.assertIn("At Rx Chicken &amp; Oysters", caps)
+        # stored caption, no override; a repeated stored caption is shown only once
+        self.assertNotIn("At Rx Chicken", mz)
+        self.assertEqual(mz.count("Rx Chicken &amp; Oysters · Wilmington · Wrightsville Beach"), 1)
         self.assertEqual(mz.count("Share yours on the Catch Wall"), 1)
-        # the override is presentation only: the record itself is untouched
+        # the stored record is untouched
         self.assertEqual(LIFE2["caption"], "")
         self.assertEqual(LIFE2["location"], "Rx Chicken & Oysters")
 
