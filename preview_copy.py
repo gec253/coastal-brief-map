@@ -170,9 +170,9 @@ def _water_temp_text(R: dict, cfg: dict, stations: dict, anchor: dict) -> tuple[
         word = place_word(meta, off_spec.get("role") or "", "waterTempOffshore") or "surface"
         # Never call a nearshore buoy "offshore"
         label = "Nearshore water temperature" if word == "nearshore" else "Offshore water temperature"
-        bits.append("%.0f°F %s at %s, observed." % (
+        bits.append("%s: %.0f°F, observed at %s." % (
+            label,
             offshore["values"]["f"],
-            "nearshore" if word == "nearshore" else "offshore",
             where(sid, meta, anchor, role=off_spec.get("role") or "", kind="waterTempOffshore"),
         ))
     return " ".join(bits), unavail
@@ -298,11 +298,7 @@ def relabel_salt(rid: str, body: dict, payload: dict, cfg: dict) -> dict:
             items.append(("Marine forecast", txt if "NWS" in txt else "NWS forecasts: " + txt))
     # Rain / point forecast
     if "Rain" in by_old:
-        txt = by_old["Rain"]
-        if not txt.lower().startswith("nws"):
-            items.append(("Rain", "NWS forecasts a " + txt[0].lower() + txt[1:] if txt and "% chance" in txt else "NWS forecasts: " + txt))
-        else:
-            items.append(("Rain", txt))
+        items.append(("Rain", nws_chance_of_rain(by_old["Rain"])))
     # Tides
     t = (payload or {}).get("tides") or {}
     rebuilt = _tides_text(t, cfg, stations, anchor)
@@ -602,6 +598,131 @@ JORDAN_GUIDE_NOTE = (
 )
 
 
+
+def nws_chance_of_rain(txt: str) -> str:
+    """Preview-only: 'NWS forecasts a 0% chance through tonight' -> '...chance of rain...'."""
+    if not txt:
+        return txt
+    if re.search(r"% chance(?! of rain)", txt, re.I):
+        txt = re.sub(r"% chance(?! of rain)", "% chance of rain", txt, count=1, flags=re.I)
+    if not txt.lower().startswith("nws"):
+        if "% chance" in txt:
+            txt = "NWS forecasts a " + txt[0].lower() + txt[1:]
+        else:
+            txt = "NWS forecasts: " + txt
+    return txt
+
+
+def take_place(sid: str, meta: dict | None, anchor: dict | None, role: str = "", kind: str = "") -> tuple[str, str]:
+    """Natural Take location: ('offshore buoy 41064, 32 mi SSE', '') or
+    ('Duck Pier (8651370), 21 mi NNW', 'a representative observation').
+    Card labels stay on card_lead and are not changed here.
+    """
+    meta = meta or {}
+    if not sid:
+        return "", ""
+    info = conditions.station_info(sid, meta, anchor)
+    word = place_word(meta, role, kind)
+    d = info.get("distanceMi")
+    b = info.get("bearingFromAnchor")
+    name = info.get("name") or sid
+    loc = None
+    if d is not None and float(d) >= 0.5 and b:
+        dtxt = str(int(d)) if float(d) == int(d) else str(d)
+        loc = "%s mi %s" % (dtxt, b)
+    if word == "offshore" and loc:
+        return "offshore buoy %s, %s" % (sid, loc), ""
+    if word == "nearshore" and loc:
+        return "nearshore buoy %s, %s" % (sid, loc), ""
+    if loc and float(d) >= 8:
+        return "%s (%s), %s" % (name, sid, loc), "a representative observation"
+    return "%s (%s)" % (name, sid), ""
+
+
+def _at_place(place: str, qual: str = "") -> str:
+    if not place:
+        return (", " + qual) if qual else ""
+    bit = " at " + place
+    if qual:
+        bit += ", " + qual
+    return bit
+
+
+def _take_wind(kt, compass: str, gust=None) -> str:
+    if kt is None:
+        return ""
+    k = int(round(kt))
+    dirc = (compass or "").strip()
+    if k < 10:
+        w = "Light %s wind" % dirc if dirc else "Light wind"
+    else:
+        w = "%s wind %d kt" % (dirc, k) if dirc else "%d kt wind" % k
+    if gust is not None and kt is not None and gust - kt >= 3:
+        w += ", gusting %d kt" % round(gust)
+    return w
+
+
+def _next_tide(events: list, now: datetime | None):
+    now = now or datetime.now(timezone.utc)
+    now_et = now.astimezone(ET) if now.tzinfo else now.replace(tzinfo=timezone.utc).astimezone(ET)
+    best = None
+    for e in events or []:
+        try:
+            d = datetime.fromtimestamp(e["t"] / 1000, timezone.utc).astimezone(ET)
+        except (KeyError, TypeError, ValueError, OSError):
+            continue
+        if d <= now_et:
+            continue
+        if best is None or d < best[1]:
+            best = (e, d)
+    return best
+
+
+def _join_take_parts(parts: list) -> str:
+    bits = []
+    for i, p in enumerate(parts):
+        tx = (p.get("text") or "").strip()
+        if not tx:
+            continue
+        if i == 0:
+            bits.append(tx[0].upper() + tx[1:] if tx and not tx[0].isupper() else tx)
+            continue
+        prev = bits[-1]
+        if prev.endswith(".") or tx.startswith("Alerts:") or tx.startswith("A "):
+            if not prev.endswith("."):
+                bits[-1] = prev + "."
+            bits.append(" " + (tx[0].upper() + tx[1:] if tx and tx[0].islower() else tx))
+        else:
+            # keep locked-string labels capitalized after a semicolon
+            bits.append("; " + tx)
+    text = "".join(bits).strip()
+    if text and not text.endswith("."):
+        text += "."
+    return text
+
+
+def _sentence(parts: list) -> dict | None:
+    parts = [p for p in parts if (p.get("text") or "").strip()]
+    if not parts:
+        return None
+    kinds = []
+    srcs = []
+    for p in parts:
+        k = p.get("kind") or "observed"
+        if k not in kinds:
+            kinds.append(k)
+        for s in p.get("sources") or []:
+            if s and s not in srcs:
+                srcs.append(s)
+    return {
+        "text": _join_take_parts(parts),
+        "kind": " ".join(kinds),
+        "kinds": kinds,
+        "sources": srcs,
+        "parts": parts,
+    }
+
+
 def card_lead(sid: str, meta: dict | None, anchor: dict | None, role: str = "", kind: str = "") -> str:
     """Short, prominent station lead for a card, e.g. 'Offshore buoy 44086, 11 mi ENE'."""
     meta = meta or {}
@@ -636,7 +757,7 @@ def _wind_plain(kt, compass: str) -> str:
     return "%d kt %s wind" % (k, dirc) if dirc else "%d kt wind" % k
 
 
-def captains_take(rid: str, body: dict, payload: dict, cfg: dict, issued_et: str = "") -> dict:
+def captains_take(rid: str, body: dict, payload: dict, cfg: dict, issued_et: str = "", now=None) -> dict:
     """Deterministic Captain's Take model from fresh, verified readings only."""
     payload = payload or {}
     cfg = cfg or {}
@@ -646,7 +767,7 @@ def captains_take(rid: str, body: dict, payload: dict, cfg: dict, issued_et: str
     elif rid == "neuse-river":
         sentences = _take_neuse(payload)
     else:
-        sentences = _take_salt(rid, body, payload, cfg)
+        sentences = _take_salt(rid, body, payload, cfg, now=now)
     return {
         "heading": "Captain's Take",
         "issuedEt": issued_et or (body.get("issuedEt") or ""),
@@ -664,123 +785,169 @@ def take_text(model: dict) -> str:
     return " ".join(bits)
 
 
-def _take_salt(rid: str, body: dict, payload: dict, cfg: dict) -> list:
+def _take_salt(rid: str, body: dict, payload: dict, cfg: dict, now=None) -> list:
+    """At most three sentences: wind/seas, water temp + next tide, NWS forecast + alerts."""
     R = payload.get("readings") or {}
     al = payload.get("alerts") or {}
     stations = (conditions.load_regions() or {}).get("stations") or {}
     anchor = (payload.get("region") or {}).get("anchor") or cfg.get("anchor") or {}
     specs = cfg.get("readings") or {}
+    now = now or datetime.now(timezone.utc)
     out = []
 
-    def lead(kind, sid_fallback=None):
+    def place_for(kind, sid_fallback=None):
         r = R.get(kind) or {}
         st = r.get("station") or {}
         sid = st.get("id") or sid_fallback
         if not sid:
-            return ""
-        return card_lead(sid, stations.get(sid) or st, anchor, (specs.get(kind) or {}).get("role") or "", kind)
+            return "", ""
+        return take_place(sid, stations.get(sid) or st, anchor, (specs.get(kind) or {}).get("role") or "", kind)
 
-    # Observed: wind and seas, each attributed to its own station.
+    # 1. Wind and seas/swell
+    parts = []
     if _ok(R.get("wind")) and (R["wind"].get("values") or {}).get("speedKt") is not None:
         v = R["wind"]["values"]
-        wtxt = _wind_plain(v["speedKt"], v.get("dirCompass"))
-        gust = v.get("gustKt")
-        if gust and v["speedKt"] is not None and gust - v["speedKt"] >= 3:
-            wtxt += ", gusting %d kt" % round(gust)
-        wloc = lead("wind") or where(
-            (R["wind"].get("station") or {}).get("id"),
-            stations.get((R["wind"].get("station") or {}).get("id")) or R["wind"].get("station"),
-            anchor, (specs.get("wind") or {}).get("role") or "", "wind")
-        seas_txt = ""
-        sloc = ""
-        if _ok(R.get("seas")) and (R["seas"].get("values") or {}).get("heightFt") is not None:
-            sv = R["seas"]["values"]
-            seas_txt = "%.1f ft combined seas" % sv["heightFt"]
-            sloc = lead("seas") or ""
-        swell_bit = ""
-        if _ok(R.get("swell")) and (R["swell"].get("values") or {}).get("heightFt") is not None:
-            swell_bit = "; swell is %.1f ft" % R["swell"]["values"]["heightFt"]
-        if seas_txt and wloc and sloc and wloc == sloc:
-            text = "%s and %s at %s" % (wtxt, seas_txt, wloc)
-        else:
-            text = wtxt + ((" at " + wloc) if wloc else "")
-            if seas_txt:
-                text += "; " + seas_txt + ((" at " + sloc) if sloc else "")
-        text += swell_bit
-        srcs = []
-        for kind in ("wind", "seas", "swell"):
-            sid = ((R.get(kind) or {}).get("station") or {}).get("id")
-            if sid and sid not in srcs:
-                srcs.append(sid)
-        out.append({"text": text[0].upper() + text[1:] + ".", "kind": "observed", "sources": srcs})
+        wtxt = _take_wind(v["speedKt"], v.get("dirCompass"), v.get("gustKt"))
+        wplace, wqual = place_for("wind")
+        if not wplace:
+            sid = ((R["wind"].get("station") or {}).get("id"))
+            wplace, wqual = take_place(sid, stations.get(sid) or R["wind"].get("station"), anchor,
+                                       (specs.get("wind") or {}).get("role") or "", "wind") if sid else ("", "")
+        text = wtxt + _at_place(wplace, wqual)
+        sid = ((R["wind"].get("station") or {}).get("id"))
+        parts.append({"text": text, "kind": "observed", "sources": [sid] if sid else []})
     elif (R.get("wind") or {}).get("status") == "stale" and R["wind"].get("time"):
-        out.append({"text": brief_strings.not_used("Wind", brief._t(R["wind"]["time"]), 2),
-                    "kind": "missing", "sources": [((R["wind"].get("station") or {}).get("id") or "")]})
+        parts.append({"text": brief_strings.not_used("Wind", brief._t(R["wind"]["time"]), 2),
+                      "kind": "missing",
+                      "sources": [((R["wind"].get("station") or {}).get("id") or "")]})
     elif (specs.get("wind") or {}).get("sources"):
-        out.append({"text": brief_strings.not_available("Wind"), "kind": "missing", "sources": specs["wind"]["sources"][:1]})
+        parts.append({"text": brief_strings.not_available("Wind"),
+                      "kind": "missing", "sources": (specs["wind"].get("sources") or [])[:1]})
 
-    if not any(s.get("kind") == "observed" and "combined seas" in s.get("text", "").lower() for s in out):
-        if (R.get("seas") or {}).get("status") == "stale" and R["seas"].get("time"):
-            out.append({"text": brief_strings.not_used("Combined seas", brief._t(R["seas"]["time"]), 2),
-                        "kind": "missing", "sources": [((R["seas"].get("station") or {}).get("id") or "")]})
-        elif (specs.get("seas") or {}).get("sources") and not _ok(R.get("seas")):
-            out.append({"text": brief_strings.not_available("Combined seas"), "kind": "missing",
-                        "sources": specs["seas"]["sources"][:1]})
-
-    # Water / tides. Missing-data wording stays on the locked strings, as its own sentence.
-    def _missing_kind(text: str) -> bool:
-        return any(p in text for p in (
-            "Not available", "Not reported", "Not used", "Not measured",
-            "Not published", "Could not be checked",
-        ))
-
-    wt = dict(body.get("items") or []).get("Water temp")
-    if wt:
-        sid = ((R.get("waterTemp") or {}).get("station") or {}).get("id")
-        osid = ((R.get("waterTempOffshore") or {}).get("station") or {}).get("id")
-        srcs = [s for s in (sid, osid) if s]
-        kind = "missing" if _missing_kind(wt) else "observed"
-        tx = wt if wt.endswith(".") else wt + "."
-        out.append({"text": tx, "kind": kind, "sources": srcs})
-    tides = dict(body.get("items") or []).get("Tides")
-    if tides:
-        sid = ((payload.get("tides") or {}).get("station") or {}).get("id")
-        if _missing_kind(tides) and "Predicted" not in tides:
-            kind = "missing"
-        elif "Predicted" in tides:
-            kind = "predicted"
+    if _ok(R.get("seas")) and (R["seas"].get("values") or {}).get("heightFt") is not None:
+        sv = R["seas"]["values"]
+        splace, squal = place_for("seas")
+        seas_txt = "%.1f ft combined seas" % sv["heightFt"] + _at_place(splace, squal)
+        # If wind and seas share the exact same place phrase, fold into the wind part.
+        if parts and parts[0].get("kind") == "observed" and splace and _at_place(splace, squal) and parts[0]["text"].endswith(_at_place(splace, squal)):
+            parts[0]["text"] = parts[0]["text"][: -len(_at_place(splace, squal))] + " and " + seas_txt
+            sid = ((R["seas"].get("station") or {}).get("id"))
+            if sid and sid not in (parts[0].get("sources") or []):
+                parts[0]["sources"] = list(parts[0].get("sources") or []) + [sid]
         else:
-            kind = "observed"
-        tx = tides if tides.endswith(".") else tides + "."
-        out.append({"text": tx, "kind": kind, "sources": [sid] if sid else []})
+            sid = ((R["seas"].get("station") or {}).get("id"))
+            parts.append({"text": seas_txt, "kind": "observed", "sources": [sid] if sid else []})
+        if _ok(R.get("swell")) and (R["swell"].get("values") or {}).get("heightFt") is not None:
+            parts.append({
+                "text": "swell is %.1f ft" % R["swell"]["values"]["heightFt"],
+                "kind": "observed",
+                "sources": [((R.get("swell") or {}).get("station") or {}).get("id") or ((R.get("seas") or {}).get("station") or {}).get("id") or ""],
+            })
+    elif (R.get("seas") or {}).get("status") == "stale" and R["seas"].get("time"):
+        parts.append({"text": brief_strings.not_used("Combined seas", brief._t(R["seas"]["time"]), 2),
+                      "kind": "missing",
+                      "sources": [((R["seas"].get("station") or {}).get("id") or "")]})
+    elif (specs.get("seas") or {}).get("sources") and not _ok(R.get("seas")):
+        parts.append({"text": brief_strings.not_available("Combined seas"),
+                      "kind": "missing", "sources": (specs["seas"].get("sources") or [])[:1]})
+    sent = _sentence(parts)
+    if sent:
+        out.append(sent)
 
-    # Forecast + alerts
-    fc_bits = []
-    fc_srcs = []
+    # 2. Water temp + next predicted high/low; observed WL only when local
+    parts = []
+    inshore = R.get("waterTemp") or {}
+    offshore = R.get("waterTempOffshore") or {}
+    in_spec = specs.get("waterTemp") or {}
+    off_spec = specs.get("waterTempOffshore") or {}
+    if _ok(inshore) and (inshore.get("values") or {}).get("f") is not None:
+        st = inshore.get("station") or {}
+        sid = st.get("id")
+        place, qual = take_place(sid, stations.get(sid) or st, anchor, in_spec.get("role") or "inshore", "waterTemp")
+        parts.append({"text": "%.0f°F inshore%s" % (inshore["values"]["f"], _at_place(place, qual)),
+                      "kind": "observed", "sources": [sid] if sid else []})
+    elif not in_spec.get("sources"):
+        parts.append({"text": brief_strings.not_measured("Inshore water temperature"),
+                      "kind": "missing", "sources": []})
+    elif inshore.get("status") == "stale" and inshore.get("time"):
+        parts.append({"text": brief_strings.not_used(
+            "Inshore water temperature", brief._t(inshore["time"]),
+            max(1, int(round((inshore.get("staleAfterMin") or 90) / 60))) or 2),
+                      "kind": "missing",
+                      "sources": [((inshore.get("station") or {}).get("id") or "")]})
+    if _ok(offshore) and (offshore.get("values") or {}).get("f") is not None:
+        st = offshore.get("station") or {}
+        sid = st.get("id")
+        place, qual = take_place(sid, stations.get(sid) or st, anchor, off_spec.get("role") or "", "waterTempOffshore")
+        parts.append({"text": "%.0f°F observed%s" % (offshore["values"]["f"], _at_place(place, qual)),
+                      "kind": "observed", "sources": [sid] if sid else []})
+
+    tides = payload.get("tides") or {}
+    tide_cfg = cfg.get("tide") or {}
+    pred_st = tides.get("station") or {}
+    pred_sid = pred_st.get("id") or tide_cfg.get("station")
+    nxt = _next_tide(tides.get("events") or [], now) if tides.get("status") == "ok" else None
+    if nxt:
+        e, d = nxt
+        kind_word = "high" if e.get("type") == "H" else "low"
+        name = (pred_st.get("name") or (stations.get(pred_sid) or {}).get("name") or pred_sid or "the tide station")
+        at = "%s (%s)" % (name, pred_sid) if pred_sid else name
+        parts.append({"text": "next %s is %s (%.1f ft) at %s" % (kind_word, brief._t(d), e.get("v") or 0, at),
+                      "kind": "predicted", "sources": [pred_sid] if pred_sid else []})
+        # Observed water level only when it is a local reading at the prediction station.
+        ob = tides.get("observed") or {}
+        # When observed and predictions share a station, assemble omits observed.station.
+        want_obs = tide_cfg.get("observed", True) is not False
+        obs_sid = (
+            ((ob.get("station") or {}).get("id"))
+            or tide_cfg.get("observedStation")
+            or (pred_sid if want_obs and ob else None)
+        )
+        local = bool(want_obs and obs_sid and pred_sid and obs_sid == pred_sid)
+        if local and ob.get("status") == "ok" and ob.get("latest") and ob["latest"].get("v") is not None:
+            parts.append({"text": "observed water level is %.2f ft MLLW" % ob["latest"]["v"],
+                          "kind": "observed", "sources": [obs_sid]})
+    sent = _sentence(parts)
+    if sent:
+        out.append(sent)
+
+    # 3. NWS forecast and alerts
+    parts = []
     rain = dict(body.get("items") or []).get("Rain")
     marine = dict(body.get("items") or []).get("Marine forecast")
-    if rain and "NWS" in rain:
-        fc_bits.append(rain.rstrip("."))
+    fc_bits = []
+    fc_srcs = []
+    if rain and ("NWS" in rain or "% chance" in rain):
+        fc_bits.append(nws_chance_of_rain(rain))
         fc_srcs.append("NWS")
-    elif "rain forecast" in " ".join(body.get("missing") or []).lower() or any("Rain forecast" in m for m in (body.get("missing") or [])):
-        fc_bits.append(brief_strings.nws_forecast_unavailable("Rain forecast").rstrip("."))
+    elif any("Rain forecast" in m or "rain forecast" in m.lower() for m in (body.get("missing") or [])):
+        parts.append({"text": brief_strings.nws_forecast_unavailable("Rain forecast"),
+                      "kind": "missing", "sources": ["NWS"]})
     if marine and "NWS" in marine:
-        # keep short
-        fc_bits.append(marine.rstrip("."))
+        mt = marine.strip()
+        mt = re.sub(r"^NWS forecasts\s+", "", mt)
+        mt = re.sub(r"\.\s*\(NWS\s+([A-Z0-9]+)\)\.?\s*$", r" (\1)", mt)
+        mt = re.sub(r"\s*\(NWS\s+([A-Z0-9]+)\)\.?\s*$", r" (\1)", mt)
+        mt = mt.rstrip(".")
+        fc_bits.append(mt)
         fc_srcs.append((payload.get("marine") or {}).get("zone") or "NWS")
     if fc_bits:
-        out.append({"text": "; ".join(fc_bits) + ".", "kind": "forecast", "sources": fc_srcs})
+        parts.append({"text": "; ".join(b.rstrip(".") for b in fc_bits), "kind": "forecast", "sources": fc_srcs})
     if al.get("status") and al.get("status") != "ok":
-        out.append({"text": brief_strings.ALERTS_CHECK_FAILED, "kind": "missing", "sources": ["NWS"]})
+        parts.append({"text": brief_strings.ALERTS_CHECK_FAILED,
+                      "kind": "missing", "sources": ["NWS"]})
     elif al.get("items"):
         ev = al["items"][0].get("event") or "An NWS alert"
-        out.append({"text": "A %s is in effect." % ev, "kind": "alert",
-                    "sources": [z for z in (cfg.get("alertZones") or [])][:3]})
+        parts.append({"text": "A %s is in effect" % ev, "kind": "alert",
+                      "sources": [z for z in (cfg.get("alertZones") or [])][:3]})
     else:
         zones = cfg.get("alertZones") or []
-        out.append({"text": brief_strings.alerts_none(", ".join(zones) if zones else "this area"),
-                    "kind": "alert", "sources": list(zones)})
-    return out
+        parts.append({"text": brief_strings.alerts_none(", ".join(zones) if zones else "this area"),
+                      "kind": "alert", "sources": list(zones)})
+    sent = _sentence(parts)
+    if sent:
+        out.append(sent)
+    return out[:3]
 
 
 def _take_jordan(payload: dict) -> list:
@@ -1090,12 +1257,46 @@ def _render_captains_take(model: dict) -> str:
         tx = (s.get("text") or "").strip()
         if not tx:
             continue
-        kind = esc(s.get("kind") or "observed")
+        kinds = s.get("kinds") or [k for k in str(s.get("kind") or "observed").split() if k]
+        kind = esc(" ".join(kinds))
         srcs = " ".join(esc(str(x)) for x in (s.get("sources") or []) if x)
         attr = ' data-kind="%s"' % kind
         if srcs:
             attr += ' data-sources="%s"' % srcs
-        ps.append("<p%s>%s</p>" % (attr, esc(tx if tx.endswith(".") else tx + ".")))
+        parts = [p for p in (s.get("parts") or []) if (p.get("text") or "").strip()]
+        mixed = len(set(p.get("kind") for p in parts)) > 1
+        if mixed:
+            inner = []
+            # Rebuild with the same separators as _join_take_parts, as tagged spans.
+            acc = ""
+            for i, p in enumerate(parts):
+                piece = (p.get("text") or "").strip()
+                if not piece:
+                    continue
+                if i == 0:
+                    chunk = piece[0].upper() + piece[1:] if piece and not piece[0].isupper() else piece
+                    prefix = ""
+                elif acc.endswith(".") or piece.startswith("Alerts:") or piece.startswith("A "):
+                    if not acc.endswith("."):
+                        inner[-1] = inner[-1] + "."
+                        acc = acc + "."
+                    chunk = piece[0].upper() + piece[1:] if piece and piece[0].islower() else piece
+                    prefix = " "
+                else:
+                    chunk = piece
+                    prefix = "; "
+                pattr = ' data-kind="%s"' % esc(p.get("kind") or "observed")
+                psr = " ".join(esc(str(x)) for x in (p.get("sources") or []) if x)
+                if psr:
+                    pattr += ' data-sources="%s"' % psr
+                inner.append("%s<span%s>%s</span>" % (prefix, pattr, esc(chunk)))
+                acc = (acc + prefix + chunk).rstrip()
+            body = "".join(inner)
+            if acc and not acc.endswith("."):
+                body += "."
+            ps.append("<p%s>%s</p>" % (attr, body))
+        else:
+            ps.append("<p%s>%s</p>" % (attr, esc(tx if tx.endswith(".") else tx + ".")))
     issued = esc(model.get("issuedEt") or "")
     issued_p = ('<p class="mb-take-note">Issued %s. Generated by fixed rules from verified readings. Not an observation and not a fishing report.</p>' % issued) if issued else (
         '<p class="mb-take-note">Generated by fixed rules from verified readings. Not an observation and not a fishing report.</p>')

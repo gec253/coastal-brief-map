@@ -233,7 +233,8 @@ class Attribution(unittest.TestCase):
         self.assertIn("Swell 0.7 ft", d["Swell"])
         self.assertIn("not combined seas", d["Swell"])
         self.assertIn("Not measured", d["Water temp"])
-        self.assertIn("63°F offshore", d["Water temp"])
+        self.assertIn("Offshore water temperature", d["Water temp"])
+        self.assertIn("63°F", d["Water temp"])
         self.assertTrue(any(k == "Observed water level" for k, _ in out["unavailable"]))
         self.assertIn("NOAA predictions for", dict(out["unavailable"])["Observed water level"])
 
@@ -257,17 +258,26 @@ class Summary(unittest.TestCase):
             "tides": {"status": "ok", "station": {"id": "TEC2837", "name": "Bogue Inlet"},
                       "events": [{"t": int(NOW.timestamp() * 1000) + 3600_000, "v": 4.4, "type": "H"}]},
         }
-        body = preview_copy.relabel_salt(rid, {"items": [], "missing": [], "freshness": [], "take": []}, payload, cfg)
-        text = preview_copy.summary_salt(rid, body, payload, cfg)
+        body = preview_copy.relabel_salt(rid, {"items": [
+            ("Rain", "0% chance through tonight; sunny, high 56°F."),
+            ("Marine forecast", "Today: NW winds 10 to 15 kt. (NWS AMZ158)"),
+        ], "missing": [], "freshness": [], "take": []}, payload, cfg)
+        model = preview_copy.captains_take(rid, body, payload, cfg, now=NOW)
+        text = preview_copy.take_text(model)
+        self.assertLessEqual(len(model["sentences"]), 3)
         self.assertIn("12 kt", text)
         self.assertIn("41064", text)
-        self.assertIn("Combined seas", text)
+        self.assertIn("combined seas", text.lower())
         self.assertIn("swell", text.lower())
-        self.assertIn("offshore", text)
-        self.assertTrue("Predicted" in text or "tide" in text.lower())
+        self.assertIn("offshore buoy", text)
+        self.assertNotIn("at Offshore buoy", text)
+        self.assertTrue("next high" in text or "next low" in text or "tide" in text.lower())
+        self.assertIn("chance of rain", text)
         self.assertIn("Alerts:", text)
-        self.assertGreaterEqual(text.count("."), 2)
-        self.assertLess(len(text.split()), 220)
+        self.assertLess(len(text.split()), 180)
+        html = preview_copy._render_captains_take(model)
+        self.assertIn("data-kind=", html)
+        self.assertIn("<span data-kind=", html)  # mixed water/tide/forecast+alert
 
     def test_coastal_missing_and_stale(self):
         rid = "emerald-isle"
@@ -282,7 +292,9 @@ class Summary(unittest.TestCase):
             "alerts": {"status": "failed"},
         }
         body = preview_copy.relabel_salt(rid, {"items": [], "missing": ["seas"], "freshness": [], "take": []}, payload, cfg)
-        text = preview_copy.summary_salt(rid, body, payload, cfg)
+        model = preview_copy.captains_take(rid, body, payload, cfg, now=NOW)
+        text = preview_copy.take_text(model)
+        self.assertLessEqual(len(model["sentences"]), 3)
         self.assertIn("Not used.", text)
         self.assertIn("older than the 2-hour limit", text)
         self.assertIn("Combined seas: Not available at issue time", text)
@@ -384,10 +396,13 @@ class CaptainsTakeAndSources(unittest.TestCase):
         self.assertEqual(m["heading"], "Captain's Take")
         self.assertIn("issuedEt", m)
         self.assertTrue(m["sentences"])
+        allowed = {"observed", "forecast", "missing", "alert", "predicted"}
         for s in m["sentences"]:
-            self.assertIn(s["kind"], ("observed", "forecast", "missing", "alert", "predicted"))
+            kinds = s.get("kinds") or str(s.get("kind") or "").split()
+            self.assertTrue(kinds and set(kinds) <= allowed, kinds)
             self.assertIn("text", s)
             self.assertIn("sources", s)
+        self.assertLessEqual(len(m["sentences"]), 3)
         self.assertIn("class=\"mb-summary mb-take\"", html)
         self.assertIn("Captain's Take", html)
         self.assertIn("id=\"cb-captains-take\"", html)
@@ -403,6 +418,85 @@ class CaptainsTakeAndSources(unittest.TestCase):
         self.assertEqual(html.count("mb-take-body"), 1)
         self.assertNotIn("bite", html.lower())
         self.assertNotIn("fishing forecast", html.lower())
+
+
+    def test_coastal_take_wording_and_three_sentences(self):
+        cfg = {r["id"]: r for r in conditions.load_regions()["regions"]}
+        rid, c = "nags-head", cfg["nags-head"]
+        payload = {
+            "ok": True, "region": {"id": rid, "anchor": c["anchor"]},
+            "readings": {
+                "wind": {"status": "ok", "values": {"speedKt": 11, "gustKt": 14, "dirCompass": "NW"},
+                         "station": {"id": "8651370", "name": "Duck Pier"}},
+                "seas": {"status": "ok", "values": {"heightFt": 4.3},
+                         "station": {"id": "44086", "name": "Nags Head offshore (CDIP 243)"}},
+                "swell": {"status": "ok", "values": {"heightFt": 0.7}, "station": {"id": "44086"}},
+                "waterTempOffshore": {"status": "ok", "values": {"f": 62}, "station": {"id": "44086"}},
+            },
+            "alerts": {"status": "ok", "items": []},
+            "tides": {"status": "ok", "station": {"id": "8652226", "name": "Jennette's Pier (ocean)"},
+                      "observed": {"status": "ok", "station": {"id": "8651370"},
+                                   "latest": {"t": int(NOW.timestamp() * 1000), "v": 3.50}},
+                      "events": [{"t": int(NOW.timestamp() * 1000) + 3600_000, "v": 3.5, "type": "H"}]},
+        }
+        body = preview_copy.relabel_salt(rid, {"items": [], "missing": [], "freshness": [], "take": []}, payload, c)
+        # Card labels stay prominent and capitalized
+        d = dict(body["items"])
+        self.assertIn("Representative observation, Duck Pier (8651370), 21 mi NNW", d["Wind"])
+        self.assertIn("Offshore buoy 44086, 11 mi ENE", d["Seas"])
+        self.assertIn("Inshore water temperature: Not measured", d["Water temp"])
+        self.assertIn("Offshore water temperature:", d["Water temp"])
+        self.assertIn("62°F", d["Water temp"])
+        model = preview_copy.captains_take(rid, body, payload, c, now=NOW)
+        self.assertEqual(len(model["sentences"]), 3)
+        text = preview_copy.take_text(model)
+        self.assertIn("NW wind 11 kt", text)
+        self.assertIn("at Duck Pier (8651370), 21 mi NNW, a representative observation", text)
+        self.assertNotIn("at Representative observation", text)
+        self.assertIn("at offshore buoy 44086, 11 mi ENE", text)
+        self.assertNotIn("at Offshore buoy", text)
+        # Observed WL at Duck is not local to Jennette's — omitted from the Take
+        self.assertNotIn("3.50 ft MLLW", text)
+        self.assertNotIn("3.50", text)
+        self.assertIn("next high", text)
+        self.assertIn("Not measured", text)
+        self.assertIn("62°F observed at offshore buoy 44086", text)
+        # Mixed-kind water/tide sentence uses parts and kinds
+        mid = model["sentences"][1]
+        self.assertIn("missing", mid["kinds"])
+        self.assertIn("observed", mid["kinds"])
+        self.assertIn("predicted", mid["kinds"])
+        html = preview_copy._render_captains_take(model)
+        self.assertIn('data-kind="missing observed predicted"', html)
+        self.assertIn('<span data-kind="missing"', html)
+        self.assertIn('<span data-kind="predicted"', html)
+
+
+    def test_wilmington_take_includes_local_water_level(self):
+        cfg = {r["id"]: r for r in conditions.load_regions()["regions"]}
+        rid, c = "wilmington", cfg["wilmington"]
+        payload = {
+            "ok": True, "region": {"id": rid, "anchor": c["anchor"]},
+            "readings": {
+                "wind": {"status": "ok", "values": {"speedKt": 7, "dirCompass": "NW"},
+                         "station": {"id": "8658163", "name": "Wrightsville Beach, Johnnie Mercer's Pier"}},
+                "seas": {"status": "ok", "values": {"heightFt": 2.0},
+                         "station": {"id": "41110", "name": "Masonboro Inlet (CDIP 150)"}},
+            },
+            "alerts": {"status": "ok", "items": []},
+            "tides": {"status": "ok", "station": {"id": "8658163", "name": "Wrightsville Beach, Johnnie Mercer's Pier"},
+                      "observed": {"status": "ok", "latest": {"t": int(NOW.timestamp() * 1000), "v": 4.18}},
+                      "events": [{"t": int(NOW.timestamp() * 1000) + 3600_000, "v": 4.1, "type": "H"}]},
+        }
+        body = preview_copy.relabel_salt(rid, {"items": [], "missing": [], "freshness": [], "take": []}, payload, c)
+        model = preview_copy.captains_take(rid, body, payload, c, now=NOW)
+        text = preview_copy.take_text(model)
+        self.assertLessEqual(len(model["sentences"]), 3)
+        self.assertTrue("next high" in text.lower())
+        self.assertIn("observed water level is 4.18 ft MLLW", text)
+        self.assertIn("nearshore buoy 41110, 6 mi SE", text)
+        html = preview_copy._render_captains_take(model)
+        self.assertNotIn("..", html.replace("...", ""))
 
     def test_offshore_lead_in_nags_and_topsail_cards(self):
         cfg = {r["id"]: r for r in conditions.load_regions()["regions"]}

@@ -86,7 +86,7 @@ def _compose_salt(rid: str, now: datetime) -> dict:
     if st != 200:
         payload = {}
     body = preview_copy.relabel_salt(rid, body, payload or {}, cfg)
-    take = preview_copy.captains_take(rid, body, payload or {}, cfg, body.get("issuedEt") or brief._et(now).strftime("%a %b %-d, %-I:%M %p ET"))
+    take = preview_copy.captains_take(rid, body, payload or {}, cfg, body.get("issuedEt") or brief._et(now).strftime("%a %b %-d, %-I:%M %p ET"), now=now)
     body["captainsTake"] = take
     body["summary"] = preview_copy.take_text(take)
     body["readingSources"] = preview_copy.reading_sources(rid, payload or {}, body, cfg, now)
@@ -402,7 +402,7 @@ def _compose_fresh(rid: str, now: datetime) -> dict:
         sources = "USGS, NWS"
     issued = brief._et(now).strftime("%a %b %-d, %-I:%M %p ET")
     body_tmp = {"items": items, "missing": missing, "issuedEt": issued}
-    take_model = preview_copy.captains_take(rid, body_tmp, d, cfg, issued)
+    take_model = preview_copy.captains_take(rid, body_tmp, d, cfg, issued, now=now)
     body = {"region": d.get("region") or {"id": rid, "name": cfg.get("name"), "area": cfg.get("area"),
                                           "anchor": cfg.get("anchor")},
             "waterType": "freshwater", "items": items, "freshness": fresh, "take": take,
