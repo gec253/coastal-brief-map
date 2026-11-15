@@ -1,5 +1,6 @@
 /* Private /preview/intro overlay. Does not ship on public /. */
-/* Animate only transform, opacity, and stroke-dashoffset. */
+/* Animate only transform, opacity, and stroke-dashoffset.
+   The veil's wave edge is a static path, swept with transform. */
 
 html[data-wave-intro] {
   --wi-navy: #071c29;
@@ -12,9 +13,7 @@ html[data-wave-intro] {
   position: fixed;
   inset: 0;
   z-index: 80;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
   pointer-events: auto;
   color: var(--wi-ivory);
   background: transparent;
@@ -30,16 +29,29 @@ html.intro-seen .wave-intro,
 .wi-veil {
   position: absolute;
   inset: 0;
-  background: var(--wi-navy);
-  transform-origin: 50% 0%;
-  animation: wi-veil 1800ms cubic-bezier(0.22, 0.7, 0.2, 1) both;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+  animation: wi-veil-fade 1800ms linear both;
+}
+
+.wi-veil-svg {
+  display: block;
+  width: 100%;
+  height: 200%;
+  animation: wi-veil-sweep 1800ms linear both;
+}
+
+.wi-veil-sheet {
+  fill: var(--wi-navy);
 }
 
 .wi-stage {
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 1;
-  width: min(1100px, 92vw);
-  height: min(42vh, 280px);
+  width: 100%;
+  height: 100%;
   pointer-events: none;
 }
 
@@ -51,7 +63,9 @@ html.intro-seen .wave-intro,
 }
 
 .wi-swell,
-.wi-echo {
+.wi-echo,
+.wi-crest,
+.wi-arc {
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -59,50 +73,80 @@ html.intro-seen .wave-intro,
 
 .wi-swell {
   stroke: var(--wi-ivory);
-  stroke-width: 1.35;
-  stroke-dasharray: 2000;
-  stroke-dashoffset: 2000;
-  animation: wi-draw 1800ms cubic-bezier(0.22, 0.7, 0.2, 1) both;
+  stroke-width: 3.2;
+  stroke-dasharray: 1360;
+  stroke-dashoffset: 1360;
+  animation: wi-draw 1800ms linear both;
 }
 
 .wi-echo {
   stroke: var(--wi-seafoam);
-  stroke-width: 0.7;
-  opacity: 0.45;
-  stroke-dasharray: 2000;
-  stroke-dashoffset: 2000;
-  animation: wi-draw-echo 1800ms cubic-bezier(0.22, 0.7, 0.2, 1) both;
+  stroke-width: 1.85;
+  opacity: 0.5;
+  stroke-dasharray: 1360;
+  stroke-dashoffset: 1360;
+  animation: wi-draw-echo 1800ms linear both;
 }
 
-.wi-spray {
+.wi-curl {
+  transform-box: fill-box;
+  transform-origin: 85% 45%;
+  animation: wi-curl 1800ms cubic-bezier(0.22, 0.7, 0.2, 1) both;
+}
+
+.wi-crest {
+  stroke: var(--wi-ivory);
+  stroke-width: 2.6;
+}
+
+.wi-arc {
+  stroke: var(--wi-ivory);
+  stroke-width: 1.7;
+}
+
+.wi-dot {
   fill: var(--wi-ivory);
+}
+
+.wi-spray-a,
+.wi-spray-b,
+.wi-spray-c,
+.wi-spray-d,
+.wi-spray-e,
+.wi-spray-f,
+.wi-spray-g,
+.wi-spray-h {
   opacity: 0;
-  animation: wi-spray 1800ms ease both;
   transform-box: fill-box;
   transform-origin: center;
 }
 
-.wi-spray:nth-child(1) { animation-delay: 0ms; }
-.wi-spray:nth-child(2) { animation-delay: 0ms; }
-.wi-spray:nth-child(3) { animation-delay: 0ms; }
-.wi-spray:nth-child(4) { animation-delay: 0ms; }
-.wi-spray:nth-child(5) { animation-delay: 0ms; }
+.wi-spray-a { animation: wi-spray-a 1800ms ease both; }
+.wi-spray-b { animation: wi-spray-b 1800ms ease both; }
+.wi-spray-c { animation: wi-spray-c 1800ms ease both; }
+.wi-spray-d { animation: wi-spray-d 1800ms ease both; }
+.wi-spray-e { animation: wi-spray-e 1800ms ease both; }
+.wi-spray-f { animation: wi-spray-f 1800ms ease both; }
+.wi-spray-g { animation: wi-spray-g 1800ms ease both; }
+.wi-spray-h { animation: wi-spray-h 1800ms ease both; }
 
 .wi-motto {
   position: absolute;
   z-index: 1;
   left: 50%;
-  top: 58%;
+  top: 34%;
   margin: 0;
   transform: translateX(-50%);
   font-family: var(--f-ui, "Source Sans 3", system-ui, sans-serif);
-  font-size: 0.68rem;
+  font-size: 0.85rem;
   font-weight: 700;
-  letter-spacing: 0.16em;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.18em;
   line-height: 1.2;
   text-transform: uppercase;
   text-align: center;
   color: var(--wi-ivory);
+  text-shadow: 0 0 16px rgba(7, 28, 41, 0.55);
   opacity: 0;
   white-space: nowrap;
   animation: wi-motto 1800ms ease both;
@@ -114,7 +158,8 @@ html.intro-seen .wave-intro,
   position: absolute;
   z-index: 2;
   top: 16px;
-  right: 16px;
+  left: 16px;
+  right: auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -176,49 +221,120 @@ html.intro-seen .wave-intro,
   outline-offset: 3px;
 }
 
+/* Swell finishes drawing by 600ms (33%). Visible stroke starts immediately. */
 @keyframes wi-draw {
-  0% { stroke-dashoffset: 2000; opacity: 1; }
-  44% { stroke-dashoffset: 0; opacity: 1; }
-  80% { stroke-dashoffset: 0; opacity: 1; }
+  0% { stroke-dashoffset: 1360; opacity: 1; }
+  33% { stroke-dashoffset: 0; opacity: 1; }
+  78% { stroke-dashoffset: 0; opacity: 1; }
   100% { stroke-dashoffset: 0; opacity: 0; }
 }
 
+/* Seafoam echo trails the ivory stroke by about 100ms. */
 @keyframes wi-draw-echo {
-  0%, 8% { stroke-dashoffset: 2000; opacity: 0; }
-  12% { opacity: 0.45; }
-  50% { stroke-dashoffset: 0; opacity: 0.45; }
-  80% { opacity: 0.35; }
+  0%, 4% { stroke-dashoffset: 1360; opacity: 0; }
+  8% { opacity: 0.5; }
+  39% { stroke-dashoffset: 0; opacity: 0.5; }
+  78% { stroke-dashoffset: 0; opacity: 0.35; }
   100% { stroke-dashoffset: 0; opacity: 0; }
 }
 
-@keyframes wi-spray {
-  0%, 48% { opacity: 0; transform: translateY(0); }
-  58% { opacity: 0.7; transform: translateY(-7px); }
-  72% { opacity: 0.3; transform: translateY(-12px); }
-  86%, 100% { opacity: 0; transform: translateY(-14px); }
+/* Barrel-curl lifts in the right third, 500–1000ms. */
+@keyframes wi-curl {
+  0%, 27% { opacity: 0; transform: scale(0.92) translateY(10px); }
+  42% { opacity: 1; transform: scale(1) translateY(0); }
+  56% { opacity: 1; transform: scale(1) translateY(0); }
+  78% { opacity: 0.85; transform: scale(1) translateY(0); }
+  100% { opacity: 0; transform: scale(1) translateY(0); }
 }
 
-@keyframes wi-veil {
-  0%, 66% { opacity: 1; transform: scaleY(1); }
-  100% { opacity: 0; transform: scaleY(1); }
+@keyframes wi-spray-a {
+  0%, 50% { opacity: 0; transform: translateY(0); }
+  58% { opacity: 0.9; transform: translateY(-8px); }
+  72% { opacity: 0.35; transform: translateY(-16px); }
+  86%, 100% { opacity: 0; transform: translateY(-20px); }
+}
+@keyframes wi-spray-b {
+  0%, 52% { opacity: 0; transform: translateY(0); }
+  60% { opacity: 0.85; transform: translateY(-10px); }
+  74% { opacity: 0.3; transform: translateY(-18px); }
+  88%, 100% { opacity: 0; transform: translateY(-22px); }
+}
+@keyframes wi-spray-c {
+  0%, 48% { opacity: 0; transform: translateY(0) scale(0.7); }
+  56% { opacity: 0.9; transform: translateY(-12px) scale(1); }
+  70% { opacity: 0.35; transform: translateY(-22px) scale(1); }
+  84%, 100% { opacity: 0; transform: translateY(-26px) scale(1); }
+}
+@keyframes wi-spray-d {
+  0%, 51% { opacity: 0; transform: translateY(0) scale(0.7); }
+  59% { opacity: 0.95; transform: translateY(-14px) scale(1); }
+  73% { opacity: 0.35; transform: translateY(-24px) scale(1); }
+  86%, 100% { opacity: 0; transform: translateY(-28px) scale(1); }
+}
+@keyframes wi-spray-e {
+  0%, 47% { opacity: 0; transform: translateY(0) scale(0.7); }
+  55% { opacity: 0.8; transform: translateY(-10px) scale(1); }
+  68% { opacity: 0.3; transform: translateY(-20px) scale(1); }
+  82%, 100% { opacity: 0; transform: translateY(-24px) scale(1); }
+}
+@keyframes wi-spray-f {
+  0%, 53% { opacity: 0; transform: translateY(0) scale(0.7); }
+  61% { opacity: 0.85; transform: translateY(-11px) scale(1); }
+  75% { opacity: 0.3; transform: translateY(-21px) scale(1); }
+  88%, 100% { opacity: 0; transform: translateY(-26px) scale(1); }
+}
+@keyframes wi-spray-g {
+  0%, 49% { opacity: 0; transform: translateY(0) scale(0.7); }
+  57% { opacity: 0.8; transform: translateY(-13px) scale(1); }
+  71% { opacity: 0.28; transform: translateY(-23px) scale(1); }
+  85%, 100% { opacity: 0; transform: translateY(-27px) scale(1); }
+}
+@keyframes wi-spray-h {
+  0%, 46% { opacity: 0; transform: translateY(0) scale(0.7); }
+  54% { opacity: 0.75; transform: translateY(-9px) scale(1); }
+  67% { opacity: 0.25; transform: translateY(-18px) scale(1); }
+  80%, 100% { opacity: 0; transform: translateY(-22px) scale(1); }
 }
 
-@keyframes wi-motto {
-  0%, 42% { opacity: 0; transform: translateX(-50%); }
-  52% { opacity: 0.92; transform: translateX(-50%); }
-  62% { opacity: 0.92; transform: translateX(-50%); }
-  70%, 100% { opacity: 0; transform: translateX(-50%); }
+/* Wave-shaped leading edge holds, then sweeps up 900–1400ms. */
+@keyframes wi-veil-sweep {
+  0%, 50% { transform: translateY(0); }
+  78% { transform: translateY(-58%); }
+  100% { transform: translateY(-68%); }
 }
 
-@keyframes wi-skip-in {
-  0%, 72% { opacity: 1; }
+@keyframes wi-veil-fade {
+  0%, 75% { opacity: 1; }
   100% { opacity: 0; }
 }
 
+/* Tagline visible about 1000–1350ms, kept below the page LCP size. */
+@keyframes wi-motto {
+  0%, 55% { opacity: 0; transform: translateX(-50%); }
+  62% { opacity: 0.95; transform: translateX(-50%); }
+  74% { opacity: 0.95; transform: translateX(-50%); }
+  82%, 100% { opacity: 0; transform: translateX(-50%); }
+}
+
+/* Skip is gone by 1000ms so it never meets Dark mode. */
+@keyframes wi-skip-in {
+  0%, 50% { opacity: 1; }
+  56%, 100% { opacity: 0; }
+}
+
 html[data-intro-seek] .wave-intro .wi-veil,
+html[data-intro-seek] .wave-intro .wi-veil-svg,
 html[data-intro-seek] .wave-intro .wi-swell,
 html[data-intro-seek] .wave-intro .wi-echo,
-html[data-intro-seek] .wave-intro .wi-spray,
+html[data-intro-seek] .wave-intro .wi-curl,
+html[data-intro-seek] .wave-intro .wi-spray-a,
+html[data-intro-seek] .wave-intro .wi-spray-b,
+html[data-intro-seek] .wave-intro .wi-spray-c,
+html[data-intro-seek] .wave-intro .wi-spray-d,
+html[data-intro-seek] .wave-intro .wi-spray-e,
+html[data-intro-seek] .wave-intro .wi-spray-f,
+html[data-intro-seek] .wave-intro .wi-spray-g,
+html[data-intro-seek] .wave-intro .wi-spray-h,
 html[data-intro-seek] .wave-intro .wi-motto,
 html[data-intro-seek] .wave-intro .wi-skip {
   animation-play-state: paused !important;
@@ -228,9 +344,18 @@ html[data-intro-seek] .wave-intro .wi-skip {
 
 @media (prefers-reduced-motion: reduce) {
   .wave-intro .wi-veil,
+  .wave-intro .wi-veil-svg,
   .wave-intro .wi-swell,
   .wave-intro .wi-echo,
-  .wave-intro .wi-spray,
+  .wave-intro .wi-curl,
+  .wave-intro .wi-spray-a,
+  .wave-intro .wi-spray-b,
+  .wave-intro .wi-spray-c,
+  .wave-intro .wi-spray-d,
+  .wave-intro .wi-spray-e,
+  .wave-intro .wi-spray-f,
+  .wave-intro .wi-spray-g,
+  .wave-intro .wi-spray-h,
   .wave-intro .wi-motto,
   .wave-intro .wi-skip {
     animation: none;
@@ -238,9 +363,12 @@ html[data-intro-seek] .wave-intro .wi-skip {
   html.intro-reduce:not(.intro-seen) .wi-veil {
     animation: wi-reduce 200ms ease both;
   }
+  html.intro-reduce:not(.intro-seen) .wi-veil-svg {
+    transform: none;
+  }
   html.intro-reduce:not(.intro-seen) .wi-swell,
   html.intro-reduce:not(.intro-seen) .wi-echo,
-  html.intro-reduce:not(.intro-seen) .wi-spray,
+  html.intro-reduce:not(.intro-seen) .wi-curl,
   html.intro-reduce:not(.intro-seen) .wi-motto {
     opacity: 0;
   }
@@ -256,12 +384,12 @@ html[data-intro-seek] .wave-intro .wi-skip {
 
 @media (max-width: 639px) {
   .wi-motto {
-    font-size: 0.62rem;
-    letter-spacing: 0.12em;
-    bottom: 16%;
+    font-size: 0.8rem;
+    letter-spacing: 0.16em;
   }
   .wi-skip {
-    top: 10px;
-    right: 10px;
+    top: 12px;
+    left: 12px;
+    right: auto;
   }
 }

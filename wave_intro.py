@@ -9,16 +9,26 @@ DURATION_MS = 1800
 
 _OVERLAY = """
 <div id="wave-intro" class="wave-intro" role="dialog" aria-label="Site introduction">
-  <div class="wi-veil" aria-hidden="true"></div>
+  <div class="wi-veil" aria-hidden="true">
+    <svg class="wi-veil-svg" viewBox="0 0 1200 1600" preserveAspectRatio="none" focusable="false">
+      <path class="wi-veil-sheet" d="M -40 -40 H 1240 V 880 C 1100 960, 1000 840, 860 900 C 720 960, 600 840, 460 910 C 300 980, 160 860, -40 940 Z"/>
+    </svg>
+  </div>
   <div class="wi-stage" aria-hidden="true">
-    <svg class="wi-svg" viewBox="0 0 1200 360" preserveAspectRatio="xMidYMid meet" focusable="false">
-      <path class="wi-echo" fill="none" d="M-20 214 C 140 214, 220 188, 360 198 S 560 250, 720 200 S 900 160, 1100 176"/>
-      <path class="wi-swell" fill="none" d="M-20 200 C 130 200, 210 168, 350 180 S 560 248, 720 186 C 850 148, 940 116, 1020 86 C 1055 72, 1082 54, 1090 40 C 1096 28, 1084 26, 1074 34 C 1064 44, 1076 56, 1096 58"/>
-      <circle class="wi-spray" fill="currentColor" r="1.5" cx="1082" cy="32"/>
-      <circle class="wi-spray" fill="currentColor" r="1.15" cx="1098" cy="44"/>
-      <circle class="wi-spray" fill="currentColor" r="1.3" cx="1068" cy="24"/>
-      <circle class="wi-spray" fill="currentColor" r="1.05" cx="1110" cy="54"/>
-      <circle class="wi-spray" fill="currentColor" r="1.2" cx="1090" cy="20"/>
+    <svg class="wi-svg" viewBox="0 0 1200 800" preserveAspectRatio="none" focusable="false">
+      <path class="wi-echo" fill="none" d="M -60 428 C 80 428, 160 384, 280 402 C 410 422, 490 474, 630 440 C 750 410, 840 378, 960 364 C 1060 354, 1140 348, 1280 342"/>
+      <path class="wi-swell" fill="none" d="M -60 412 C 80 412, 160 368, 280 386 C 410 406, 490 458, 630 424 C 750 394, 840 362, 960 348 C 1060 338, 1140 332, 1280 326"/>
+      <g class="wi-curl">
+        <path class="wi-crest" fill="none" d="M 760 378 C 900 360, 1040 340, 1110 300 C 1165 272, 1170 236, 1120 214 C 1060 188, 990 206, 968 250 C 954 278, 992 300, 1055 302"/>
+        <path class="wi-arc wi-spray-a" fill="none" d="M 1088 200 C 1104 184, 1130 178, 1150 190"/>
+        <path class="wi-arc wi-spray-b" fill="none" d="M 1128 224 C 1144 214, 1164 220, 1176 236"/>
+        <circle class="wi-dot wi-spray-c" cx="1118" cy="198" r="11"/>
+        <circle class="wi-dot wi-spray-d" cx="1150" cy="220" r="13"/>
+        <circle class="wi-dot wi-spray-e" cx="1084" cy="188" r="9"/>
+        <circle class="wi-dot wi-spray-f" cx="1172" cy="248" r="10"/>
+        <circle class="wi-dot wi-spray-g" cx="1130" cy="178" r="8"/>
+        <circle class="wi-dot wi-spray-h" cx="1098" cy="170" r="7"/>
+      </g>
     </svg>
   </div>
   <p class="wi-motto">Know the Water. Live the Coast.</p>
