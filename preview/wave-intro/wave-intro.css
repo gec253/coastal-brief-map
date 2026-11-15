@@ -1,0 +1,215 @@
+/* Private /preview/intro overlay. Does not ship on public /. */
+/* Path geometry is driven from requestAnimationFrame, not CSS d. */
+/* Any keyframes stay compositor-only: opacity, transform, stroke-dashoffset. */
+
+html[data-wave-intro] {
+  --wi-navy: #071c29;
+  --wi-ivory: #f3e6d0;
+  --wi-seafoam: #8eb8b0;
+  --wi-brass: #c4a36a;
+}
+
+/* The page keeps its own background throughout. The overlay sheet alone
+   covers the first paint, so nothing on html/body changes colour when the
+   intro ends (an earlier navy html/body hold snapped to ivory or #10232F). */
+
+.wave-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: block;
+  pointer-events: auto;
+  color: var(--wi-ivory);
+  background: transparent;
+}
+
+.wave-intro[hidden],
+html.intro-seen .wave-intro,
+.wave-intro.is-done {
+  display: none;
+  pointer-events: none;
+}
+
+/* The navy body of the sheet is a plain composited layer moved only with
+   transform, so it never repaints. The SVG above it repaints just a thin
+   band around the moving edge. */
+.wi-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--wi-navy);
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+  pointer-events: none;
+}
+
+.wi-svg {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  /* Own layer: band repaints never touch the page beneath. */
+  will-change: transform;
+}
+
+.wi-sheet {
+  fill: var(--wi-navy);
+}
+
+.wi-line {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.wi-line-ivory {
+  stroke: var(--wi-ivory);
+  stroke-width: 1.35px;
+  opacity: 0.96;
+}
+
+.wi-line-sea {
+  stroke: var(--wi-seafoam);
+  stroke-width: 1.05px;
+  opacity: 0.55;
+}
+
+.wi-line-brass {
+  stroke: #C4A36A;
+  stroke: url(#wi-aged-brass);
+  stroke-width: 1.25px;
+  opacity: 1;
+}
+
+.wi-skip {
+  appearance: none;
+  position: absolute;
+  z-index: 2;
+  top: auto;
+  right: auto;
+  bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  left: max(16px, env(safe-area-inset-left, 0px));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 14px;
+  border: 1px solid rgba(243, 230, 208, 0.45);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--wi-ivory);
+  font: 700 0.78rem/1 var(--f-ui, "Source Sans 3", system-ui, sans-serif);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.wi-skip:hover {
+  background: rgba(196, 163, 106, 0.16);
+}
+
+.wi-skip:focus-visible {
+  outline: 3px solid var(--wi-brass);
+  outline-offset: 3px;
+}
+
+.wi-sound[hidden] {
+  display: none !important;
+}
+
+.wi-replay-wrap {
+  margin: 0 0 12px;
+}
+
+.wi-replay {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: 500 0.82rem/1.4 var(--f-ui, "Source Sans 3", system-ui, sans-serif);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+.wi-replay:hover,
+.wi-replay:focus-visible {
+  opacity: 1;
+}
+
+.wi-replay:focus-visible {
+  outline: 3px solid var(--wi-brass);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.intro-reduce:not(.intro-seen) .wi-svg,
+  html.intro-reduce:not(.intro-seen) .wi-fill {
+    animation: wi-reduce 200ms ease both;
+  }
+  html.intro-reduce:not(.intro-seen) .wi-line {
+    opacity: 0;
+  }
+  html.intro-reduce:not(.intro-seen) .wi-skip {
+    opacity: 1;
+  }
+}
+
+@keyframes wi-reduce {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@media (max-width: 639px) {
+  .wi-skip {
+    top: auto;
+    right: auto;
+    bottom: max(12px, env(safe-area-inset-bottom, 0px));
+    left: max(12px, env(safe-area-inset-left, 0px));
+  }
+}
+
+/* Aged-brass finish on the real masthead rule, so the handoff is invisible.
+   Purely decorative (the rule is already aria-hidden). No layout changes. */
+html[data-wave-intro] .wave-settle {
+  stroke: #C4A36A;
+  stroke: url(#wi-rule-brass);
+  stroke-width: 1.25px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  animation: none !important;
+  stroke-dashoffset: 0 !important;
+}
+
+html[data-wave-intro] .wave-swell,
+html[data-wave-intro] .wave-glint,
+html[data-wave-intro] .mast-sheen {
+  animation: none !important;
+}
+
+/* While the intro is on, hide the static rule without affecting layout.
+   It returns in the same frame the overlay line is removed. */
+html[data-wave-intro].intro-play:not(.intro-seen) .wave-settle,
+html[data-wave-intro].intro-play:not(.intro-seen) .wave-swell,
+html[data-wave-intro].intro-play:not(.intro-seen) .wave-glint,
+html[data-wave-intro].intro-play:not(.intro-seen) .mast-sheen {
+  opacity: 0 !important;
+}
+
+/* Once the brass line has flattened onto the rule, show the real path
+   and hide the overlay stroke so the last frames match the handoff. */
+html[data-wave-intro].intro-play.intro-rule-live:not(.intro-seen) .wave-settle {
+  opacity: 1 !important;
+}
