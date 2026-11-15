@@ -129,6 +129,87 @@ class Assemble(unittest.TestCase):
         self.assertIn('id="share-soon"', html)
 
 
+
+
+    def test_featured_uses_same_origin_media_when_cached(self):
+        photo = dict(PHOTOS[0])
+        pid = photo["id"]
+        with cw._MEDIA_LOCK:
+            cw._MEDIA_CACHE[(pid, "800")] = b"RIFF" + b"x" * 200
+            cw._MEDIA_CACHE[(pid, "400")] = b"RIFF" + b"x" * 200
+        try:
+            loc = cw.localize_featured(photo)
+            self.assertTrue(loc["src"]["800"].startswith("/catch-wall-media/"))
+            self.assertIn("/800.webp", loc["src"]["800"])
+            model = cw.assemble("catch", "all", live=[loc] + PHOTOS[1:])
+            # assemble localizes featured again from original live photos unless we cache against PHOTOS[0]
+        finally:
+            with cw._MEDIA_LOCK:
+                cw._MEDIA_CACHE.pop((pid, "800"), None)
+                cw._MEDIA_CACHE.pop((pid, "400"), None)
+        # Re-do with cache held through assemble
+        with cw._MEDIA_LOCK:
+            cw._MEDIA_CACHE[(pid, "800")] = b"RIFF" + b"x" * 200
+            cw._MEDIA_CACHE[(pid, "400")] = b"RIFF" + b"x" * 200
+        try:
+            model = cw.assemble("catch", "all", live=PHOTOS)
+            html = cw.featured_preload_html(model) + cw._photo_figure(model["featured"], 0, True)
+            self.assertIn("/catch-wall-media/%s/800.webp" % pid, html)
+            self.assertIn("/catch-wall-media/%s/400.webp" % pid, html)
+            # 1600 stays on the public bucket until that derivative is cached.
+            self.assertEqual(cw.parse_media_path("/catch-wall-media/%s/800.webp" % pid), (pid, "800"))
+            self.assertIsNone(cw.parse_media_path("/catch-wall-media/../800.webp"))
+        finally:
+            with cw._MEDIA_LOCK:
+                cw._MEDIA_CACHE.pop((pid, "800"), None)
+                cw._MEDIA_CACHE.pop((pid, "400"), None)
+
+class PhotoCache(unittest.TestCase):
+    def tearDown(self):
+        cw._store_cache([])
+        cw._PUBLIC_CACHE["t"] = 0.0
+
+    def test_photo_cache_serves_stale_without_blocking(self):
+        calls = []
+
+        class FakeResp:
+            def __enter__(self):
+                return self
+            def __exit__(self, *a):
+                return False
+            def read(self):
+                return b'{"photos": [{"id": "x"}]}'
+
+        def fake_open(*a, **k):
+            calls.append(k.get("timeout"))
+            return FakeResp()
+
+        cw._store_cache([{"id": "cached"}])
+        with patch("catch_wall_public.urlopen", fake_open):
+            rows = cw._fetch_public_approved()
+        self.assertEqual(rows, [{"id": "cached"}])
+        self.assertEqual(calls, [])
+
+        # Past freshness, within TTL: return stale immediately and refresh in the background.
+        cw._PUBLIC_CACHE["t"] = cw.time.time() - (cw._CACHE_FRESH_S + 1)
+        with patch("catch_wall_public.urlopen", fake_open):
+            rows = cw._fetch_public_approved()
+        self.assertEqual(rows, [{"id": "cached"}])
+        cw.time.sleep(0.2)
+        self.assertEqual(calls, [cw._FETCH_TIMEOUT_S])
+
+        def boom(*a, **k):
+            calls.append("boom")
+            raise TimeoutError("slow")
+
+        cw._store_cache([{"id": "stale"}])
+        cw._PUBLIC_CACHE["t"] = 0.0
+        with patch("catch_wall_public.urlopen", boom):
+            rows = cw._fetch_public_approved()
+        self.assertEqual(rows, [{"id": "stale"}])
+        self.assertIn("boom", calls)
+
+
 class PublicPages(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -177,8 +258,14 @@ class PublicPages(unittest.TestCase):
         self.assertIn("red-drum-400.webp", body)
         self.assertIn('fetchpriority="high"', body)
         self.assertIn('media="(max-width: 859px)"', body)
-        self.assertIn("/catch-wall-public.css", body)
+        self.assertIn('id="catch-wall-css"', body)
+        self.assertNotIn('href="/catch-wall-public.css"', body)
+        self.assertNotIn('href="/folio-chrome.css"', body)
         self.assertIn("/catch-wall-public.js", body)
+        head = body.split("</head>", 1)[0]
+        self.assertLess(head.find('rel="preload" as="image"'), head.find("/fonts/"))
+        self.assertLess(head.find('rel="preload" as="image"'), head.find("styles.css"))
+        self.assertIn('rel="preconnect"', head)
         self.assertIn("window.__CW_BOOT", body)
         self.assertNotIn('src="/gallery.js"', body)
         self.assertNotIn("Design sample", body)
