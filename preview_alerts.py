@@ -21,6 +21,10 @@ UA = "TheCoastalBrief/1.0 (+https://thecoastalbrief.com; coastal conditions site
 # or Granville. Jordan official points (dam, Haw at Moncure, Haw at Bynum) all
 # map to Chatham (NCZ040 / NCC037); Wake/Durham were not added because no
 # official station on this preview's instrument list maps to those counties.
+# Cape Fear reach (Lillington to Lock 1): official gauges map to Harnett,
+# Cumberland and Bladen only, verified 15 Nov 2026 from NWS /points at
+# 02102500, 02104000, 02105500 and 02105769. Huske Lock and Lock 1 near Kelly
+# both resolve to Bladen (NCZ096 / NCC017); Columbus was not added.
 NEUSE_ALERT_COUNTIES = (
     {"short": "Wake", "name": "Wake County", "id": "NCZ041", "ncc": "NCC183"},
     {"short": "Johnston", "name": "Johnston County", "id": "NCZ042", "ncc": "NCC101"},
@@ -29,9 +33,15 @@ NEUSE_ALERT_COUNTIES = (
 JORDAN_ALERT_COUNTIES = (
     {"short": "Chatham", "name": "Chatham County", "id": "NCZ040", "ncc": "NCC037"},
 )
+CAPE_FEAR_ALERT_COUNTIES = (
+    {"short": "Harnett", "name": "Harnett County", "id": "NCZ077", "ncc": "NCC085"},
+    {"short": "Cumberland", "name": "Cumberland County", "id": "NCZ088", "ncc": "NCC051"},
+    {"short": "Bladen", "name": "Bladen County", "id": "NCZ096", "ncc": "NCC017"},
+)
 ALERT_COUNTIES = {
     "neuse-river": NEUSE_ALERT_COUNTIES,
     "jordan-lake": JORDAN_ALERT_COUNTIES,
+    "cape-fear-river": CAPE_FEAR_ALERT_COUNTIES,
 }
 
 

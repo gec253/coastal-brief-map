@@ -1,18 +1,18 @@
 """Private preview Morning Briefs for regions that do not have a public brief yet.
 
 Coastal previews (Wilmington, Nags Head, Emerald Isle, Topsail) reuse brief.build_salt.
-Freshwater previews (Jordan Lake, Neuse River) are based on the Falls Lake brief and
+Freshwater previews (Jordan Lake, Neuse River, Cape Fear River) are based on the Falls Lake brief and
 assembled from the same official USGS / USACE / NWPS / NWS feeds as /api/freshwater.
-Coastal previews run brief.validate as a read-only check. Jordan Lake and Neuse River
-previews use river_gate (a freshwater-only quality gate) for the banner; brief.validate
-is left unchanged and is not used to accept or reject these two previews. They are:
+Coastal previews run brief.validate as a read-only check. Jordan Lake, Neuse River and
+Cape Fear River previews use river_gate (a freshwater-only quality gate) for the banner; brief.validate
+is left unchanged and is not used to accept or reject these previews. They are:
 
 - served only at /preview/brief/<region-id> to a browser holding the cb_preview cookie (404 otherwise);
 - built in memory on request and kept in this module's own short cache, never in brief._mem,
   cache/briefs/ or the brief-archive branch;
 - never part of brief.enabled_regions(), the 5:15 AM schedule, /api/brief/wake, or /brief.
 
-Public /brief?region=jordan-lake and /brief?region=neuse-river stay 404. Falls Lake keeps
+Public /brief?region=jordan-lake, /brief?region=neuse-river and /brief?region=cape-fear-river stay 404. Falls Lake keeps
 its public brief; it has no preview twin.
 
 Readings a region has no honest sensor for are shown as "unavailable" with the region's own
@@ -36,7 +36,7 @@ import preview_alerts
 import preview_copy
 
 REGIONS = ("wilmington", "nags-head", "emerald-isle", "topsail")
-FRESH_REGIONS = ("jordan-lake", "neuse-river")
+FRESH_REGIONS = ("jordan-lake", "neuse-river", "cape-fear-river")
 TTL_S = 15 * 60
 _cache: dict[str, tuple[float, dict]] = {}
 _locks = {rid: threading.Lock() for rid in REGIONS + FRESH_REGIONS}
@@ -44,7 +44,7 @@ _locks = {rid: threading.Lock() for rid in REGIONS + FRESH_REGIONS}
 # brief.build_salt names missing items in lower case; map them to region reading kinds.
 _MISS_KIND = {"wind": "wind", "seas": "seas", "swell": "swell", "pressure": "pressure"}  # water temp: handled above
 
-_FRESH_NAV = (("jordan-lake", "Jordan Lake"), ("neuse-river", "Neuse River"))
+_FRESH_NAV = (("jordan-lake", "Jordan Lake"), ("neuse-river", "Neuse River"), ("cape-fear-river", "Cape Fear River"))
 
 
 def available(rid: str) -> bool:
@@ -152,7 +152,10 @@ def _nwps_forecast(block: dict) -> str:
     else:
         flood = cat
     issued_bit = ("," + issued) if issued else ""
-    return " NWS forecast (NWPS %s): crest %.1f ft%s, %s%s." % (lid, fc["crestStage"], when, flood, issued_bit)
+    datum = ""
+    if block.get("nwpsMinusUsgsFt") is not None:
+        datum = " (AHPS level, not USGS gage height)"
+    return " NWS forecast (NWPS %s): crest %.1f ft%s%s, %s%s." % (lid, fc["crestStage"], datum, when, flood, issued_bit)
 
 
 def _vs_action(block: dict) -> str:
@@ -161,12 +164,17 @@ def _vs_action(block: dict) -> str:
         or block.get("floodStages") or {}
     action = fl.get("action")
     minor = fl.get("minor")
+    offset = block.get("nwpsMinusUsgsFt")
+    if offset:
+        # NWPS flood stages at Huske are AHPS levels, not USGS gage height.
+        action = (action - offset) if action is not None else None
+        minor = (minor - offset) if minor is not None else None
     if stage is None or action is None:
         return ""
     if minor is not None and stage >= minor:
-        return " Stage is at or above the NWS minor flood stage (%.0f ft)." % minor
+        return " Stage is at or above the NWS minor flood stage (%.1f ft USGS gage height)." % minor
     if stage >= action:
-        return " Stage is at or above the NWS action stage (%.0f ft)." % action
+        return " Stage is at or above the NWS action stage (%.1f ft USGS gage height)." % action
     return ""
 
 
@@ -335,6 +343,53 @@ def _compose_neuse(d: dict, cfg: dict, now: datetime) -> tuple[list, list, list,
     return items, fresh, take[:4], missing, unavailable
 
 
+
+def _compose_cape_fear(d: dict, cfg: dict, now: datetime) -> tuple[list, list, list, list, list]:
+    items, fresh, take, missing, unavailable = [], [], [], [], []
+    items.append(_alert_item(d, "at Fayetteville"))
+    river = d.get("river") or []
+    if not river:
+        missing.append("river gauges")
+    for block in river:
+        label, text = _river_item(block)
+        items.append((label, text))
+        stage, flow = block.get("stageFt"), block.get("flowCfs")
+        name = block.get("label") or "Gauge"
+        if stage and flow and stage.get("time") == flow.get("time"):
+            _fresh_add(fresh, name, {"time": stage["time"], "stale": bool(stage.get("stale") or flow.get("stale"))},
+                       block.get("usgs"))
+        else:
+            if stage:
+                _fresh_add(fresh, name + " (stage)", stage, block.get("usgs"))
+            if flow:
+                _fresh_add(fresh, name + " (flow)", flow, block.get("usgs"))
+    wt = d.get("waterTemp") or {}
+    if wt.get("status") == "ok" and wt.get("f") is not None:
+        _fresh_add(fresh, "Water temp", wt, wt.get("usgs"))
+        items.append(("Water temp", "%.0f°F (%.1f °C) at USGS %s." % (wt["f"], wt["c"], wt.get("usgs") or "")))
+    else:
+        unavailable.append(_water_temp_unavailable(d, cfg))
+    wx = _weather_item(d, missing)
+    if wx:
+        items.append(wx)
+    al = d.get("alerts") or {}
+    if al.get("items"):
+        take.append("Check the %s before an early start." % al["items"][0]["event"])
+    flood = [b for b in river if _vs_action(b)]
+    if flood:
+        take.append("Stage is at or above the NWS action stage at %s." %
+                    ", ".join(b.get("label") or b.get("usgs") for b in flood))
+    low = [b for b in river if (b.get("band") or {}).get("key") in ("record-low", "much-below")]
+    if low:
+        take.append("Flow is very low for the date at %s (regulated by Jordan Lake and the locks)." %
+                    ", ".join(b.get("label") or b.get("usgs") for b in low))
+    if not take:
+        line = preview_alerts.alert_line(al, "cape-fear-river")
+        line = line[len("Alerts: "):] if line.startswith("Alerts: ") else line
+        take.append(line + " The gauges are not at action stage.")
+    return items, fresh, take[:4], missing, unavailable
+
+
 def _glance_jordan(items: list) -> list[dict]:
     cells: list[dict] = []
     d = dict(items)
@@ -388,6 +443,33 @@ def _glance_neuse(items: list) -> list[dict]:
     return cells
 
 
+
+def _glance_cape_fear(items: list) -> list[dict]:
+    cells: list[dict] = []
+    d = dict(items)
+    fay = d.get("Cape Fear River at Fayetteville") or ""
+    fay_obs = re.split(r"\s+NWS forecast\b", fay, maxsplit=1)[0]
+    m = re.search(r"([\d.]+)\s*ft stage", fay_obs)
+    if m:
+        cells.append({"key": "Fayetteville stage", "kind": "observed", "value": m.group(1), "unit": "ft", "sub": "USGS 02104000", "tone": "lake"})
+    m = re.search(r"([\d.]+)\s*cfs", fay_obs)
+    if m:
+        val = m.group(1).rstrip("0").rstrip(".") if "." in m.group(1) else m.group(1)
+        cells.append({"key": "Fayetteville flow", "kind": "observed", "value": val, "unit": "cfs", "sub": "regulated", "tone": "lake"})
+    lil = d.get("Cape Fear River at Lillington") or ""
+    lil_obs = re.split(r"\s+NWS forecast\b", lil, maxsplit=1)[0]
+    m = re.search(r"([\d.]+)\s*cfs", lil_obs)
+    if m:
+        val = m.group(1).rstrip("0").rstrip(".") if "." in m.group(1) else m.group(1)
+        cells.append({"key": "Lillington flow", "kind": "observed", "value": val, "unit": "cfs", "sub": "regulated", "tone": "lake"})
+    wx = d.get("Weather") or ""
+    m = re.search(r"high\s+(\d+)°F", wx, re.I)
+    if m:
+        short = (re.split(r",\s*high", wx, maxsplit=1)[0] or "").strip()
+        cells.append({"key": "Air high", "kind": "forecast", "value": m.group(1), "unit": "°F", "sub": short or "NWS forecast", "tone": "air"})
+    return cells
+
+
 def _compose_fresh(rid: str, now: datetime) -> dict:
     import freshwater
     st, d = freshwater.assemble(rid)
@@ -400,6 +482,11 @@ def _compose_fresh(rid: str, now: datetime) -> dict:
         items, missing, unavailable = preview_copy.polish_fresh_items(rid, items, missing, unavailable, d)
         glance = _glance_jordan(items)
         sources = "USGS, USACE Wilmington District, NWS"
+    elif rid == "cape-fear-river":
+        items, fresh, take, missing, unavailable = _compose_cape_fear(d, cfg, now)
+        items, missing, unavailable = preview_copy.polish_fresh_items(rid, items, missing, unavailable, d)
+        glance = _glance_cape_fear(items)
+        sources = "USGS, NWS"
     else:
         items, fresh, take, missing, unavailable = _compose_neuse(d, cfg, now)
         items, missing, unavailable = preview_copy.polish_fresh_items(rid, items, missing, unavailable, d)

@@ -770,6 +770,8 @@ def captains_take(rid: str, body: dict, payload: dict, cfg: dict, issued_et: str
         sentences = _take_jordan(payload)
     elif rid == "neuse-river":
         sentences = _take_neuse(payload)
+    elif rid == "cape-fear-river":
+        sentences = _take_cape_fear(payload)
     else:
         sentences = _take_salt(rid, body, payload, cfg, now=now)
     return {
@@ -1053,6 +1055,70 @@ def _take_neuse(payload: dict) -> list:
     out.append({"text": preview_alerts.alert_line(al, "neuse-river"),
                 "kind": "alert" if al.get("status") == "ok" else "missing",
                 "sources": preview_alerts.zone_ids(rid="neuse-river")})
+    return out
+
+
+
+def _take_cape_fear(payload: dict) -> list:
+    """Up to three sentences from verified Fayetteville readings, an NWPS forecast, and alerts."""
+    out = []
+    river = payload.get("river") or []
+    by_usgs = {b.get("usgs"): b for b in river}
+    fay = by_usgs.get("02104000") or (river[1] if len(river) > 1 else (river[0] if river else {}))
+    if fay:
+        stage, flow = fay.get("stageFt") or {}, fay.get("flowCfs") or {}
+        srcs = [fay.get("usgs") or "02104000"]
+        if _fresh_ok(stage) or _fresh_ok(flow):
+            parts = []
+            if _fresh_ok(stage):
+                parts.append("%.2f ft stage" % stage["value"])
+            if _fresh_ok(flow):
+                parts.append("%g cfs" % flow["value"])
+            band = ((fay.get("band") or {}).get("label") or "").lower()
+            band_bit = (", %s for the date" % band) if band else ""
+            out.append({
+                "text": "At Fayetteville, the river is at %s%s, observed (USGS 02104000)." % (
+                    " and ".join(parts), band_bit),
+                "kind": "observed", "sources": srcs,
+            })
+        elif stage.get("stale") or flow.get("stale"):
+            tm = stage.get("time") or flow.get("time")
+            out.append({"text": brief_strings.not_used("Fayetteville stage and flow", brief._t(tm) if tm else "the last report", 3),
+                        "kind": "missing", "sources": srcs})
+        else:
+            out.append({"text": brief_strings.not_available("Fayetteville stage and flow"),
+                        "kind": "missing", "sources": srcs})
+        fc = (fay.get("nwps") or {}).get("forecast") if (fay.get("nwps") or {}).get("status") == "ok" else None
+        fc_lid = (fay.get("nwps") or {}).get("lid") or "FAYN7"
+        fc_block = fay
+        if not (fc and fc.get("crestStage") is not None):
+            for b in river:
+                nw = b.get("nwps") or {}
+                f = nw.get("forecast") if nw.get("status") == "ok" else None
+                if f and f.get("crestStage") is not None:
+                    fc, fc_lid, fc_block = f, nw.get("lid"), b
+                    break
+            else:
+                fc = None
+        if fc and fc.get("crestStage") is not None:
+            when = (" at " + brief._t(fc["crestTime"])) if fc.get("crestTime") else ""
+            datum = ""
+            if fc_block.get("nwpsMinusUsgsFt") is not None:
+                datum = " AHPS"
+            out.append({
+                "text": "NWS forecasts a crest of %.1f ft%s%s (NWPS %s)." % (
+                    fc["crestStage"], datum, when, fc_lid or "FAYN7"),
+                "kind": "forecast", "sources": [fc_lid or "FAYN7"],
+            })
+        else:
+            out.append({"text": brief_strings.nws_forecast_unavailable("River forecast"),
+                        "kind": "missing", "sources": ["NWPS"]})
+    else:
+        out.append({"text": brief_strings.not_available("River gauges"), "kind": "missing", "sources": []})
+    al = payload.get("alerts") or {}
+    out.append({"text": preview_alerts.alert_line(al, "cape-fear-river"),
+                "kind": "alert" if al.get("status") == "ok" else "missing",
+                "sources": preview_alerts.zone_ids(rid="cape-fear-river")})
     return out
 
 
