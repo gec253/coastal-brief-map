@@ -2,7 +2,8 @@
   var KEY = "cb-wave-intro-seen";
   var TS_KEY = "cb-wave-intro-seen-at";
   var WINDOW_MS = 12 * 60 * 60 * 1000;
-  var DURATION = 1700;
+  var DURATION = 1900;
+  var HARD_MAX = 2000;      // ms from the first frame drawn: never longer
   var REDUCE_MS = 200;
   var overlay = document.getElementById("wave-intro");
   var skip = document.getElementById("wi-skip");
@@ -14,6 +15,8 @@
   var lineIvory = overlay && overlay.querySelector(".wi-line-ivory");
   var lineSea = overlay && overlay.querySelector(".wi-line-sea");
   var lineBrass = overlay && overlay.querySelector(".wi-line-brass");
+  var washes = overlay ? overlay.querySelectorAll(".wi-wash") : [];
+  var ripples = overlay ? overlay.querySelectorAll(".wi-ripple") : [];
   var reduceMedia = window.matchMedia && (
     window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
     window.matchMedia("(prefers-reduced-data: reduce)").matches
@@ -35,12 +38,18 @@
   // while the edge descends, so the edge shape evolves and local speed
   // varies along it. Because d(delay)/dt stays well under 1, tau never
   // runs backwards: the edge never re-covers revealed content.
-  var TRAVEL = 1560;        // ms for one point to cross the viewport
-  var D_DIAG = 55;          // left leads the right by this much (diagonal)
-  var D_CREST = 52;         // crest lag: crest height ~ speed x this
-  var D_RIP = 18;           // a broad, slower trough behind the crest
-  var CREST_BACK = 0.34;    // long gentle back (in viewport widths)
-  var CREST_FACE = 0.17;    // shorter leading face
+  var TRAVEL = 1880;        // ms for one point to cross the viewport
+  var D_DIAG = 24;          // left leads the right by this much (diagonal)
+  var D_CREST = 70;         // crest lag: crest height ~ speed x this
+  var D_RIP = 14;           // a broad, slower trough behind the crest
+  var CREST_BACK = 0.30;    // long gentle back (in viewport widths)
+  var CREST_FACE = 0.15;    // shorter leading face
+  // Soft leading edge: translucent wash layers trail the solid navy on the
+  // same clock, WASH ms behind it, so the band is thin when the water moves
+  // slowly and opens up mid-sweep. Ripples ride the wash behind the crest.
+  var WASH = 54;
+  var WASH_STEPS = [1, 0.72, 0.46, 0.22];
+  var RIPPLE_STEPS = [0.72, 0.46];
   var N = 30;               // edge samples (Catmull-Rom -> cubic Beziers)
   var SEA_OFF = 7, BRASS_OFF = 14, SMIN_K = 12;
   var vw = 390, vh = 844;
@@ -223,15 +232,20 @@
   // acceleration, then a long natural deceleration as it leaves.
   var Y_START = -(BRASS_OFF + 6);
   function descent(tau) {
-    var y1 = vh + 48;
+    var y1 = vh + 64;
     if (tau <= 0) return Y_START + tau * 0.12; // continues smoothly above the top
     if (tau >= TRAVEL) return y1 + (tau - TRAVEL) * 0.05;
     return Y_START + (y1 - Y_START) * cubic(0.4, 0.08, 0.55, 0.92, tau / TRAVEL);
   }
 
   function crestAt(t) {
-    // Crest centre (in viewport widths) rolls from off the left to off the right.
-    return -0.32 + 1.62 * cubic(0.35, 0.1, 0.55, 1, t / DURATION);
+    // Crest centre (in viewport widths) rolls from just off the left to off
+    // the right, nearly linearly through the part of the timeline when the
+    // edge is over the page, so the peak visibly sweeps the whole width.
+    var p = (t - 60) / (TRAVEL + 40);
+    if (p < 0) p = 0;
+    if (p > 1) p = 1;
+    return -0.16 + 1.4 * cubic(0.25, 0.12, 0.7, 0.92, p);
   }
 
   function delay(u, t, lag) {
@@ -241,7 +255,7 @@
     var sig = v > 0 ? Math.min(Math.max(CREST_FACE * vw, 64), 180) : Math.min(Math.max(CREST_BACK * vw, 120), 380);
     var swell = 0.8 + 0.2 * Math.sin(Math.PI * Math.min(1, Math.max(0, t / DURATION)));
     var crest = D_CREST * swell * Math.exp(-0.5 * (v / sig) * (v / sig));
-    var rc = -0.7 + 1.25 * (t / DURATION);
+    var rc = -0.75 + 1.4 * Math.min(1, t / DURATION);
     var rv = (u - rc) / 0.32;
     var rip = D_RIP * (1 - Math.exp(-0.5 * rv * rv));
     return D_DIAG * u + crest + rip;
@@ -276,6 +290,11 @@
     return d;
   }
 
+  // Top of a wash layer: the same edge, f * WASH ms further back in time.
+  function washY(x, t, f) {
+    return descent(t - delay(x / vw, t, 0) - WASH * f);
+  }
+
   function seaY(x, t) {
     return Math.max(edgeY(x, t, 0) + 3, edgeY(x, t, 0.035) + SEA_OFF);
   }
@@ -300,12 +319,12 @@
     var M = 16, i, x;
     for (i = 0; i <= M; i++) {
       x = ruleBox.left + (ruleBox.right - ruleBox.left) * (i / M);
-      if (edgeY(x, t, 0) < ruleBox.y + ruleBox.thickness + 1) return false;
+      if (washY(x, t, 1) < ruleBox.y + ruleBox.thickness + 1) return false;
     }
     return true;
   }
 
-  var state = { minEdge: 0, handoff: false };
+  var state = { minEdge: 0, minWash: 0, handoff: false };
 
   function draw(raw) {
     if (!sheet) return;
@@ -324,6 +343,38 @@
       if (yi[i] < minE) minE = yi[i];
     }
     var dIvory = curveD(xi, yi);
+    // Wash layers: each a band from its own trailing curve down to the solid
+    // edge. Flat translucent fills stack into a soft ramp (no filters).
+    var k, j, wy, back, minW = Infinity;
+    for (k = 0; k < washes.length && k < WASH_STEPS.length; k++) {
+      wy = [];
+      for (i = 0; i < N; i++) {
+        wy.push(washY(xi[i], t, WASH_STEPS[k]));
+        if (k === 0 && wy[i] < minW) minW = wy[i];
+      }
+      back = "";
+      for (j = N - 1; j >= 0; j--) back += " L " + xi[j].toFixed(2) + " " + (yi[j] + 1).toFixed(2);
+      washes[k].setAttribute("d", curveD(xi, wy) + back + " Z");
+    }
+    state.minWash = washes.length ? minW : minE;
+    // Secondary ripples: short sea-glass strokes on the wash, trailing the
+    // crest, faded at both ends by a gradient that follows them.
+    var cx = crestAt(t) * vw;
+    for (k = 0; k < ripples.length && k < RIPPLE_STEPS.length; k++) {
+      var rx0 = cx - vw * (0.42 + 0.1 * k), rx1 = cx - vw * (0.02 + 0.06 * k);
+      var rxs = [], rys = [], M = 12;
+      for (j = 0; j <= M; j++) {
+        x = rx0 + (rx1 - rx0) * (j / M);
+        rxs.push(x);
+        rys.push(washY(x, t, RIPPLE_STEPS[k]));
+      }
+      ripples[k].setAttribute("d", curveD(rxs, rys));
+      var rg = svg && svg.querySelector("#wi-rip-" + (k + 1));
+      if (rg) {
+        rg.setAttribute("x1", rx0.toFixed(1));
+        rg.setAttribute("x2", rx1.toFixed(1));
+      }
+    }
     // The SVG sheet is only a band from the edge to just past its lowest
     // point; the composited fill layer carries the navy below it (with a
     // generous overlap so no seam can open on fractional pixels).
@@ -368,7 +419,7 @@
       // edge reaches it.
       var sx = skipBox ? skipBox.x : 60;
       var stop = skipBox ? skipBox.top : vh - 60;
-      var gap = stop - edgeY(sx, t, 0);
+      var gap = stop - washY(sx, t, 1);
       var so = gap <= 60 ? 0 : gap >= 200 ? 1 : (gap - 60) / 140;
       skip.style.opacity = String(so);
       skip.style.pointerEvents = so < 0.05 ? "none" : "auto";
@@ -390,6 +441,7 @@
 
   var clock = 0;
   var ema = 16.7;
+  var playT0 = 0;
   function tick(now) {
     var dt = lastTs ? now - lastTs : 0;
     lastTs = now;
@@ -400,8 +452,11 @@
     // steady device still runs in real time.
     clock += Math.min(dt, Math.max(34, 2 * ema));
     if (dt > 0) ema = 0.8 * ema + 0.2 * Math.min(dt, 100);
-    // Never hold the overlay much past its length, whatever the device.
-    if (now - startTs > DURATION + 600) clock = DURATION;
+    // Hard 2.0s cap from the first drawn frame, without a jump: once the
+    // clock has fallen behind (stalls), it is carried forward in real time
+    // so it still reaches the end exactly at HARD_MAX.
+    var floor = DURATION - (HARD_MAX - (now - playT0));
+    if (clock < floor) clock = floor;
     var raw = clock / DURATION;
     if (typeof window.__wiOnFrame === "function") {
       try { window.__wiOnFrame(now, raw, dt); } catch (e) {}
@@ -413,9 +468,9 @@
       return;
     }
     draw(raw);
-    // Done as soon as the sheet has left the screen and the brass line is
-    // the real rule: no invisible tail holding the overlay.
-    if (state.handoff && state.minEdge > vh + 1) {
+    // Done as soon as the sheet and its faintest wash have left the screen
+    // and the brass line is the real rule: nothing on screen is removed.
+    if (state.handoff && state.minWash > vh + 1) {
       raf = 0;
       finish();
       return;
@@ -444,6 +499,7 @@
     ensureAgedBrass();
     mapRule();
     stopLoop();
+    playT0 = window.performance && performance.now ? performance.now() : 0;
     if (seek !== null && seek !== "") {
       var ms = Math.max(0, parseInt(seek, 10) || 0);
       document.documentElement.setAttribute("data-intro-seek", "");
@@ -525,6 +581,8 @@
   window.__wiFinish = finish;
   window.__wiState = state;
   window.__wiEdge = function (x, ms) { return edgeY(x, ms, 0); };
+  window.__wiWash = function (x, ms) { return washY(x, ms, 1); };
+  window.__wiCrest = function (ms) { return crestAt(ms) * vw; };
 
   if (!shouldPlay()) {
     hide();
