@@ -9,12 +9,9 @@ html[data-wave-intro] {
   --wi-brass: #c4a36a;
 }
 
-/* Hold midnight behind the overlay so the first paint is never a blank
-   or pre-revealed page. Removed with .intro-play when the intro ends. */
-html[data-wave-intro].intro-play,
-html[data-wave-intro].intro-play body {
-  background-color: var(--wi-navy);
-}
+/* The page keeps its own background throughout. The overlay sheet alone
+   covers the first paint, so nothing on html/body changes colour when the
+   intro ends (an earlier navy html/body hold snapped to ivory or #10232F). */
 
 .wave-intro {
   position: fixed;
@@ -33,6 +30,21 @@ html.intro-seen .wave-intro,
   pointer-events: none;
 }
 
+/* The navy body of the sheet is a plain composited layer moved only with
+   transform, so it never repaints. The SVG above it repaints just a thin
+   band around the moving edge. */
+.wi-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--wi-navy);
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+  pointer-events: none;
+}
+
 .wi-svg {
   display: block;
   position: absolute;
@@ -40,7 +52,8 @@ html.intro-seen .wave-intro,
   width: 100%;
   height: 100%;
   pointer-events: none;
-  will-change: contents;
+  /* Own layer: band repaints never touch the page beneath. */
+  will-change: transform;
 }
 
 .wi-sheet {
@@ -141,7 +154,8 @@ html.intro-seen .wave-intro,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html.intro-reduce:not(.intro-seen) .wi-svg {
+  html.intro-reduce:not(.intro-seen) .wi-svg,
+  html.intro-reduce:not(.intro-seen) .wi-fill {
     animation: wi-reduce 200ms ease both;
   }
   html.intro-reduce:not(.intro-seen) .wi-line {

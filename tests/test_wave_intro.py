@@ -97,11 +97,12 @@ class WaveIntroPreview(unittest.TestCase):
 
     def test_duration_is_brief(self):
         import wave_intro
-        self.assertGreaterEqual(wave_intro.DURATION_MS, 1000)
-        self.assertLessEqual(wave_intro.DURATION_MS, 1500)
+        # Ed: about 1.5-1.8s in total.
+        self.assertGreaterEqual(wave_intro.DURATION_MS, 1400)
+        self.assertLessEqual(wave_intro.DURATION_MS, 1800)
         status, body, _ = self._intro()
         self.assertEqual(status, 200)
-        self.assertIn(b"var DURATION = 1300", body)
+        self.assertIn(b"var DURATION = %d" % wave_intro.DURATION_MS, body)
         self.assertIn(b"requestAnimationFrame", body)
         self.assertIn(b"getBoundingClientRect", body)
         self.assertIn(b"wave-settle", body)
@@ -168,6 +169,30 @@ class WaveIntroPreview(unittest.TestCase):
         self.assertFalse(set(props) - allowed, set(props) - allowed)
         # Confirm we did not add a CSS d animation (Safari does not support it).
         self.assertNotRegex(css, rb"@keyframes[^}]*\bd\s*:")
+
+    def test_travelling_crest_and_no_background_swap(self):
+        status, body, _ = self._intro()
+        self.assertEqual(status, 200)
+        css = body[body.find(b'id="wave-intro-css"'):body.find(b"</style>")]
+        # The end-of-intro colour jump came from painting html/body navy while
+        # playing; the page must keep its own background throughout.
+        self.assertNotRegex(css, rb"\.intro-play[^{]*body[^{]*\{[^}]*background")
+        self.assertNotRegex(css, rb"html\[data-wave-intro\]\.intro-play\s*,")
+        # One live swell: a crest that travels across x on its own clock,
+        # and a composited fill layer moved only by transform.
+        self.assertIn(b"function crestAt(t)", body)
+        self.assertIn(b"function delay(u, t, lag)", body)
+        self.assertIn(b'class="wi-fill"', body)
+        self.assertIn(b"translate3d(0,", body)
+        # Stalls are capped so a long first frame never shows as a jump.
+        self.assertIn(b"Math.min(dt, Math.max(34, 2 * ema))", body)
+        self.assertIn(b"DURATION + 600", body)
+        # The brass line lands on the measured rule and hands off in-frame.
+        self.assertIn(b"smin(brassRaw(x, t), ruleBox.y, SMIN_K)", body)
+        self.assertIn(b"intro-rule-live", body)
+        # No video files in the product.
+        self.assertNotIn(b".mp4", body)
+        self.assertNotIn(b".webm", body)
 
     def test_public_homepage_untouched(self):
         status, body, hdrs = self._req("/")

@@ -2,7 +2,7 @@
   var KEY = "cb-wave-intro-seen";
   var TS_KEY = "cb-wave-intro-seen-at";
   var WINDOW_MS = 12 * 60 * 60 * 1000;
-  var DURATION = 1300;
+  var DURATION = 1700;
   var REDUCE_MS = 200;
   var overlay = document.getElementById("wave-intro");
   var skip = document.getElementById("wi-skip");
@@ -10,6 +10,7 @@
   var sound = document.getElementById("wi-sound");
   var svg = overlay && overlay.querySelector(".wi-svg");
   var sheet = overlay && overlay.querySelector(".wi-sheet");
+  var fill = overlay && overlay.querySelector(".wi-fill");
   var lineIvory = overlay && overlay.querySelector(".wi-line-ivory");
   var lineSea = overlay && overlay.querySelector(".wi-line-sea");
   var lineBrass = overlay && overlay.querySelector(".wi-line-brass");
@@ -28,29 +29,22 @@
   var reduce = !!reduceMedia;
   var ruleBox = null;
 
-  // Handmade swell profile in viewBox units (y positive down). Long,
-  // asymmetric, modest amplitude — not a repeating sine and not a break.
-  var XS = [-140, 40, 200, 380, 560, 740, 900, 1140];
-  // One long coastal swell and a quieter following ripple, not a repeating sine.
-  // Peak-to-trough about 6% of the viewBox height; wavelength wider than
-  // the viewport, so the edge is one long shallow swell, not a hump.
-  var BASE = [-8, 10, 26, 30, 12, -6, -24, -16];
-  var LAYERS = [
-    { yOff: 6, amp: 0.92, drift: 0.08, phase: 0.41, shift: 40 },
-    { yOff: 12, amp: 0.85, drift: -0.06, phase: 0.67, shift: -30 },
-    { yOff: 0, amp: 1, drift: 0.04, phase: 0.1, shift: 0 }
-  ];
-  var MORPH = [
-    [0.31, 0.17, 0.41, 0.22],
-    [0.44, 0.63, 0.28, 0.11],
-    [0.22, 0.39, 0.47, 0.71],
-    [0.38, 0.08, 0.33, 0.54],
-    [0.27, 0.52, 0.19, 0.36],
-    [0.49, 0.14, 0.41, 0.67],
-    [0.18, 0.58, 0.29, 0.21],
-    [0.36, 0.44, 0.23, 0.59]
-  ];
-
+  // One swell, two clocks. Every x follows the same monotone vertical
+  // descent F(tau), but on its own local clock tau = t - delay(x, t).
+  // A travelling bump in the delay is the crest: it rolls left to right
+  // while the edge descends, so the edge shape evolves and local speed
+  // varies along it. Because d(delay)/dt stays well under 1, tau never
+  // runs backwards: the edge never re-covers revealed content.
+  var TRAVEL = 1560;        // ms for one point to cross the viewport
+  var D_DIAG = 55;          // left leads the right by this much (diagonal)
+  var D_CREST = 52;         // crest lag: crest height ~ speed x this
+  var D_RIP = 18;           // a broad, slower trough behind the crest
+  var CREST_BACK = 0.34;    // long gentle back (in viewport widths)
+  var CREST_FACE = 0.17;    // shorter leading face
+  var N = 30;               // edge samples (Catmull-Rom -> cubic Beziers)
+  var SEA_OFF = 7, BRASS_OFF = 14, SMIN_K = 12;
+  var vw = 390, vh = 844;
+  var skipBox = null;
 
   var BRASS_STOPS = [
     ["0", "#A67C45"],
@@ -97,6 +91,15 @@
   }
 
   function mapRule() {
+    var box = svg ? svg.getBoundingClientRect() : null;
+    vw = (box && box.width) || window.innerWidth || 1;
+    vh = (box && box.height) || window.innerHeight || 1;
+    var ox = box ? box.left : 0, oy = box ? box.top : 0;
+    if (svg) svg.setAttribute("viewBox", "0 0 " + vw.toFixed(2) + " " + vh.toFixed(2));
+    if (skip) {
+      var sb = skip.getBoundingClientRect();
+      skipBox = { x: sb.left - ox + sb.width / 2, top: sb.top - oy };
+    }
     var settle = document.querySelector(".wave-settle") || document.querySelector(".mast-wave");
     if (!settle) {
       ruleBox = null;
@@ -104,22 +107,31 @@
     }
     var r = settle.getBoundingClientRect();
     var cs = window.getComputedStyle(settle);
-    var sw = parseFloat(cs.strokeWidth) || 1.15;
-    var vw = window.innerWidth || 1;
-    var vh = window.innerHeight || 1;
-    var top = r.top;
-    var bottom = r.bottom;
-    var thickness = r.height > 0.2 ? r.height : sw;
-    var midY = r.height > 0.2 ? (top + bottom) / 2 : top;
+    var sw = parseFloat(cs.strokeWidth) || 1.25;
+    var midY = r.height > 0.2 ? (r.top + r.bottom) / 2 : r.top;
+    // Browsers paint an inline SVG from a device-pixel-snapped origin, so the
+    // real rule sits a fraction of a pixel off its layout position. Apply the
+    // same snap so the overlay line and the real rule are the same pixels.
+    var mastBox = document.querySelector(".mast-wave-svg");
+    if (mastBox) {
+      var dpr = window.devicePixelRatio || 1;
+      var mt = mastBox.getBoundingClientRect().top;
+      midY += Math.round(mt * dpr) / dpr - mt;
+    }
     ruleBox = {
-      x1: (r.left / vw) * 1000,
-      x2: (r.right / vw) * 1000,
-      y: (midY / vh) * 1000,
-      thickness: thickness,
-      left: r.left,
-      right: r.right,
-      midY: midY
+      left: r.left - ox,
+      right: r.right - ox,
+      y: midY - oy,
+      thickness: sw
     };
+    // Match the overlay brass gradient to the real rule's, pixel for pixel.
+    var mast = document.querySelector(".mast-wave-svg");
+    var grad = svg && svg.querySelector("#wi-aged-brass");
+    if (mast && grad) {
+      var m = mast.getBoundingClientRect();
+      grad.setAttribute("x1", (m.left - ox).toFixed(2));
+      grad.setAttribute("x2", (m.right - ox).toFixed(2));
+    }
   }
 
   function markSeen() {
@@ -180,7 +192,7 @@
     overlay.setAttribute("aria-hidden", "true");
     overlay.style.pointerEvents = "none";
     document.documentElement.classList.add("intro-seen");
-    document.documentElement.classList.remove("intro-play", "intro-reduce");
+    document.documentElement.classList.remove("intro-play", "intro-reduce", "intro-rule-live");
     if (skip && document.activeElement === skip) skip.blur();
   }
 
@@ -189,52 +201,59 @@
     hide();
   }
 
-  // CSS cubic-bezier(.65, 0, .35, 1) sampled for the travel ease.
-  function sampleBezier(a, b, t) {
+  // Solve a CSS cubic-bezier(x1, y1, x2, y2) for progress t.
+  function bez(a, b, t) {
     var mt = 1 - t;
     return 3 * mt * mt * t * a + 3 * mt * t * t * b + t * t * t;
   }
 
-  function easeTravel(t) {
+  function cubic(x1, y1, x2, y2, t) {
     if (t <= 0) return 0;
     if (t >= 1) return 1;
     var lo = 0, hi = 1, mid, i;
-    for (i = 0; i < 12; i++) {
+    for (i = 0; i < 18; i++) {
       mid = (lo + hi) / 2;
-      if (sampleBezier(0.65, 0.35, mid) < t) lo = mid;
+      if (bez(x1, x2, mid) < t) lo = mid;
       else hi = mid;
     }
-    mid = (lo + hi) / 2;
-    return sampleBezier(0, 1, mid);
+    return bez(y1, y2, (lo + hi) / 2);
   }
 
-  function baseAt(x) {
-    var i, t, x0, x1;
-    if (x <= XS[0]) return BASE[0];
-    if (x >= XS[XS.length - 1]) return BASE[BASE.length - 1];
-    for (i = 0; i < XS.length - 1; i++) {
-      if (x <= XS[i + 1]) {
-        x0 = XS[i];
-        x1 = XS[i + 1];
-        t = (x - x0) / (x1 - x0);
-        // Smoothstep the spatial interpolation so joins stay soft.
-        t = t * t * (3 - 2 * t);
-        return BASE[i] * (1 - t) + BASE[i + 1] * t;
-      }
-    }
-    return BASE[BASE.length - 1];
+  // Descent: moving from the first frame (no hold), a soft swell of
+  // acceleration, then a long natural deceleration as it leaves.
+  var Y_START = -(BRASS_OFF + 6);
+  function descent(tau) {
+    var y1 = vh + 48;
+    if (tau <= 0) return Y_START + tau * 0.12; // continues smoothly above the top
+    if (tau >= TRAVEL) return y1 + (tau - TRAVEL) * 0.05;
+    return Y_START + (y1 - Y_START) * cubic(0.4, 0.08, 0.55, 0.92, tau / TRAVEL);
   }
 
-  function pointY(i, raw, layer) {
-    var m = MORPH[i];
-    var wobble =
-      3 * Math.sin((raw * m[0] + m[2]) * Math.PI * 2) +
-      2 * Math.sin((raw * m[1] + m[3] + layer.phase) * Math.PI * 2);
-    var drift = layer.drift * raw * 8;
-    // Slight left-to-right tilt, kept small so it doesn't read as a blob.
-    var tilt = (XS[i] / 1000 - 0.36) * 10;
-    var env = 0.92 + 0.08 * Math.cos(raw * 1.05 + layer.phase);
-    return baseAt(XS[i] + layer.shift) * layer.amp * env + wobble * layer.amp + drift + tilt + layer.yOff;
+  function crestAt(t) {
+    // Crest centre (in viewport widths) rolls from off the left to off the right.
+    return -0.32 + 1.62 * cubic(0.35, 0.1, 0.55, 1, t / DURATION);
+  }
+
+  function delay(u, t, lag) {
+    // Crest widths are capped in pixels so a wide desktop still reads as
+    // one rolling swell rather than a near-flat line.
+    var v = (u - (crestAt(t) - lag)) * vw;
+    var sig = v > 0 ? Math.min(Math.max(CREST_FACE * vw, 64), 180) : Math.min(Math.max(CREST_BACK * vw, 120), 380);
+    var swell = 0.8 + 0.2 * Math.sin(Math.PI * Math.min(1, Math.max(0, t / DURATION)));
+    var crest = D_CREST * swell * Math.exp(-0.5 * (v / sig) * (v / sig));
+    var rc = -0.7 + 1.25 * (t / DURATION);
+    var rv = (u - rc) / 0.32;
+    var rip = D_RIP * (1 - Math.exp(-0.5 * rv * rv));
+    return D_DIAG * u + crest + rip;
+  }
+
+  function edgeY(x, t, lag) {
+    return descent(t - delay(x / vw, t, lag));
+  }
+
+  function smin(a, b, k) {
+    var h = Math.max(k - Math.abs(a - b), 0) / k;
+    return Math.min(a, b) - h * h * k * 0.25;
   }
 
   function curveD(xs, ys) {
@@ -257,91 +276,102 @@
     return d;
   }
 
-  function settleTFromEdge(ys) {
-    // Flatten in place as the crest approaches the rule, finishing
-    // before any trough can cross the tagline beneath it.
+  function seaY(x, t) {
+    return Math.max(edgeY(x, t, 0) + 3, edgeY(x, t, 0.035) + SEA_OFF);
+  }
+
+  function brassRaw(x, t) {
+    return Math.max(seaY(x, t) + 3, edgeY(x, t, 0.07) + BRASS_OFF);
+  }
+
+  // How much of the rule the brass line has landed on (0..1). Monotone in t.
+  function landed(t) {
     if (!ruleBox) return 0;
-    var maxY = ys[0], i;
-    for (i = 1; i < ys.length; i++) if (ys[i] > maxY) maxY = ys[i];
-    var start = ruleBox.y - 20;
-    var end = ruleBox.y - 2;
-    if (maxY <= start) return 0;
-    if (maxY >= end) return 1;
-    return easeTravel((maxY - start) / (end - start));
-  }
-
-  function morphToRule(xs, ys, t) {
-    if (!ruleBox || t <= 0) return { xs: xs, ys: ys };
-    var i, n = xs.length, outX = [], outY = [];
-    for (i = 0; i < n; i++) {
-      var u = n === 1 ? 0 : i / (n - 1);
-      var tx = ruleBox.x1 + u * (ruleBox.x2 - ruleBox.x1);
-      outX.push(xs[i] + (tx - xs[i]) * t);
-      outY.push(ys[i] + (ruleBox.y - ys[i]) * t);
+    var M = 16, i, x, hit = 0;
+    for (i = 0; i <= M; i++) {
+      x = ruleBox.left + (ruleBox.right - ruleBox.left) * (i / M);
+      if (brassRaw(x, t) >= ruleBox.y + SMIN_K) hit++;
     }
-    return { xs: outX, ys: outY };
+    return hit / (M + 1);
   }
 
-  function layerYs(raw, eased, layer) {
-    // Travel: start just above the viewport, end just below it, with
-    // room for amplitude so t=0 is fully covered and t=1 is clear.
-    // Line is already kissing the top at t=0, and leaves the bottom
-    // near the end so the last beats are a settle, not a blank hold.
-    // t=0: the whole edge sits above the viewport (header stays covered).
-    // The edge is off the bottom by ~1050ms (eased ≈ 0.96).
-    var front = -72 + eased * 1180;
-    var i, ys = [];
-    for (i = 0; i < XS.length; i++) ys.push(front + pointY(i, raw, layer));
-    return ys;
+  function ruleRevealed(t) {
+    if (!ruleBox) return true;
+    var M = 16, i, x;
+    for (i = 0; i <= M; i++) {
+      x = ruleBox.left + (ruleBox.right - ruleBox.left) * (i / M);
+      if (edgeY(x, t, 0) < ruleBox.y + ruleBox.thickness + 1) return false;
+    }
+    return true;
   }
+
+  var state = { minEdge: 0, handoff: false };
 
   function draw(raw) {
     if (!sheet) return;
     if (raw < 0) raw = 0;
     if (raw > 1) raw = 1;
     if (!ruleBox) mapRule();
-    var eased = easeTravel(raw);
-    var ivoryYs = layerYs(raw, eased, LAYERS[2]);
-    var seaYs = layerYs(raw, eased, LAYERS[1]);
-    var brassYs = layerYs(raw, eased, LAYERS[0]);
-    var st = settleTFromEdge(brassYs);
-    var ivory = { xs: XS.slice(), ys: ivoryYs };
-    var sea = { xs: XS.slice(), ys: seaYs };
-    var brass = morphToRule(XS.slice(), brassYs, st);
-    var dIvory = curveD(ivory.xs, ivory.ys);
-    sheet.setAttribute("d", dIvory + " L 1140 1400 L -140 1400 Z");
-    if (lineSea) lineSea.setAttribute("d", curveD(sea.xs, sea.ys));
-    if (lineIvory) lineIvory.setAttribute("d", dIvory);
-    if (lineBrass) {
-      lineBrass.setAttribute("d", curveD(brass.xs, brass.ys));
-      // Thickness eases onto the measured rule; the line itself never fades.
-      var startW = 1.15;
-      var endW = ruleBox ? ruleBox.thickness : 1.25;
-      lineBrass.style.strokeWidth = (startW + (endW - startW) * st) + "px";
-      // Once flattened, hand off to the real rule in the same frame so the
-      // last overlay frames and the first post-intro frame are the same paint.
-      if (st >= 1) {
-        lineBrass.style.opacity = "0";
-        document.documentElement.classList.add("intro-rule-live");
-      } else {
-        lineBrass.style.opacity = "1";
-        document.documentElement.classList.remove("intro-rule-live");
-      }
+    var t = raw * DURATION;
+    var pad = vw * 0.04;
+    var i, u, x, xi = [], yi = [], ys = [], yb = [], xb = [], minE = Infinity;
+    for (i = 0; i < N; i++) {
+      u = i / (N - 1);
+      x = -pad + (vw + 2 * pad) * u;
+      xi.push(x);
+      yi.push(edgeY(x, t, 0));
+      ys.push(seaY(x, t));
+      if (yi[i] < minE) minE = yi[i];
     }
-    // Ivory and sea leave with the sheet as it exits (~1050ms).
-    var trailFade = raw < 0.78 ? 1 : raw >= 0.86 ? 0 : 1 - (raw - 0.78) / 0.08;
-    if (lineIvory) lineIvory.style.opacity = String(0.96 * trailFade);
-    if (lineSea) lineSea.style.opacity = String(0.55 * trailFade);
+    var dIvory = curveD(xi, yi);
+    // The SVG sheet is only a band from the edge to just past its lowest
+    // point; the composited fill layer carries the navy below it (with a
+    // generous overlap so no seam can open on fractional pixels).
+    var maxE = -Infinity;
+    for (i = 0; i < N; i++) if (yi[i] > maxE) maxE = yi[i];
+    var fillTop = Math.max(0, maxE + 24);
+    var bandBottom = fillTop + 40;
+    sheet.setAttribute("d", dIvory + " L " + (vw + pad).toFixed(2) + " " + bandBottom.toFixed(2) +
+      " L " + (-pad).toFixed(2) + " " + bandBottom.toFixed(2) + " Z");
+    if (fill) fill.style.transform = "translate3d(0," + fillTop.toFixed(2) + "px,0)";
+    if (lineIvory) lineIvory.setAttribute("d", dIvory);
+    if (lineSea) lineSea.setAttribute("d", curveD(xi, ys));
+    state.minEdge = minE;
+
+    if (lineBrass) {
+      // The brass line rides deepest on the swell, lands on the rule from
+      // the left as the crest rolls past, and draws in to the rule's length.
+      var land = landed(t);
+      var s = land * land * (3 - 2 * land);
+      for (i = 0; i < N; i++) {
+        u = i / (N - 1);
+        x = xi[i];
+        if (ruleBox) x = x + ((ruleBox.left + (ruleBox.right - ruleBox.left) * u) - x) * s;
+        xb.push(x);
+        yb.push(ruleBox ? smin(brassRaw(x, t), ruleBox.y, SMIN_K) : brassRaw(x, t));
+      }
+      if (ruleBox && land >= 1) {
+        for (i = 0; i < N; i++) yb[i] = ruleBox.y;
+      }
+      lineBrass.setAttribute("d", curveD(xb, yb));
+      lineBrass.style.strokeWidth = (ruleBox ? ruleBox.thickness : 1.25) + "px";
+      // Hand off in the same frame once it lies exactly on the rule and the
+      // rule itself is uncovered; the line never fades.
+      var live = !!ruleBox && land >= 1 && ruleRevealed(t);
+      state.handoff = live;
+      lineBrass.style.opacity = live ? "0" : "1";
+      document.documentElement.classList.toggle("intro-rule-live", live);
+    }
     if (svg) svg.style.opacity = "1";
     if (skip) {
-      // Stay on navy at the bottom-left; fade before the edge reaches them.
-      var lead = ivoryYs[0], li;
-      for (li = 1; li < ivoryYs.length; li++) if (ivoryYs[li] < lead) lead = ivoryYs[li];
-      var s = 1;
-      if (lead >= 820) s = 0;
-      else if (lead > 640) s = 1 - (lead - 640) / 180;
-      skip.style.opacity = String(s);
-      skip.style.pointerEvents = s < 0.05 ? "none" : "auto";
+      // Skip sits on the navy at the bottom-left; it eases out before the
+      // edge reaches it.
+      var sx = skipBox ? skipBox.x : 60;
+      var stop = skipBox ? skipBox.top : vh - 60;
+      var gap = stop - edgeY(sx, t, 0);
+      var so = gap <= 60 ? 0 : gap >= 200 ? 1 : (gap - 60) / 140;
+      skip.style.opacity = String(so);
+      skip.style.pointerEvents = so < 0.05 ? "none" : "auto";
     }
   }
 
@@ -358,12 +388,21 @@
     lastTs = 0;
   }
 
+  var clock = 0;
+  var ema = 16.7;
   function tick(now) {
-    if (!startTs) startTs = now;
-    var elapsed = now - startTs;
-    var raw = elapsed / DURATION;
     var dt = lastTs ? now - lastTs : 0;
     lastTs = now;
+    if (!startTs) startTs = now;
+    // Virtual clock: a long main-thread frame advances at most ~2 frames,
+    // so a stall never shows up as a visible jump in the swell.
+    // Spikes are capped relative to the recent frame rate, so a slow but
+    // steady device still runs in real time.
+    clock += Math.min(dt, Math.max(34, 2 * ema));
+    if (dt > 0) ema = 0.8 * ema + 0.2 * Math.min(dt, 100);
+    // Never hold the overlay much past its length, whatever the device.
+    if (now - startTs > DURATION + 600) clock = DURATION;
+    var raw = clock / DURATION;
     if (typeof window.__wiOnFrame === "function") {
       try { window.__wiOnFrame(now, raw, dt); } catch (e) {}
     }
@@ -374,6 +413,21 @@
       return;
     }
     draw(raw);
+    // Done as soon as the sheet has left the screen and the brass line is
+    // the real rule: no invisible tail holding the overlay.
+    if (state.handoff && state.minEdge > vh + 1) {
+      raf = 0;
+      finish();
+      return;
+    }
+    raf = window.requestAnimationFrame(tick);
+  }
+
+  function startLoop() {
+    clock = 0;
+    ema = 16.7;
+    lastTs = 0;
+    startTs = 0;
     raf = window.requestAnimationFrame(tick);
   }
 
@@ -405,7 +459,25 @@
     }
     draw(0);
     if (skip) skip.focus();
-    raf = window.requestAnimationFrame(tick);
+    // Begin once the deferred page scripts have run, so their start-up work
+    // lands on the still frame (plain navy) rather than mid-swell, but never
+    // wait more than ~120ms after first paint: on a slow connection those
+    // scripts can take seconds and the page must not sit behind the sheet.
+    if (document.readyState === "loading") {
+      var begun = false;
+      var begin = function () {
+        if (begun || overlay.classList.contains("is-done")) return;
+        begun = true;
+        document.removeEventListener("DOMContentLoaded", onReady);
+        if (timer) { window.clearTimeout(timer); timer = 0; }
+        startLoop();
+      };
+      var onReady = function () { raf = window.requestAnimationFrame(begin); };
+      document.addEventListener("DOMContentLoaded", onReady);
+      raf = window.requestAnimationFrame(function () { timer = window.setTimeout(begin, 120); });
+    } else {
+      startLoop();
+    }
   }
 
   function skipNow() {
@@ -444,12 +516,15 @@
 
   ensureAgedBrass();
   window.addEventListener("resize", mapRule);
+  window.addEventListener("scroll", mapRule, { passive: true });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(mapRule).catch(function () {});
 
   window.__wiDuration = DURATION;
   window.__wiDraw = draw;
   window.__wiMapRule = mapRule;
   window.__wiFinish = finish;
+  window.__wiState = state;
+  window.__wiEdge = function (x, ms) { return edgeY(x, ms, 0); };
 
   if (!shouldPlay()) {
     hide();

@@ -5,10 +5,11 @@ from pathlib import Path
 
 DIR = Path(__file__).resolve().parent / "preview" / "wave-intro"
 SESSION_KEY = "cb-wave-intro-seen"
-DURATION_MS = 1300
+DURATION_MS = 1700
 
 _OVERLAY = """
 <div id="wave-intro" class="wave-intro" role="dialog" aria-label="Site introduction">
+  <div class="wi-fill" aria-hidden="true"></div>
   <svg class="wi-svg" viewBox="0 0 1000 1000" preserveAspectRatio="none" focusable="false" aria-hidden="true">
     <defs>
       <linearGradient id="wi-aged-brass" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="100%" y2="0">
