@@ -356,7 +356,15 @@ console.log(JSON.stringify(out));
         # wash and is never hidden or delayed during (or after) the intro.
         self.assertNotRegex(css, rb"\.mini-bar[^{]*\{[^}]*(visibility:\s*hidden|display:\s*none|opacity:\s*0)")
         self.assertNotRegex(css, rb"intro-play[^{]*\.mini-bar")
-        self.assertRegex(css, rb"html\[data-wave-intro\] body\.glance-on-screen \.mini-bar\s*\{[^}]*transform:\s*none")
+        # Pinned only until the first scroll/interaction, then the page's
+        # normal glance-on-screen auto-hide takes over (no permanent override).
+        self.assertRegex(css, rb"html\[data-wave-intro\]:not\(\.bar-released\) body\.glance-on-screen \.mini-bar\s*\{[^}]*transform:\s*none")
+        self.assertNotRegex(css, rb"html\[data-wave-intro\] body\.glance-on-screen \.mini-bar")
+        js = (Path(__file__).resolve().parents[1] / "preview" / "wave-intro" / "wave-intro.js").read_text(encoding="utf-8")
+        self.assertIn('classList.add("bar-released")', js)
+        for ev in ("scroll", "wheel", "touchstart", "pointerdown", "keydown"):
+            self.assertIn('"%s"' % ev, js)
+        self.assertNotRegex(js, r"setTimeout\([^)]*bar-released")
         # It sits below the overlay in z-order (mini-bar 900 in styles.css).
         page_css = (Path(__file__).resolve().parents[1] / "styles.css").read_text(encoding="utf-8")
         mz = re.search(r"\.mini-bar\s*\{[^}]*z-index:\s*(\d+)", page_css)

@@ -230,12 +230,13 @@ html[data-wave-intro] .wave-settle {
 
 /* Ed (v7b): the phone Wind / Water / Tide bar is shown from first paint,
    UNDER the wash (it is z-index 900, the overlay 1000), and the water
-   passes over it like the rest of the page. On this preview it is never
-   hidden or delayed: the page's own "hide while the glance strip is on
-   screen" slide is held off, so the bar can't slide out under the wash
-   (or right after it). Phone widths only, as on the page. */
+   passes over it like the rest of the page. The page's own "hide while the
+   glance strip is on screen" slide is held off through the intro and until
+   the visitor's first scroll or interaction (wave-intro.js adds
+   .bar-released), so the bar never slides away by itself. Phone widths
+   only, as on the page. */
 @media (max-width: 700px) {
-  html[data-wave-intro] body.glance-on-screen .mini-bar {
+  html[data-wave-intro]:not(.bar-released) body.glance-on-screen .mini-bar {
     transform: none;
   }
 }

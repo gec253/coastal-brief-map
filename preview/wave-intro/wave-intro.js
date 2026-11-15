@@ -480,4 +480,21 @@
     return;
   }
   play();
+  // Scout (v7b): the phone mini-bar stays pinned (see wave-intro.css) through
+  // the intro and until the visitor's first scroll or interaction; then the
+  // page's normal glance-on-screen auto-hide takes over, so the bar never
+  // slides away by itself.
+  (function releaseBarOnFirstInteraction() {
+    var root = document.documentElement;
+    var evs = ["scroll", "wheel", "touchstart", "pointerdown", "keydown"];
+    function release() {
+      root.classList.add("bar-released");
+      for (var i = 0; i < evs.length; i++) {
+        window.removeEventListener(evs[i], release, true);
+      }
+    }
+    for (var i = 0; i < evs.length; i++) {
+      window.addEventListener(evs[i], release, { capture: true, passive: true });
+    }
+  })();
 })();
