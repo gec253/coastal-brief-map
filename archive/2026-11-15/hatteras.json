@@ -2,49 +2,59 @@
  "forecastUpdated": "2026-11-15T09:02:21+00:00",
  "freshness": [
   {
+   "label": "Wind",
+   "stale": false,
+   "station": "41025",
+   "time": "4:20 AM ET"
+  },
+  {
    "label": "Seas",
    "stale": false,
    "station": "41120",
-   "time": "4:26 AM ET"
+   "time": "4:56 AM ET"
   },
   {
    "label": "Barometer",
    "stale": false,
    "station": "8654467",
-   "time": "5:06 AM ET"
+   "time": "5:12 AM ET"
   },
   {
    "label": "Water level",
    "stale": false,
    "station": "8654467",
-   "time": "5:06 AM ET"
+   "time": "5:12 AM ET"
   },
   {
    "label": "Water temp",
    "stale": false,
    "station": "8654467",
-   "time": "5:06 AM ET"
+   "time": "5:12 AM ET"
   }
  ],
  "issueDate": "2026-11-15",
- "issuedAt": "2026-11-15T10:15:00.835077+00:00",
- "issuedEt": "Sun Nov 15, 5:15 AM ET",
+ "issuedAt": "2026-11-15T10:24:04.733616+00:00",
+ "issuedEt": "Sun Nov 15, 5:24 AM ET",
  "items": [
   [
    "Advisories",
    "No NWS marine advisories for this area."
   ],
   [
+   "Wind",
+   "14 kt from the NNW, gusting 18, at Diamond Shoals; about steady from 16 kt 10 h earlier."
+  ],
+  [
    "Seas",
-   "4.3 ft every 8 s from the NE at Cape Hatteras East (CDIP 250); easing from 5.9 ft 10 h earlier."
+   "4.3 ft every 8 s from the NNE at Cape Hatteras East (CDIP 250); easing from 5.6 ft 10 h earlier."
   ],
   [
    "Swell",
-   "0.7 ft at 10 s from the ENE (split from the buoy spectrum)."
+   "0.7 ft at 11 s from the ENE (split from the buoy spectrum)."
   ],
   [
    "Pressure",
-   "30.18 inHg, rising."
+   "30.18 inHg, rising, up 3.6 hPa over 10 h at 41025."
   ],
   [
    "Marine forecast",
@@ -65,9 +75,7 @@
  ],
  "marineUpdated": "2026-11-15T04:00:00-05:00",
  "marineZone": "AMZ154",
- "missing": [
-  "wind (stale: last report 4:00 AM ET, not used)"
- ],
+ "missing": [],
  "ok": true,
  "reason": "scheduled",
  "region": {
@@ -93,7 +101,7 @@
   "Offshore water is 10°F warmer than inshore."
  ],
  "validation": {
-  "checkedAt": "2026-11-15T10:15:00.835077+00:00",
+  "checkedAt": "2026-11-15T10:24:04.733616+00:00",
   "checks": [
    "region",
    "location",
@@ -103,11 +111,9 @@
    "forecast age",
    "core readings"
   ],
-  "missingCore": [
-   "wind"
-  ],
-  "status": "partial"
+  "missingCore": [],
+  "status": "ok"
  },
  "waterType": "saltwater",
- "words": 105
+ "words": 131
 }
