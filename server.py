@@ -2355,6 +2355,9 @@ class Handler(SimpleHTTPRequestHandler):
         # with the same region handling.
         if parsed.path in ("/", "/index.html", "/dashboard", "/dashboard/"):
             rid = (parse_qs(parsed.query).get("region") or [""])[0].strip()
+            if rid in ("falls-lake", "jordan-lake", "neuse-river") and parsed.path in ("/", "/index.html") and freshwater.flag_on():
+                # Public lakes and the Neuse open the Hybrid page in freshwater mode; /lake?region= is unchanged.
+                return self._send_public_home(rid)
             if rid in ("falls-lake", "jordan-lake", "neuse-river") and (freshwater.flag_on() or self._preview_ok()):
                 self.send_response(303)
                 self.send_header("Location", "/lake?region=%s" % rid)

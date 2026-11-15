@@ -466,6 +466,18 @@ def region_groups(current: str) -> list[tuple[str, list[tuple[str, str, bool]]]]
     return [("Saltwater", salt), ("Freshwater", fresh)]
 
 
+def public_fresh_ids() -> set:
+    """Freshwater regions that are public today (enabled, built, not preview/draft), only while FRESHWATER_ENABLED is on."""
+    try:
+        import freshwater
+        if not freshwater.flag_on():
+            return set()
+        return {rid for rid, r in freshwater.regions().items()
+                if r.get("enabled") and r.get("previewReady") and not r.get("draft") and not freshwater.is_preview_region(rid)}
+    except Exception:
+        return set()
+
+
 def public_salt_ids() -> set:
     """Saltwater regions the public picker lists today (same list as /api/regions without the cookie)."""
     try:
@@ -489,7 +501,7 @@ def public_region_groups(current: str) -> list[tuple[str, list[tuple[str, str, b
         if freshwater.flag_on():
             for rid, r in freshwater.regions().items():
                 if r.get("enabled") and r.get("previewReady") and not r.get("draft") and not freshwater.is_preview_region(rid):
-                    fresh.append((rid, r.get("name") or rid, rid == current, "/lake?region=%s" % rid))
+                    fresh.append((rid, r.get("name") or rid, rid == current, "/?region=%s" % rid))
     except Exception:
         pass
     return [("Saltwater", salt), ("Freshwater", fresh)]
@@ -892,6 +904,9 @@ def conditions_html(m: dict, *, variant: str, public: bool = False) -> str:
     if public:   # only public briefs; same fallback as brief-link.js; no link when the brief is switched off
         brief_link = ('<a class="cg-link" href="/brief?region=%s">Today\'s Morning Brief</a>'
                       % _esc(rid if rid in PUBLIC_BRIEF_SALT else "crystal-coast", True)) if _brief_on() else ""
+        if m.get("water") == "fresh":   # only Falls Lake has a public freshwater brief
+            brief_link = ('<a class="cg-link" href="/brief?region=falls-lake">Today\'s Morning Brief</a>'
+                          if rid == "falls-lake" and _brief_on() else "")
     if m.get("water") == "fresh":
         dash = "/lake?region=%s" % rid
     elif public:   # the old dashboard lives at /dashboard once / is this page
@@ -936,7 +951,7 @@ def _brief_on() -> bool:
 PUBLIC_BRIEF_SALT = ("crystal-coast", "hatteras")   # the coastal briefs that are public today
 
 
-def masthead_html(variant: str, public: bool = False) -> str:
+def masthead_html(variant: str, public: bool = False, water: str = "salt") -> str:
     if public:
         return (
             '<header class="mh mh-hybrid">'
@@ -944,11 +959,14 @@ def masthead_html(variant: str, public: bool = False) -> str:
             '<h1 class="mh-name"><a href="/">The Coastal Brief</a></h1>'
             '<svg class="mh-rule" viewBox="0 0 1200 4" preserveAspectRatio="none" aria-hidden="true" focusable="false">'
             '<line class="wave-settle" x1="0" y1="2" x2="1200" y2="2"/></svg>'
-            '<nav class="mh-sec" aria-label="Sections"><a href="/" aria-current="page">Saltwater</a><a href="/lake">Freshwater</a>'
+            '<nav class="mh-sec" aria-label="Sections"><a href="/"%s>Saltwater</a><a href="%s"%s>Freshwater</a>'
             '%s<a href="/catch-wall">Catch Wall</a>'
             '<a href="/dashboard">Map &amp; tides</a></nav></div>'
             "</header>"
-        ) % (_esc(_today()), '<a href="/brief?region=crystal-coast" id="nav-brief">Morning Brief</a>' if _brief_on() else "")
+        ) % (_esc(_today()), "" if water == "fresh" else ' aria-current="page"',
+             "/?region=falls-lake" if public_fresh_ids() else "/lake",
+             ' aria-current="page"' if water == "fresh" else "",
+             '<a href="/brief?region=crystal-coast" id="nav-brief">Morning Brief</a>' if _brief_on() else "")
     return (
         '<header class="mh mh-%s"><p class="pv-flag">Private concept · %s</p>'
         + ('<div class="mh-plate"><p class="mh-date"><time>%s</time><span class="mh-motto">From the rivers to the sounds to the sea</span></p>'
@@ -1112,7 +1130,7 @@ def _shell(variant: str, main: str, shot: bool, water: str = "salt", public: boo
         "water": water, "defs": getattr(wave_intro, "_DEFS", ""),
         "v": variant, "shot": " data-shot" if shot else "", "title": _esc(TITLES[variant]),
         "css": css, "icss": icss, "boot": wave_intro._BOOT, "overlay": wave_intro._OVERLAY,
-        "mast": masthead_html(variant, public=public), "main": main, "replay": wave_intro._REPLAY, "ijs": wave_intro._js(),
+        "mast": masthead_html(variant, public=public, water=water), "main": main, "replay": wave_intro._REPLAY, "ijs": wave_intro._js(),
     }
     return page.encode("utf-8")
 
@@ -1277,18 +1295,16 @@ BUILDERS = {"heritage": page_heritage, "editorial": page_editorial, "hybrid": pa
 
 
 def page(variant: str, region_id: str | None = None, shot: bool = False, public: bool = False) -> bytes:
-    """public=True is the public homepage (/): Hybrid only, public saltwater regions only, no concept chrome."""
+    """public=True is the public homepage (/): Hybrid only, public regions only, no concept chrome."""
     if variant not in BUILDERS:
         raise ValueError("unknown concept")
     if public:
         if variant != "hybrid":
             raise ValueError("only the Hybrid page is public")
         rid = (region_id or "").strip()
-        if rid not in public_salt_ids():
+        if rid not in public_salt_ids() and rid not in public_fresh_ids():
             region_id = None   # unknown or not-public ids fall back to the default region, never render
         m = model(region_id)
-        if m.get("water") == "fresh":   # belt and braces: freshwater lives on /lake
-            m = model(None)
         data = _shell(variant, page_hybrid(m, _photos(), public=True), shot, water=m.get("water") or "salt", public=True)
         return data.replace(PHOTO_ROUTE.encode(), PUBLIC_PHOTO_ROUTE.encode())
     m = model(region_id)
