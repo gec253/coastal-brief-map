@@ -4,18 +4,18 @@
    "label": "Lake level",
    "stale": false,
    "station": "02087182",
-   "time": "4:45 AM ET"
+   "time": "5:30 AM ET"
   },
   {
    "label": "Water temp",
    "stale": false,
    "station": "02087182",
-   "time": "4:45 AM ET"
+   "time": "5:30 AM ET"
   }
  ],
  "issueDate": "2026-11-15",
- "issuedAt": "2026-11-15T10:15:01.944879+00:00",
- "issuedEt": "Sun Nov 15, 5:15 AM ET",
+ "issuedAt": "2026-11-15T10:56:14.386518+00:00",
+ "issuedEt": "Sun Nov 15, 5:56 AM ET",
  "items": [
   [
    "Alerts",
@@ -23,7 +23,7 @@
   ],
   [
    "Lake level",
-   "244.99 ft (NGVD29), 6.51 ft below the 251.5 ft guide curve; -0.06 ft in 24 h."
+   "244.98 ft (NGVD29), 6.52 ft below the 251.5 ft guide curve; -0.05 ft in 24 h."
   ],
   [
    "Dam release",
@@ -48,7 +48,7 @@
  ],
  "missing": [],
  "ok": true,
- "reason": "scheduled",
+ "reason": "on-request",
  "region": {
   "anchor": {
    "label": "Falls Lake Dam (USGS 02087182)",
@@ -69,7 +69,7 @@
   "Check the Freeze Warning before an early start."
  ],
  "validation": {
-  "checkedAt": "2026-11-15T10:15:01.944879+00:00",
+  "checkedAt": "2026-11-15T10:56:14.386518+00:00",
   "checks": [
    "region",
    "location",
