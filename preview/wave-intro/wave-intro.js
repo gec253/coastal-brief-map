@@ -2,8 +2,8 @@
   var KEY = "cb-wave-intro-seen";
   var TS_KEY = "cb-wave-intro-seen-at";
   var WINDOW_MS = 12 * 60 * 60 * 1000;
-  var DURATION = 1400;
-  var HARD_MAX = 1700;      // ms from play(): never longer, even after a stall
+  var DURATION = 1300;
+  var HARD_MAX = 1500;      // ms from play(): never longer, even after a stall
   var overlay = document.getElementById("wave-intro");
   var skip = document.getElementById("wi-skip");
   var replay = document.getElementById("wi-replay");
@@ -11,6 +11,7 @@
   var svg = overlay && overlay.querySelector(".wi-svg");
   var sheet = overlay && overlay.querySelector(".wi-sheet");
   var fill = overlay && overlay.querySelector(".wi-fill");
+  var lines = overlay && overlay.querySelector(".wi-lines");
   var contours = overlay ? overlay.querySelectorAll(".wi-contour") : [];
   var lineFoam = overlay && overlay.querySelector(".wi-line-foam");
   var lineBrass = overlay && overlay.querySelector(".wi-line-brass");
@@ -31,38 +32,43 @@
   var reduce = !!reduceMedia;
   var ruleBox = null;
 
-  // V6: ONE swell, one direction. Every layer is the same surface: each x
-  // follows one monotone descent F(tau) on its own local clock
-  // tau = t - delay(x, t). A single broad crest (a bump in the delay) drifts
-  // gently left to right as the swell comes down. The crest's drift is kept
-  // slow enough that d(delay)/dt stays well under 1 (checked: MAX_RATE), so
-  // tau never runs backwards: every edge sample only ever moves DOWN.
-  // The drawn edge is a quadratic B-spline of those samples, so each point
-  // of the drawn curve is a positive average of samples and only moves down
-  // too. The revealed page above the edge therefore only grows; nothing is
-  // ever covered again.
+  // V7: ONE wash of water, one direction, over a page that is already
+  // there. The page renders underneath from the first frame and stays
+  // interactive (the overlay takes no pointer events, Skip aside). The
+  // swell starts already part-way down the screen and already moving, then
+  // runs out like swash up a beach: it slows, thins and its wash fades, so
+  // the ending is almost nothing and attention lands on the conditions.
   //
-  // Depth: three opaque layers (navy body, deep green, coastal green on
-  // top). The upper layers are the SAME surface a few ms further back in
-  // time (LAGS) with a slightly fuller crest (AMPS), so the bands are thin
-  // as the swell sets off, open a little at full speed, and close as it
-  // rolls away: one swell with a shoulder, not three moving things.
-  var TRAVEL = 1800;        // ms for one point to cross the viewport
-  var D_DIAG = 26;          // left leads the right slightly
-  var D_CREST = 46;         // crest lag: crest height ~ speed x this
-  var LAGS = [0, 8, 16];    // body, deep green, coastal green (top)
-  var AMPS = [1, 1.1, 1.2];
+  // Every x follows one monotone descent F(tau) on its own local clock
+  // tau = t - delay(x, t); a single broad crest drifts gently right. The
+  // crest's drift keeps d(delay)/dt far under 1 (MAX_RATE guard), so every
+  // edge sample only moves DOWN, and the drawn edge (a quadratic B-spline,
+  // positive weights) only moves down too: what is revealed stays revealed.
+  // The wash's opacity only ever falls, so what is still under it only
+  // ever gets clearer.
+  //
+  // Depth: the navy wash plus one subtle secondary contour (a muted sea-
+  // green band: the same surface a few ms further back in time, LAGS), and
+  // a fine seafoam leading line.
+  var TRAVEL = 1700;        // ms of the descent curve (it leaves the screen earlier)
+  var START = 0.13;         // edge already 12% down the screen on frame 0
+  var POW = 2.3;            // ease-out power: fastest at the start, rolls out
+  var D_DIAG = 22;          // left leads the right slightly
+  var D_CREST = 40;         // crest lag: crest height ~ speed x this
+  var LAGS = [0, 14];       // navy wash, sea-green secondary contour (top)
+  var AMPS = [1, 1.12];
   var CREST_BACK = 0.5;     // long gentle back (viewport widths)
   var CREST_FACE = 0.3;     // shorter leading face
-  var CREST_FROM = 0.06, CREST_TO = 0.98; // a gentle drift, not a sweep
+  var CREST_FROM = 0.1, CREST_TO = 0.95; // a gentle drift, not a sweep
   var MAX_RATE = 0.75;      // d(delay)/dt guard (must stay < 1)
+  var WASH_FROM = 0.84, WASH_TO = 0.22; // wash opacity: only ever falls
   // Brass settle: near the masthead rule every layer's height is remapped
   // through y - B*tanh((y - rule)/W), a smooth monotone curve with a soft
   // plateau at the rule. The aged-brass top edge lies down along the rule
   // as it reaches it; the brass is drawn only above the rule (a clip), so
   // the line that stays behind is the real rule, already on the page in
   // the same aged-brass gradient. It never fades: it settles.
-  var SETTLE_W = 18, SETTLE_FLAT = 0.72;
+  var SETTLE_W = 16, SETTLE_FLAT = 0.7;
   var N = 40;               // edge samples (quadratic B-spline)
   var vw = 390, vh = 844;
   var skipBox = null;
@@ -73,6 +79,7 @@
     vh = (box && box.height) || window.innerHeight || 1;
     var ox = box ? box.left : 0, oy = box ? box.top : 0;
     if (svg) svg.setAttribute("viewBox", "0 0 " + vw.toFixed(2) + " " + vh.toFixed(2));
+    if (lines) lines.setAttribute("viewBox", "0 0 " + vw.toFixed(2) + " " + vh.toFixed(2));
     if (skip) {
       var sb = skip.getBoundingClientRect();
       skipBox = { x: sb.left - ox + sb.width / 2, top: sb.top - oy };
@@ -190,18 +197,25 @@
 
   function settleB() { return ruleBox ? SETTLE_FLAT * SETTLE_W : 0; }
 
-  // Descent: already moving on the first frame (no hold), a gentle swell of
-  // acceleration, then it rolls away: the swell leaves the bottom of the
-  // screen while still moving and keeps easing off below it, so there is
-  // never a stop on screen.
-  var EASE = [0.3, 0.1, 0.3, 1];
+  // Descent: on screen and moving on frame 0, then a smooth ease-out
+  // (1 - (1 - s)^POW): no acceleration from rest, no bounce, no stop on
+  // screen. Before tau = 0 (points still on their delay) the edge keeps
+  // its starting speed, so there is no kink in time.
   function descent(tau) {
     var b = settleB();
-    var y0 = -b + 4, y1 = vh * 1.1 + b + 30;
-    var v0 = (y1 - y0) * (EASE[1] / EASE[0]) / TRAVEL;
+    var y0 = START * vh, y1 = vh * 1.1 + b + 30;
+    var v0 = (y1 - y0) * POW / TRAVEL;
     if (tau <= 0) return y0 + tau * v0;
-    if (tau >= TRAVEL) return y1 + (tau - TRAVEL) * 0.05;
-    return y0 + (y1 - y0) * cubic(EASE[0], EASE[1], EASE[2], EASE[3], tau / TRAVEL);
+    if (tau >= TRAVEL) return y1 + (tau - TRAVEL) * 0.02;
+    return y0 + (y1 - y0) * (1 - Math.pow(1 - tau / TRAVEL, POW));
+  }
+
+  // Wash opacity: a smooth monotone fall from WASH_FROM to WASH_TO over the
+  // run (smoothstep), so covered content only ever gets clearer.
+  function washAt(t) {
+    var s = Math.min(1, Math.max(0, t / (DURATION - 100)));
+    s = s * s * (3 - 2 * s);
+    return WASH_FROM + (WASH_TO - WASH_FROM) * s;
   }
 
   // Smooth, monotone remap with a soft plateau at the masthead rule.
@@ -232,7 +246,7 @@
     return D_DIAG * u + D_CREST * amp * bump(v);
   }
 
-  // Height of layer k (0 = navy body, 2 = coastal green leading edge).
+  // Height of layer k (0 = navy wash, 1 = sea-green secondary contour, top).
   function layerY(x, t, k) {
     return settle(descent(t - delay(x / vw, t, AMPS[k]) - LAGS[k]));
   }
@@ -281,6 +295,12 @@
     if (raw > 1) raw = 1;
     if (!ruleBox) mapRule();
     var t = raw * DURATION;
+    // The wash opacity is applied to the two wash layers themselves (the
+    // fill and the band SVG), which meet edge to edge on a whole device
+    // pixel, so nothing overlaps or doubles and no offscreen group is needed.
+    var wa = washAt(t).toFixed(4);
+    if (fill) fill.style.opacity = wa;
+    if (svg) svg.style.opacity = wa;
     var pad = vw * 0.04;
     var i, k, u, xi = [], ys = [], minTop = Infinity, maxBody = -Infinity;
     for (k = 0; k <= TOP; k++) ys.push([]);
@@ -295,8 +315,9 @@
     }
     // The SVG paints only a band from the leading edge to just past the
     // body's lowest point; the composited fill carries the navy below it.
-    var fillTop = Math.max(0, maxBody + 24);
-    var bandBottom = (fillTop + 40).toFixed(2);
+    var dpr = window.devicePixelRatio || 1;
+    var fillTop = Math.max(0, Math.ceil((maxBody + 1) * dpr) / dpr);
+    var bandBottom = fillTop.toFixed(3);
     var close = " L " + (vw + pad).toFixed(2) + " " + bandBottom + " L " + (-pad).toFixed(2) + " " + bandBottom + " Z";
     var dTop = curveD(xi, ys[TOP]);
     for (k = 0; k < contours.length; k++) {
@@ -305,7 +326,7 @@
       contours[k].setAttribute("d", (layer === TOP ? dTop : curveD(xi, ys[layer])) + close);
     }
     sheet.setAttribute("d", curveD(xi, ys[0]) + close);
-    if (fill) fill.style.transform = "translate3d(0," + fillTop.toFixed(2) + "px,0)";
+    if (fill) fill.style.transform = "translate3d(0," + fillTop.toFixed(3) + "px,0)";
     if (lineFoam) lineFoam.setAttribute("d", dTop);
     if (lineBrass) lineBrass.setAttribute("d", dTop);
     if (foamGrad) {
@@ -398,24 +419,10 @@
     }
     draw(0);
     if (skip) skip.focus();
-    // Begin once the deferred page scripts have run, so their start-up work
-    // lands on the first still frame rather than mid-swell, but never wait
-    // more than ~120ms after first paint.
-    if (document.readyState === "loading") {
-      var begun = false;
-      var begin = function () {
-        if (begun || overlay.hasAttribute("hidden")) return;
-        begun = true;
-        document.removeEventListener("DOMContentLoaded", onReady);
-        if (timer) { window.clearTimeout(timer); timer = 0; }
-        startLoop();
-      };
-      var onReady = function () { raf = window.requestAnimationFrame(begin); };
-      document.addEventListener("DOMContentLoaded", onReady);
-      raf = window.requestAnimationFrame(function () { timer = window.setTimeout(begin, 120); });
-    } else {
-      startLoop();
-    }
+    // Start at once: frame 0 is already in motion, so holding it for the
+    // page's deferred scripts would read as a stutter. The virtual clock
+    // below caps any stall to ~2 frames instead.
+    startLoop();
   }
 
   // Skip works in the same event: the overlay is gone before the handler
@@ -465,6 +472,7 @@
   window.__wiRule = function () { return ruleBox; };
   window.__wiMaxDelayRate = maxDelayRate;
   window.__wiMaxRate = MAX_RATE;
+  window.__wiWash = washAt;
 
   if (!shouldPlay()) {
     if (reduce) markSeen();

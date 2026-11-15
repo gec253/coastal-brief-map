@@ -97,10 +97,10 @@ class WaveIntroPreview(unittest.TestCase):
 
     def test_duration_is_brief(self):
         import wave_intro
-        # Ed (v6): about 1.0-1.5s total, hard cap under 1.8s even after a stall.
+        # Ed (v7): about 1.0-1.3s total, hard cap 1.5s even after a stall.
         self.assertGreaterEqual(wave_intro.DURATION_MS, 1000)
-        self.assertLessEqual(wave_intro.DURATION_MS, 1500)
-        self.assertLessEqual(wave_intro.HARD_MAX_MS, 1800)
+        self.assertLessEqual(wave_intro.DURATION_MS, 1300)
+        self.assertLessEqual(wave_intro.HARD_MAX_MS, 1500)
         self.assertGreaterEqual(wave_intro.HARD_MAX_MS, wave_intro.DURATION_MS)
         status, body, _ = self._intro()
         self.assertEqual(status, 200)
@@ -251,7 +251,7 @@ class WaveIntroPreview(unittest.TestCase):
         self.assertNotIn(b"BRASS_FADE", body)
         self.assertIn(b'clip-path="url(#wi-brass-clip)"', body)
         # Very restrained seafoam: one thin, low-opacity highlight.
-        self.assertRegex(css, rb"\.wi-line-foam\s*\{[^}]*stroke-opacity:\s*0\.[0-3]\d*;")
+        self.assertRegex(css, rb"\.wi-line-foam\s*\{[^}]*stroke-opacity:\s*0\.[0-5]\d*;")
         # Nothing of the page (the phone mini-bar is z-index 900) shows over the swell.
         z = re.search(rb"\.wave-intro\s*\{[^}]*z-index:\s*(\d+)", css)
         self.assertGreater(int(z.group(1)), 900)
@@ -300,8 +300,14 @@ for (var t = 0; t <= D; t += 1000 / 240) {
   var top = xs.map(function (x) { return window.__wiTop(x, t); });
   if (prev) for (var j = 0; j < xs.length; j++) { var dy = top[j] - prev[j]; if (dy < out.worst) out.worst = dy; if (dy < -1e-9) out.back++; }
   if (out.exitMs < 0 && Math.min.apply(null, top) > VH + 3) out.exitMs = t;
+  var rev = top.reduce(function (a, y) { return a + Math.min(1, Math.max(0, y / VH)); }, 0) / top.length;
+  if (out.rev0 === undefined) out.rev0 = rev;
+  if (out.rev100 === undefined && t >= 100) out.rev100 = rev;
+  if (out.rev500 === undefined && t >= 500) out.rev500 = rev;
   prev = top;
 }
+out.washUp = 0; out.wash0 = window.__wiWash(0);
+for (var tw = 4; tw <= D; tw += 4) if (window.__wiWash(tw) > window.__wiWash(tw - 4) + 1e-12) out.washUp++;
 console.log(JSON.stringify(out));
 """
         for vw, vh, rule in ((390, 844, (0, 390, 128)), (1280, 800, (272, 1008, 176))):
@@ -315,9 +321,39 @@ console.log(JSON.stringify(out));
             self.assertLess(out["maxRate"], 1)
             # The leading edge never moves up anywhere: nothing is re-covered.
             self.assertEqual(out["back"], 0, out)
-            # And the swell is fully off-screen in about 1.0-1.5s.
-            self.assertGreaterEqual(out["exitMs"], 1000, out)
-            self.assertLessEqual(out["exitMs"], 1500, out)
+            # And the swell is fully off-screen in about 1.0-1.3s.
+            self.assertGreaterEqual(out["exitMs"], 900, out)
+            self.assertLessEqual(out["exitMs"], 1300, out)
+            # Ed (v7): no solid-navy hold. The edge is on screen at frame 0,
+            # a meaningful share is uncovered by 100ms and most by 500ms.
+            self.assertGreaterEqual(out["rev0"], 0.06, out)
+            self.assertGreaterEqual(out["rev100"], 0.15, out)
+            self.assertGreaterEqual(out["rev500"], 0.5, out)
+            # The wash only ever thins: what is under it only gets clearer.
+            self.assertEqual(out["washUp"], 0, out)
+            self.assertLess(out["wash0"], 0.9, out)
+
+    def test_v7_overlay_never_blocks_the_page(self):
+        status, body, _ = self._intro()
+        self.assertEqual(status, 200)
+        css = body[body.find(b'id="wave-intro-css"'):body.find(b"</style>")]
+        # Ed (v7): the dashboard stays interactive under and through the
+        # intro. The overlay takes no pointer events; only Skip does.
+        self.assertRegex(css, rb"\.wave-intro\s*\{[^}]*pointer-events:\s*none")
+        self.assertRegex(css, rb"\.wi-skip\s*\{[^}]*pointer-events:\s*auto")
+        for sel, block in re.findall(rb"([^{}]+)\{([^}]*)\}", css):
+            if re.search(rb"pointer-events:\s*auto", block):
+                self.assertIn(b".wi-skip", sel, sel)
+        js = body[body.find(b'var KEY = "cb-wave-intro-seen"'):]
+        for m in re.finditer(rb"(\w+)\.style\.pointerEvents", js):
+            self.assertEqual(m.group(1), b"skip")
+        self.assertNotIn(b'role="dialog"', body)
+        # The page renders underneath from frame 0: the wash is translucent
+        # from the start and only Skip is opaque.
+        self.assertIn(b"var WASH_FROM = 0.84", body)
+        self.assertRegex(css, rb"\.wi-water \.wi-fill,\s*\.wi-water \.wi-svg\s*\{[^}]*opacity:\s*0\.84")
+        # The phone mini-bar never pops in and out behind the water.
+        self.assertRegex(css, rb"html\.intro-play \.mini-bar\s*\{[^}]*visibility:\s*hidden")
 
     def test_public_homepage_untouched(self):
         status, body, hdrs = self._req("/")

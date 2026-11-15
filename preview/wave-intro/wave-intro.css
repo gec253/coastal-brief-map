@@ -3,10 +3,9 @@
 /* Any keyframes stay compositor-only: opacity, transform, stroke-dashoffset. */
 
 html[data-wave-intro] {
-  /* Heritage navy, coastal green, aged brass. */
+  /* Deep navy, muted sea-green, understated aged brass. */
   --wi-navy: #071c29;
-  --wi-green-deep: #0f3036;
-  --wi-green: #1c4a44;
+  --wi-green: #2b5850;
   --wi-ivory: #f3e6d0;
   --wi-brass: #c4a36a;
 }
@@ -23,7 +22,8 @@ html[data-wave-intro] {
   inset: 0;
   z-index: 1000;
   display: none;
-  pointer-events: auto;
+  /* The page underneath stays fully interactive: only Skip takes input. */
+  pointer-events: none;
   color: var(--wi-ivory);
   background: transparent;
 }
@@ -31,7 +31,7 @@ html[data-wave-intro] {
 html.intro-play .wave-intro {
   display: block;
   /* Failsafe only: if the script never runs, the sheet slides away. */
-  animation: wi-failsafe 1ms linear 2600ms both;
+  animation: wi-failsafe 1ms linear 1700ms both;
 }
 
 html[data-intro-seek] .wave-intro {
@@ -49,9 +49,24 @@ html.intro-seen .wave-intro {
   to { transform: translate3d(0, 110vh, 0); }
 }
 
-/* The navy body of the swell is a plain composited layer moved only with
-   transform, so it never repaints. The SVG above it repaints just a thin
-   band around the moving edge. */
+/* The wash: navy body plus the secondary contour, each shown at the same
+   opacity (set per frame, only ever falling), so the page reads through
+   it from the first frame. The fill and the band SVG abut on a whole
+   device pixel, so they never overlap or double up. */
+.wi-water {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.wi-water .wi-fill,
+.wi-water .wi-svg {
+  opacity: 0.84;
+}
+
+/* The navy body is a plain composited layer moved only with transform, so
+   it never repaints. The SVG above it repaints just a thin band around
+   the moving edge. */
 .wi-fill {
   position: absolute;
   left: 0;
@@ -64,7 +79,8 @@ html.intro-seen .wave-intro {
   pointer-events: none;
 }
 
-.wi-svg {
+.wi-svg,
+.wi-lines {
   display: block;
   position: absolute;
   inset: 0;
@@ -75,19 +91,14 @@ html.intro-seen .wave-intro {
   will-change: transform;
 }
 
-/* One swell, three opaque layers on the same crest: navy body, a deep
-   green shoulder and a coastal green leading band. Flat fills only: no
-   filters, masks, blur, or translucency over the page. */
+/* One swell: navy body and one sea-green secondary contour on the same
+   crest. Flat fills inside the wash group: no filters, masks or blur. */
 .wi-sheet {
   fill: var(--wi-navy);
 }
 
 .wi-contour-top {
   fill: var(--wi-green);
-}
-
-.wi-contour-mid {
-  fill: var(--wi-green-deep);
 }
 
 .wi-line {
@@ -104,7 +115,7 @@ html.intro-seen .wave-intro {
 .wi-line-foam {
   stroke: url(#wi-foam);
   stroke-width: 1px;
-  stroke-opacity: 0.34;
+  stroke-opacity: 0.5;
 }
 
 .wi-line-brass {
@@ -123,6 +134,7 @@ html.intro-seen .wave-intro {
 
 .wi-skip {
   appearance: none;
+  pointer-events: auto;
   position: absolute;
   z-index: 2;
   top: auto;
@@ -214,6 +226,13 @@ html[data-wave-intro] .wave-settle {
   opacity: 1;
   animation: none !important;
   stroke-dashoffset: 0 !important;
+}
+
+/* The page's phone mini-bar (Wind / Water / Tide) would slide out under
+   the translucent wash on load; it stays unshown while the intro plays,
+   so nothing on the page pops in or out behind the water. */
+html.intro-play .mini-bar {
+  visibility: hidden;
 }
 
 html[data-wave-intro] .wave-swell,
