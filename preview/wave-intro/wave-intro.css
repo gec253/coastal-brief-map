@@ -1,6 +1,5 @@
 /* Private /preview/intro overlay. Does not ship on public /. */
-/* Animate only transform, opacity, and stroke-dashoffset.
-   The veil's wave edge is a static path, swept with transform. */
+/* Animate only transform, opacity, and stroke-dashoffset. */
 
 html[data-wave-intro] {
   --wi-navy: #071c29;
@@ -32,18 +31,26 @@ html.intro-seen .wave-intro,
   overflow: hidden;
   z-index: 0;
   pointer-events: none;
-  animation: wi-veil-fade 1800ms linear both;
+  animation: wi-veil-fade 1900ms linear both;
 }
 
 .wi-veil-svg {
   display: block;
   width: 100%;
   height: 200%;
-  animation: wi-veil-sweep 1800ms linear both;
+  animation: wi-veil-sweep 1900ms linear both;
 }
 
 .wi-veil-sheet {
   fill: var(--wi-navy);
+}
+
+.wi-veil-solid {
+  animation: wi-veil-solid 1900ms linear both;
+}
+
+.wi-veil-cut {
+  animation: wi-veil-cut 1900ms linear both;
 }
 
 .wi-stage {
@@ -65,7 +72,7 @@ html.intro-seen .wave-intro,
 .wi-swell,
 .wi-echo,
 .wi-crest,
-.wi-arc {
+.wi-hatch {
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -76,7 +83,7 @@ html.intro-seen .wave-intro,
   stroke-width: 3.2;
   stroke-dasharray: 1360;
   stroke-dashoffset: 1360;
-  animation: wi-draw 1800ms linear both;
+  animation: wi-draw 1900ms linear both;
 }
 
 .wi-echo {
@@ -85,72 +92,35 @@ html.intro-seen .wave-intro,
   opacity: 0.5;
   stroke-dasharray: 1360;
   stroke-dashoffset: 1360;
-  animation: wi-draw-echo 1800ms linear both;
+  animation: wi-draw-echo 1900ms linear both;
 }
 
-.wi-curl {
+.wi-rise,
+.wi-break,
+.wi-fall,
+.wi-engraving {
   transform-box: fill-box;
-  transform-origin: 85% 45%;
-  animation: wi-curl 1800ms cubic-bezier(0.22, 0.7, 0.2, 1) both;
+  transform-origin: 90% 70%;
 }
+
+.wi-rise { animation: wi-rise 1900ms ease both; }
+.wi-break { animation: wi-break 1900ms ease both; }
+.wi-fall { animation: wi-fall 1900ms ease both; }
+.wi-engraving { animation: wi-engraving 1900ms ease both; }
 
 .wi-crest {
   stroke: var(--wi-ivory);
-  stroke-width: 2.6;
+  stroke-width: 2.05;
 }
 
-.wi-arc {
+.wi-hatch {
   stroke: var(--wi-ivory);
-  stroke-width: 1.7;
+  stroke-width: 0.95;
+  opacity: 0.75;
 }
 
-.wi-dot {
+.wi-spray {
   fill: var(--wi-ivory);
-}
-
-.wi-spray-a,
-.wi-spray-b,
-.wi-spray-c,
-.wi-spray-d,
-.wi-spray-e,
-.wi-spray-f,
-.wi-spray-g,
-.wi-spray-h {
-  opacity: 0;
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
-.wi-spray-a { animation: wi-spray-a 1800ms ease both; }
-.wi-spray-b { animation: wi-spray-b 1800ms ease both; }
-.wi-spray-c { animation: wi-spray-c 1800ms ease both; }
-.wi-spray-d { animation: wi-spray-d 1800ms ease both; }
-.wi-spray-e { animation: wi-spray-e 1800ms ease both; }
-.wi-spray-f { animation: wi-spray-f 1800ms ease both; }
-.wi-spray-g { animation: wi-spray-g 1800ms ease both; }
-.wi-spray-h { animation: wi-spray-h 1800ms ease both; }
-
-.wi-motto {
-  position: absolute;
-  z-index: 1;
-  left: 50%;
-  top: 34%;
-  margin: 0;
-  transform: translateX(-50%);
-  font-family: var(--f-ui, "Source Sans 3", system-ui, sans-serif);
-  font-size: 0.85rem;
-  font-weight: 700;
-  font-variant-caps: all-small-caps;
-  letter-spacing: 0.18em;
-  line-height: 1.2;
-  text-transform: uppercase;
-  text-align: center;
-  color: var(--wi-ivory);
-  text-shadow: 0 0 16px rgba(7, 28, 41, 0.55);
-  opacity: 0;
-  white-space: nowrap;
-  animation: wi-motto 1800ms ease both;
-  pointer-events: none;
 }
 
 .wi-skip {
@@ -173,7 +143,7 @@ html.intro-seen .wave-intro,
   font: 700 0.78rem/1 var(--f-ui, "Source Sans 3", system-ui, sans-serif);
   letter-spacing: 0.04em;
   cursor: pointer;
-  animation: wi-skip-in 1800ms ease both;
+  animation: wi-skip-in 1900ms ease both;
 }
 
 .wi-skip:hover {
@@ -221,121 +191,92 @@ html.intro-seen .wave-intro,
   outline-offset: 3px;
 }
 
-/* Swell finishes drawing by 600ms (33%). Visible stroke starts immediately. */
+/* 0–600ms: the swell draws. */
 @keyframes wi-draw {
   0% { stroke-dashoffset: 1360; opacity: 1; }
-  33% { stroke-dashoffset: 0; opacity: 1; }
-  78% { stroke-dashoffset: 0; opacity: 1; }
+  31.5% { stroke-dashoffset: 0; opacity: 1; }
+  80% { stroke-dashoffset: 0; opacity: 1; }
   100% { stroke-dashoffset: 0; opacity: 0; }
 }
 
-/* Seafoam echo trails the ivory stroke by about 100ms. */
 @keyframes wi-draw-echo {
   0%, 4% { stroke-dashoffset: 1360; opacity: 0; }
   8% { opacity: 0.5; }
-  39% { stroke-dashoffset: 0; opacity: 0.5; }
-  78% { stroke-dashoffset: 0; opacity: 0.35; }
+  36% { stroke-dashoffset: 0; opacity: 0.5; }
+  80% { stroke-dashoffset: 0; opacity: 0.35; }
   100% { stroke-dashoffset: 0; opacity: 0; }
 }
 
-/* Barrel-curl lifts in the right third, 500–1000ms. */
-@keyframes wi-curl {
-  0%, 27% { opacity: 0; transform: scale(0.92) translateY(10px); }
-  42% { opacity: 1; transform: scale(1) translateY(0); }
-  56% { opacity: 1; transform: scale(1) translateY(0); }
-  78% { opacity: 0.85; transform: scale(1) translateY(0); }
-  100% { opacity: 0; transform: scale(1) translateY(0); }
+/* 600–800ms: the face rises. */
+@keyframes wi-rise {
+  0%, 31.5% { opacity: 0; transform: translateY(8px) scale(0.98); }
+  42% { opacity: 1; transform: translateY(0) scale(1); }
+  52.5% { opacity: 0; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
 }
 
-@keyframes wi-spray-a {
-  0%, 50% { opacity: 0; transform: translateY(0); }
-  58% { opacity: 0.9; transform: translateY(-8px); }
-  72% { opacity: 0.35; transform: translateY(-16px); }
-  86%, 100% { opacity: 0; transform: translateY(-20px); }
-}
-@keyframes wi-spray-b {
-  0%, 52% { opacity: 0; transform: translateY(0); }
-  60% { opacity: 0.85; transform: translateY(-10px); }
-  74% { opacity: 0.3; transform: translateY(-18px); }
-  88%, 100% { opacity: 0; transform: translateY(-22px); }
-}
-@keyframes wi-spray-c {
-  0%, 48% { opacity: 0; transform: translateY(0) scale(0.7); }
-  56% { opacity: 0.9; transform: translateY(-12px) scale(1); }
-  70% { opacity: 0.35; transform: translateY(-22px) scale(1); }
-  84%, 100% { opacity: 0; transform: translateY(-26px) scale(1); }
-}
-@keyframes wi-spray-d {
-  0%, 51% { opacity: 0; transform: translateY(0) scale(0.7); }
-  59% { opacity: 0.95; transform: translateY(-14px) scale(1); }
-  73% { opacity: 0.35; transform: translateY(-24px) scale(1); }
-  86%, 100% { opacity: 0; transform: translateY(-28px) scale(1); }
-}
-@keyframes wi-spray-e {
-  0%, 47% { opacity: 0; transform: translateY(0) scale(0.7); }
-  55% { opacity: 0.8; transform: translateY(-10px) scale(1); }
-  68% { opacity: 0.3; transform: translateY(-20px) scale(1); }
-  82%, 100% { opacity: 0; transform: translateY(-24px) scale(1); }
-}
-@keyframes wi-spray-f {
-  0%, 53% { opacity: 0; transform: translateY(0) scale(0.7); }
-  61% { opacity: 0.85; transform: translateY(-11px) scale(1); }
-  75% { opacity: 0.3; transform: translateY(-21px) scale(1); }
-  88%, 100% { opacity: 0; transform: translateY(-26px) scale(1); }
-}
-@keyframes wi-spray-g {
-  0%, 49% { opacity: 0; transform: translateY(0) scale(0.7); }
-  57% { opacity: 0.8; transform: translateY(-13px) scale(1); }
-  71% { opacity: 0.28; transform: translateY(-23px) scale(1); }
-  85%, 100% { opacity: 0; transform: translateY(-27px) scale(1); }
-}
-@keyframes wi-spray-h {
-  0%, 46% { opacity: 0; transform: translateY(0) scale(0.7); }
-  54% { opacity: 0.75; transform: translateY(-9px) scale(1); }
-  67% { opacity: 0.25; transform: translateY(-18px) scale(1); }
-  80%, 100% { opacity: 0; transform: translateY(-22px) scale(1); }
+/* 800–1000ms: the lip pitches and curls into a hollow. */
+@keyframes wi-break {
+  0%, 42% { opacity: 0; transform: translateY(4px) scale(0.99); }
+  52.5% { opacity: 1; transform: translateY(0) scale(1); }
+  63% { opacity: 0; transform: translateY(2px) scale(1); }
+  100% { opacity: 0; transform: translateY(2px) scale(1); }
 }
 
-/* Wave-shaped leading edge holds, then sweeps up 900–1400ms. */
+/* 1000–1400ms: the lip falls as the nameplate resolves. */
+@keyframes wi-fall {
+  0%, 52.5% { opacity: 0; transform: translateY(-2px); }
+  63% { opacity: 1; transform: translateY(0); }
+  80% { opacity: 1; transform: translateY(4px); }
+  100% { opacity: 0; transform: translateY(6px); }
+}
+
+@keyframes wi-engraving {
+  0%, 44% { opacity: 0; transform: translateY(0); }
+  52.5% { opacity: 1; transform: translateY(0); }
+  80% { opacity: 0.9; transform: translateY(3px); }
+  100% { opacity: 0; transform: translateY(5px); }
+}
+
+/* Solid navy holds through the break, then yields to the cut sheet. */
+@keyframes wi-veil-solid {
+  0%, 47% { opacity: 1; }
+  52.5%, 100% { opacity: 0; }
+}
+
+/* Hole over the real Folio nameplate and tagline, 1000–1400ms. */
+@keyframes wi-veil-cut {
+  0%, 47% { opacity: 0; }
+  52.5%, 100% { opacity: 1; }
+}
+
+/* 1400–1900ms: the navy lifts away from the masthead. */
 @keyframes wi-veil-sweep {
-  0%, 50% { transform: translateY(0); }
-  78% { transform: translateY(-58%); }
-  100% { transform: translateY(-68%); }
+  0%, 73.5% { transform: translateY(0); }
+  100% { transform: translateY(-62%); }
 }
 
 @keyframes wi-veil-fade {
-  0%, 75% { opacity: 1; }
+  0%, 86% { opacity: 1; }
   100% { opacity: 0; }
 }
 
-/* Tagline visible about 1000–1350ms, kept below the page LCP size. */
-@keyframes wi-motto {
-  0%, 55% { opacity: 0; transform: translateX(-50%); }
-  62% { opacity: 0.95; transform: translateX(-50%); }
-  74% { opacity: 0.95; transform: translateX(-50%); }
-  82%, 100% { opacity: 0; transform: translateX(-50%); }
-}
-
-/* Skip is gone by 1000ms so it never meets Dark mode. */
+/* Skip is gone before the nameplate (and Dark mode) appear. */
 @keyframes wi-skip-in {
-  0%, 50% { opacity: 1; }
-  56%, 100% { opacity: 0; }
+  0%, 47% { opacity: 1; }
+  52.5%, 100% { opacity: 0; }
 }
 
 html[data-intro-seek] .wave-intro .wi-veil,
 html[data-intro-seek] .wave-intro .wi-veil-svg,
+html[data-intro-seek] .wave-intro .wi-veil-solid,
+html[data-intro-seek] .wave-intro .wi-veil-cut,
 html[data-intro-seek] .wave-intro .wi-swell,
 html[data-intro-seek] .wave-intro .wi-echo,
-html[data-intro-seek] .wave-intro .wi-curl,
-html[data-intro-seek] .wave-intro .wi-spray-a,
-html[data-intro-seek] .wave-intro .wi-spray-b,
-html[data-intro-seek] .wave-intro .wi-spray-c,
-html[data-intro-seek] .wave-intro .wi-spray-d,
-html[data-intro-seek] .wave-intro .wi-spray-e,
-html[data-intro-seek] .wave-intro .wi-spray-f,
-html[data-intro-seek] .wave-intro .wi-spray-g,
-html[data-intro-seek] .wave-intro .wi-spray-h,
-html[data-intro-seek] .wave-intro .wi-motto,
+html[data-intro-seek] .wave-intro .wi-rise,
+html[data-intro-seek] .wave-intro .wi-break,
+html[data-intro-seek] .wave-intro .wi-fall,
+html[data-intro-seek] .wave-intro .wi-engraving,
 html[data-intro-seek] .wave-intro .wi-skip {
   animation-play-state: paused !important;
   animation-delay: calc(var(--intro-ms, 0) * -1ms) !important;
@@ -345,18 +286,14 @@ html[data-intro-seek] .wave-intro .wi-skip {
 @media (prefers-reduced-motion: reduce) {
   .wave-intro .wi-veil,
   .wave-intro .wi-veil-svg,
+  .wave-intro .wi-veil-solid,
+  .wave-intro .wi-veil-cut,
   .wave-intro .wi-swell,
   .wave-intro .wi-echo,
-  .wave-intro .wi-curl,
-  .wave-intro .wi-spray-a,
-  .wave-intro .wi-spray-b,
-  .wave-intro .wi-spray-c,
-  .wave-intro .wi-spray-d,
-  .wave-intro .wi-spray-e,
-  .wave-intro .wi-spray-f,
-  .wave-intro .wi-spray-g,
-  .wave-intro .wi-spray-h,
-  .wave-intro .wi-motto,
+  .wave-intro .wi-rise,
+  .wave-intro .wi-break,
+  .wave-intro .wi-fall,
+  .wave-intro .wi-engraving,
   .wave-intro .wi-skip {
     animation: none;
   }
@@ -368,8 +305,10 @@ html[data-intro-seek] .wave-intro .wi-skip {
   }
   html.intro-reduce:not(.intro-seen) .wi-swell,
   html.intro-reduce:not(.intro-seen) .wi-echo,
-  html.intro-reduce:not(.intro-seen) .wi-curl,
-  html.intro-reduce:not(.intro-seen) .wi-motto {
+  html.intro-reduce:not(.intro-seen) .wi-rise,
+  html.intro-reduce:not(.intro-seen) .wi-break,
+  html.intro-reduce:not(.intro-seen) .wi-fall,
+  html.intro-reduce:not(.intro-seen) .wi-engraving {
     opacity: 0;
   }
   html.intro-reduce:not(.intro-seen) .wi-skip {
@@ -383,10 +322,6 @@ html[data-intro-seek] .wave-intro .wi-skip {
 }
 
 @media (max-width: 639px) {
-  .wi-motto {
-    font-size: 0.8rem;
-    letter-spacing: 0.16em;
-  }
   .wi-skip {
     top: 12px;
     left: 12px;

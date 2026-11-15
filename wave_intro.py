@@ -5,33 +5,46 @@ from pathlib import Path
 
 DIR = Path(__file__).resolve().parent / "preview" / "wave-intro"
 SESSION_KEY = "cb-wave-intro-seen"
-DURATION_MS = 1800
+DURATION_MS = 1900
 
 _OVERLAY = """
 <div id="wave-intro" class="wave-intro" role="dialog" aria-label="Site introduction">
   <div class="wi-veil" aria-hidden="true">
     <svg class="wi-veil-svg" viewBox="0 0 1200 1600" preserveAspectRatio="none" focusable="false">
-      <path class="wi-veil-sheet" d="M -40 -40 H 1240 V 880 C 1100 960, 1000 840, 860 900 C 720 960, 600 840, 460 910 C 300 980, 160 860, -40 940 Z"/>
+      <defs>
+        <mask id="wi-cut-mask" maskUnits="userSpaceOnUse">
+          <rect x="-80" y="-80" width="1360" height="1760" fill="#fff"/>
+          <rect id="wi-mast-hole" x="0" y="0" width="0" height="0" fill="#000"/>
+        </mask>
+      </defs>
+      <path class="wi-veil-sheet wi-veil-solid" d="M -40 -40 H 1240 V 880 C 1100 960, 1000 840, 860 900 C 720 960, 600 840, 460 910 C 300 980, 160 860, -40 940 Z"/>
+      <path class="wi-veil-sheet wi-veil-cut" mask="url(#wi-cut-mask)" d="M -40 -40 H 1240 V 880 C 1100 960, 1000 840, 860 900 C 720 960, 600 840, 460 910 C 300 980, 160 860, -40 940 Z"/>
     </svg>
   </div>
   <div class="wi-stage" aria-hidden="true">
     <svg class="wi-svg" viewBox="0 0 1200 800" preserveAspectRatio="none" focusable="false">
       <path class="wi-echo" fill="none" d="M -60 428 C 80 428, 160 384, 280 402 C 410 422, 490 474, 630 440 C 750 410, 840 378, 960 364 C 1060 354, 1140 348, 1280 342"/>
       <path class="wi-swell" fill="none" d="M -60 412 C 80 412, 160 368, 280 386 C 410 406, 490 458, 630 424 C 750 394, 840 362, 960 348 C 1060 338, 1140 332, 1280 326"/>
-      <g class="wi-curl">
-        <path class="wi-crest" fill="none" d="M 760 378 C 900 360, 1040 340, 1110 300 C 1165 272, 1170 236, 1120 214 C 1060 188, 990 206, 968 250 C 954 278, 992 300, 1055 302"/>
-        <path class="wi-arc wi-spray-a" fill="none" d="M 1088 200 C 1104 184, 1130 178, 1150 190"/>
-        <path class="wi-arc wi-spray-b" fill="none" d="M 1128 224 C 1144 214, 1164 220, 1176 236"/>
-        <circle class="wi-dot wi-spray-c" cx="1118" cy="198" r="11"/>
-        <circle class="wi-dot wi-spray-d" cx="1150" cy="220" r="13"/>
-        <circle class="wi-dot wi-spray-e" cx="1084" cy="188" r="9"/>
-        <circle class="wi-dot wi-spray-f" cx="1172" cy="248" r="10"/>
-        <circle class="wi-dot wi-spray-g" cx="1130" cy="178" r="8"/>
-        <circle class="wi-dot wi-spray-h" cx="1098" cy="170" r="7"/>
+      <g class="wi-rise">
+        <path class="wi-crest wi-crest-a" fill="none" d="M 800 360 C 900 350, 1000 325, 1080 295 C 1120 278, 1155 265, 1180 258"/>
+      </g>
+      <g class="wi-break">
+        <path class="wi-crest wi-crest-b" fill="none" d="M 800 360 C 900 350, 1000 320, 1070 285 C 1110 260, 1145 245, 1175 248 C 1195 250, 1198 265, 1185 278 C 1170 292, 1148 296, 1130 288"/>
+      </g>
+      <g class="wi-fall">
+        <path class="wi-crest wi-crest-c" fill="none" d="M 800 360 C 900 352, 1000 328, 1065 300 C 1110 278, 1150 270, 1178 278 C 1195 284, 1192 302, 1172 312 C 1152 322, 1130 320, 1118 312"/>
+      </g>
+      <g class="wi-engraving">
+        <path class="wi-hatch" fill="none" d="M 1140 268 C 1155 262, 1170 263, 1178 270"/>
+        <path class="wi-hatch" fill="none" d="M 1136 276 C 1150 270, 1164 271, 1172 278"/>
+        <path class="wi-hatch" fill="none" d="M 1134 284 C 1146 278, 1158 279, 1166 285"/>
+        <circle class="wi-spray" cx="1208" cy="238" r="3.2"/>
+        <circle class="wi-spray" cx="1216" cy="250" r="2.6"/>
+        <circle class="wi-spray" cx="1200" cy="232" r="2.4"/>
+        <circle class="wi-spray" cx="1222" cy="242" r="2.2"/>
       </g>
     </svg>
   </div>
-  <p class="wi-motto">Know the Water. Live the Coast.</p>
   <button type="button" class="wi-skip" id="wi-skip">Skip intro</button>
   <button type="button" class="wi-sound" id="wi-sound" hidden aria-pressed="false" data-sound-hook>Sound</button>
 </div>

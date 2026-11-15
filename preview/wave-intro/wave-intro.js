@@ -1,6 +1,6 @@
 (function () {
   var KEY = "cb-wave-intro-seen";
-  var DURATION = 1800;
+  var DURATION = 1900;
   var REDUCE_MS = 200;
   var overlay = document.getElementById("wave-intro");
   var skip = document.getElementById("wi-skip");
@@ -43,7 +43,37 @@
     hide();
   }
 
+
+  function mapMastHole() {
+    var hole = document.getElementById("wi-mast-hole");
+    if (!hole) return;
+    var name = document.querySelector(".mast-nameplate") || document.querySelector("header.site h1");
+    var motto = document.querySelector(".mast-motto");
+    if (!name) return;
+    var a = name.getBoundingClientRect();
+    var left = a.left, top = a.top, right = a.right, bottom = a.bottom;
+    if (motto) {
+      var b = motto.getBoundingClientRect();
+      if (b.width && b.height) {
+        left = Math.min(left, b.left);
+        top = Math.min(top, b.top);
+        right = Math.max(right, b.right);
+        bottom = Math.max(bottom, b.bottom);
+      }
+    }
+    var padX = 20, padY = 10;
+    var vw = window.innerWidth || 1;
+    var vh = window.innerHeight || 1;
+    // Veil SVG viewBox is 1200 x 1600, drawn at 100% x 200% of the viewport,
+    // so 1200 units = 100vw and 800 units = 100vh.
+    hole.setAttribute("x", ((left - padX) / vw) * 1200);
+    hole.setAttribute("y", ((top - padY) / vh) * 800);
+    hole.setAttribute("width", ((right - left + padX * 2) / vw) * 1200);
+    hole.setAttribute("height", ((bottom - top + padY * 2) / vh) * 800);
+  }
+
   function play() {
+
     if (!overlay) return;
     document.documentElement.classList.remove("intro-seen");
     document.documentElement.classList.add("intro-play");
@@ -52,6 +82,8 @@
     overlay.removeAttribute("hidden");
     overlay.setAttribute("aria-hidden", "false");
     overlay.style.pointerEvents = "auto";
+    mapMastHole();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(mapMastHole).catch(function () {});
     if (seek !== null && seek !== "") {
       var ms = Math.max(0, parseInt(seek, 10) || 0);
       document.documentElement.setAttribute("data-intro-seek", "");
@@ -83,6 +115,7 @@
     play();
   }
 
+  window.addEventListener("resize", mapMastHole);
   if (skip) skip.addEventListener("click", skipNow);
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape" && overlay && !overlay.hasAttribute("hidden") && !overlay.classList.contains("is-done")) {
