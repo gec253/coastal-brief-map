@@ -1,0 +1,113 @@
+{
+ "forecastUpdated": "2026-11-15T09:02:21+00:00",
+ "freshness": [
+  {
+   "label": "Seas",
+   "stale": false,
+   "station": "41120",
+   "time": "4:26 AM ET"
+  },
+  {
+   "label": "Barometer",
+   "stale": false,
+   "station": "8654467",
+   "time": "5:06 AM ET"
+  },
+  {
+   "label": "Water level",
+   "stale": false,
+   "station": "8654467",
+   "time": "5:06 AM ET"
+  },
+  {
+   "label": "Water temp",
+   "stale": false,
+   "station": "8654467",
+   "time": "5:06 AM ET"
+  }
+ ],
+ "issueDate": "2026-11-15",
+ "issuedAt": "2026-11-15T10:15:00.835077+00:00",
+ "issuedEt": "Sun Nov 15, 5:15 AM ET",
+ "items": [
+  [
+   "Advisories",
+   "No NWS marine advisories for this area."
+  ],
+  [
+   "Seas",
+   "4.3 ft every 8 s from the NE at Cape Hatteras East (CDIP 250); easing from 5.9 ft 10 h earlier."
+  ],
+  [
+   "Swell",
+   "0.7 ft at 10 s from the ENE (split from the buoy spectrum)."
+  ],
+  [
+   "Pressure",
+   "30.18 inHg, rising."
+  ],
+  [
+   "Marine forecast",
+   "Today: NW winds 10 to 15 kt. (NWS AMZ154)"
+  ],
+  [
+   "Rain",
+   "0% chance through tonight; clear, high 45°F."
+  ],
+  [
+   "Tides",
+   "high 12:55 AM ET (0.6 ft), low 6:50 AM ET (0.4 ft), high 12:57 PM ET (0.6 ft), low 7:25 PM ET (0.3 ft) at USCG Station Hatteras, MLLW."
+  ],
+  [
+   "Water temp",
+   "57°F inshore (USCG Station Hatteras), 67°F offshore (buoy 41120)."
+  ]
+ ],
+ "marineUpdated": "2026-11-15T04:00:00-05:00",
+ "marineZone": "AMZ154",
+ "missing": [
+  "wind (stale: last report 4:00 AM ET, not used)"
+ ],
+ "ok": true,
+ "reason": "scheduled",
+ "region": {
+  "anchor": {
+   "label": "Cape Hatteras",
+   "lat": 35.2515,
+   "lon": -75.5288
+  },
+  "area": "Cape Hatteras, Outer Banks",
+  "id": "hatteras",
+  "map": {
+   "center": [
+    35.2,
+    -75.6
+   ],
+   "zoom": 8
+  },
+  "name": "Hatteras Island"
+ },
+ "regionId": "hatteras",
+ "sources": "NOAA NDBC, NOAA CO-OPS, NWS (api.weather.gov)",
+ "take": [
+  "Offshore water is 10°F warmer than inshore."
+ ],
+ "validation": {
+  "checkedAt": "2026-11-15T10:15:00.835077+00:00",
+  "checks": [
+   "region",
+   "location",
+   "issue date",
+   "timestamp",
+   "marine zone",
+   "forecast age",
+   "core readings"
+  ],
+  "missingCore": [
+   "wind"
+  ],
+  "status": "partial"
+ },
+ "waterType": "saltwater",
+ "words": 105
+}
