@@ -52,4 +52,3 @@ html[data-sprint="heritage"] body{background:var(--page)}
   .hx-plates .plate-lead{grid-column:auto}
   .hx-cards{grid-template-columns:repeat(3,1fr);gap:28px}
 }
-.mh-heritage .mh-bar::before{display:none}

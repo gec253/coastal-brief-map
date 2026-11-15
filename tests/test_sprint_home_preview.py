@@ -167,6 +167,10 @@ class Gate(unittest.TestCase):
             s, h, _ = self._get(p + "?region=topsail", key=self.KEY, cookie=True)
             self.assertEqual(s, 200)
             self.assertIn("noindex", h.get("X-Robots-Tag", "") + h.get("x-robots-tag", ""))
+        ph = "/preview/sprint-home/photos/bodie-sunrise-800.avif"
+        self.assertEqual(self._get(ph)[0], 404)
+        self.assertEqual(self._get(ph, key=self.KEY)[0], 404)
+        self.assertEqual(self._get(ph, key=self.KEY, cookie=True)[0], 200)
 
 
 class Render(unittest.TestCase):
@@ -177,7 +181,8 @@ class Render(unittest.TestCase):
             cg = body.index("data-conditions")
             self.assertIn("<img", body)
             self.assertLess(cg, body.index("<img"), v)
-            self.assertLess(cg, body.index('class="ph '), v)
+            if "<picture" in body:
+                self.assertLess(cg, body.index("<picture"), v)
 
     def test_values_come_from_payload(self):
         h = render("heritage", salt("wilmington"))
@@ -215,24 +220,31 @@ class Render(unittest.TestCase):
         self.assertEqual(nums(h), [])
 
     def test_every_image_is_credited(self):
+        credit_re = re.compile(r'<(?:span|p) class="(?:ph-credit|mz-credit|hz-c)">([^<]+)</(?:span|p)>')
+        ok_credit = re.compile(r"^(Community photo · (Catch Wall|Coastal Life)|"
+                               r"Photo: National Park Service, Cape Hatteras National Seashore \(public domain\))$")
         for v in sprint_home.CONCEPTS:
             h = render(v, salt("wilmington"))
-            figs = re.findall(r"<figure class=\"ph [^\"]*\">.*?</figure>", h, re.S)
-            with_img = [f for f in figs if "<img" in f]
-            self.assertGreaterEqual(len(with_img), 2, v)
-            self.assertEqual(h.count("<img"), len(with_img), v)
-            for f in with_img:
-                m = re.search(r'<span class="ph-credit">([^<]+)</span>', f)
-                self.assertTrue(m, f[:200])
-                self.assertRegex(m.group(1), r"^(Catch Wall|Coastal Life) community photo · ")
-                self.assertIn("Photographer not recorded", m.group(1))  # nothing invented
-                self.assertRegex(f, r'width="\d+" height="\d+"')
-            self.assertIn(sprint_home.AWAITING, h)
+            body = h[h.index("<main"):]
+            imgs = [m.start() for m in re.finditer(r"<img ", body)]
+            self.assertGreaterEqual(len(imgs), 2, v)
+            for i in imgs:
+                # each image's own container closes with a credit before the next image starts
+                nxt = min([j for j in imgs if j > i] + [len(body)])
+                m = credit_re.search(body, i, nxt)
+                self.assertTrue(m, (v, body[i:i + 160]))
+                self.assertRegex(m.group(1), ok_credit)
+                self.assertRegex(body[i:body.index(">", i)], r'width="\d+" height="\d+"')
+            self.assertIn("Awaiting real material", h)
 
     def test_no_photos_gives_honest_slots(self):
         h = render("editorial", salt("wilmington"), photos=[])
         self.assertNotIn("<img", h)
         self.assertGreaterEqual(h.count(sprint_home.AWAITING), 3)
+        with mock.patch.object(sprint_home, "PHOTO_DIR", Path("/nonexistent")):
+            h = render("hybrid", salt("wilmington"), photos=[])
+        self.assertNotIn("<img", h)
+        self.assertIn("Awaiting real material", h)
 
     def test_region_degradation(self):
         cases = {
@@ -287,6 +299,90 @@ class Render(unittest.TestCase):
         # The overlay must not hold the readings back: they are in the HTML, not fetched by script.
         self.assertNotIn("/api/conditions", h)
         self.assertIn('<span class="t-num">12</span>', h)
+
+
+def alerts(*events, status="ok", ends_in_min=120):
+    return {"status": status, "zones": ["AMZ158"], "items": [
+        {"event": e, "ends": iso(-ends_in_min)} for e in events]}
+
+
+class Refinement(unittest.TestCase):
+    def test_flag_mapping_exact_event_names(self):
+        f = sprint_home.flag_for
+        self.assertEqual(f(alerts("Small Craft Advisory")), "pennant")
+        self.assertEqual(f(alerts("Gale Warning")), "pennant2")
+        self.assertEqual(f(alerts("Storm Warning")), "square")
+        self.assertEqual(f(alerts("Hurricane Warning")), "square2")
+        self.assertEqual(f(alerts("Small Craft Advisory", "Gale Warning")), "pennant2")  # highest wins
+        for e in ("Tropical Storm Warning", "Winter Storm Warning", "Hurricane Force Wind Warning", "Hurricane Watch",
+                  "Gale Watch", "Storm Watch", "Hazardous Seas Warning", "Special Marine Warning", "Rip Current Statement",
+                  "Coastal Flood Advisory", "small craft advisory", "Brisk Wind Advisory"):
+            self.assertIsNone(f(alerts(e)), e)
+        self.assertIsNone(f(alerts("Gale Warning", ends_in_min=-30)))     # already ended
+        self.assertIsNone(f(alerts("Gale Warning", status="unavailable")))  # not verified
+        self.assertIsNone(f(None))
+
+    def test_flag_renders_only_for_matching_alert(self):
+        h = render("hybrid", salt("wilmington", alerts=alerts("Gale Warning")))
+        self.assertIn('aria-label="Coastal warning display: two red pennants"', h)
+        self.assertEqual(h.count('class="al-flag"'), 1)
+        for e in ("Tropical Storm Warning", "Rip Current Statement"):
+            h = render("hybrid", salt("wilmington", alerts=alerts(e)))
+            self.assertIn(e, h)
+            self.assertNotIn('class="al-flag"', h)
+        h = render("hybrid", salt("wilmington"))
+        self.assertNotIn('class="al-flag"', h)
+
+    def test_offshore_water_is_unmistakable(self):
+        off = ok({"f": 68.2}, "41159", "Onslow Bay Outer")
+        off["station"].update({"distanceMi": 36, "bearingFromAnchor": "ESE", "anchor": "Ocean City Fishing Pier"})
+        h = render("hybrid", salt("topsail", readings={"waterTemp": OFF, "waterTempOffshore": off}))
+        w = tile(h, "water")
+        self.assertIn("is-offshore", w)
+        self.assertIn("Offshore buoy", w)
+        self.assertIn("Buoy 41159 · 36 mi ESE of Ocean City Fishing Pier", w)
+        self.assertIn('class="t-buoy"', w)
+        nodist = ok({"f": 68.2}, "41159", "Onslow Bay Outer")
+        nodist["station"].pop("distanceMi")
+        h = render("hybrid", salt("topsail", readings={"waterTemp": OFF, "waterTempOffshore": nodist}))
+        self.assertIn("Buoy 41159 · distance offshore not recorded", tile(h, "water"))
+        h = render("hybrid", salt("wilmington"))
+        self.assertNotIn("is-offshore", tile(h, "water"))
+
+    def test_hybrid_has_no_toggles_and_shows_forecast(self):
+        h = render("hybrid", salt("wilmington"))
+        cg = h[h.index("data-conditions"):h.index("</section>", h.index("data-conditions"))]
+        self.assertNotIn("<details", cg)
+        self.assertIn("N winds 10 to 15 kt", cg)
+        self.assertLess(cg.index('class="fc"'), cg.index('class="cg-more"'))
+        self.assertIn('<nav class="rr" aria-label="Choose your water">', h)
+        groups = [("Saltwater", [("wilmington", "Wilmington", True)]), ("Freshwater", [("jordan-lake", "Jordan Lake", False)])]
+        with mock.patch.object(sprint_home, "region_groups", return_value=groups):
+            rr = sprint_home.region_rail("wilmington")
+        self.assertIn(">Saltwater<", rr)
+        self.assertIn(">Freshwater<", rr)
+        self.assertIn('aria-current="page"', rr)
+
+    def test_motto_once_and_water_attribute(self):
+        h = render("hybrid", salt("wilmington"))
+        body = h[h.index("<body"):]
+        self.assertEqual(body.count("From the rivers to the sounds to the sea"), 1)
+        self.assertIn('data-water="salt"', h)
+        h = render("hybrid", fresh_jordan(), fresh=True)
+        self.assertIn('data-water="fresh"', h)
+
+    def test_bodie_is_the_saltwater_horizon(self):
+        h = render("hybrid", salt("wilmington"))
+        hz = h[h.index('<section class="hz"'):]
+        self.assertIn("/preview/sprint-home/photos/bodie-sunrise-800.webp", hz[:2000])
+        self.assertIn('width="1600" height="1200"', hz[:2000])
+        self.assertIn("Photo: National Park Service, Cape Hatteras National Seashore (public domain)", hz[:2500])
+        self.assertTrue((sprint_home.DIR / "CREDITS.md").is_file())
+
+    def test_photo_path_is_strict(self):
+        self.assertIsNotNone(sprint_home.photo_path("/preview/sprint-home/photos/bodie-sunrise-800.avif"))
+        for bad in ("../server.py", "bodie-sunrise-800.png", "BODIE-800.avif", "x/../../a-800.webp"):
+            self.assertIsNone(sprint_home.photo_path("/preview/sprint-home/photos/" + bad), bad)
 
 
 @unittest.skipUnless(os.environ.get("SPRINT_LIVE") == "1", "live network check; set SPRINT_LIVE=1")

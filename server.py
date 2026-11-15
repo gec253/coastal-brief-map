@@ -2306,6 +2306,13 @@ class Handler(SimpleHTTPRequestHandler):
             return self._wave_intro_route(parsed)
         if parsed.path in sprint_home.ROUTES:
             return self._sprint_home_route(parsed)
+        if parsed.path.startswith(sprint_home.PHOTO_ROUTE):
+            if not self._preview_ok():
+                return self.send_error(404, "not found")
+            path = sprint_home.photo_path(parsed.path)
+            if not path:
+                return self.send_error(404, "not found")
+            return self._send_file(path, "image/avif" if path.suffix == ".avif" else "image/webp")
         # /?region=falls-lake (etc.) should open the lake page, not break the saltwater dashboard.
         if parsed.path in ("/", "/index.html"):
             rid = (parse_qs(parsed.query).get("region") or [""])[0].strip()

@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import html
 import math
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -33,6 +34,22 @@ LEAD_PHOTO_ID = "3e41ed83-23a3-4032-8a5f-c7957b788e3f"   # Red Drum, New Bern ·
 WIDE_PHOTO_ID = "bcd8fba5-28d9-4db8-a41a-65a5fd2ef26b"   # Striped Bass, Roanoke River
 FRESH_PHOTO_ID = "a225cada-6666-40ed-9640-4eba26905970"  # Weldon
 LIFE_PHOTO_ID = "caec2542-d57c-40bd-ab1f-b57bb19a55a1"   # Rx Chicken& Oysters
+LIFE2_PHOTO_ID = "89eef7f7-9d80-41ad-b1e5-96985bcaa73d"  # Rx Chicken & Oysters (diner)
+
+# Bodie Island Lighthouse at sunrise: NPGallery asset, PhotoCredit "Cape Hatteras
+# National Seashore", constraints "Public domain: Full Granting Rights".
+# Verified 15 Nov 2026; see preview/sprint-home/CREDITS.md. Served locally.
+PHOTO_DIR = DIR / "photos"
+PHOTO_ROUTE = "/preview/sprint-home/photos/"
+BODIE = {
+    "id": "bodie-sunrise", "local": True, "w": 1600, "h": 1200,
+    "base": PHOTO_ROUTE + "bodie-sunrise", "widths": (800, 1280),
+    "alt": "Bodie Island Lighthouse and keepers' quarters at sunrise, Cape Hatteras National Seashore",
+    "title": "Bodie Island Lighthouse at sunrise",
+    "location": "Bodie Island, Cape Hatteras National Seashore", "region": "October 13, 2023",
+    "credit_line": "Photo: National Park Service, Cape Hatteras National Seashore (public domain)",
+    "source_url": "https://npgallery.nps.gov/AssetDetail/3011f0d3-bb6a-4b82-8fef-ca0b654e8040",
+}
 
 # Copy reused verbatim from the glance contract (section 2.3 / 3.4).
 NOT_REPORTING = "Not reporting"
@@ -155,6 +172,31 @@ def _temp_tile(r, name, tid, note="") -> dict:
                  src=_station(r), when=et_time(r.get("time")), note=note)
 
 
+_PHOTO_NAME = re.compile(r"^[a-z0-9-]+-(800|1280)\.(avif|webp)$")
+
+
+def photo_path(url_path: str):
+    """Local preview photo for a request path, or None. Strict names only."""
+    name = url_path[len(PHOTO_ROUTE):]
+    if not _PHOTO_NAME.match(name):
+        return None
+    path = PHOTO_DIR / name
+    return path if path.is_file() else None
+
+
+def offshore_where(r) -> str:
+    """'Buoy 41159 · 37 mi SSW of Beaufort Inlet' from station metadata only."""
+    s = (r or {}).get("station") or {}
+    sid = s.get("id") or ""
+    head = ("Buoy %s" % sid) if sid else "Offshore buoy"
+    if _num(s.get("distanceMi")):
+        where = "%s mi %s" % (_r0(s["distanceMi"]), s.get("bearingFromAnchor") or "")
+        if s.get("anchor"):
+            where = where.rstrip() + " of " + s["anchor"]
+        return head + " · " + where.strip()
+    return head + " · distance offshore not recorded"
+
+
 def _water_tile(R) -> dict:
     inshore = R.get("waterTemp")
     off = R.get("waterTempOffshore")
@@ -162,11 +204,17 @@ def _water_tile(R) -> dict:
         t = _temp_tile(inshore, "Water", "water", note="Inshore station")
         ov = _vals(off)
         if _state(off) != "off" and _num(ov.get("f")):
-            t["sub"] = "Offshore buoy %s°F" % _r0(ov["f"])
+            os_ = (off or {}).get("station") or {}
+            dist = (" (%s mi %s)" % (_r0(os_["distanceMi"]), os_.get("bearingFromAnchor") or "")) if _num(os_.get("distanceMi")) else ""
+            t["sub"] = "Offshore buoy %s%s: %s°F" % (os_.get("id") or "", dist.replace(" )", ")"), _r0(ov["f"]))
         return t
     if _state(off) != "off":
-        # No inshore sensor here (Nags Head, Emerald Isle, Topsail): label it offshore.
-        return _temp_tile(off, "Water", "water", note="Offshore buoy")
+        # No inshore sensor here (Nags Head, Emerald Isle, Topsail): the offshore
+        # buoy is shown, labelled, with its ID and distance, and a distinct tile.
+        t = _temp_tile(off, "Water", "water", note="Offshore buoy, no inshore sensor here")
+        t["offshore"] = True
+        t["src"] = offshore_where(off)
+        return t
     return _tile(id="water", name="Water", state="off", note="Inshore station")
 
 
@@ -193,7 +241,7 @@ def _tide_tile(tides: dict) -> dict:
     now = _now_ms()
     evs = [e for e in (tides.get("events") or []) if _num(e.get("t")) and e["t"] > now]
     st = tides.get("station") or {}
-    src = (st.get("name") or "") + ((" · " + st["id"]) if st.get("id") else "")
+    src = "Predictions: " + (st.get("name") or "") + ((" · " + st["id"]) if st.get("id") else "")
     if tides.get("status") != "ok" or not evs:
         return _tile(id="tide", name="Tide", kind="Predicted", state="off", off=TIDE_OFF, src=src)
     ev = evs[0]
@@ -212,7 +260,8 @@ def _tide_tile(tides: dict) -> dict:
             line = "Observed %s ft" % _fmt(lt["v"], 1)
             if _num(lt.get("diff")):
                 line += ", %+.1f vs predicted" % lt["diff"]
-            t["obs"] = line + " (preliminary, " + et_time(obs.get("time")) + ")"
+            t["obs"] = line
+            t["when"] = "· observed level preliminary, " + et_time(obs.get("time"))
     t["curve"] = tides.get("curve") or []
     t["events"] = tides.get("events") or []
     return t
@@ -262,7 +311,7 @@ def salt_model(payload: dict) -> dict:
     reg = payload.get("region") or {}
     return {
         "water": "salt", "region": reg, "tiles": tiles, "more": more,
-        "alerts": _alerts(payload.get("alerts")), "forecast": _marine(payload.get("marine")),
+        "alerts": _alerts(payload.get("alerts")), "alerts_raw": payload.get("alerts"), "forecast": _marine(payload.get("marine")),
         "updated": et_time(payload.get("generatedAt")), "ok": True,
     }
 
@@ -349,7 +398,7 @@ def fresh_model(payload: dict) -> dict:
                 if fc.get("status") == "ok" and per else {"off": FRESH_POINT_OFF})
     return {
         "water": "fresh", "region": reg, "tiles": tiles, "more": more,
-        "alerts": _alerts(payload.get("alerts")), "forecast": forecast,
+        "alerts": _alerts(payload.get("alerts")), "alerts_raw": payload.get("alerts"), "forecast": forecast,
         "updated": et_time(payload.get("generatedAt")), "ok": True,
     }
 
@@ -380,6 +429,25 @@ def model(region_id: str | None = None) -> dict:
     return {"ok": False, "water": "salt", "region": {"id": rid or "", "name": ""}, "tiles": [], "more": [],
             "alerts": {"state": "unknown", "items": [{"event": ALERTS_OFF[0], "meta": ALERTS_OFF[1]}]},
             "forecast": None, "updated": ""}
+
+
+def region_groups(current: str) -> list[tuple[str, list[tuple[str, str, bool]]]]:
+    salt, fresh = [], []
+    fids = _freshwater_ids()
+    for rid, name, cur in region_links(current):
+        (fresh if rid in fids else salt).append((rid, name, cur))
+    return [("Saltwater", salt), ("Freshwater", fresh)]
+
+
+def region_rail(current: str) -> str:
+    groups = []
+    for label, items in region_groups(current):
+        if not items:
+            continue
+        links = "".join('<a href="?region=%s"%s>%s</a>' % (_esc(r, True), ' aria-current="page"' if c else "", _esc(n))
+                        for r, n, c in items)
+        groups.append('<div class="rr-g rr-%s"><p class="rr-k">%s</p><div class="rr-l">%s</div></div>' % (label.lower(), label, links))
+    return '<nav class="rr" aria-label="Choose your water">%s</nav>' % "".join(groups)
 
 
 def region_links(current: str) -> list[tuple[str, str, bool]]:
@@ -426,21 +494,43 @@ def collection(p: dict) -> str:
 
 def credit(p: dict) -> str:
     """Credit built only from stored fields. No invented names."""
-    who = ("Photo: %s" % p["name"]) if p.get("name") else "Photographer not recorded"
-    return "%s community photo · %s" % (collection(p), who)
+    if p.get("credit_line"):
+        return str(p["credit_line"])
+    if p.get("name"):
+        return "Photo: %s · %s" % (p["name"], collection(p))
+    return "Community photo · %s" % collection(p)
 
 
 def caption(p: dict) -> str:
-    bits = [b for b in (p.get("species"), p.get("location"), p.get("region")) if b]
+    bits = [b for b in (p.get("title"), p.get("species"), p.get("location"), p.get("region")) if b]
     return " · ".join(bits)
 
 
 def alt(p: dict) -> str:
+    if p.get("alt"):
+        return str(p["alt"])
     try:
         import catch_wall_public
         return catch_wall_public._alt(p)
     except Exception:
         return caption(p) or "Community photograph"
+
+
+def img_html(p: dict, sizes: str, eager: bool = False) -> str:
+    """<img>/<picture> with explicit dimensions. Never the LCP unless eager."""
+    load = 'fetchpriority="low" loading="lazy"' if not eager else 'loading="eager"'
+    if p.get("local"):
+        srcs = lambda ext: ", ".join("%s-%d.%s %dw" % (p["base"], w, ext, w) for w in p["widths"])
+        return (
+            '<picture><source type="image/avif" srcset="%s" sizes="%s"><img src="%s-800.webp" srcset="%s" sizes="%s" '
+            'alt="%s" width="%d" height="%d" %s decoding="async"></picture>'
+        ) % (srcs("avif"), sizes, p["base"], srcs("webp"), sizes, _esc(alt(p), True), p["w"], p["h"], load)
+    src = p.get("src") or {}
+    parts = ["%s %sw" % (_esc(src[k], True), k) for k in ("400", "800", "1600") if src.get(k)]
+    fallback = src.get("800") or src.get("400") or ""
+    return '<img src="%s" srcset="%s" sizes="%s" alt="%s" width="%d" height="%d" %s decoding="async">' % (
+        _esc(fallback, True), ", ".join(parts), sizes, _esc(alt(p), True),
+        int(p.get("w") or 1600), int(p.get("h") or 1200), load)
 
 
 def figure(p: dict | None, cls: str, sizes: str, slot_title: str = "", ratio: str = "4 / 5") -> str:
@@ -450,18 +540,10 @@ def figure(p: dict | None, cls: str, sizes: str, slot_title: str = "", ratio: st
             '<figure class="ph ph-empty %s" style="aspect-ratio:%s"><div class="ph-slot">'
             '<p class="ph-slot-k">%s</p><p class="ph-slot-t">%s</p></div></figure>'
         ) % (cls, ratio, AWAITING, _esc(slot_title))
-    src = p.get("src") or {}
-    parts = []
-    for key in ("400", "800", "1600"):
-        if src.get(key):
-            parts.append("%s %sw" % (_esc(src[key], True), key))
-    fallback = src.get("800") or src.get("400") or ""
     return (
-        '<figure class="ph %s"><div class="ph-frame" style="aspect-ratio:%s">'
-        '<img src="%s" srcset="%s" sizes="%s" alt="%s" width="%d" height="%d" loading="lazy" decoding="async"></div>'
+        '<figure class="ph %s"><div class="ph-frame" style="aspect-ratio:%s">%s</div>'
         '<figcaption><span class="ph-cap">%s</span> <span class="ph-credit">%s</span></figcaption></figure>'
-    ) % (cls, ratio, _esc(fallback, True), ", ".join(parts), sizes, _esc(alt(p), True),
-         int(p.get("w") or 1600), int(p.get("h") or 1200), _esc(caption(p)), _esc(credit(p)))
+    ) % (cls, ratio, img_html(p, sizes), _esc(caption(p)), _esc(credit(p)))
 
 
 # ---------------------------------------------------------------- instruments markup
@@ -504,9 +586,17 @@ def _tide_spark(t: dict) -> str:
     ) % (path, nx)
 
 
+OFFSHORE_ICON = (
+    '<svg class="t-buoy" viewBox="0 0 24 16" aria-hidden="true" focusable="false">'
+    '<path d="M12 2 L15 9 H9 Z" fill="currentColor"/><path d="M12 0V2" stroke="currentColor" stroke-width="1.4"/>'
+    '<path d="M1 12 Q4 10 7 12 T13 12 T19 12 T23 12" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>'
+)
+
+
 def tile_html(t: dict, big: bool = False) -> str:
     st = t["state"]
-    cls = "t t-%s%s%s" % (t["id"], " is-stale" if st == "stale" else "", " is-off" if st == "off" else "")
+    cls = "t t-%s%s%s%s" % (t["id"], " is-stale" if st == "stale" else "", " is-off" if st == "off" else "",
+                           " is-offshore" if t.get("offshore") else "")
     kind_cls = {"Observed": "k-obs", "Predicted": "k-pred", "Forecast": "k-fc"}.get(t["kind"], "k-obs")
     hid = "t-%s-n" % t["id"]
     if st == "stale":
@@ -515,6 +605,8 @@ def tile_html(t: dict, big: bool = False) -> str:
         chip = '<span class="t-kind %s">%s</span>' % (kind_cls, _esc(t["kind"]))
     out = ['<div class="%s" role="group" aria-labelledby="%s">' % (cls, hid)]
     out.append('<div class="t-head"><h3 class="t-name" id="%s">%s</h3>%s</div>' % (hid, _esc(t["name"]), chip))
+    if t.get("offshore") and st != "off":
+        out.append('<p class="t-offtag">%s<span>Offshore buoy</span></p>' % OFFSHORE_ICON)
     if st == "off":
         out.append('<p class="t-read"><span class="t-num num-off">—</span></p>')
         out.append('<p class="t-sub t-offline">%s</p>' % _esc(t["off"] or NOT_REPORTING))
@@ -552,35 +644,68 @@ def tile_html(t: dict, big: bool = False) -> str:
     return "".join(out)
 
 
-def alerts_html(a: dict, pennants: bool = False) -> str:
+# NWS Coastal Warning Display signals (weather.gov/marine/cwd), keyed by the
+# exact `event` string NWS returns from api.weather.gov/alerts/active.
+FLAG_EVENTS = {
+    "Small Craft Advisory": "pennant",
+    "Gale Warning": "pennant2",
+    "Storm Warning": "square",
+    "Hurricane Warning": "square2",
+}
+FLAG_LABELS = {
+    "pennant": "one red pennant",
+    "pennant2": "two red pennants",
+    "square": "a square red flag with a black center",
+    "square2": "two square red flags with black centers",
+}
+
+
+def _ended(it: dict) -> bool:
+    d = homepage_boot._to_dt(it.get("ends"))
+    return bool(d and d < datetime.now(timezone.utc))
+
+
+def flag_for(alerts: dict | None) -> str | None:
+    """Highest flag for active, verified alerts, or None. Exact event names only."""
+    a = alerts or {}
+    if a.get("status") != "ok":
+        return None
+    order = ("pennant", "pennant2", "square", "square2")
+    best = None
+    for it in a.get("items") or []:
+        kind = FLAG_EVENTS.get(it.get("event") or "")
+        if kind and not _ended(it) and (best is None or order.index(kind) > order.index(best)):
+            best = kind
+    return best
+
+
+def flag_svg(kind: str | None) -> str:
+    if not kind:
+        return ""
+    pen = '<path d="M3 3 L27 10 L3 17 Z" fill="#B3261E"/>'
+    sq = '<rect x="3" y="3" width="18" height="18" fill="#B3261E"/><rect x="9" y="9" width="6" height="6" fill="#141414"/>'
+    mast = '<path d="M2 1V44" stroke="currentColor" stroke-width="1.6"/>'
+    body = {
+        "pennant": pen,
+        "pennant2": pen + '<g transform="translate(0 18)">' + pen + "</g>",
+        "square": sq,
+        "square2": sq + '<g transform="translate(0 21)">' + sq + "</g>",
+    }[kind]
+    return (
+        '<span class="al-flag" role="img" aria-label="Coastal warning display: %s">'
+        '<svg viewBox="0 0 30 46" width="26" height="40" aria-hidden="true" focusable="false">%s%s</svg></span>'
+    ) % (FLAG_LABELS[kind], mast, body)
+
+
+def alerts_html(a: dict, pennants: bool = False, raw: dict | None = None) -> str:
     st = a["state"]
     rows = []
     for it in a["items"]:
-        flag = ""
-        if pennants and st == "active":
-            flag = _pennant(it["event"])
-        rows.append('<p class="al-row">%s<b>%s</b>%s</p>' % (
-            flag, _esc(it["event"]), (' <span>%s</span>' % _esc(it["meta"])) if it["meta"] else ""))
-    return '<div class="al al-%s" role="status">%s<a class="al-link" href="%s" rel="noopener">NWS details</a></div>' % (
-        st, "".join(rows), homepage_boot.NWS_DETAILS)
-
-
-def _pennant(event: str) -> str:
-    """Historic NWS coastal warning display flags, only for a live matching alert."""
-    e = event.lower()
-    pen = '<path d="M2 2 L22 8 L2 14 Z" fill="#B3261E"/>'
-    sq = '<rect x="2" y="2" width="16" height="16" fill="#B3261E"/><rect x="7" y="7" width="6" height="6" fill="#111"/>'
-    if "hurricane" in e:
-        body, w = sq + '<g transform="translate(20 0)">' + sq + "</g>", 40
-    elif "storm" in e:
-        body, w = sq, 20
-    elif "gale" in e:
-        body, w = pen + '<g transform="translate(0 6)">' + pen + "</g>", 24
-    elif "small craft" in e:
-        body, w = pen, 24
-    else:
-        return ""
-    return '<svg class="al-flag" viewBox="0 0 %d 22" width="%d" height="22" aria-hidden="true">%s</svg>' % (w, w, body)
+        rows.append('<p class="al-row"><b>%s</b>%s</p>' % (
+            _esc(it["event"]), (' <span>%s</span>' % _esc(it["meta"])) if it["meta"] else ""))
+    flag = flag_svg(flag_for(raw)) if pennants else ""
+    return '<div class="al al-%s%s" role="status">%s<div class="al-rows">%s</div><a class="al-link" href="%s" rel="noopener">NWS details</a></div>' % (
+        st, " has-flag" if flag else "", flag, "".join(rows), homepage_boot.NWS_DETAILS)
 
 
 def forecast_html(f: dict | None, water: str) -> str:
@@ -598,11 +723,13 @@ def forecast_html(f: dict | None, water: str) -> str:
 
 def _extras(m: dict, more: str, variant: str) -> tuple[str, str]:
     fc = forecast_html(m.get("forecast"), m.get("water")) if m.get("ok") else ""
-    if variant == "editorial" and (more or fc):
+    if False:  # Ed: no toggles that hide instruments
         # Editorial keeps the four headline readings on the first screen and
         # folds the rest under one labelled control so the photograph leads.
         label = "Swell, barometer and the marine forecast" if m.get("water") == "salt" else "Rain and the NWS forecast"
         return ('<details class="cg-fold"><summary>%s</summary>%s%s</details>' % (label, more, fc), "")
+    if variant == "hybrid":
+        return (fc, more)  # forecast right under the headline instruments
     return (more, fc)
 
 
@@ -614,7 +741,7 @@ def conditions_html(m: dict, *, variant: str) -> str:
         tiles = ""
         more = ""
     else:
-        body = alerts_html(m["alerts"], pennants=variant in ("heritage", "hybrid"))
+        body = alerts_html(m["alerts"], pennants=variant in ("heritage", "hybrid"), raw=m.get("alerts_raw"))
         tiles = '<div class="cg-grid">%s</div>' % "".join(tile_html(t) for t in m["tiles"])
         more = ('<div class="cg-more" role="group" aria-label="Also observed"><p class="cg-more-k">Also observed</p>%s</div>' % "".join(tile_html(t) for t in m["more"])) if m["more"] else ""
     links = []
@@ -627,14 +754,16 @@ def conditions_html(m: dict, *, variant: str) -> str:
         '<p class="cg-where">%s</p>'
         '<p class="cg-upd">%s</p></header>'
         "%s%s%s%s"
-        '<div class="cg-foot"><details class="cg-region"><summary>Change water</summary><nav aria-label="Regions">%s</nav></details>'
-        '<a class="cg-link" href="%s">Full dashboard</a><a class="cg-link" href="/brief?region=%s">Morning Brief</a></div>'
+        '<div class="cg-foot">%s'
+        '<a class="cg-link" href="%s">Full dashboard</a><a class="cg-link" href="/brief?region=%s">Today\'s brief for this water</a></div>'
         "</section>"
     ) % (
         variant, _esc(reg.get("name") or ""),
         ("Updated %s" % _esc(m["updated"])) if m.get("updated") else "",
         body, tiles, *_extras(m, more, variant),
-        "".join(links), _esc(dash, True), _esc(rid, True),
+        (region_rail(rid) if variant == "hybrid" else
+         '<details class="cg-region"><summary>Change water</summary><nav aria-label="Regions">%s</nav></details>' % "".join(links)),
+        _esc(dash, True), _esc(rid, True),
     )
 
 
@@ -648,11 +777,11 @@ def _today() -> str:
 def masthead_html(variant: str) -> str:
     return (
         '<header class="mh mh-%s"><p class="pv-flag">Private concept · %s</p>'
-        '<div class="mh-bar"><a class="mh-mark" href="/">The Coastal Brief</a>'
-        '<nav class="mh-nav" aria-label="Sections"><a href="/brief">Morning Brief</a><a href="/catch-wall">Catch Wall</a></nav></div>'
+        '<div class="mh-bar">'
+        '<nav class="mh-nav" aria-label="Sections"><a href="/brief">Morning Brief</a><a href="/lake">Lakes &amp; rivers</a><a href="/catch-wall">Catch Wall</a></nav></div>'
         '<div class="mh-plate"><h1 class="mh-name"><a href="/">The Coastal Brief</a></h1>'
-        '<svg class="mh-rule" viewBox="0 0 400 4" preserveAspectRatio="none" aria-hidden="true" focusable="false">'
-        '<line class="wave-settle" x1="0" y1="2" x2="400" y2="2"/></svg>'
+        '<svg class="mh-rule" viewBox="0 0 1200 4" preserveAspectRatio="none" aria-hidden="true" focusable="false">'
+        '<line class="wave-settle" x1="0" y1="2" x2="1200" y2="2"/></svg>'
         '<p class="mh-date"><time>%s</time><span class="mh-motto">From the rivers to the sounds to the sea</span></p></div>'
         "</header>"
     ) % (variant, _esc(TITLES[variant]), _esc(_today()))
@@ -672,15 +801,31 @@ SYSTEM = {
         ("Editorial sections", "Kicker, serif headline, standfirst, credited photo. Empty story slots are shown, not filled."),
     ),
     "hybrid": (
-        ("Morning Brief", "Navy readings band from Heritage on top, editorial body type below. One brass rule ties them."),
-        ("Freshwater dashboards", "Same band with marsh green accent; lake level, release and inflow keep the tile grid."),
-        ("Galleries", "Editorial grid with Heritage plate captions."),
-        ("Editorial sections", "Magazine layout with daymark section markers used once per page."),
+        ("Morning Brief", "The readings band opens the brief exactly as here, navy on the coast and river green inland, then the Take in editorial type."),
+        ("Freshwater dashboards", "Same band, tiles and chips in river green and clay: lake level vs guide curve, release, inflow and gage height get the big numerals."),
+        ("Galleries", "The asymmetric mosaic: varied crops, captions on a soft scrim, a concise community credit on every frame, honest empty cells."),
+        ("Editorial sections", "Horizon photo below the instruments, then kicker, serif headline and standfirst. One daymark per page."),
     ),
 }
 
 
+FRESH_SW = (("River green", "#1F3A2E"), ("Moss", "#5D6B3A"), ("Clay", "#8A5A3C"), ("Tannin", "#6B4A2E"), ("Sandbar", "#D8C9A8"))
+SALT_SW = (("Midnight navy", "#071C29"), ("Atlantic blue", "#0E3A57"), ("Pamlico green", "#2F5D57"), ("Dock wood", "#6B5440"), ("Coastal sand", "#D9C7A6"))
+
+
 def system_html(variant: str) -> str:
+    if variant == "hybrid":
+        pal = lambda items: "".join('<li><span class="sw" style="background:%s"></span>%s <code>%s</code></li>' % (c, n, c) for n, c in items)
+        rows = "".join("<li><b>%s.</b> %s</li>" % (_esc(a), _esc(b)) for a, b in SYSTEM[variant])
+        return (
+            '<section class="sys" aria-labelledby="sys-h"><h2 id="sys-h">Design system (concept notes)</h2>'
+            '<div class="sys-twin"><div><h3>Saltwater palette</h3><ul class="sys-sw">%s</ul></div>'
+            '<div><h3>Freshwater palette</h3><ul class="sys-sw">%s</ul></div></div>'
+            '<p class="sys-type">Shared: ivory <code>#F6F1E7</code>, sunrise gold <code>#E0A43C</code>, brass rule <code>#C4A36A</code>. '
+            '<span class="sys-serif">Fraunces</span> nameplate, headlines and instrument numerals · <span class="sys-sans">Source Sans 3</span> text · '
+            '<span class="sys-num">Barlow Condensed</span> instrument labels. All OFL, self-hosted.</p>'
+            '<ul class="sys-carry">%s</ul></section>'
+        ) % (pal(SALT_SW), pal(FRESH_SW), rows)
     sw = (("Midnight navy", "#071C29"), ("Atlantic blue", "#0E3A57"), ("Pamlico green", "#2F5D57"),
           ("Marsh green", "#5D6B3A"), ("Dock wood", "#6B5440"), ("Coastal sand", "#D9C7A6"),
           ("Sunrise gold", "#E0A43C"), ("Ivory", "#F6F1E7"), ("Brass rule", "#C4A36A"))
@@ -711,10 +856,10 @@ TITLES = {
 }
 
 
-def _shell(variant: str, main: str, shot: bool) -> bytes:
+def _shell(variant: str, main: str, shot: bool, water: str = "salt") -> bytes:
     intro_css = wave_intro._css()
     page = """<!DOCTYPE html>
-<html lang="en" data-sprint="%(v)s" data-wave-intro%(shot)s>
+<html lang="en" data-sprint="%(v)s" data-water="%(water)s" data-wave-intro%(shot)s>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -732,12 +877,12 @@ def _shell(variant: str, main: str, shot: bool) -> bytes:
 </style>
 %(boot)s</head>
 <body>
-%(overlay)s
+%(defs)s%(overlay)s
 <a class="skip" href="#conditions">Skip to Conditions at a Glance</a>
 %(mast)s
 <main id="main">%(main)s</main>
 <footer class="ft"><div class="ft-in">
-<p>Private concept preview. Readings are live from NOAA, NWS and USGS through the same feed as the homepage. Photographs are approved Catch Wall and Coastal Life submissions, credited as stored.</p>
+<p>Private concept preview. Readings are live from NOAA, NWS and USGS through the same feed as the homepage. Photographs are approved Catch Wall and Coastal Life submissions, credited as stored, plus one public-domain National Park Service photograph.</p>
 %(replay)s</div></footer>
 <script>
 %(ijs)s
@@ -745,6 +890,7 @@ def _shell(variant: str, main: str, shot: bool) -> bytes:
 </body>
 </html>
 """ % {
+        "water": water, "defs": getattr(wave_intro, "_DEFS", ""),
         "v": variant, "shot": " data-shot" if shot else "", "title": _esc(TITLES[variant]),
         "css": style_tag(variant), "icss": intro_css, "boot": wave_intro._BOOT, "overlay": wave_intro._OVERLAY,
         "mast": masthead_html(variant), "main": main, "replay": wave_intro._REPLAY, "ijs": wave_intro._js(),
@@ -761,6 +907,8 @@ def _photos():
         "wide": photo_by_id(ph, WIDE_PHOTO_ID),
         "fresh": photo_by_id(ph, FRESH_PHOTO_ID),
         "life": photo_by_id(ph, LIFE_PHOTO_ID),
+        "life2": photo_by_id(ph, LIFE2_PHOTO_ID),
+        "bodie": BODIE if (PHOTO_DIR / "bodie-sunrise-800.avif").is_file() else None,
     }
 
 
@@ -813,21 +961,47 @@ def page_editorial(m: dict, P: dict) -> str:
     )
 
 
+def _mosaic_cell(p: dict | None, cls: str, sizes: str, slot: str = "", kicker: str = AWAITING) -> str:
+    if not p:
+        return (
+            '<figure class="mz %s mz-slot"><div class="mz-slot-in"><p class="mz-k">%s</p>'
+            '<p class="mz-t">%s</p></div></figure>'
+        ) % (cls, _esc(kicker), _esc(slot))
+    return (
+        '<figure class="mz %s"><div class="mz-img">%s</div>'
+        '<figcaption><span class="mz-cap">%s</span><span class="mz-credit">%s</span></figcaption></figure>'
+    ) % (cls, img_html(p, sizes), _esc(caption(p)), _esc(credit(p)))
+
+
 def page_hybrid(m: dict, P: dict) -> str:
+    fresh = m.get("water") == "fresh"
+    hero = (P["fresh"] or P["bodie"]) if fresh else (P["bodie"] or P["lead"])
+    # The second Coastal Life frame (89eef7f7) shares its caption with caec2542, so it is left out to avoid repeated text.
+    rest = [x for x in (P["lead"], P["wide"], P["life"], P["fresh"], P["bodie"]) if x and x is not hero]
+    # Fixed mosaic slots, filled in order; unfilled slots stay honest.
+    shapes = ("mz-a", "mz-b", "mz-c", "mz-d", "mz-e")
+    sizes = {"mz-a": "(min-width: 1000px) 520px, 50vw", "mz-b": "(min-width: 1000px) 400px, 50vw",
+             "mz-c": "(min-width: 1000px) 400px, 50vw", "mz-d": "(min-width: 1000px) 640px, 100vw",
+             "mz-e": "(min-width: 1000px) 400px, 50vw"}
+    cells = [_mosaic_cell(rest[i] if i < len(rest) else None, sh, sizes[sh], "A community photograph from this coast or river",
+                          "Awaiting real material: photograph") for i, sh in enumerate(shapes)]
+    cells.append(_mosaic_cell(None, "mz-f", "", STORY_SLOT, "Awaiting real material: story"))
+    if hero:
+        horizon = (
+            '<section class="hz" aria-labelledby="hz-h"><div class="hz-img">%s</div>'
+            '<div class="hz-cap"><h2 id="hz-h" class="hz-t">%s</h2><p class="hz-m">%s</p><p class="hz-c">%s</p></div></section>'
+        ) % (img_html(hero, "100vw"), _esc(hero.get("title") or hero.get("location") or caption(hero)),
+             _esc(" · ".join(b for b in (hero.get("species"), hero.get("location") if hero.get("title") else None, hero.get("region")) if b)),
+             _esc(credit(hero)))
+    else:
+        horizon = '<section class="hz hz-empty" aria-label="Lead photograph">%s</section>' % figure(None, "", "", "Lead photograph", "16 / 9")
     return (
         conditions_html(m, variant="hybrid")
-        + '<section class="hy-feature" aria-labelledby="hy-f">'
-        + figure(P["lead"], "hy-lead", "(min-width: 1000px) 640px, 100vw", ratio="3 / 2")
-        + '<div class="hy-copy"><p class="kicker"><span class="dm dm-sq" aria-hidden="true"></span>Catch Wall</p>'
-        + '<h2 id="hy-f" class="hy-hed">Red drum on the Neuse at New Bern</h2>'
-        + '<p class="hy-dek">A community photograph, shown as it was submitted. No story has been reported for it yet.</p>'
-        + '<p><a class="hy-cta" href="/catch-wall">Open the Catch Wall</a></p></div></section>'
-        + '<section class="hy-row" aria-labelledby="hy-r"><h2 id="hy-r" class="sec">Coast and inland</h2><div class="hy-strip" tabindex="0" role="region" aria-label="Photographs, scroll sideways">'
-        + figure(P["wide"], "", "(min-width: 1000px) 300px, 70vw", ratio="4 / 3")
-        + figure(P["fresh"], "", "(min-width: 1000px) 300px, 70vw", ratio="4 / 3")
-        + figure(P["life"], "", "(min-width: 1000px) 300px, 70vw", ratio="4 / 3")
-        + figure(None, "", "", "Bodie Island Lighthouse, sunrise. Not in the approved collections yet.", "4 / 3")
-        + "</div></section>"
+        + horizon
+        + '<section class="mzs" aria-labelledby="mz-h"><p class="kicker"><span class="dm dm-sq" aria-hidden="true"></span>Catch Wall · Coastal Life</p>'
+        + '<h2 id="mz-h" class="mzs-h">From the docks, sounds and rivers</h2>'
+        + '<p class="mzs-dek">Approved community photographs, shown as they were submitted. <a href="/catch-wall">Share yours on the Catch Wall</a>.</p>'
+        + '<div class="mz-grid">%s</div></section>' % "".join(cells)
         + system_html("hybrid")
     )
 
@@ -839,4 +1013,4 @@ def page(variant: str, region_id: str | None = None, shot: bool = False) -> byte
     if variant not in BUILDERS:
         raise ValueError("unknown concept")
     m = model(region_id)
-    return _shell(variant, BUILDERS[variant](m, _photos()), shot)
+    return _shell(variant, BUILDERS[variant](m, _photos()), shot, water=m.get("water") or "salt")
