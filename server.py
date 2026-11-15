@@ -2117,7 +2117,7 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 <a class="card" href="/preview/masthead?c=c"><b>Masthead concepts</b><span>Three directions for a cinematic gold wave-to-masthead reveal (A editorial, B nautical, C hybrid). Replay from the bar at the bottom.</span></a>
 <a class="card" href="/preview/home"><b>Homepage (Ed's pick)</b><span>Classic Coastal Editorial masthead (A) with the Modern Coastal Magazine layout and the Bodie Island sunrise. Compare Cinematic and the other mastheads from the bar at the bottom.</span></a>
 <a class="card" href="/preview/identity"><b>Chartroom Folio</b><span>Visual identity sprint: stronger nameplate, conditions as one instrument panel, a slim credited photo strip after the readings, and one editorial card for saltwater and freshwater.</span></a>
-<a class="card" href="/preview/intro"><b>Wave intro</b><span>Private signature intro over the public homepage. Plays once per session. Skip or press Escape.</span></a>
+<a class="card" href="/preview/intro?play=1"><b>Wave intro</b><span>Private signature intro over the public homepage. Plays on a new visit, not within 12 hours or from an in-site link. Use ?play=1 to review. Skip or press Escape.</span></a>
 <a class="card" href="/catch-wall"><b>Catch Wall photo submissions</b><span>Private test: the Share form and the review page work in this browser, even while public uploads stay off. Photos you send wait in the pending queue until you approve them.</span></a>
 <a class="card" href="/preview/photos-check"><b>Photo setup check</b><span>A private status report: storage, image tools, and the pending queue. It never shows keys.</span></a>
 <p><a href="/preview?lock=1">Lock this browser again</a></p></main></body></html>""" % PREVIEW_DAYS

@@ -29,7 +29,7 @@ class WaveIntroPreview(unittest.TestCase):
         cls.httpd.shutdown()
         cls.httpd.server_close()
 
-    def _req(self, path, env=None, cookie=None):
+    def _req(self, path, env=None, cookie=None, headers=None):
         saved = {k: os.environ.get(k) for k in ("PREVIEW_KEY", "MORNING_BRIEF_ENABLED", "FRESHWATER_ENABLED")}
         try:
             os.environ.pop("PREVIEW_KEY", None)
@@ -39,11 +39,13 @@ class WaveIntroPreview(unittest.TestCase):
                         os.environ.pop(k, None)
                     else:
                         os.environ[k] = v
-            headers = {}
+            hdr = {}
+            if headers:
+                hdr.update(headers)
             if cookie:
-                headers["Cookie"] = cookie
+                hdr["Cookie"] = cookie
             conn = HTTPConnection("127.0.0.1", self.port, timeout=12)
-            conn.request("GET", path, headers=headers)
+            conn.request("GET", path, headers=hdr)
             resp = conn.getresponse()
             body = resp.read()
             hdrs = {k.lower(): v for k, v in resp.getheaders()}
@@ -59,6 +61,9 @@ class WaveIntroPreview(unittest.TestCase):
     def _cookie(self):
         return "%s=%s" % (self.server.PREVIEW_COOKIE, self.server._preview_cookie_value(self.KEY))
 
+    def _intro(self, path="/preview/intro"):
+        return self._req(path, env={"PREVIEW_KEY": self.KEY}, cookie=self._cookie())
+
     def test_preview_404_without_cookie(self):
         for path in ("/preview/intro", "/preview/intro?play=1", "/preview/intro?seen=1"):
             status, _, _ = self._req(path)
@@ -67,7 +72,7 @@ class WaveIntroPreview(unittest.TestCase):
             self.assertEqual(status, 404, path + " key set, no cookie")
 
     def test_cookie_unlocks_intro_and_sets_noindex(self):
-        status, body, hdrs = self._req("/preview/intro", env={"PREVIEW_KEY": self.KEY}, cookie=self._cookie())
+        status, body, hdrs = self._intro()
         self.assertEqual(status, 200)
         self.assertEqual(hdrs.get("cache-control"), "no-store")
         self.assertIn("noindex", hdrs.get("x-robots-tag", ""))
@@ -78,41 +83,79 @@ class WaveIntroPreview(unittest.TestCase):
         self.assertIn(b'id="wave-intro"', body)
         self.assertIn(b'id="wi-skip"', body)
         self.assertIn(b"Skip intro", body)
-        self.assertIn(b'min-height: 44px', body)
+        self.assertIn(b"min-height: 44px", body)
         self.assertIn(b'id="wi-replay"', body)
         self.assertIn(b"Replay intro", body)
         self.assertIn(b"Know the Water. Live the Coast.", body)
         self.assertIn(b"cb-wave-intro-seen", body)
         self.assertIn(b"prefers-reduced-motion", body)
-        # Public homepage is still underneath.
         self.assertIn(b'id="conditions"', body)
         self.assertIn(b"The Coastal Brief", body)
+        # No extra overlay tagline — the real masthead already carries it.
+        self.assertNotIn(b'class="wi-motto"', body)
+        self.assertNotIn(b'id="wi-motto"', body)
+
+    def test_duration_is_brief(self):
+        import wave_intro
+        self.assertGreaterEqual(wave_intro.DURATION_MS, 1000)
+        self.assertLessEqual(wave_intro.DURATION_MS, 1500)
+        status, body, _ = self._intro()
+        self.assertEqual(status, 200)
+        self.assertIn(b"var DURATION = 1300", body)
+        self.assertIn(b"requestAnimationFrame", body)
+        self.assertIn(b"getBoundingClientRect", body)
+        self.assertIn(b"wave-settle", body)
+        self.assertIn(b"mapRule", body)
+        self.assertIn(b"wi-aged-brass", body)
+
+    def test_playback_rules(self):
+        status, body, _ = self._intro()
+        self.assertEqual(status, 200)
+        self.assertIn(b"cb-wave-intro-seen-at", body)
+        self.assertIn(b"12 * 60 * 60 * 1000", body)
+        self.assertIn(b"sessionStorage.getItem(KEY) === \"1\"", body)
+        self.assertIn(b'localStorage.getItem(TS_KEY)', body)
+        self.assertIn(b"sameOriginReferrer", body)
+        self.assertIn(b"document.referrer", body)
+        self.assertIn(b"location.origin", body)
+        self.assertIn(b"new URL(document.referrer)", body)
+        self.assertIn(b"back_forward", body)
+        self.assertIn(b"performance.navigation.type === 2", body)
+        self.assertIn(b'params.get("play") === "1"', body)
+        self.assertIn(b'q.get("play") === "1"', body)
+        self.assertIn(b"prefers-reduced-motion: reduce", body)
+        self.assertIn(b"var REDUCE_MS = 200", body)
+        self.assertIn(b"skip.focus()", body)
+        self.assertIn(b"Escape", body)
+        # ?play=1 is still a review override.
+        status, body, _ = self._intro("/preview/intro?play=1")
+        self.assertEqual(status, 200)
+        self.assertIn(b'id="wave-intro"', body)
 
     def test_no_autoplay_media(self):
-        status, body, _ = self._req("/preview/intro", env={"PREVIEW_KEY": self.KEY}, cookie=self._cookie())
+        status, body, _ = self._intro()
         self.assertEqual(status, 200)
         self.assertNotIn(b"<audio", body)
         self.assertNotIn(b"<video", body)
-        self.assertNotRegex(body.lower(), rb"<[^>]+autoplay\b")
+        self.assertNotRegex(body.lower(), rb"<[^>]+\bautoplay\b")
         self.assertNotIn(b"new Audio", body)
-        self.assertIn(b'data-sound-hook', body)
+        self.assertIn(b"data-sound-hook", body)
         self.assertIn(b'id="wi-sound" hidden', body)
 
     def test_session_and_skip_hooks(self):
-        status, body, _ = self._req("/preview/intro", env={"PREVIEW_KEY": self.KEY}, cookie=self._cookie())
+        status, body, _ = self._intro()
         self.assertEqual(status, 200)
-        js = body.split(b"cb-wave-intro-seen")[1] if body.count(b"cb-wave-intro-seen") else body
         self.assertIn(b'sessionStorage.setItem(KEY, "1")', body)
-        self.assertIn(b'Escape', body)
-        self.assertIn(b'skip.focus()', body)
-        self.assertIn(b'prefers-reduced-motion: reduce', body)
-        # Boot script hides the overlay before paint when the session already saw it.
+        self.assertIn(b"Escape", body)
+        self.assertIn(b"skip.focus()", body)
+        self.assertIn(b"prefers-reduced-motion: reduce", body)
         self.assertIn(b'classList.add("intro-seen")', body)
 
     def test_animations_are_compositor_only(self):
-        status, body, _ = self._req("/preview/intro", env={"PREVIEW_KEY": self.KEY}, cookie=self._cookie())
+        status, body, _ = self._intro()
         css = body[body.find(b'id="wave-intro-css"'):body.find(b"</style>")]
-        # Keyframe bodies should only change transform, opacity, and stroke-dashoffset.
+        # Path d is driven from rAF, not CSS. Any leftover keyframes must
+        # only change compositor properties.
         props = set()
         for block in re.findall(rb"@keyframes[^{]+\{(.+?)\n\}", css, re.S):
             for prop in re.findall(rb"([a-z-]+)\s*:", block):
@@ -122,8 +165,9 @@ class WaveIntroPreview(unittest.TestCase):
                     continue
                 props.add(prop.decode())
         allowed = {"transform", "opacity", "stroke-dashoffset"}
-        self.assertTrue(props, "expected keyframes")
         self.assertFalse(set(props) - allowed, set(props) - allowed)
+        # Confirm we did not add a CSS d animation (Safari does not support it).
+        self.assertNotRegex(css, rb"@keyframes[^}]*\bd\s*:")
 
     def test_public_homepage_untouched(self):
         status, body, hdrs = self._req("/")
@@ -136,7 +180,6 @@ class WaveIntroPreview(unittest.TestCase):
         self.assertNotIn(b"wave-intro-css", body)
         self.assertIn(b'data-home="folio"', body)
         self.assertIn(b'data-concept="a"', body)
-        # Cookie must not leak the intro onto public /.
         status, body, hdrs = self._req("/", env={"PREVIEW_KEY": self.KEY}, cookie=self._cookie())
         self.assertEqual(status, 200)
         self.assertNotIn(b"data-wave-intro", body)
@@ -146,4 +189,4 @@ class WaveIntroPreview(unittest.TestCase):
     def test_hub_lists_the_intro(self):
         status, body, _ = self._req("/preview", env={"PREVIEW_KEY": self.KEY}, cookie=self._cookie())
         self.assertEqual(status, 200)
-        self.assertIn(b'href="/preview/intro"', body)
+        self.assertIn(b'href="/preview/intro?play=1"', body)

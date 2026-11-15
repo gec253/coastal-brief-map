@@ -1,11 +1,19 @@
 /* Private /preview/intro overlay. Does not ship on public /. */
-/* Animate only transform, opacity, and stroke-dashoffset. */
+/* Path geometry is driven from requestAnimationFrame, not CSS d. */
+/* Any keyframes stay compositor-only: opacity, transform, stroke-dashoffset. */
 
 html[data-wave-intro] {
   --wi-navy: #071c29;
   --wi-ivory: #f3e6d0;
   --wi-seafoam: #8eb8b0;
   --wi-brass: #c4a36a;
+}
+
+/* Hold midnight behind the overlay so the first paint is never a blank
+   or pre-revealed page. Removed with .intro-play when the intro ends. */
+html[data-wave-intro].intro-play,
+html[data-wave-intro].intro-play body {
+  background-color: var(--wi-navy);
 }
 
 .wave-intro {
@@ -25,123 +33,43 @@ html.intro-seen .wave-intro,
   pointer-events: none;
 }
 
-.wi-veil {
+.wi-svg {
+  display: block;
   position: absolute;
   inset: 0;
-  overflow: hidden;
-  z-index: 0;
-  pointer-events: none;
-  animation: wi-veil-fade 1900ms linear both;
-}
-
-.wi-veil-svg,
-.wi-veil-svg-cut {
-  display: block;
   width: 100%;
-  height: 200%;
-  animation: wi-veil-sweep 1900ms linear both;
+  height: 100%;
+  pointer-events: none;
+  will-change: contents;
 }
 
-.wi-veil-sheet {
+.wi-sheet {
   fill: var(--wi-navy);
 }
 
-.wi-veil-solid {
-  animation: wi-veil-solid 1900ms linear both;
-}
-
-/* Viewport-fixed hole: the wrap does not translate, so the masthead
-   stays uncovered while the navy sheet lifts away from it. */
-.wi-veil-cut-wrap {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  animation: wi-veil-cut 1900ms linear both;
-  --mast-x: 0px;
-  --mast-y: 0px;
-  --mast-w: 0px;
-  --mast-h: 0px;
-  -webkit-mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
-  -webkit-mask-size: 100% 100%, var(--mast-w) var(--mast-h);
-  -webkit-mask-position: 0 0, var(--mast-x) var(--mast-y);
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-composite: xor;
-  mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
-  mask-size: 100% 100%, var(--mast-w) var(--mast-h);
-  mask-position: 0 0, var(--mast-x) var(--mast-y);
-  mask-repeat: no-repeat;
-  mask-composite: exclude;
-}
-
-.wi-stage {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-
-.wi-svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-
-.wi-swell,
-.wi-echo,
-.wi-crest,
-.wi-hatch {
+.wi-line {
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
 }
 
-.wi-swell {
+.wi-line-ivory {
   stroke: var(--wi-ivory);
-  stroke-width: 3.2;
-  stroke-dasharray: 1360;
-  stroke-dashoffset: 1360;
-  animation: wi-draw 1900ms linear both;
+  stroke-width: 1.35px;
+  opacity: 0.96;
 }
 
-.wi-echo {
+.wi-line-sea {
   stroke: var(--wi-seafoam);
-  stroke-width: 1.85;
-  opacity: 0.5;
-  stroke-dasharray: 1360;
-  stroke-dashoffset: 1360;
-  animation: wi-draw-echo 1900ms linear both;
+  stroke-width: 1.05px;
+  opacity: 0.55;
 }
 
-.wi-rise,
-.wi-break,
-.wi-fall,
-.wi-engraving {
-  transform-box: fill-box;
-  transform-origin: 70% 55%;
-}
-
-.wi-rise { animation: wi-rise 1900ms ease both; }
-.wi-break { animation: wi-break 1900ms ease both; }
-.wi-fall { animation: wi-fall 1900ms ease both; }
-.wi-engraving { animation: wi-engraving 1900ms ease both; }
-
-.wi-crest {
-  stroke: var(--wi-ivory);
-  stroke-width: 2.55;
-}
-
-.wi-hatch {
-  stroke: var(--wi-ivory);
-  stroke-width: 1.2;
-  opacity: 0.75;
-}
-
-.wi-spray {
-  fill: var(--wi-ivory);
+.wi-line-brass {
+  stroke: url(#wi-aged-brass);
+  stroke-width: 0.9px;
+  opacity: 1;
 }
 
 .wi-skip {
@@ -164,7 +92,6 @@ html.intro-seen .wave-intro,
   font: 700 0.78rem/1 var(--f-ui, "Source Sans 3", system-ui, sans-serif);
   letter-spacing: 0.04em;
   cursor: pointer;
-  animation: wi-skip-in 1900ms ease both;
 }
 
 .wi-skip:hover {
@@ -176,7 +103,6 @@ html.intro-seen .wave-intro,
   outline-offset: 3px;
 }
 
-/* Opt-in hook only. Hidden until a verified public-domain clip is wired. */
 .wi-sound[hidden] {
   display: none !important;
 }
@@ -212,127 +138,11 @@ html.intro-seen .wave-intro,
   outline-offset: 3px;
 }
 
-/* 0–600ms: the swell draws. */
-@keyframes wi-draw {
-  0% { stroke-dashoffset: 1360; opacity: 1; }
-  31.5% { stroke-dashoffset: 0; opacity: 1; }
-  80% { stroke-dashoffset: 0; opacity: 1; }
-  100% { stroke-dashoffset: 0; opacity: 0; }
-}
-
-@keyframes wi-draw-echo {
-  0%, 4% { stroke-dashoffset: 1360; opacity: 0; }
-  8% { opacity: 0.5; }
-  36% { stroke-dashoffset: 0; opacity: 0.5; }
-  80% { stroke-dashoffset: 0; opacity: 0.35; }
-  100% { stroke-dashoffset: 0; opacity: 0; }
-}
-
-/* 600–800ms: the face rises. */
-@keyframes wi-rise {
-  0%, 31.5% { opacity: 0; transform: translateY(8px) scale(0.98); }
-  42% { opacity: 1; transform: translateY(0) scale(1); }
-  52.5% { opacity: 0; transform: translateY(0) scale(1); }
-  100% { opacity: 0; transform: translateY(0) scale(1); }
-}
-
-/* 800–1000ms: the lip pitches and curls into a hollow. */
-@keyframes wi-break {
-  0%, 42% { opacity: 0; transform: translateY(4px) scale(0.99); }
-  52.5% { opacity: 1; transform: translateY(0) scale(1); }
-  63% { opacity: 0; transform: translateY(2px) scale(1); }
-  100% { opacity: 0; transform: translateY(2px) scale(1); }
-}
-
-/* 1000–1400ms: the lip falls as the nameplate resolves. */
-@keyframes wi-fall {
-  0%, 52.5% { opacity: 0; transform: translateY(-2px); }
-  63% { opacity: 1; transform: translateY(0); }
-  80% { opacity: 1; transform: translateY(4px); }
-  100% { opacity: 0; transform: translateY(6px); }
-}
-
-@keyframes wi-engraving {
-  0%, 44% { opacity: 0; transform: translateY(0); }
-  52.5% { opacity: 1; transform: translateY(0); }
-  80% { opacity: 0.9; transform: translateY(3px); }
-  100% { opacity: 0; transform: translateY(5px); }
-}
-
-/* Solid navy holds through the break, then yields to the cut sheet. */
-@keyframes wi-veil-solid {
-  0%, 47% { opacity: 1; }
-  52.5%, 100% { opacity: 0; }
-}
-
-/* Hole over the real Folio nameplate and tagline, 1000–1400ms. */
-@keyframes wi-veil-cut {
-  0%, 47% { opacity: 0; }
-  52.5%, 100% { opacity: 1; }
-}
-
-/* 1400–1900ms: the navy lifts away from the masthead. */
-@keyframes wi-veil-sweep {
-  0%, 73.5% { transform: translateY(0); }
-  100% { transform: translateY(-62%); }
-}
-
-@keyframes wi-veil-fade {
-  0%, 95% { opacity: 1; }
-  100% { opacity: 0; }
-}
-
-/* Skip is gone before the nameplate (and Dark mode) appear. */
-@keyframes wi-skip-in {
-  0%, 47% { opacity: 1; }
-  52.5%, 100% { opacity: 0; }
-}
-
-html[data-intro-seek] .wave-intro .wi-veil,
-html[data-intro-seek] .wave-intro .wi-veil-svg,
-html[data-intro-seek] .wave-intro .wi-veil-svg-cut,
-html[data-intro-seek] .wave-intro .wi-veil-solid,
-html[data-intro-seek] .wave-intro .wi-veil-cut-wrap,
-html[data-intro-seek] .wave-intro .wi-swell,
-html[data-intro-seek] .wave-intro .wi-echo,
-html[data-intro-seek] .wave-intro .wi-rise,
-html[data-intro-seek] .wave-intro .wi-break,
-html[data-intro-seek] .wave-intro .wi-fall,
-html[data-intro-seek] .wave-intro .wi-engraving,
-html[data-intro-seek] .wave-intro .wi-skip {
-  animation-play-state: paused !important;
-  animation-delay: calc(var(--intro-ms, 0) * -1ms) !important;
-  animation-fill-mode: both !important;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .wave-intro .wi-veil,
-  .wave-intro .wi-veil-svg,
-  .wave-intro .wi-veil-svg-cut,
-  .wave-intro .wi-veil-solid,
-  .wave-intro .wi-veil-cut-wrap,
-  .wave-intro .wi-swell,
-  .wave-intro .wi-echo,
-  .wave-intro .wi-rise,
-  .wave-intro .wi-break,
-  .wave-intro .wi-fall,
-  .wave-intro .wi-engraving,
-  .wave-intro .wi-skip {
-    animation: none;
-  }
-  html.intro-reduce:not(.intro-seen) .wi-veil {
+  html.intro-reduce:not(.intro-seen) .wi-svg {
     animation: wi-reduce 200ms ease both;
   }
-  html.intro-reduce:not(.intro-seen) .wi-veil-svg,
-  html.intro-reduce:not(.intro-seen) .wi-veil-svg-cut {
-    transform: none;
-  }
-  html.intro-reduce:not(.intro-seen) .wi-swell,
-  html.intro-reduce:not(.intro-seen) .wi-echo,
-  html.intro-reduce:not(.intro-seen) .wi-rise,
-  html.intro-reduce:not(.intro-seen) .wi-break,
-  html.intro-reduce:not(.intro-seen) .wi-fall,
-  html.intro-reduce:not(.intro-seen) .wi-engraving {
+  html.intro-reduce:not(.intro-seen) .wi-line {
     opacity: 0;
   }
   html.intro-reduce:not(.intro-seen) .wi-skip {
@@ -351,4 +161,28 @@ html[data-intro-seek] .wave-intro .wi-skip {
     left: 12px;
     right: auto;
   }
+}
+
+/* Aged-brass finish on the real masthead rule, so the handoff is invisible.
+   Purely decorative (the rule is already aria-hidden). No layout changes. */
+html[data-wave-intro] .wave-settle {
+  stroke: url(#wi-rule-brass);
+  stroke-width: 1.15px;
+  animation: none !important;
+  stroke-dashoffset: 0 !important;
+}
+
+html[data-wave-intro] .wave-swell,
+html[data-wave-intro] .wave-glint,
+html[data-wave-intro] .mast-sheen {
+  animation: none !important;
+}
+
+/* While the intro is on, hide the static rule without affecting layout.
+   It returns in the same frame the overlay line is removed. */
+html[data-wave-intro].intro-play:not(.intro-seen) .wave-settle,
+html[data-wave-intro].intro-play:not(.intro-seen) .wave-swell,
+html[data-wave-intro].intro-play:not(.intro-seen) .wave-glint,
+html[data-wave-intro].intro-play:not(.intro-seen) .mast-sheen {
+  opacity: 0 !important;
 }

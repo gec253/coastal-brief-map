@@ -5,44 +5,25 @@ from pathlib import Path
 
 DIR = Path(__file__).resolve().parent / "preview" / "wave-intro"
 SESSION_KEY = "cb-wave-intro-seen"
-DURATION_MS = 1900
+DURATION_MS = 1300
 
 _OVERLAY = """
 <div id="wave-intro" class="wave-intro" role="dialog" aria-label="Site introduction">
-  <div class="wi-veil" aria-hidden="true">
-    <svg class="wi-veil-svg" viewBox="0 0 1200 1600" preserveAspectRatio="none" focusable="false">
-      <path class="wi-veil-sheet wi-veil-solid" d="M -40 -40 H 1240 V 880 C 1100 960, 1000 840, 860 900 C 720 960, 600 840, 460 910 C 300 980, 160 860, -40 940 Z"/>
-    </svg>
-    <div class="wi-veil-cut-wrap">
-      <svg class="wi-veil-svg wi-veil-svg-cut" viewBox="0 0 1200 1600" preserveAspectRatio="none" focusable="false">
-        <path class="wi-veil-sheet" d="M -40 -40 H 1240 V 880 C 1100 960, 1000 840, 860 900 C 720 960, 600 840, 460 910 C 300 980, 160 860, -40 940 Z"/>
-      </svg>
-    </div>
-  </div>
-  <div class="wi-stage" aria-hidden="true">
-    <svg class="wi-svg" viewBox="0 0 1200 800" preserveAspectRatio="none" focusable="false">
-      <path class="wi-echo" fill="none" d="M -60 428 C 80 428, 160 384, 280 402 C 410 422, 490 474, 630 440 C 750 410, 840 378, 960 364 C 1060 354, 1140 348, 1280 342"/>
-      <path class="wi-swell" fill="none" d="M -60 412 C 80 412, 160 368, 280 386 C 410 406, 490 458, 630 424 C 750 394, 840 362, 960 348 C 1060 338, 1140 332, 1280 326"/>
-      <g class="wi-rise">
-        <path class="wi-crest wi-crest-a" fill="none" d="M 280 386 C 472 372, 664 337, 817 295 C 894 271, 961 253, 1009 243"/>
-      </g>
-      <g class="wi-break">
-        <path class="wi-crest wi-crest-b" fill="none" d="M 280 386 C 472 372, 664 330, 798 281 C 875 246, 942 225, 1000 229 C 1038 232, 1044 253, 1019 271 C 990 291, 948 296, 913 285"/>
-      </g>
-      <g class="wi-fall">
-        <path class="wi-crest wi-crest-c" fill="none" d="M 280 386 C 472 375, 664 341, 789 302 C 875 271, 952 260, 1006 271 C 1038 280, 1032 305, 994 319 C 956 333, 913 330, 890 319"/>
-      </g>
-      <g class="wi-engraving">
-        <path class="wi-hatch" fill="none" d="M 933 257 C 961 249, 990 250, 1006 260"/>
-        <path class="wi-hatch" fill="none" d="M 925 268 C 952 260, 979 261, 994 271"/>
-        <path class="wi-hatch" fill="none" d="M 921 280 C 944 271, 967 273, 983 281"/>
-        <circle class="wi-spray" cx="1063" cy="215" r="5.5"/>
-        <circle class="wi-spray" cx="1072" cy="230" r="4.5"/>
-        <circle class="wi-spray" cx="1048" cy="207" r="4.2"/>
-        <circle class="wi-spray" cx="1058" cy="220" r="3.8"/>
-      </g>
-    </svg>
-  </div>
+  <svg class="wi-svg" viewBox="0 0 1000 1000" preserveAspectRatio="none" focusable="false" aria-hidden="true">
+    <defs>
+      <linearGradient id="wi-aged-brass" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#8C6A3C"/>
+        <stop offset="0.35" stop-color="#C4A36A"/>
+        <stop offset="0.5" stop-color="#B08A52"/>
+        <stop offset="0.72" stop-color="#C4A36A"/>
+        <stop offset="1" stop-color="#8C6A3C"/>
+      </linearGradient>
+    </defs>
+    <path class="wi-sheet" d="M -140 -80 H 1140 V 1400 H -140 Z"/>
+    <path class="wi-line wi-line-ivory" fill="none" d=""/>
+    <path class="wi-line wi-line-sea" fill="none" d=""/>
+    <path class="wi-line wi-line-brass" fill="none" stroke="url(#wi-aged-brass)" d=""/>
+  </svg>
   <button type="button" class="wi-skip" id="wi-skip">Skip intro</button>
   <button type="button" class="wi-sound" id="wi-sound" hidden aria-pressed="false" data-sound-hook>Sound</button>
 </div>
@@ -57,13 +38,45 @@ _REPLAY = (
 _BOOT = """<script>
 (function(){
   var key = "cb-wave-intro-seen";
+  var tsKey = "cb-wave-intro-seen-at";
+  var windowMs = 12 * 60 * 60 * 1000;
   var q = new URLSearchParams(location.search || "");
   var force = q.get("play") === "1";
   var seen = q.get("seen") === "1";
   var seek = q.get("seek");
-  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var reduce = window.matchMedia && (
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+    window.matchMedia("(prefers-reduced-data: reduce)").matches
+  );
+  function recent() {
+    try { if (sessionStorage.getItem(key) === "1") return true; } catch (e) {}
+    try {
+      var ts = parseInt(localStorage.getItem(tsKey) || "", 10);
+      if (ts && (Date.now() - ts) < windowMs) return true;
+    } catch (e) {}
+    return false;
+  }
+  function sameOriginRef() {
+    try {
+      if (!document.referrer) return false;
+      return new URL(document.referrer).origin === location.origin;
+    } catch (e) { return false; }
+  }
+  function backFwd() {
+    try {
+      var n = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
+      if (n && n.type === "back_forward") return true;
+      if (performance.navigation && performance.navigation.type === 2) return true;
+    } catch (e) {}
+    return false;
+  }
+  function topLanding() {
+    if (window.top !== window) return false;
+    var path = location.pathname.replace(/\\/+$/, "") || "/";
+    return path === "/" || path === "/preview/intro";
+  }
   try {
-    if (!force && (seen || sessionStorage.getItem(key) === "1")) {
+    if (!force && (seen || recent() || sameOriginRef() || backFwd() || !topLanding())) {
       document.documentElement.classList.add("intro-seen");
       return;
     }
