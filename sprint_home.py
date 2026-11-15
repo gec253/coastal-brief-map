@@ -501,7 +501,17 @@ def credit(p: dict) -> str:
     return "Community photo · %s" % collection(p)
 
 
+# Preview-only caption overrides, applied at render time. Nothing is written back to submissions,
+# moderation data or Supabase. Each override uses only words from that record's own stored fields.
+PREVIEW_CAPTIONS = {
+    # stored: location "Rx Chicken & Oysters", region "Wilmington · Wrightsville Beach", caption "" (same fields as caec2542)
+    LIFE2_PHOTO_ID: "At Rx Chicken & Oysters",
+}
+
+
 def caption(p: dict) -> str:
+    if str(p.get("id") or "") in PREVIEW_CAPTIONS:
+        return PREVIEW_CAPTIONS[str(p["id"])]
     bits = [b for b in (p.get("title"), p.get("species"), p.get("location"), p.get("region")) if b]
     return " · ".join(bits)
 
@@ -650,7 +660,9 @@ FLAG_EVENTS = {
     "Small Craft Advisory": "pennant",
     "Gale Warning": "pennant2",
     "Storm Warning": "square",
+    "Tropical Storm Warning": "square",        # traditional display; see NOTES.md (not shown on the NWS CWD chart)
     "Hurricane Warning": "square2",
+    "Hurricane Force Wind Warning": "square2",  # traditional display; see NOTES.md (not shown on the NWS CWD chart)
 }
 FLAG_LABELS = {
     "pennant": "one red pennant",
@@ -973,19 +985,24 @@ def _mosaic_cell(p: dict | None, cls: str, sizes: str, slot: str = "", kicker: s
     ) % (cls, img_html(p, sizes), _esc(caption(p)), _esc(credit(p)))
 
 
+MZ_SIZES = {"mz-a": "(min-width: 1000px) 400px, 50vw", "mz-b": "(min-width: 1000px) 400px, 50vw",
+            "mz-c": "(min-width: 1000px) 400px, 50vw", "mz-d": "(min-width: 1000px) 820px, 100vw",
+            "mz-e": "(min-width: 1000px) 400px, 50vw"}
+MZ_CTA = ('<aside class="mz mz-cta"><p class="mz-cta-k">Catch Wall</p><p class="mz-cta-t">Caught something, or ate well on the water?</p>'
+          '<a class="mz-cta-a" href="/catch-wall">Share yours on the Catch Wall</a></aside>')
+
+
 def page_hybrid(m: dict, P: dict) -> str:
     fresh = m.get("water") == "fresh"
     hero = (P["fresh"] or P["bodie"]) if fresh else (P["bodie"] or P["lead"])
-    # The second Coastal Life frame (89eef7f7) shares its caption with caec2542, so it is left out to avoid repeated text.
-    rest = [x for x in (P["lead"], P["wide"], P["life"], P["fresh"], P["bodie"]) if x and x is not hero]
-    # Fixed mosaic slots, filled in order; unfilled slots stay honest.
-    shapes = ("mz-a", "mz-b", "mz-c", "mz-d", "mz-e")
-    sizes = {"mz-a": "(min-width: 1000px) 520px, 50vw", "mz-b": "(min-width: 1000px) 400px, 50vw",
-             "mz-c": "(min-width: 1000px) 400px, 50vw", "mz-d": "(min-width: 1000px) 640px, 100vw",
-             "mz-e": "(min-width: 1000px) 400px, 50vw"}
-    cells = [_mosaic_cell(rest[i] if i < len(rest) else None, sh, sizes[sh], "A community photograph from this coast or river",
-                          "Awaiting real material: photograph") for i, sh in enumerate(shapes)]
-    cells.append(_mosaic_cell(None, "mz-f", "", STORY_SLOT, "Awaiting real material: story"))
+    # Each photo gets the shape that suits it: the portrait diner frame (89eef7f7) takes the tall cell.
+    want = [("mz-a", P["lead"]), ("mz-b", P["wide"]), ("mz-c", P["life"]), ("mz-e", P.get("life2")),
+            ("mz-d", P["bodie"] if fresh else P["fresh"])]
+    placed = [(sh, x) for sh, x in want if x and x is not hero]
+    # No placeholders: empty cells are dropped. A full set uses the composed mosaic; fewer falls back to a loose grid.
+    full = len(placed) == len(want)
+    cells = [_mosaic_cell(x, sh, MZ_SIZES[sh]) for sh, x in placed] + [MZ_CTA]
+    grid_cls = "mz-grid" + ("" if full else " mz-loose mz-n%d" % len(placed))
     if hero:
         horizon = (
             '<section class="hz" aria-labelledby="hz-h"><div class="hz-img">%s</div>'
@@ -994,14 +1011,14 @@ def page_hybrid(m: dict, P: dict) -> str:
              _esc(" · ".join(b for b in (hero.get("species"), hero.get("location") if hero.get("title") else None, hero.get("region")) if b)),
              _esc(credit(hero)))
     else:
-        horizon = '<section class="hz hz-empty" aria-label="Lead photograph">%s</section>' % figure(None, "", "", "Lead photograph", "16 / 9")
+        horizon = '<div class="hz-none" aria-hidden="true"></div>'
     return (
         conditions_html(m, variant="hybrid")
         + horizon
         + '<section class="mzs" aria-labelledby="mz-h"><p class="kicker"><span class="dm dm-sq" aria-hidden="true"></span>Catch Wall · Coastal Life</p>'
         + '<h2 id="mz-h" class="mzs-h">From the docks, sounds and rivers</h2>'
-        + '<p class="mzs-dek">Approved community photographs, shown as they were submitted. <a href="/catch-wall">Share yours on the Catch Wall</a>.</p>'
-        + '<div class="mz-grid">%s</div></section>' % "".join(cells)
+        + '<p class="mzs-dek">Approved community photographs, shown as they were submitted.</p>'
+        + '<div class="%s">%s</div></section>' % (grid_cls, "".join(cells))
         + system_html("hybrid")
     )
 

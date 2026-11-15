@@ -98,6 +98,11 @@ PHOTOS = [
     {"id": sprint_home.LIFE_PHOTO_ID, "category": "life", "location": "Rx Chicken& Oysters",
      "region": "Wilmington · Wrightsville Beach", "name": "", "w": 1284, "h": 1030, "src": {"800": "/m/c/800.webp"}},
 ]
+LIFE2 = {"id": sprint_home.LIFE2_PHOTO_ID, "category": "life", "location": "Rx Chicken & Oysters", "caption": "",
+         "region": "Wilmington · Wrightsville Beach", "name": "", "w": 1095, "h": 1436, "src": {"800": "/m/e/800.webp"}}
+FRESH = {"id": sprint_home.FRESH_PHOTO_ID, "category": "fishing", "location": "Weldon", "name": "",
+         "w": 4032, "h": 3024, "src": {"800": "/m/f/800.webp"}}
+ALL_PHOTOS = PHOTOS + [LIFE2, FRESH]
 
 
 def render(variant, payload, photos=PHOTOS, fresh=False):
@@ -235,7 +240,10 @@ class Render(unittest.TestCase):
                 self.assertTrue(m, (v, body[i:i + 160]))
                 self.assertRegex(m.group(1), ok_credit)
                 self.assertRegex(body[i:body.index(">", i)], r'width="\d+" height="\d+"')
-            self.assertIn("Awaiting real material", h)
+            if v == "hybrid":
+                self.assertNotIn("Awaiting real material", h)
+            else:
+                self.assertIn("Awaiting real material", h)
 
     def test_no_photos_gives_honest_slots(self):
         h = render("editorial", salt("wilmington"), photos=[])
@@ -244,7 +252,9 @@ class Render(unittest.TestCase):
         with mock.patch.object(sprint_home, "PHOTO_DIR", Path("/nonexistent")):
             h = render("hybrid", salt("wilmington"), photos=[])
         self.assertNotIn("<img", h)
-        self.assertIn("Awaiting real material", h)
+        self.assertNotIn("Awaiting real material", h)   # hybrid hides empty slots entirely
+        self.assertIn('class="mz-grid mz-loose mz-n0"', h)
+        self.assertIn("Share yours on the Catch Wall", h)
 
     def test_region_degradation(self):
         cases = {
@@ -312,9 +322,13 @@ class Refinement(unittest.TestCase):
         self.assertEqual(f(alerts("Small Craft Advisory")), "pennant")
         self.assertEqual(f(alerts("Gale Warning")), "pennant2")
         self.assertEqual(f(alerts("Storm Warning")), "square")
+        self.assertEqual(f(alerts("Tropical Storm Warning")), "square")
         self.assertEqual(f(alerts("Hurricane Warning")), "square2")
+        self.assertEqual(f(alerts("Hurricane Force Wind Warning")), "square2")
+        self.assertEqual(f(alerts("Tropical Storm Warning", "Hurricane Force Wind Warning")), "square2")
         self.assertEqual(f(alerts("Small Craft Advisory", "Gale Warning")), "pennant2")  # highest wins
-        for e in ("Tropical Storm Warning", "Winter Storm Warning", "Hurricane Force Wind Warning", "Hurricane Watch",
+        for e in ("Tropical Storm Watch", "Winter Storm Warning", "Hurricane Force Wind Watch", "Hurricane Watch",
+                  "tropical storm warning", "Tropical Storm Warning (test)", "Extreme Wind Warning", "High Wind Warning",
                   "Gale Watch", "Storm Watch", "Hazardous Seas Warning", "Special Marine Warning", "Rip Current Statement",
                   "Coastal Flood Advisory", "small craft advisory", "Brisk Wind Advisory"):
             self.assertIsNone(f(alerts(e)), e)
@@ -326,7 +340,11 @@ class Refinement(unittest.TestCase):
         h = render("hybrid", salt("wilmington", alerts=alerts("Gale Warning")))
         self.assertIn('aria-label="Coastal warning display: two red pennants"', h)
         self.assertEqual(h.count('class="al-flag"'), 1)
-        for e in ("Tropical Storm Warning", "Rip Current Statement"):
+        h = render("hybrid", salt("wilmington", alerts=alerts("Tropical Storm Warning")))
+        self.assertIn('aria-label="Coastal warning display: a square red flag with a black center"', h)
+        h = render("hybrid", salt("wilmington", alerts=alerts("Hurricane Force Wind Warning")))
+        self.assertIn('aria-label="Coastal warning display: two square red flags with black centers"', h)
+        for e in ("Tropical Storm Watch", "Rip Current Statement"):
             h = render("hybrid", salt("wilmington", alerts=alerts(e)))
             self.assertIn(e, h)
             self.assertNotIn('class="al-flag"', h)
@@ -378,6 +396,28 @@ class Refinement(unittest.TestCase):
         self.assertIn('width="1600" height="1200"', hz[:2000])
         self.assertIn("Photo: National Park Service, Cape Hatteras National Seashore (public domain)", hz[:2500])
         self.assertTrue((sprint_home.DIR / "CREDITS.md").is_file())
+
+    def test_mosaic_full_set_has_no_placeholders_and_unique_captions(self):
+        h = render("hybrid", salt("wilmington"), photos=ALL_PHOTOS)
+        mz = h[h.index('<section class="mzs"'):]
+        mz = mz[:mz.index("</section>")]
+        self.assertIn('<div class="mz-grid">', mz)
+        self.assertNotIn("mz-loose", mz)
+        self.assertNotIn("Awaiting", mz)
+        self.assertNotIn("mz-slot", mz)
+        self.assertEqual(mz.count('<figure class="mz '), 5)
+        caps = re.findall(r'<span class="mz-cap">([^<]+)</span>', mz)
+        self.assertEqual(len(caps), len(set(caps)), caps)
+        self.assertIn("At Rx Chicken &amp; Oysters", caps)
+        self.assertEqual(mz.count("Share yours on the Catch Wall"), 1)
+        # the override is presentation only: the record itself is untouched
+        self.assertEqual(LIFE2["caption"], "")
+        self.assertEqual(LIFE2["location"], "Rx Chicken & Oysters")
+
+    def test_mosaic_partial_set_falls_back_to_loose_grid(self):
+        h = render("hybrid", salt("wilmington"), photos=PHOTOS)
+        self.assertIn("mz-loose", h)
+        self.assertNotIn("Awaiting", h[h.index('<section class="mzs"'):])
 
     def test_photo_path_is_strict(self):
         self.assertIsNotNone(sprint_home.photo_path("/preview/sprint-home/photos/bodie-sunrise-800.avif"))

@@ -40,6 +40,8 @@ Credit rule:
 | bcd8fba5 | Catch Wall | Striped Bass · Roanoke River | mosaic |
 | caec2542 | Coastal Life | Rx Chicken & Oysters · Wilmington · Wrightsville Beach | mosaic |
 | a225cada | Catch Wall | Weldon | mosaic (salt), horizon (fresh) |
-| 89eef7f7 | Coastal Life | same place as caec2542 | **not used**: the repeated caption broke the no-repeated-text rule |
+| 89eef7f7 | Coastal Life | location "Rx Chicken & Oysters", region "Wilmington · Wrightsville Beach", caption empty (same fields as caec2542) | mosaic (tall cell), shown with the preview-only caption "At Rx Chicken & Oysters" |
+
+The 89eef7f7 caption is a presentation override in `sprint_home.PREVIEW_CAPTIONS`. It uses only words from that record's stored location field. Nothing was written to the submission, moderation data or Supabase.
 
 No AI, stock or scraped images are used anywhere.
