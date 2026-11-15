@@ -976,12 +976,18 @@
       cell("i-tide", ev ? (ev.type === "H" ? "Next high" : "Next low") : "Tide", ev ? clock(ev.t) : "—",
         ev && isNum(ev.v) ? fmt(ev.v, 1) + " ft predicted" : "predicted", ev ? tideR : null);
     box.hidden = false;
-    if (!state.glanceIO && window.IntersectionObserver) {
-      state.glanceIO = new IntersectionObserver(function (ents) {
-        ents.forEach(function (e) { document.body.classList.toggle("glance-on-screen", e.isIntersecting); });
-      });
-      state.glanceIO.observe(box);
-    }
+    hookGlanceIO();
+  }
+
+  /* Hook even when homepage_boot already painted glance (skip-repaint path),
+     so the mini-bar can hide while glance is on screen. */
+  function hookGlanceIO() {
+    const box = $("glance-strip");
+    if (!box || state.glanceIO || !window.IntersectionObserver) return;
+    state.glanceIO = new IntersectionObserver(function (ents) {
+      ents.forEach(function (e) { document.body.classList.toggle("glance-on-screen", e.isIntersecting); });
+    });
+    state.glanceIO.observe(box);
   }
 
   function renderInstruments(d) {
@@ -1041,6 +1047,7 @@
       renderAlerts(d.alerts, d.marine);
       state.firstPaintDirty = true;
     }
+    hookGlanceIO();
     renderHeaderBits(d);
     $("conditions").classList.remove("is-booting");
     document.dispatchEvent(new CustomEvent("cb:conditions", { detail: d }));
