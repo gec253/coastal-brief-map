@@ -1039,9 +1039,9 @@
     if (!already) {
       renderGlance(d);
       renderAlerts(d.alerts, d.marine);
-      renderHeaderBits(d);
       state.firstPaintDirty = true;
     }
+    renderHeaderBits(d);
     $("conditions").classList.remove("is-booting");
     document.dispatchEvent(new CustomEvent("cb:conditions", { detail: d }));
     scheduleInstruments(d);
