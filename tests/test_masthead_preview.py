@@ -94,7 +94,9 @@ class MastheadPreview(unittest.TestCase):
 
     # Homepage speed-trim files, the Catch Wall form, and the header picker's default region list
     # (region-nav.js, which gains each region when it goes public) may differ from origin/main.
-    # Brief and lake Folio presentation (brief.css, lake.html) may also differ from origin/main.
+    # lake.html and brief.css are on main again, so they are locked against origin/main.
+    # This branch does not edit those files: the Neuse CLS reservation lives in
+    # styles.css (still unlocked) plus a data-region stamp in the server paint path.
     PUBLIC_FILES_LOCKED = tuple(
         rel for rel in PUBLIC_FILES
         if rel not in (
@@ -104,8 +106,6 @@ class MastheadPreview(unittest.TestCase):
             "styles.css",
             "catch-wall.html",
             "region-nav.js",
-            "lake.html",
-            "brief.css",
         )
     )
 

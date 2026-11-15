@@ -133,6 +133,18 @@ class BriefLakePublic(unittest.TestCase):
         self.assertIn(b'src="/lake.js"', body)
         self.assertIn(b'href="/lake?region=falls-lake"', body)
         self.assertIn(b'href="/lake?region=jordan-lake"', body)
+        self.assertIn(b'data-region="falls-lake"', body)
+        status, neuse = self._get("/lake?region=neuse-river")
+        self.assertEqual(status, 200)
+        self.assertIn(b'data-region="neuse-river"', neuse)
+        self.assertNotIn(b'data-region="falls-lake"', neuse)
+        status, jordan = self._get("/lake?region=jordan-lake")
+        self.assertEqual(status, 200)
+        self.assertIn(b'data-region="jordan-lake"', jordan)
+        css = (ROOT / "styles.css").read_text()
+        self.assertIn('html[data-page="lake"][data-region="neuse-river"] #fw-grid', css)
+        self.assertIn('html[data-page="lake"][data-region="neuse-river"] #fw-inflows-sec', css)
+        self.assertIn('html[data-page="lake"][data-region="neuse-river"] #fw-river-sec', css)
 
     def test_public_homepage_unchanged_by_brief_lake_chrome(self):
         status, body = self._get("/")
