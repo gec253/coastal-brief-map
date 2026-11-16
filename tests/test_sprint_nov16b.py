@@ -48,14 +48,14 @@ class Instruments(unittest.TestCase):
             "waterTempOffshore": off,
         }))
         w = tile(h, "water")
-        self.assertIn("Inshore station", w)
+        # Data's label contract (main 9352476): rendered as given, never reworded.
+        self.assertIn("Inshore water · Beaufort, Duke Marine Lab", w)
         self.assertIn('class="t-offread"', w)
-        self.assertIn("Offshore buoy", w)
+        self.assertIn("Offshore water · buoy 41159, 36 mi ESE of Ocean City Fishing Pier", w)
         self.assertIn("68", w)
-        self.assertIn("Buoy 41159 · 36 mi ESE of Ocean City Fishing Pier", w)
         self.assertNotIn("is-offshore", w)  # inshore is still the primary tile
         # never relabel one as the other
-        self.assertTrue(w.index("Inshore station") < w.index("t-offread"))
+        self.assertTrue(w.index("Inshore water") < w.index("t-offread") < w.index("Offshore water"))
 
     def test_offshore_only_still_unmistakable(self):
         off = ok({"f": 68.2}, "41159", "Onslow Bay Outer")

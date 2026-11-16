@@ -4368,3 +4368,7 @@ html[data-page="lake"][data-region="cape-fear-river"] #fw-river-sec {
 @media (min-width: 860px) {
   html[data-page="lake"][data-region="cape-fear-river"] #fw-river-sec { min-height: 700px; }
 }
+
+/* /lake: stale NWS forecast line. A quiet amber rule, the bold "issued … · stale" note in full ink. No fill, no alarm. */
+.fw-meta.is-stale { padding-left: 8px; border-left: 2px solid rgba(201, 138, 46, 0.75); }
+.fw-meta.is-stale strong { color: var(--d-ink); font-weight: 700; }
