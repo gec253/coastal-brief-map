@@ -1085,10 +1085,12 @@ class TopsailConfig(unittest.TestCase):
         self.assertEqual(len(also), 1)
         self.assertEqual(also[0]["zone"], "AMZ250")
         self.assertEqual(also[0]["area"], "Surf City / Topsail Beach")
-        self.assertEqual(also[0]["zoneName"], "Surf City / Topsail Beach")
-        self.assertEqual(m["zoneName"], "North Topsail / New River Inlet")
+        # zoneName is the official NWS name as published; the local description stays in "area".
+        self.assertEqual(also[0]["zoneName"], "Coastal waters from Surf City to Cape Fear NC out 20 nm")
+        self.assertEqual(m["zoneName"], "S of Cape Lookout NC to Surf City NC out to 20 NM")
+        self.assertNotIn("Official name", m["zoneNote"] + also[0]["zoneNote"])
         self.assertIn("Cape Fear", also[0]["zoneNote"])
-        self.assertIn("Cape Lookout", m["zoneNote"])
+        self.assertIn("Surf City", m["zoneNote"])
         # Hatteras and Crystal Coast are unchanged.
         hat = self.regions["hatteras"]
         self.assertEqual(hat["marine"]["zone"], "AMZ154")
@@ -1113,10 +1115,11 @@ class TopsailConfig(unittest.TestCase):
         self.assertEqual(out["area"], "North Topsail / New River Inlet")
         self.assertEqual(out["also"][0]["zone"], "AMZ250")
         self.assertEqual(out["also"][0]["area"], "Surf City / Topsail Beach")
-        self.assertEqual(out["also"][0]["zoneName"], "Surf City / Topsail Beach")
+        self.assertEqual(out["also"][0]["zoneName"], "Coastal waters from Surf City to Cape Fear NC out 20 nm")
+        self.assertEqual(out["zoneName"], "S of Cape Lookout NC to Surf City NC out to 20 NM")
         self.assertEqual(out["also"][0]["office"], "NWS Wilmington (ILM)")
         self.assertIn("Cape Fear", out["also"][0]["zoneNote"])
-        self.assertIn("Cape Lookout", out["zoneNote"])
+        self.assertIn("Surf City", out["zoneNote"])
         self.assertEqual(urls, [
             "https://api.weather.gov/zones/coastal/AMZ158/forecast",
             "https://api.weather.gov/zones/coastal/AMZ250/forecast",

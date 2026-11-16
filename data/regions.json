@@ -969,17 +969,17 @@
       },
       "marine": {
         "zone": "AMZ158",
-        "zoneName": "North Topsail / New River Inlet",
+        "zoneName": "S of Cape Lookout NC to Surf City NC out to 20 NM",
         "area": "North Topsail / New River Inlet",
         "office": "NWS Newport/Morehead City (MHX)",
-        "zoneNote": "Official name: S of Cape Lookout NC to Surf City NC out to 20 NM. Topsail Island is split at Surf City. Each official marine zone also covers a larger stretch of coast than this island.",
+        "zoneNote": "Topsail Island is split at Surf City. Each official marine zone also covers a larger stretch of coast than this island.",
         "also": [
           {
             "zone": "AMZ250",
-            "zoneName": "Surf City / Topsail Beach",
+            "zoneName": "Coastal waters from Surf City to Cape Fear NC out 20 nm",
             "area": "Surf City / Topsail Beach",
             "office": "NWS Wilmington (ILM)",
-            "zoneNote": "Official name: Coastal waters from Surf City to Cape Fear NC out 20 nm."
+            "zoneNote": "AMZ250 runs from Surf City to Cape Fear, a larger area than Topsail Island."
           }
         ]
       },

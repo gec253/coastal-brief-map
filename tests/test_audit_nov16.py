@@ -117,3 +117,12 @@ class FreshPreviewCrestWording(unittest.TestCase):
         f = brief_preview._nwps_forecast(blk(falling))
         self.assertIn("highest stage, no rise forecast; 4.5 ft", f)
         self.assertNotIn("crest", f)
+
+
+class TopsailZoneNames(unittest.TestCase):
+    def test_dashboard_labels_local_area_as_unofficial(self):
+        root = Path(__file__).resolve().parents[1]
+        js = (root / "dashboard.js").read_text()
+        self.assertIn("Local area (not an NWS name): ", js)
+        self.assertEqual(js.count("mfArea("), 3)  # helper + single-zone + multi-zone
+        self.assertNotIn("North Topsail / New River Inlet", js)

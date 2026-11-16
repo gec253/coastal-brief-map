@@ -653,6 +653,10 @@
     if (!m) return [];
     return [m].concat(m.also || []);
   }
+  // Official NWS zone name stays the zone name; a local description is labelled as not official.
+  function mfArea(z) {
+    return z && z.area ? '<p class="mf-area">Local area (not an NWS name): ' + esc(z.area) + "</p>" : "";
+  }
   function renderMarine(m) {
     const el = $("i-marine");
     el.classList.remove("is-loading", "is-off");
@@ -666,7 +670,7 @@
     if (zones.length === 1) {
       // One zone (Crystal Coast and most regions): same markup as before.
       el.innerHTML = head("Marine forecast", null, "forecast") +
-        '<p class="mf-zone"><b>' + esc(m.zone) + "</b> · " + esc(m.zoneName) + "</p>" +
+        '<p class="mf-zone"><b>' + esc(m.zone) + "</b> · " + esc(m.zoneName) + "</p>" + mfArea(m) +
         (m.zoneNote ? '<p class="mf-note">' + esc(m.zoneNote) + "</p>" : "") +
         '<div class="mf-periods">' + (m.periods || []).slice(0, 2).map(function (p) {
           return '<div class="mf-p"><div class="mf-name">' + esc(p.name) + '</div><p class="mf-text">' + esc(p.text) + "</p></div>";
@@ -682,7 +686,7 @@
         return '<div class="mf-block"><p class="mf-zone"><b>' + esc(z.zone) + "</b> · " + esc(z.zoneName || "") + "</p>" +
           '<p class="mf-text">The NWS forecast for this zone is unavailable right now.</p></div>';
       }
-      return '<div class="mf-block"><p class="mf-zone"><b>' + esc(z.zone) + "</b> · " + esc(z.zoneName || "") + "</p>" +
+      return '<div class="mf-block"><p class="mf-zone"><b>' + esc(z.zone) + "</b> · " + esc(z.zoneName || "") + "</p>" + mfArea(z) +
         (z.zoneNote ? '<p class="mf-note">' + esc(z.zoneNote) + "</p>" : "") +
         '<div class="mf-periods">' + (z.periods || []).slice(0, 2).map(function (p) {
           return '<div class="mf-p"><div class="mf-name">' + esc(p.name) + '</div><p class="mf-text">' + esc(p.text) + "</p></div>";
