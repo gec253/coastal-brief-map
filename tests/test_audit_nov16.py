@@ -126,3 +126,22 @@ class TopsailZoneNames(unittest.TestCase):
         self.assertIn("Local area (not an NWS name): ", js)
         self.assertEqual(js.count("mfArea("), 3)  # helper + single-zone + multi-zone
         self.assertNotIn("North Topsail / New River Inlet", js)
+
+
+class CapeFearPreviewCrestWording(unittest.TestCase):
+    def test_falling_forecast_take_has_no_crest(self):
+        from unittest import mock
+        import brief_preview
+        import freshwater
+        import preview_copy
+        import test_cape_fear as cf
+        p = cf._cape()
+        for b in p["river"]:
+            fc = (b.get("nwps") or {}).get("forecast")
+            if fc:
+                fc["series"] = [[fc["crestTime"], fc["crestStage"]], ["later", fc["crestStage"] - 0.4]]
+        with mock.patch.object(freshwater, "assemble", return_value=(200, p)):
+            b = brief_preview.compose(cf.RID, cf.NOW)
+        text = preview_copy.take_text(b["captainsTake"])
+        self.assertIn("NWS forecasts no rise; highest forecast stage 9.4 ft", text)
+        self.assertNotIn("crest", text.lower())

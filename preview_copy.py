@@ -1167,8 +1167,8 @@ def _take_cape_fear(payload: dict) -> list:
             if fc_block.get("nwpsMinusUsgsFt") is not None:
                 datum = " AHPS"
             out.append({
-                "text": "NWS forecasts a crest of %.1f ft%s%s (NWPS %s)." % (
-                    fc["crestStage"], datum, when, fc_lid or "FAYN7"),
+                "text": "%s %.1f ft%s%s (NWPS %s)." % (
+                    crest_phrase(fc), fc["crestStage"], datum, when, fc_lid or "FAYN7"),
                 "kind": "forecast", "sources": [fc_lid or "FAYN7"],
             })
         else:
