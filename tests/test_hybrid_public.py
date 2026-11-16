@@ -173,10 +173,9 @@ class HybridPublic(unittest.TestCase):
         s, _, b = self._fresh("falls-lake", env={"FRESHWATER_ENABLED": "0"})
         self.assertEqual(s, 200)
         self.assertIn(b'data-sprint="hybrid" data-water="salt"', b)
-        # the daily featured photo may be the (correctly captioned) Falls Lake rotation entry; exclude it
-        b = re.sub(rb'<section class="hz hz-rot".*?</section>', b"", b, flags=re.S)
-        b = re.sub(rb'<link rel="preload" as="image"[^>]*>', b"", b)
+        # Ed (Nov 16): no freshwater photo on a saltwater page, the daily photo included. Asserted directly.
         self.assertNotIn(b"falls-lake-pier", b)
+        self.assertNotIn(b'data-category="freshwater"', b)
 
     def test_preview_regions_404_publicly_and_never_listed(self):
         s, _, b = self._get("/")

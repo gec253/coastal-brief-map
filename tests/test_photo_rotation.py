@@ -267,20 +267,24 @@ class Overrides(unittest.TestCase):
         return m.group(1).decode() if m else None
 
     def test_public_path_ignores_overrides(self):
-        today = R.featured(approved=sprint_home.approved_photos())["id"]
-        other = next(p["id"] for p in R.load(FIX)["photos"] if p["id"] != today)
+        today = R.featured(approved=sprint_home.approved_photos(), salt=True)["id"]   # saltwater pages: salt-eligible only
+        other = next(p["id"] for p in R.load(FIX)["photos"] if p["id"] != today and R.salt_eligible(p))
         for q in ("/?photo=%s" % other, "/?date=2027-01-01", "/?region=crystal-coast&photo=%s" % other):
             s, b = self._get(q, cookie=True)
             self.assertEqual(s, 200)
             self.assertEqual(self._photo(b), today, q)
 
     def test_preview_route_honours_overrides(self):
+        s, b = self._get("/preview/home-hybrid?photo=cape-lookout-sunrise", cookie=True)
+        self.assertEqual((s, self._photo(b)), (200, "cape-lookout-sunrise"))
+        # Ed (Nov 16): a freshwater photo is never shown on a saltwater page, even by ?photo=
         s, b = self._get("/preview/home-hybrid?photo=falls-lake-pier", cookie=True)
-        self.assertEqual((s, self._photo(b)), (200, "falls-lake-pier"))
+        self.assertEqual(s, 200)
+        self.assertNotEqual(self._photo(b), "falls-lake-pier")
         man = R.load(FIX)
         d = date(2027, 1, 1)
         s, b = self._get("/preview/home-hybrid?date=%s" % d.isoformat(), cookie=True)
-        want = R.featured(day=d, approved=sprint_home.approved_photos(), manifest=man)["id"]
+        want = R.featured(day=d, approved=sprint_home.approved_photos(), manifest=man, salt=True)["id"]
         self.assertEqual(self._photo(b), want)
         s, _ = self._get("/preview/home-hybrid?photo=falls-lake-pier")   # no cookie: gated
         self.assertEqual(s, 404)

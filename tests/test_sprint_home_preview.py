@@ -350,7 +350,7 @@ class Refinement(unittest.TestCase):
             h = render("hybrid", salt("wilmington", alerts=alerts(e)))
             self.assertNotIn('class="al-flag"', h, e)
             self.assertIn('class="al al-active al-warn"', h)         # authoritative warning banner
-            self.assertIn('<span class="al-sev">Warning</span><b>%s</b>' % e, h)
+            self.assertIn('<b class="al-ev">%s</b>' % e, h)                # exact NWS product name, no extra label
         h = render("hybrid", salt("wilmington", alerts=alerts("Storm Warning")))
         self.assertIn('aria-label="Coastal warning display: a square red flag with a black center"', h)
         h = render("hybrid", salt("wilmington", alerts=alerts("Hurricane Warning")))
@@ -488,13 +488,10 @@ class Refinement(unittest.TestCase):
         self.assertIn('href="https://creativecommons.org/licenses/by-sa/2.0/"', mz)
 
     def test_salt_view_has_no_falls_photo(self):
-        # The Falls Lake lake-view hero never leads a salt view. (The daily featured photo may be
-        # the Falls Lake rotation entry on some days, captioned as Falls Lake; that section and its
-        # preload are excluded here. Before Nov 16 this test failed on days the rotation picked it.)
+        # Ed (Nov 16): nothing freshwater on a saltwater page, the daily photo included. Asserted directly.
         h = render("hybrid", salt("wilmington"), photos=ALL_PHOTOS)
-        h = re.sub(r'<section class="hz hz-rot".*?</section>', "", h, flags=re.S)
-        h = re.sub(r'<link rel="preload" as="image"[^>]*>', "", h)
         self.assertNotIn("falls-lake-pier", h)
+        self.assertNotIn('data-category="freshwater"', h)
         self.assertNotIn('class="cr-a"', h.split("</style>", 1)[-1])
 
     def test_test_data_banner_on_fixtures_only(self):

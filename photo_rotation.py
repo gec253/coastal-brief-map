@@ -252,6 +252,47 @@ def rotation_order(photos: list[dict], max_steps: int = 50000) -> list[dict]:
     return seq
 
 
+# ------------------------------------------------------------------ saltwater eligibility
+# Ed (Nov 16): nothing freshwater ever appears on a saltwater page. Two independent checks:
+#  1. category: "freshwater" entries never rotate on saltwater pages;
+#  2. location guard, in case an entry is miscategorised: its id, location and description are
+#     checked against known inland waters (a fixed list plus the freshwater region names), and
+#     against generic inland words (lake, river, reservoir, dam, falls, gorge, creek, mountain,
+#     state park) unless a coastal word is also present (harbor, sound, inlet, ocean, beach, island,
+#     seashore, bay, marsh, banks, lighthouse/light, ferry). "Silver Lake Harbor, Ocracoke" and
+#     "Bay River, Bayboro" stay eligible; "Nantahala River" (filed as lifestyle) does not.
+INLAND_NAMES = ("falls lake", "jordan lake", "fontana", "linville", "nantahala", "mattamuskeet",
+                "cliffs of the neuse", "kerr lake", "lake gaston", "lake norman", "high rock lake",
+                "badin lake", "lake wheeler", "lake raleigh", "b. everett jordan", "weldon", "roanoke rapids")
+_INLAND_WORD = re.compile(r"\b(lakes?|reservoirs?|dams?|falls|gorge|rivers?|creeks?|mountains?|state park)\b", re.I)
+_COAST_WORD = re.compile(r"\b(harbou?r|sound|inlet|ocean|beach|island|seashore|bay|marsh|banks|light(house)?|ferry)\b", re.I)
+
+
+def _inland_names() -> tuple[str, ...]:
+    names = list(INLAND_NAMES)
+    try:
+        import freshwater
+        for rid, r in (freshwater.regions() or {}).items():
+            n = str((r or {}).get("name") or "").split("(")[0].strip().casefold()
+            if n:
+                names.append(n)
+    except Exception:
+        pass
+    return tuple(names)
+
+
+def is_inland(e: dict) -> bool:
+    text = " ".join(str(e.get(k) or "") for k in ("id", "location", "description")).replace("-", " ")
+    low = text.casefold()
+    if any(n in low for n in _inland_names()):
+        return True
+    return bool(_INLAND_WORD.search(text)) and not _COAST_WORD.search(text)
+
+
+def salt_eligible(e: dict) -> bool:
+    return e.get("category") != "freshwater" and not is_inland(e)
+
+
 # ------------------------------------------------------------------ selection
 
 def et_date(now: datetime | None = None) -> date:
@@ -383,11 +424,18 @@ def resolve(entry: dict, approved: list[dict]) -> dict | None:
 
 
 def featured(day: date | None = None, photo_id: str | None = None, approved: list[dict] | None = None,
-             manifest: dict | None = None) -> dict | None:
-    """Today's photo (or the given day's, or a given id: preview overrides only)."""
+             manifest: dict | None = None, salt: bool = False) -> dict | None:
+    """Today's photo (or the given day's, or a given id: preview overrides only).
+    salt=True (every saltwater page): only salt_eligible() entries, rotated among themselves, and a
+    ?photo= override naming a freshwater entry is ignored."""
     man = manifest or active()
     if not man:
         return None
+    if salt:
+        photos = [p for p in man["photos"] if salt_eligible(p)]
+        if not photos:
+            return None
+        man = dict(man, photos=photos)
     if approved is None:
         approved = []
         if any(p.get("catch_wall_id") for p in man["photos"]):

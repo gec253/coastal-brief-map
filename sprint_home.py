@@ -796,7 +796,7 @@ def flag_svg(kind: str | None) -> str:
     }[kind]
     return (
         '<span class="al-flag" role="img" aria-label="Coastal warning display: %s">'
-        '<svg viewBox="0 0 30 46" width="26" height="40" aria-hidden="true" focusable="false">%s%s</svg></span>'
+        '<svg viewBox="0 0 30 46" width="11" height="17" aria-hidden="true" focusable="false">%s%s</svg></span>'
     ) % (FLAG_LABELS[kind], mast, body)
 
 
@@ -816,20 +816,22 @@ SEV_LABEL = {"warn": "Warning", "adv": "Advisory", "watch": "Watch", "stmt": "St
 
 
 def alerts_html(a: dict, pennants: bool = False, raw: dict | None = None) -> str:
+    """Slim alert strip (Ed, Nov 16): one line per alert with the exact NWS product name and its
+    until-time, then a compact "NWS details" link. Colour carries the severity (ivory + amber edge
+    for advisories and watches, solid red for warnings). Official flags only, tiny and inline.
+    Server-rendered, so its space is reserved before first paint (no CLS)."""
     st = a["state"]
-    rows = []
-    sevs = []
-    for it in a["items"]:
+    rows, sevs = [], []
+    flag = flag_svg(flag_for(raw)) if pennants else ""
+    for i, it in enumerate(a["items"]):
         sv = severity(it["event"]) if st == "active" else ""
         sevs.append(sv)
-        rows.append('<p class="al-row%s">%s<b>%s</b>%s</p>' % (
-            (" sev-" + sv) if sv else "",
-            ('<span class="al-sev">%s</span>' % SEV_LABEL[sv]) if sv else "",
+        rows.append('<p class="al-row%s">%s<b class="al-ev">%s</b>%s</p>' % (
+            (" sev-" + sv) if sv else "", flag if i == 0 else "",
             _esc(it["event"]), (' <span class="al-meta">%s</span>' % _esc(it["meta"])) if it["meta"] else ""))
     top = next((x for x in ("warn", "adv", "watch", "stmt") if x in sevs), "")
-    flag = flag_svg(flag_for(raw)) if pennants else ""
-    return '<div class="al al-%s%s%s" role="status">%s<div class="al-rows">%s</div><a class="al-link" href="%s" rel="noopener">NWS details</a></div>' % (
-        st, (" al-" + top) if top else "", " has-flag" if flag else "", flag, "".join(rows), homepage_boot.NWS_DETAILS)
+    return '<div class="al al-%s%s%s" role="status"><div class="al-rows">%s</div><a class="al-link" href="%s" rel="noopener">NWS details</a></div>' % (
+        st, (" al-" + top) if top else "", " has-flag" if flag else "", "".join(rows), homepage_boot.NWS_DETAILS)
 
 
 def forecast_html(f: dict | None, water: str) -> str:
@@ -1003,7 +1005,7 @@ def _hybrid_masthead(public: bool, water: str) -> str:
         '<line class="wave-settle" x1="0" y1="2" x2="1200" y2="2"/></svg></div>'
         '<p class="mh-motto">From the rivers to the sounds to the sea</p>'
         '<nav class="mh-sec" aria-label="Sections"><a href="%s"%s>Saltwater</a><a href="%s"%s>Freshwater</a>'
-        '%s<a href="/catch-wall">Catch Wall</a><a href="/dashboard">Map &amp; tides</a></nav></div>'
+        '%s<a href="/catch-wall">Catch Wall</a><a class="mh-maps" href="/dashboard">Map &amp; tides</a></nav></div>'
         "</header>"
     ) % (flag, _esc(_today()), salt_href, "" if water == "fresh" else ' aria-current="page"',
          fresh_href, ' aria-current="page"' if water == "fresh" else "", brief)
@@ -1133,6 +1135,7 @@ def _shell(variant: str, main: str, shot: bool, water: str = "salt", public: boo
 %(meta)s
 <meta name="color-scheme" content="light dark">
 <link rel="preload" href="/fonts/fraunces-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fraunces-italic-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/barlow-condensed-600.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/source-sans-3-var.woff2" as="font" type="font/woff2" crossorigin>
 %(img_preload)s<link rel="icon" href="/branding/favicon.svg" type="image/svg+xml">
@@ -1347,7 +1350,8 @@ BUILDERS = {"heritage": page_heritage, "editorial": page_editorial, "hybrid": pa
 
 def _featured(day=None, photo_id: str | None = None):
     try:
-        return photo_rotation.featured(day=day, photo_id=photo_id, approved=approved_photos())
+        # only ever called for saltwater views: salt=True keeps freshwater/inland photos out
+        return photo_rotation.featured(day=day, photo_id=photo_id, approved=approved_photos(), salt=True)
     except Exception:
         return None   # the Bodie Island default stays
 

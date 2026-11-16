@@ -84,6 +84,103 @@ class LandscapeOnly(unittest.TestCase):
         self.assertIn("Today\u2019s photograph", hz)
 
 
+class SaltPagesNeverFresh(unittest.TestCase):
+    """Ed (Nov 16): never anything freshwater on a saltwater page."""
+
+    def order(self):
+        return R.rotation_order([p for p in R.active()["photos"] if R.salt_eligible(p)])
+
+    def test_two_full_cycles_never_fresh_never_back_to_back(self):
+        order = self.order()
+        n = len(order)
+        self.assertGreater(n, 4)
+        start = date(2026, 11, 16)
+        picks = [R.featured(day=date.fromordinal(start.toordinal() + k), approved=[], salt=True) for k in range(2 * n + 2)]
+        for k, p in enumerate(picks):
+            self.assertNotEqual(p["category"], "freshwater", (k, p["id"]))
+            self.assertFalse(R.is_inland(p), (k, p["id"]))
+        for a, b in zip(picks, picks[1:]):   # includes the cycle wrap (twice)
+            self.assertNotEqual(a["category"], b["category"], (a["id"], b["id"]))
+            self.assertNotEqual(R.loc_key(a), R.loc_key(b), (a["id"], b["id"]))
+        self.assertEqual({p["id"] for p in picks}, {p["id"] for p in order})   # every eligible photo gets its day
+
+    def test_et_midnight_boundary(self):
+        before = datetime(2026, 11, 17, 4, 59, 59, tzinfo=timezone.utc)   # 11:59:59 PM EST, Nov 16
+        after = datetime(2026, 11, 17, 5, 0, 0, tzinfo=timezone.utc)      # 12:00 AM EST, Nov 17
+        a = R.featured(day=R.et_date(before), approved=[], salt=True)
+        b = R.featured(day=R.et_date(after), approved=[], salt=True)
+        self.assertEqual((R.et_date(before), R.et_date(after)), (date(2026, 11, 16), date(2026, 11, 17)))
+        self.assertNotEqual(a["id"], b["id"])
+        for p in (a, b):
+            self.assertTrue(R.salt_eligible(p), p["id"])
+
+    def test_miscategorised_inland_entry_is_guarded(self):
+        self.assertFalse(R.salt_eligible({"id": "x", "category": "lifestyle", "location": "Nantahala River"}))
+        self.assertFalse(R.salt_eligible({"id": "x", "category": "saltwater", "location": "Falls Lake, North Carolina",
+                                          "description": "Fishing pier"}))
+        self.assertFalse(R.salt_eligible({"id": "x", "category": "heritage", "location": "Some Reservoir"}))
+        self.assertTrue(R.salt_eligible({"id": "x", "category": "saltwater", "location": "Silver Lake Harbor, Ocracoke Island"}))
+        self.assertTrue(R.salt_eligible({"id": "x", "category": "saltwater", "location": "Bay River, Bayboro"}))
+        for p in R.active()["photos"]:
+            if p["category"] == "freshwater":
+                self.assertFalse(R.salt_eligible(p), p["id"])
+
+    def _page(self, region, **kw):
+        from unittest import mock
+        payload = salt(region)
+        with mock.patch.object(sprint_home, "approved_photos", return_value=[]), \
+             mock.patch.object(sprint_home, "region_links", return_value=[]), \
+             mock.patch.object(sprint_home, "_freshwater_ids", return_value=set()), \
+             mock.patch.object(sprint_home.conditions, "assemble", return_value=(200, payload)):
+            return sprint_home.page("hybrid", region, **kw).decode("utf-8")
+
+    def test_preview_date_override_and_public_pages(self):
+        n = len(self.order())
+        start = date(2026, 11, 16)
+        fresh_ids = [p["id"] for p in R.active()["photos"] if not R.salt_eligible(p)]
+        for k in range(2 * n + 1):
+            d = date.fromordinal(start.toordinal() + k).isoformat()
+            h = self._page("wilmington", photo_day=d)
+            cat = re.search(r'data-category="([a-z]+)"', h).group(1)
+            self.assertNotEqual(cat, "freshwater", d)
+            for fid in fresh_ids:
+                self.assertNotIn(fid, h, (d, fid))
+        for fid in fresh_ids:   # a ?photo= override naming a freshwater photo is ignored on salt pages
+            h = self._page("hatteras", photo_id=fid)
+            self.assertNotIn('data-photo="%s"' % fid, h)
+        for region in ("crystal-coast", "hatteras", "wilmington", "nags-head", "emerald-isle", "topsail"):
+            h = self._page(region, public=True)
+            self.assertNotIn('data-category="freshwater"', h, region)
+            for fid in fresh_ids:
+                self.assertNotIn(fid, h, (region, fid))
+
+
+class AlertStrip(unittest.TestCase):
+    def test_slim_strip_exact_name_until_and_link(self):
+        from test_sprint_home_preview import alerts
+        for ev, cls in (("Small Craft Advisory", "al-adv"), ("Gale Warning", "al-warn"), ("Tropical Storm Warning", "al-warn")):
+            h = render("hybrid", salt("wilmington", alerts=alerts(ev)))
+            strip = re.search(r'<div class="al al-active[^"]*".*?</a></div>', h, re.S).group(0)
+            self.assertIn(cls, strip)
+            self.assertIn('<b class="al-ev">%s</b>' % ev, strip)
+            self.assertRegex(strip, r'<span class="al-meta">until [^<]+</span>')
+            self.assertIn('>NWS details</a>', strip)
+            self.assertNotIn("al-sev", strip)
+            self.assertIn("TEST DATA", h)
+        css = (sprint_home.DIR / "hybrid.css").read_text(encoding="utf-8")
+        link = re.findall(r"\.cg-hybrid \.al-link\{[^}]*\}", css)[-1]
+        self.assertIn("min-height:44px", link)
+
+    def test_phone_nav_drops_map_and_tides(self):
+        h = render("hybrid", salt("wilmington"))
+        self.assertIn('<a class="mh-maps" href="/dashboard">Map &amp; tides</a>', h)
+        css = (sprint_home.DIR / "hybrid.css").read_text(encoding="utf-8")
+        self.assertRegex(css, r"@media \(max-width:639px\)\{[^@]*\.mh-sec a\.mh-maps\{display:none\}")
+        nav = re.search(r'<nav class="cg-tools".*?</nav>', h, re.S).group(0)
+        self.assertIn("Nautical chart", nav)
+        self.assertIn("Radar", nav)
+
+
 class Navigation(unittest.TestCase):
     def test_chart_radar_links_point_at_real_targets(self):
         h = render("hybrid", salt("wilmington"))
