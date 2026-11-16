@@ -219,22 +219,49 @@ def offshore_where(r) -> str:
     return head + " · distance offshore not recorded"
 
 
+def inshore_label(r) -> str:
+    """Design label: 'Inshore water · Beaufort, Duke Marine Lab'. Station metadata only."""
+    name = ((r or {}).get("station") or {}).get("name") or ""
+    return "Inshore water" + ((" · " + name) if name else "")
+
+
+def offshore_label(r) -> str:
+    """Design label: 'Offshore water · buoy 41159, 37 mi SSW of Beaufort Inlet'.
+
+    The distance is conditions.station_info's great-circle distance from the
+    region anchor to the official NDBC position, rounded to whole miles."""
+    s = (r or {}).get("station") or {}
+    out = "Offshore water · " + (("buoy %s" % s["id"]) if s.get("id") else "offshore buoy")
+    if _num(s.get("distanceMi")):
+        out += ", %s mi %s" % (_r0(s["distanceMi"]), s.get("bearingFromAnchor") or "")
+        out = out.rstrip()
+        if s.get("anchor"):
+            out += " of " + s["anchor"]
+    return out
+
+
 def _water_tile(R) -> dict:
     inshore = R.get("waterTemp")
     off = R.get("waterTempOffshore")
     if _state(inshore) != "off":
         t = _temp_tile(inshore, "Water", "water", note="Inshore station")
+        t["label"] = inshore_label(inshore)
         ov = _vals(off)
         if _state(off) != "off" and _num(ov.get("f")):
             os_ = (off or {}).get("station") or {}
             dist = (" (%s mi %s)" % (_r0(os_["distanceMi"]), os_.get("bearingFromAnchor") or "")) if _num(os_.get("distanceMi")) else ""
             t["sub"] = "Offshore buoy %s%s: %s°F" % (os_.get("id") or "", dist.replace(" )", ")"), _r0(ov["f"]))
+            if _state(off) == "stale":
+                # An old buoy reading must not ride along looking current next to a fresh inshore one.
+                t["sub"] += " (stale, last report %s)" % et_time(off.get("time"))
+            t["offshore_label"] = offshore_label(off)
         return t
     if _state(off) != "off":
         # No inshore sensor here (Nags Head, Emerald Isle, Topsail): the offshore
         # buoy is shown, labelled, with its ID and distance, and a distinct tile.
         t = _temp_tile(off, "Water", "water", note="Offshore buoy, no inshore sensor here")
         t["offshore"] = True
+        t["label"] = offshore_label(off)
         t["src"] = offshore_where(off)
         return t
     return _tile(id="water", name="Water", state="off", note="Inshore station")
@@ -278,13 +305,29 @@ def _tide_tile(tides: dict) -> dict:
     t = _tile(id="tide", name="Next high" if ev.get("type") == "H" else "Next low", kind="Predicted",
               num=hm, unit=ampm + " ET", sub=sub.strip(), src=src, when="")
     t["then"] = then
+    cs = tides.get("curveStation") or {}
+    if cs.get("name"):
+        # Jennette's Pier publishes highs and lows only; the 6-minute curve is Duck Pier's.
+        t["curve_from"] = cs["name"]
+        t["src"] += " · curve from %s%s" % (cs["name"], (" · " + cs["id"]) if cs.get("id") else "")
     obs = tides.get("observed")
     if isinstance(obs, dict) and obs.get("status") in ("ok", "stale"):
         lt = obs.get("latest") or {}
         if _num(lt.get("v")):
-            line = "Observed %s ft" % _fmt(lt["v"], 1)
-            if _num(lt.get("diff")):
-                line += ", %+.1f vs predicted" % lt["diff"]
+            os_ = obs.get("station") or {}
+            if os_.get("id") and os_.get("id") != st.get("id"):
+                # Observed level from a different gauge (Nags Head: Duck Pier). Say where, and how far.
+                where = os_.get("name") or os_["id"]
+                if _num(os_.get("distanceMi")):
+                    where += " (%s mi %s)" % (_r0(os_["distanceMi"]), os_.get("bearingFromAnchor") or "")
+                    where = where.replace(" )", ")")
+                line = "Observed at %s: %s ft" % (where, _fmt(lt["v"], 1))
+                if _num(lt.get("diff")):
+                    line += ", %+.1f vs predicted there" % lt["diff"]
+            else:
+                line = "Observed %s ft" % _fmt(lt["v"], 1)
+                if _num(lt.get("diff")):
+                    line += ", %+.1f vs predicted" % lt["diff"]
             t["obs"] = line
             t["when"] = "· observed level preliminary, " + et_time(obs.get("time"))
             ot = homepage_boot._to_dt(obs.get("time"))
@@ -645,7 +688,7 @@ def _tide_spark(t: dict) -> str:
     t0, t1 = now - 3 * 3600e3, now + 12 * 3600e3
     curve = [c for c in (t.get("curve") or []) if isinstance(c, (list, tuple)) and len(c) == 2 and _num(c[1])]
     pts = [c for c in curve if t0 <= c[0] <= t1]
-    method = "6-minute NOAA predictions"
+    method = "6-minute NOAA predictions" + ((" from " + t["curve_from"]) if t.get("curve_from") else "")
     # Owner decision (Nov 15): stations with only official highs and lows (Emerald Isle, Topsail)
     # get text only; a curve is drawn only from genuine NOAA 6-minute predictions.
     if len(pts) < 10 or not (pts[0][0] <= now <= pts[-1][0]):
@@ -676,7 +719,7 @@ def _tide_spark(t: dict) -> str:
         nowm += '<circle cx="%.1f" cy="%.1f" r="3" class="s-nowdot"/>' % (X(now), Y(yn))
     obs = ('<circle cx="%.1f" cy="%.1f" r="3.4" class="s-obs"/>' % (X(ob[0]), Y(ob[1]))) if ob else ""
     label = "Tide curve, %s, from 3 hours ago to 12 hours ahead%s." % (method, "; dot marks the latest observed level" if ob else "")
-    legend = '<span class="s-k s-k-pred">Predicted</span>'
+    legend = '<span class="s-k s-k-pred">%s</span>' % _esc("Predicted" + ((" · " + t["curve_from"]) if t.get("curve_from") else ""))
     if ob:
         legend += '<span class="s-k s-k-obs">Observed</span>'
     legend += '<span class="s-k s-k-now">Now</span>'
