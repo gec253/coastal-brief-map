@@ -172,7 +172,8 @@ def _nwps_forecast(block: dict) -> str:
     datum = ""
     if block.get("nwpsMinusUsgsFt") is not None:
         datum = " (AHPS level, not USGS gage height)"
-    return " NWS forecast (NWPS %s): crest %.1f ft%s%s, %s%s." % (lid, fc["crestStage"], datum, when, flood, issued_bit)
+    word = "highest stage, no rise forecast;" if preview_copy.crest_is_start(fc) else "crest"   # no crest named when NWPS forecasts no rise
+    return " NWS forecast (NWPS %s): %s %.1f ft%s%s, %s%s." % (lid, word, fc["crestStage"], datum, when, flood, issued_bit)
 
 
 def _vs_action(block: dict) -> str:

@@ -100,3 +100,20 @@ class NwpsForecastIsLabelledStageOnly(unittest.TestCase):
         self.assertEqual(fc["crestStage"], 4.5)
         self.assertNotIn("crestFlowCfs", fc)
         self.assertNotIn("kcfs", repr(fc))
+
+
+class FreshPreviewCrestWording(unittest.TestCase):
+    """Private Falls/Jordan/Neuse previews: a falling NWPS forecast is not called a crest."""
+
+    def test_phrase(self):
+        import preview_copy
+        import brief_preview
+        rising = {"crestStage": 4.5, "crestTime": "2026-11-17T06:00:00Z", "series": [["a", 4.1], ["b", 4.5], ["c", 4.3]]}
+        falling = {"crestStage": 4.5, "crestTime": "2026-11-17T00:00:00Z", "series": [["a", 4.5], ["b", 4.2]]}
+        self.assertEqual(preview_copy.crest_phrase(rising), "NWS forecasts a crest of")
+        self.assertEqual(preview_copy.crest_phrase(falling), "NWS forecasts no rise; highest forecast stage")
+        blk = lambda fc: {"nwps": {"status": "ok", "lid": "CLYN7", "forecast": dict(fc, category="no_flooding")}}
+        self.assertIn("crest 4.5 ft", brief_preview._nwps_forecast(blk(rising)))
+        f = brief_preview._nwps_forecast(blk(falling))
+        self.assertIn("highest stage, no rise forecast; 4.5 ft", f)
+        self.assertNotIn("crest", f)

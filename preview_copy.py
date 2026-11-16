@@ -18,6 +18,20 @@ import preview_zones
 ET = ZoneInfo("America/New_York")
 
 
+
+def crest_phrase(fc: dict) -> str:
+    """'NWS forecasts a crest of' for a forecast rise; otherwise 'NWS forecasts no rise; highest forecast stage'.
+
+    NWPS max-stage is the first forecast point when the river is forecast steady or
+    falling; calling that a crest would describe a rise that is not forecast."""
+    return "NWS forecasts no rise; highest forecast stage" if crest_is_start(fc) else "NWS forecasts a crest of"
+
+
+def crest_is_start(fc: dict) -> bool:
+    """True when freshwater.nwps' crest (max stage) is the first forecast point."""
+    ser = [p for p in ((fc or {}).get("series") or []) if isinstance(p, (list, tuple)) and len(p) == 2 and p[1] is not None]
+    return bool(ser) and fc.get("crestStage") is not None and ser[0][1] >= fc["crestStage"]
+
 def _item_alert(text: str) -> str:
     return text[len("Alerts: "):] if text.startswith("Alerts: ") else text
 
@@ -580,8 +594,8 @@ def summary_neuse(payload: dict, items: list, missing: list) -> str:
         fc = (clay.get("nwps") or {}).get("forecast") if (clay.get("nwps") or {}).get("status") == "ok" else None
         if fc and fc.get("crestStage") is not None:
             when = (" at " + brief._t(fc["crestTime"])) if fc.get("crestTime") else ""
-            bits.append("NWS forecasts a crest of %.1f ft%s (NWPS %s)." % (
-                fc["crestStage"], when, (clay.get("nwps") or {}).get("lid") or "CLYN7"))
+            bits.append("%s %.1f ft%s (NWPS %s)." % (
+                crest_phrase(fc), fc["crestStage"], when, (clay.get("nwps") or {}).get("lid") or "CLYN7"))
         else:
             # try any routine-forecast gauge
             found = False
@@ -589,8 +603,8 @@ def summary_neuse(payload: dict, items: list, missing: list) -> str:
                 nw = b.get("nwps") or {}
                 f = nw.get("forecast") if nw.get("status") == "ok" else None
                 if f and f.get("crestStage") is not None:
-                    bits.append("NWS forecasts a crest of %.1f ft at %s (NWPS %s)." % (
-                        f["crestStage"], b.get("label") or "", nw.get("lid") or ""))
+                    bits.append("%s %.1f ft at %s (NWPS %s)." % (
+                        crest_phrase(f), f["crestStage"], b.get("label") or "", nw.get("lid") or ""))
                     found = True
                     break
             if not found:
@@ -1089,8 +1103,8 @@ def _take_neuse(payload: dict) -> list:
             when = (" at " + brief._t(fc["crestTime"])) if fc.get("crestTime") else ""
             place = clay_fc_label or "Clayton"
             out.append({
-                "text": "NWS forecasts a crest of %.1f ft%s (NWPS %s)." % (
-                    fc["crestStage"], when, clay_fc_lid or "CLYN7"),
+                "text": "%s %.1f ft%s (NWPS %s)." % (
+                    crest_phrase(fc), fc["crestStage"], when, clay_fc_lid or "CLYN7"),
                 "kind": "forecast", "sources": [clay_fc_lid or "CLYN7"],
             })
         else:
