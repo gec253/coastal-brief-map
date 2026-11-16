@@ -89,7 +89,8 @@ class BriefLakePublic(unittest.TestCase):
         self.assertNotIn(b'href="/styles.css"', body)
 
     def test_brief_print_button_is_present_and_hidden_in_print(self):
-        btn = b'<button type="button" class="mb-print" onclick="window.print()">Print</button>'
+        # brief-polish look on public pages: the same button, now an icon with the accessible name "Print"
+        btn = b'<button type="button" class="mb-print" onclick="window.print()" aria-label="Print">'
         for path in ("/brief?region=crystal-coast", "/brief?region=falls-lake"):
             status, body = self._get(path)
             self.assertEqual(status, 200, path)

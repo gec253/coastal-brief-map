@@ -59,7 +59,7 @@
     if (btn) {
       if (full) {
         btn.setAttribute("title", full);
-        btn.setAttribute("aria-label", full);
+        btn.setAttribute("aria-label", (btn.getAttribute("data-name-prefix") || "") + full);
       } else {
         btn.removeAttribute("title");
         btn.removeAttribute("aria-label");

@@ -1944,6 +1944,53 @@ def _paint_public_brief(data: bytes) -> bytes:
     return data
 
 
+_PUB_TOOLS_FROM = (
+    '<button type="button" class="mb-print" onclick="window.print()">Print</button>\n'
+    '      <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>'
+)
+
+
+def _polish_public_brief(data: bytes) -> bytes:
+    """Presentation only: the approved brief-polish.css look on public /brief pages.
+    Reuses brief_preview's styling helpers (icon print/theme buttons with the same labels,
+    reading times folded into a details panel, the polish CSS). brief.page(), the brief's
+    words, order, data and archive are untouched; the preview-only banner, region select
+    and Captain's Take move are not applied. Any failure is logged and the unpolished
+    page is served."""
+    try:
+        import brief_preview
+        out = data.decode("utf-8")
+        if '<body class="mb-page">' not in out:
+            raise RuntimeError("public brief: body class missing")
+        out = out.replace('<body class="mb-page">', '<body class="mb-page mb-polish">', 1)
+        css = brief_preview._POLISH_CSS.read_text(encoding="utf-8")
+        css = re.sub(r"/\*.*?\*/", "", css, flags=re.S).replace("body.mb-preview-brief", "body.mb-polish")
+        if "mb-preview-brief" in css:
+            raise RuntimeError("public brief: unexpected polish selector")
+        out = out.replace("</head>", '<style id="brief-style">\n%s\n</style>\n</head>' % css.replace("</", "<\\/"), 1)
+        out = brief_preview._compact_tools(out)
+        # Public pages carry the two tool buttons in the Folio masthead row: same icon buttons,
+        # same accessible names ("Print", "Switch to dark mode"), as on the approved preview.
+        icons = brief_preview._TOOLS_TO.split("\n")[1:-1]
+        if _PUB_TOOLS_FROM in out:
+            out = out.replace(_PUB_TOOLS_FROM, "\n".join(l.strip() for l in icons), 1)
+            out = out.replace('    btn.textContent=dark?"Light mode":"Dark mode";\n', "", 1)
+        # a11y (axe on main): the Folio compact bar sat outside any landmark, and the visible
+        # "Region" label was not part of the region button's accessible name (region-nav.js
+        # sets aria-label to the region name; data-name-prefix makes it "Region: <name>" on
+        # brief pages only). Markup attributes only; no visible change.
+        out = out.replace('<div class="compact-bar mast-nav" id="compact-bar">',
+                          '<div class="compact-bar mast-nav" id="compact-bar" role="region" aria-label="Region and sections">', 1)
+        out = out.replace('<button type="button" class="rn-btn" id="rn-btn"', '<button type="button" class="rn-btn" id="rn-btn" data-name-prefix="Region: "', 1)
+        out = brief_preview._wrap_reading_times(out)
+        if brief_preview._DETAILS_SCRIPT_FROM in out:
+            out = out.replace(brief_preview._DETAILS_SCRIPT_FROM, brief_preview._DETAILS_SCRIPT_TO, 1)
+        return out.encode("utf-8")
+    except Exception as e:
+        sys.stderr.write("public brief polish failed, serving unpolished page: %r\n" % (e,))
+        return data
+
+
 _LAKE_ALERT_JS = """<script>
 (function(){
   function wrapAlerts(){
@@ -2086,6 +2133,22 @@ def _paint_public_catch_wall(data: bytes, page: str, water: str = "all") -> byte
     for src in (b"/region-nav.js", b"/brief-link.js", b"/identity.js"):
         data = _ensure_script(data, src)
     return data
+
+
+def _public_catch_wall_redesign(water: str = "all") -> bytes | None:
+    """Public /catch-wall: the Catch Wall redesign (approved photos only, no preview chrome).
+    Returns None, so the caller serves the previous render, when there is nothing to show
+    (that page owns the empty and unavailable states) or when the render raises (logged)."""
+    try:
+        data = catch_wall_preview.public_page(water)
+        if b'name="robots" content="index, follow"' not in data or b'class="pv-flag"' in data:
+            raise RuntimeError("public catch wall render failed its own checks")
+        return data
+    except catch_wall_preview.NotReady:
+        return None
+    except Exception as e:  # never take the page down for a presentation change
+        sys.stderr.write("public catch wall redesign failed, serving previous render: %r\n" % (e,))
+        return None
 
 
 # /catch-wall, /coastal-life and /photos share catch-wall.html. Give each its own
@@ -2526,7 +2589,7 @@ class Handler(SimpleHTTPRequestHandler):
             return self._send_private(
                 None,
                 "text/html; charset=utf-8",
-                _paint_public_brief(body.encode("utf-8")),
+                _polish_public_brief(_paint_public_brief(body.encode("utf-8"))),
                 robots=robots,
             )
         if parsed.path in ("/lab/tiles", "/lab/tiles.js"):
@@ -2803,6 +2866,10 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_error(404, "file not found")
         if path.name == "index.html":
             data = _public_home_html(region_id, preview=preview)
+        elif share == "catch-wall" and (redesign := _public_catch_wall_redesign(
+                (parse_qs(urlparse(getattr(self, "path", "") or "").query).get("water") or ["all"])[0])) is not None:
+            data = redesign  # complete page with its own title, canonical and share meta
+            share = None
         elif share in ("catch-wall", "coastal-life", "photos"):
             q = parse_qs(urlparse(getattr(self, "path", "") or "").query)
             water = (q.get("water") or ["all"])[0]

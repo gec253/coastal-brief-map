@@ -270,6 +270,7 @@
     config = c || { uploads: false };
     if ($("share-open")) $("share-open").hidden = !config.uploads;
     if ($("share-soon")) $("share-soon").hidden = !!config.uploads;
+    document.querySelectorAll("[data-share-soon]").forEach(function (n) { n.hidden = !!config.uploads; });
     document.querySelectorAll("[data-share]").forEach(function (b) {
       if (b.id === "share-open") return;
       b.hidden = !config.uploads;

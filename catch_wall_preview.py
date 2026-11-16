@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import html
 import json
+import re
 from pathlib import Path
 
 import sprint_home
@@ -187,11 +188,24 @@ CONTRIB = (
     '<h2 id="cw-j-h" class="pl-join-h">Have a catch from Carolina water?</h2>'
     '<p>Send the photograph with the species and where you caught it. We review every picture before it appears, '
     'and we credit you by name if you give one.</p>'
-    '<a class="cw-submit" href="%s">Submit your catch <span aria-hidden="true">\u2192</span></a></aside>'
-) % SUBMIT_HREF
+    '%s</aside>'
+)
+SUBMIT_LINK = '<a class="cw-submit"%s href="%s"%s>Submit your catch <span aria-hidden="true">\u2192</span></a>'
+SOON = '<p class="cw-soon"%s>Photo sharing opens soon.</p>'
 
 
-def body_html(photos: list[dict], day=None) -> str:
+def submit_cta(public: bool, primary: bool) -> str:
+    """Preview: a plain link to the existing /catch-wall page. Public (/catch-wall itself): the same
+    existing share flow as before. The link opens the existing share dialog via catch-wall-public.js
+    ([data-share] / #share-open) and stays hidden until /api/photos/config says uploads are on;
+    otherwise the existing "Photo sharing opens soon." note shows, exactly as on the old page."""
+    if not public:
+        return SUBMIT_LINK % ("", SUBMIT_HREF, "")
+    return (SUBMIT_LINK % (' id="share-open" hidden' if primary else " hidden", SUBMIT_HREF + "#share", " data-share")
+            + SOON % (' id="share-soon"' if primary else " data-share-soon"))
+
+
+def body_html(photos: list[dict], day=None, public: bool = False) -> str:
     feat = featured_catch(photos, day)
     groups = {k: [p for p in photos if water(p) == k] for k, _, _ in SECTIONS}
     if feat:   # the featured catch leads its own section (shown once, never duplicated)
@@ -210,11 +224,12 @@ def body_html(photos: list[dict], day=None) -> str:
         '<p class="cw-dek">Catches from North Carolina water, from the sounds to the reservoirs, shown as anglers sent them. '
         'Every photograph is reviewed before it appears here.</p>'
         '<div class="cw-act"><nav class="chips" aria-label="Jump to water type">%s</nav>'
-        '<a class="cw-submit" href="%s">Submit your catch <span aria-hidden="true">\u2192</span></a></div>'
+        '%s</div>'
         '<svg class="brass" viewBox="0 0 1200 4" preserveAspectRatio="none" aria-hidden="true" focusable="false">'
         '<rect width="1200" height="4" fill="url(#cw-brass)"/></svg>'
         '</section>'
-    ) % (chips, SUBMIT_HREF)
+    ) % (chips, submit_cta(public, True))
+    contrib = CONTRIB % submit_cta(public, False)
     secs = []
     first = True
     shown = [k for k, _, _ in SECTIONS if groups[k]]
@@ -228,7 +243,7 @@ def body_html(photos: list[dict], day=None) -> str:
         for n, p in enumerate(items, start=1):
             plates.append(plate(p, index[id(p)], n, eager=first and n == 1, feat=p is feat))
         if k == join_at:
-            plates.append(CONTRIB)
+            plates.append(contrib)
         first = False
         secs.append(
             '<section class="ws ws-%s" id="sec-%s" aria-labelledby="ws-%s-h">'
@@ -239,7 +254,7 @@ def body_html(photos: list[dict], day=None) -> str:
     if not secs:
         secs.append('<p class="cw-none" role="status">Photographs are unavailable right now. Please try again shortly.</p>')
     if not shown:
-        secs.append(CONTRIB)
+        secs.append(contrib)
     return intro + '<div class="ws-wrap">' + "".join(secs) + "</div>", order
 
 
@@ -294,11 +309,15 @@ def _payload(order: list[dict]) -> str:
     return json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 
 
-def masthead_html() -> str:
+def masthead_html(public: bool = False) -> str:
     """Same newspaper masthead as the Hybrid homepage; the page's own h1 is "The Catch Wall"."""
-    m = sprint_home._hybrid_masthead(False, "salt")
+    m = sprint_home._hybrid_masthead(public, "salt")
     m = m.replace('<h1 class="mh-name">', '<p class="mh-name">', 1).replace("</a></h1>", "</a></p>", 1)
     m = m.replace(' aria-current="page">Saltwater', ">Saltwater", 1)
+    if public:
+        if '<a href="/catch-wall">Catch Wall</a>' not in m or "pv-flag" in m:
+            raise RuntimeError("public catch wall: masthead shape changed")
+        return m.replace('<a href="/catch-wall">Catch Wall</a>', '<a href="/catch-wall" aria-current="page">Catch Wall</a>', 1)
     m = m.replace('<a href="/catch-wall">Catch Wall</a>', '<a href="/preview/catch-wall" aria-current="page">Catch Wall</a>', 1)
     return m.replace("Private concept · C · Hybrid", "Private preview · Catch Wall redesign", 1)
 
@@ -312,31 +331,149 @@ BRASS_DEFS = (
 )
 
 
-def style_tag() -> str:
+_CSS_COMMENT = re.compile(r"/\*.*?\*/", re.S)
+
+
+def style_tag(public: bool = False) -> str:
     css = "\n".join(
         (sprint_home.DIR / n).read_text(encoding="utf-8") for n in ("base.css", "hybrid.css")
     ) + "\n" + (DIR / "catch-wall.css").read_text(encoding="utf-8")
+    if public:
+        css = _CSS_COMMENT.sub("", css + "\n" + share_css())
+        return '<style id="cw-css">\n%s\n</style>\n' % css.replace("</", "<\\/")
     return '<style id="cw-preview-css">\n%s\n</style>\n' % css.replace("</", "<\\/")
 
 
-def page(live: list[dict] | None = None) -> bytes:
+# ---- Public /catch-wall: the existing share flow, carried over unchanged -------------
+# The share dialog markup is copied at render time from catch-wall.html (the old public page)
+# and its CSS from styles.css, so the form, its fields and /api/photos/submit stay exactly as
+# they are. catch-wall-public.js drives it, as before. Missing pieces raise, and server.py then
+# serves the old render.
+_DLG_RE = re.compile(r'<dialog class="share-dlg".*?</dialog>', re.S)
+_PHASE2_KEEP = ("body.no-scroll", ".gal-soon", ".btn-share", ".sr-only")
+_DARK_RE = re.compile(r'^\[data-theme="dark"\] (.+)$', re.M)
+SHARE_VARS = (
+    ".share-dlg{--d-panel:#FBF8F2;--d-inst:#FFFFFF;--d-inst-2:#F7F2E8;--d-edge:rgba(11,42,61,.14);--d-ink:#0B2A3D;"
+    "--d-ink-2:#3E5868;--d-accent:#2B6F8F;--teal:#5BA8A0;--navy:#0B2A3D;--copper:#B8743A;"
+    "--f-display:'Fraunces',Georgia,'Times New Roman',serif;font-family:var(--f-ui,system-ui,sans-serif)}\n"
+    "@media (prefers-color-scheme:dark){.share-dlg{--d-panel:#0C2231;--d-inst:#0F2A3C;--d-inst-2:#0B2333;"
+    "--d-edge:rgba(169,214,204,.16);--d-ink:#F6F1E7;--d-ink-2:#B9C9CF;--d-accent:#8CC9EA}}\n"
+    ".cw-submit[hidden],.cw-soon[hidden]{display:none}\n"
+    ".cw-soon{margin:0;min-height:44px;display:flex;align-items:center;font-size:.9rem;color:var(--ink-2);border-left:3px solid #B8743A;padding:0 0 0 10px}\n"
+    ".pl-join .cw-soon{color:#E2DACB;margin-top:6px}\n"
+)
+
+
+def share_dialog_html() -> str:
+    m = _DLG_RE.search((ROOT / "catch-wall.html").read_text(encoding="utf-8"))
+    if not m or 'id="share-form"' not in m.group(0):
+        raise RuntimeError("public catch wall: share dialog missing from catch-wall.html")
+    return m.group(0)
+
+
+def share_css() -> str:
+    full = (ROOT / "styles.css").read_text(encoding="utf-8")
+    a, b = full.find("/* Share dialog */"), full.find("/* Home: coastal-life")
+    if a < 0 or b < a:
+        raise RuntimeError("public catch wall: share dialog CSS missing from styles.css")
+    keep = [ln for ln in full[full.find("/* ===== Phase 2"):a].splitlines() if ln.startswith(_PHASE2_KEEP)
+            and not ln.startswith(".gal-soon {")]
+    chunk = "\n".join(keep) + "\n" + full[a:b]
+    chunk = _DARK_RE.sub(lambda m: "@media (prefers-color-scheme:dark){%s}" % m.group(1), chunk)
+    return SHARE_VARS + chunk
+
+
+PUBLIC_TITLE = "Catch Wall \u2014 The Coastal Brief"
+PUBLIC_URL = "https://thecoastalbrief.com/catch-wall"
+PUBLIC_DESC = ("Catches from North Carolina water, from the sounds to the reservoirs, shown as anglers sent them. "
+               "Every photograph is reviewed before it appears.")
+PUBLIC_FOOT = (
+    '<footer class="ft"><div class="ft-in ft-pub">'
+    '<ul class="ft-links" aria-label="Quick links">'
+    '<li><a href="https://license.gooutdoorsnorthcarolina.com/Licensing/CustomerLookup.aspx" rel="noopener" target="_blank">Buy an NC fishing or hunting license</a></li>'
+    '<li><a href="https://www.ncwildlife.gov/hunting/license-types-and-fees" rel="noopener" target="_blank">License types and fees</a></li>'
+    '<li><a href="https://www.ncwildlife.gov/" rel="noopener" target="_blank">NC Wildlife Resources Commission</a></li></ul>'
+    "<p>The Coastal Brief is not weather, surf, or fishing advice. Always check official NWS marine forecasts and advisories before going out.</p>"
+    "<p>Photos are shared by visitors, reviewed before they appear, and stay the property of the people who took them.</p>"
+    "<p>Licenses are sold by the NC Wildlife Resources Commission; The Coastal Brief is not affiliated with it.</p>"
+    "</div></footer>"
+)
+
+
+def _head_meta(public: bool) -> str:
+    if not public:
+        return ('<meta name="robots" content="noindex, nofollow">\n<meta name="color-scheme" content="light dark">\n'
+                '<title>Catch Wall \u00b7 The Coastal Brief (private preview)</title>\n'
+                '<meta name="description" content="Private Catch Wall redesign preview for The Coastal Brief. Not public.">\n')
+    t, d = _esc(PUBLIC_TITLE), _esc(PUBLIC_DESC)
+    return (
+        '<meta name="robots" content="index, follow">\n<meta name="color-scheme" content="light dark">\n'
+        '<title>%s</title>\n<meta name="description" content="%s">\n<link rel="canonical" href="%s">\n'
+        '<meta name="theme-color" content="#0B2A3D">\n'
+        '<meta property="og:title" content="%s">\n<meta property="og:description" content="%s">\n'
+        '<meta property="og:url" content="%s">\n<meta property="og:type" content="website">\n'
+        '<meta name="twitter:title" content="%s">\n<meta name="twitter:description" content="%s">\n%s'
+    ) % (t, d, PUBLIC_URL, t, d, PUBLIC_URL, t, d, _og_image_meta())
+
+
+_OG_IMG_RE = re.compile(r'<meta (?:property="og:image[^"]*"|name="twitter:(?:image[^"]*|card)") content="[^"]*">')
+
+
+def _og_image_meta() -> str:
+    """The site's share card tags (image, size, alt), copied from the previous public page."""
+    tags = _OG_IMG_RE.findall((ROOT / "catch-wall.html").read_text(encoding="utf-8"))
+    if not any("og:image\"" in t for t in tags):
+        raise RuntimeError("public catch wall: share card meta missing from catch-wall.html")
+    return "".join(t + "\n" for t in tags)
+
+
+class NotReady(Exception):
+    """Expected state (no approved catches yet, or storage unavailable): the previous public
+    render already handles it with its invitation / "Photos are unavailable" copy."""
+
+
+def public_page(water_q: str = "all") -> bytes:
+    """Public /catch-wall. Same photo source as the previous page (catch_wall_public's
+    approved-only cache). ?water=salt|fresh keeps working: only that water's section shows."""
+    import catch_wall_public
+    if not catch_wall_public._cache_snapshot()[3]:
+        # Cold cache: the previous render does the one bounded fetch, so a slow backend is never waited on twice.
+        raise NotReady("photo cache not warm yet")
+    state = catch_wall_public.load_state()   # served from the warm cache; never blocks
+    w = catch_wall_public.parse_water(water_q)
+    live = [p for p in state["photos"] if w == "all" or water(p) == w]
+    if state.get("unavailable") or not catch_photos(live):
+        raise NotReady("no approved catches to show" if not state.get("unavailable") else "photos unavailable")
+    return page(live, public=True)
+
+
+def page(live: list[dict] | None = None, public: bool = False) -> bytes:
+    """public=False: /preview/catch-wall (unchanged). public=True: /catch-wall, approved photos only,
+    no preview chrome, indexable, with the existing share dialog and catch-wall-public.js."""
     photos = catch_photos(live)
-    main, order = body_html(photos)
+    main, order = body_html(photos, public=public)
     first = order[0] if order else None
     preload = ""
     if first and _src(first):
         preload = '<link rel="preload" as="image" href="%s" imagesrcset="%s" imagesizes="%s" fetchpriority="high">\n' % (
             _esc(_src(first)), _srcset(first), SIZES["pl-a"])
+    if public:
+        dialog = dialog_html() + "\n" + share_dialog_html()
+        foot = PUBLIC_FOOT
+        boot = json.dumps({"view": "catch", "water": "all", "photos": []})
+        scripts = ('<script>window.__CW_BOOT=%s;</script>\n<script src="/catch-wall-public.js" defer></script>\n'
+                   '<script src="/brief-link.js" defer></script>\n' % boot)
+    else:
+        dialog = dialog_html()
+        foot = ('<footer class="ft"><div class="ft-in"><p>Private preview. Photographs are approved Catch Wall submissions, '
+                'shown with only the details each submission includes and credited as stored.</p></div></footer>')
+        scripts = ""
     out = """<!DOCTYPE html>
 <html lang="en" data-sprint="hybrid" data-page="catch-wall">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="robots" content="noindex, nofollow">
-<meta name="color-scheme" content="light dark">
-<title>Catch Wall \u00b7 The Coastal Brief (private preview)</title>
-<meta name="description" content="Private Catch Wall redesign preview for The Coastal Brief. Not public.">
-<link rel="preload" href="/fonts/fraunces-var.woff2" as="font" type="font/woff2" crossorigin>
+%(meta)s<link rel="preload" href="/fonts/fraunces-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/source-sans-3-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/barlow-condensed-600.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/fraunces-italic-var.woff2" as="font" type="font/woff2" crossorigin>
@@ -349,11 +486,12 @@ def page(live: list[dict] | None = None) -> bytes:
 %(mast)s
 <main id="main">%(main)s</main>
 %(dialog)s
-<footer class="ft"><div class="ft-in"><p>Private preview. Photographs are approved Catch Wall submissions, shown with only the details each submission includes and credited as stored.</p></div></footer>
+%(foot)s
 <script>window.__CWP=%(payload)s;</script>
 <script>%(js)s</script>
-</body>
+%(scripts)s</body>
 </html>
-""" % {"preload": preload, "css": style_tag(), "defs": BRASS_DEFS, "mast": masthead_html(), "main": main,
-       "dialog": dialog_html(), "payload": _payload(order), "js": LB_JS}
+""" % {"meta": _head_meta(public), "preload": preload, "css": style_tag(public), "defs": BRASS_DEFS,
+       "mast": masthead_html(public), "main": main, "dialog": dialog, "foot": foot, "payload": _payload(order),
+       "js": LB_JS, "scripts": scripts}
     return out.encode("utf-8")

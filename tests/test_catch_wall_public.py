@@ -303,8 +303,14 @@ class PublicPages(unittest.TestCase):
             hdrs = {k.lower(): v for k, v in e.headers.items()}
             return e.code, e.read().decode("utf-8", "replace"), hdrs
 
+    def _old(self):
+        """The previous public render, still served as /catch-wall's fallback and on /photos, /coastal-life."""
+        import catch_wall_preview
+        return patch.object(catch_wall_preview, "public_page", side_effect=catch_wall_preview.NotReady("test"))
+
     def test_catch_wall_is_server_rendered(self):
-        status, body, _ = self._get("/catch-wall")
+        with self._old():
+            status, body, _ = self._get("/catch-wall")
         self.assertEqual(status, 200)
         self.assertIn('data-home="folio"', body)
         self.assertIn('data-concept="a"', body)
@@ -344,12 +350,19 @@ class PublicPages(unittest.TestCase):
         self.assertNotIn("data-preview", body)
 
     def test_filters_and_views(self):
-        status, body, _ = self._get("/catch-wall?water=fresh")
+        with self._old():
+            status, body, _ = self._get("/catch-wall?water=fresh")
         self.assertEqual(status, 200)
         self.assertIn("Weldon", body)
         self.assertNotIn("Red Drum", body)
         self.assertIn("A place for real photographs", body)
         self.assertIn('href="/catch-wall?water=fresh"', body)
+        with patch.object(cw, "_cache_snapshot", return_value=(time.time(), list(PHOTOS), True, True)):
+            status, body, _ = self._get("/catch-wall?water=fresh")   # the redesign filters the same way
+        self.assertEqual(status, 200)
+        self.assertIn('class="pl pl-f"', body)
+        self.assertIn("Weldon", body)
+        self.assertNotIn("Red Drum", body)
         status, life, _ = self._get("/coastal-life")
         self.assertEqual(status, 200)
         self.assertIn("Morning on the sound", life)
@@ -375,9 +388,13 @@ class PublicPages(unittest.TestCase):
         self.assertNotIn("fetch('/api/photos?", js)
 
     def test_share_cta_on_pages(self):
-        status, catch, _ = self._get("/catch-wall")
+        with self._old():
+            status, catch, _ = self._get("/catch-wall")
         self.assertEqual(status, 200)
         self.assertIn(">Share your catch</button>", catch)
+        with patch.object(cw, "_cache_snapshot", return_value=(time.time(), list(PHOTOS), True, True)):
+            status, new, _ = self._get("/catch-wall")
+        self.assertIn('<a class="cw-submit" id="share-open" hidden href="/catch-wall#share" data-share>Submit your catch', new)
         self.assertNotIn('id="share-open" hidden>Share your photo</button>', catch)
         status, life, _ = self._get("/coastal-life")
         self.assertEqual(status, 200)
@@ -426,9 +443,10 @@ class PublicPages(unittest.TestCase):
             "regions": [{"id": "neuse", "name": "Neuse River"}],
             "turnstileSiteKey": "",
         }
-        with patch.object(photos, "public_config", return_value=cfg):
+        with patch.object(photos, "public_config", return_value=cfg), \
+             patch.object(cw, "_cache_snapshot", return_value=(time.time(), list(PHOTOS), True, True)):
             result = subprocess.run(
-                [pw, str(script), self.base + "/catch-wall"],
+                [pw, str(script), self.base + "/catch-wall", "Submit your catch"],
                 capture_output=True,
                 text=True,
                 timeout=60,

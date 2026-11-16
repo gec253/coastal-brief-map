@@ -8,6 +8,7 @@ from playwright.sync_api import sync_playwright
 
 def main() -> int:
     url = sys.argv[1]
+    want = sys.argv[2] if len(sys.argv) > 2 else "Share your catch"
     chrome = "/usr/bin/google-chrome"
     with sync_playwright() as p:
         browser = p.chromium.launch(
@@ -29,7 +30,7 @@ def main() -> int:
         if errors:
             print("pageerror: " + " | ".join(errors), file=sys.stderr)
             return 1
-        if label != "Share your catch":
+        if label.split("\n")[0].strip() != want:
             print("cta was %r" % label, file=sys.stderr)
             return 1
         if not opened:
