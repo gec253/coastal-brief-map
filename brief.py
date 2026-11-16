@@ -43,7 +43,7 @@ PREP = (5, 15)
 PUBLISH_BY = (5, 30)
 # Ed authorized unattended publication for Nov 14-20, 2026 (ET). Extend only with his OK: change this
 # date (and AUTO_UNTIL in .github/workflows/morning-brief-wake.yml), or set MORNING_BRIEF_AUTO_UNTIL.
-AUTO_PUBLISH_UNTIL = "2026-11-20"
+AUTO_PUBLISH_UNTIL = "2026-11-30"
 MAX_FORECAST_AGE_H = 24  # an NWS marine or point forecast older than this is not used
 ARCHIVE_URL = "https://raw.githubusercontent.com/gec253/coastal-brief-map/brief-archive/latest/%s.json"
 _lock = threading.Lock()

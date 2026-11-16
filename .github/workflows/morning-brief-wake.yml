@@ -27,7 +27,7 @@ env:
   SITE: https://thecoastalbrief.com
   REGIONS: crystal-coast hatteras
   EXTRA_REGIONS: falls-lake
-  AUTO_UNTIL: ${{ vars.MORNING_BRIEF_AUTO_UNTIL || '2026-11-20' }}
+  AUTO_UNTIL: ${{ vars.MORNING_BRIEF_AUTO_UNTIL || '2026-11-30' }}
 jobs:
   brief:
     runs-on: ubuntu-latest

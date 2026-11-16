@@ -229,27 +229,27 @@ class Serving(Base):
 
 class Window(Base):
     def test_default_window_is_nov_20(self):
-        self.assertEqual(brief.auto_until(), "2026-11-20")
-        self.assertTrue(brief.auto_active(et(2026, 11, 20, 23, 59)))
-        self.assertFalse(brief.auto_active(et(2026, 11, 21, 0, 0)))
+        self.assertEqual(brief.auto_until(), "2026-11-30")
+        self.assertTrue(brief.auto_active(et(2026, 11, 30, 23, 59)))
+        self.assertFalse(brief.auto_active(et(2026, 12, 1, 0, 0)))
         with mock.patch.dict(os.environ, {"MORNING_BRIEF_AUTO_UNTIL": "2026-11-27"}):
             self.assertTrue(brief.auto_active(et(2026, 11, 21, 5, 15)))
         with mock.patch.dict(os.environ, {"MORNING_BRIEF_AUTO_UNTIL": "garbage"}):
-            self.assertEqual(brief.auto_until(), "2026-11-20")
+            self.assertEqual(brief.auto_until(), "2026-11-30")
 
     def test_after_window_nothing_new_is_built_and_last_brief_stays(self):
-        self.clock = et(2026, 11, 20, 5, 15)
+        self.clock = et(2026, 11, 30, 5, 15)
         last = brief.build("crystal-coast", "scheduled", self.clock)
         n = len(self.calls)
-        self.clock = et(2026, 11, 21, 6, 0)
+        self.clock = et(2026, 12, 1, 6, 0)
         self.assertEqual(brief.wake(now=self.clock, background=False)["building"], 0)
-        self.assertEqual(brief.run_window(now_fn=lambda: et(2026, 11, 21, 5, 15), sleep_fn=lambda s: None), {})
+        self.assertEqual(brief.run_window(now_fn=lambda: et(2026, 12, 1, 5, 15), sleep_fn=lambda s: None), {})
         st, b = brief.get("crystal-coast", now=self.clock)
         self.assertEqual(st, 200)
-        self.assertEqual(b["issueDate"], "2026-11-20")
+        self.assertEqual(b["issueDate"], "2026-11-30")
         self.assertEqual(b["issuedAt"], last["issuedAt"])
         self.assertIn("paused", b["staleNotice"])
-        self.assertIn("Nov 20, 2026", b["staleNotice"])
+        self.assertIn("Nov 30, 2026", b["staleNotice"])
         st, b = brief.get("hatteras", now=self.clock)
         self.assertEqual(st, 503)
         self.assertEqual(len(self.calls), n)  # no new builds of any kind
@@ -303,9 +303,9 @@ class Workflow(unittest.TestCase):
         self.assertFalse(d("schedule", et(2026, 11, 14, 13, 0))[0])
 
     def test_guard_window_end(self):
-        self.assertTrue(self.m.decide("schedule", et(2026, 11, 20, 4, 35))[0])
-        self.assertFalse(self.m.decide("schedule", et(2026, 11, 21, 4, 35))[0])
-        self.assertFalse(self.m.decide("workflow_dispatch", et(2026, 11, 21, 5, 20))[0])
+        self.assertTrue(self.m.decide("schedule", et(2026, 11, 30, 4, 35))[0])
+        self.assertFalse(self.m.decide("schedule", et(2026, 12, 1, 4, 35))[0])
+        self.assertFalse(self.m.decide("workflow_dispatch", et(2026, 12, 1, 5, 20))[0])
 
     def _brief(self, rid, day="2026-11-14", at="2026-11-14T10:15:20+00:00", **kw):
         return {"ok": True, "regionId": rid, "issueDate": day, "issuedAt": at, "issuedEt": "x", "reason": "scheduled",
