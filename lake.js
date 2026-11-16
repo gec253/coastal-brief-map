@@ -9,6 +9,22 @@
   const isNum = (v) => typeof v === "number" && isFinite(v);
   const tfmt = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
   const when = (t) => (t ? tfmt.format(new Date(t)) + " ET" : "");
+  // NWPS stage forecast: no "crest" unless a rise is forecast (the highest stage is not the
+  // first forecast point); issue time shown; older than NWPS_STALE_H hours is stale, never current.
+  const NWPS_STALE_H = 18;
+  function nwpsLine(f) {
+    const ser = (f.series || []).filter(function (p) { return p && typeof p[1] === "number"; });
+    const noRise = ser.length > 0 && ser[0][1] >= f.crestStage;
+    const iss = f.issued ? new Date(f.issued) : null;
+    const issOk = iss && !isNaN(iss.getTime());
+    const stale = issOk && (Date.now() - iss.getTime()) / 3600e3 > NWPS_STALE_H;
+    const head = (noRise ? " NWS forecast: no rise, highest " : " NWS crest ") + f.crestStage.toFixed(1) + " ft " + esc(when(f.crestTime));
+    const cat = f.category && f.category !== "no_flooding" ? " · " + esc(f.category.replace("_", " ")) : " · no flooding forecast";
+    const issued = issOk
+      ? " · " + (stale ? "<strong>" : "") + "NWS forecast issued " + esc(when(f.issued)) + (stale ? " · stale</strong>" : "")
+      : " · NWS did not give an issue time";
+    return '<p class="fw-meta' + (stale ? " is-stale" : "") + '">' + tag("forecast") + head + cat + issued + "</p>";
+  }
   const signed = (v, d) => (v > 0 ? "+" : v < 0 ? "−" : "±") + Math.abs(v).toFixed(d);
   const cfs = (v) => (v >= 100 ? Math.round(v).toLocaleString("en-US") : v.toFixed(1));
   const hide = (id) => { const el = $(id); if (el) { el.hidden = true; el.style.display = "none"; } };
@@ -142,7 +158,7 @@
     } else {
       h += '<p class="fw-meta">' + (isNum(fl.minor) ? "Flood stage " + fl.minor + " ft" : "Stage only") + (s.stageFt ? " · " + esc(when(s.stageFt.time)) : "") + "</p>";
     }
-    if (n && n.forecast) h += '<p class="fw-meta">' + tag("forecast") + " NWS crest " + n.forecast.crestStage.toFixed(1) + " ft " + esc(when(n.forecast.crestTime)) + (n.forecast.category && n.forecast.category !== "no_flooding" ? " · " + esc(n.forecast.category.replace("_", " ")) : " · no flooding forecast") + "</p>";
+    if (n && n.forecast) h += nwpsLine(n.forecast);
     if ((s.flowCfs && s.flowCfs.stale) || (s.stageFt && s.stageFt.stale)) h += '<p class="fw-meta"><strong>Stale reading.</strong></p>';
     if (!s.stageFt && !s.flowCfs) h += unavailable("Not available from USGS right now.");
     h += '<p class="fw-meta"><a href="' + esc(s.url) + '" target="_blank" rel="noopener">USGS ' + esc(s.usgs) + "</a>" + (n ? ' · <a href="' + esc(n.url) + '" target="_blank" rel="noopener">NWPS ' + esc(n.lid) + "</a>" : "") + "</p></div>";

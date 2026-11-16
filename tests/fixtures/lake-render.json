@@ -1,0 +1,1963 @@
+{
+ "falls-lake": {
+  "ok": true,
+  "generatedAt": "2026-11-15T18:00:00Z",
+  "region": {
+   "id": "falls-lake",
+   "name": "Falls Lake",
+   "area": "Fixture area",
+   "waterType": "freshwater",
+   "instrumentSet": "freshwater-lake",
+   "anchor": {
+    "label": "the dam"
+   }
+  },
+  "alerts": {
+   "status": "ok",
+   "items": []
+  },
+  "lake": {
+   "usgs": "00000001",
+   "siteName": "Fixture dam",
+   "url": "https://waterdata.usgs.gov/",
+   "elevation": {
+    "value": 251.3,
+    "time": "2026-11-15T18:00:00Z"
+   },
+   "vsGuideFt": -0.2,
+   "guideCurveFt": 251.5,
+   "change24hFt": 0.05,
+   "change7dFt": -0.3,
+   "guideCurveChecked": "2026-11-15",
+   "guideCurveSource": "https://example.test/usace",
+   "series7d": [
+    [
+     "2026-11-15T18:00:00Z",
+     251.1
+    ],
+    [
+     "2026-11-15T18:00:00Z",
+     251.2
+    ],
+    [
+     "2026-11-15T18:00:00Z",
+     251.25
+    ],
+    [
+     "2026-11-15T18:00:00Z",
+     251.3
+    ]
+   ],
+   "nwps": {
+    "status": "ok",
+    "lid": "FIXL1",
+    "floodStages": {
+     "action": 260,
+     "minor": 264,
+     "moderate": 268,
+     "major": 272
+    }
+   }
+  },
+  "waterTemp": {
+   "status": "ok",
+   "usgs": "00000002",
+   "f": 61.0,
+   "c": 16.1,
+   "note": "Fixture",
+   "time": "2026-11-15T18:00:00Z"
+  },
+  "release": {
+   "label": "Below dam",
+   "usgs": "00000003",
+   "url": "https://waterdata.usgs.gov/monitoring-location/00000003/",
+   "stageFt": {
+    "value": 4.12,
+    "time": "2026-11-15T18:00:00Z"
+   },
+   "floodStages": {
+    "action": 12,
+    "minor": 14,
+    "moderate": 18,
+    "major": 22
+   },
+   "regulated": true,
+   "regulatedNote": "Regulated flow.",
+   "note": "Fixture gauge note.",
+   "nwpsMinusUsgsFt": 0.5,
+   "band": {
+    "key": "normal",
+    "label": "Normal"
+   },
+   "stats": {
+    "years": "1990-2025",
+    "p10": 300,
+    "p50": 800
+   },
+   "nwps": {
+    "status": "ok",
+    "lid": "FIXR1",
+    "url": "https://water.noaa.gov/gauges/FIXR1",
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "forecast": {
+     "crestStage": 5.4,
+     "crestTime": "2026-11-16T12:00:00Z",
+     "crestFlowCfs": 1234,
+     "category": "no_flooding"
+    }
+   },
+   "flowCfs": {
+    "value": 812.0,
+    "time": "2026-11-15T18:00:00Z"
+   },
+   "tileTitle": "Release below dam"
+  },
+  "rain": {
+   "status": "ok",
+   "usgs": "00000004",
+   "time": "2026-11-15T18:00:00Z",
+   "last24In": 0.1,
+   "last7dIn": 0.6,
+   "qpf": {
+    "status": "ok",
+    "next24In": 0.2,
+    "next72In": 0.5,
+    "updated": "2026-11-15T18:00:00Z",
+    "sourceUrl": "https://example.test/qpf"
+   }
+  },
+  "river": [
+   {
+    "label": "River gauge A",
+    "usgs": "00000005",
+    "url": "https://waterdata.usgs.gov/monitoring-location/00000005/",
+    "stageFt": {
+     "value": 4.12,
+     "time": "2026-11-15T18:00:00Z"
+    },
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "regulated": true,
+    "regulatedNote": "Regulated flow.",
+    "note": "Fixture gauge note.",
+    "nwpsMinusUsgsFt": 0.5,
+    "band": {
+     "key": "normal",
+     "label": "Normal"
+    },
+    "stats": {
+     "years": "1990-2025",
+     "p10": 300,
+     "p50": 800
+    },
+    "nwps": {
+     "status": "ok",
+     "lid": "FIXA1",
+     "url": "https://water.noaa.gov/gauges/FIXA1",
+     "floodStages": {
+      "action": 12,
+      "minor": 14,
+      "moderate": 18,
+      "major": 22
+     },
+     "forecast": {
+      "crestStage": 5.4,
+      "crestTime": "2026-11-16T12:00:00Z",
+      "crestFlowCfs": 1234,
+      "category": "no_flooding"
+     }
+    },
+    "flowCfs": {
+     "value": 812.0,
+     "time": "2026-11-15T18:00:00Z"
+    }
+   },
+   {
+    "label": "River gauge B",
+    "usgs": "00000006",
+    "url": "https://waterdata.usgs.gov/monitoring-location/00000006/",
+    "stageFt": {
+     "value": 4.12,
+     "time": "2026-11-15T18:00:00Z"
+    },
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "regulated": true,
+    "regulatedNote": "Regulated flow.",
+    "note": "Fixture gauge note.",
+    "nwpsMinusUsgsFt": 0.5,
+    "band": {
+     "key": "normal",
+     "label": "Normal"
+    },
+    "stats": {
+     "years": "1990-2025",
+     "p10": 300,
+     "p50": 800
+    },
+    "nwps": {
+     "status": "ok",
+     "lid": "FIXB1",
+     "url": "https://water.noaa.gov/gauges/FIXB1",
+     "floodStages": {
+      "action": 12,
+      "minor": 14,
+      "moderate": 18,
+      "major": 22
+     },
+     "forecast": {
+      "crestStage": 5.4,
+      "crestTime": "2026-11-16T12:00:00Z",
+      "crestFlowCfs": 1234,
+      "category": "no_flooding"
+     }
+    },
+    "stageOnly": true,
+    "flowNote": "Stage only at this gauge."
+   }
+  ],
+  "inflows": [
+   {
+    "label": "Inflow C",
+    "usgs": "00000007",
+    "url": "https://waterdata.usgs.gov/monitoring-location/00000007/",
+    "stageFt": {
+     "value": 4.12,
+     "time": "2026-11-15T18:00:00Z"
+    },
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "regulated": true,
+    "regulatedNote": "Regulated flow.",
+    "note": "Fixture gauge note.",
+    "nwpsMinusUsgsFt": 0.5,
+    "band": {
+     "key": "normal",
+     "label": "Normal"
+    },
+    "stats": {
+     "years": "1990-2025",
+     "p10": 300,
+     "p50": 800
+    },
+    "nwps": {
+     "status": "ok",
+     "lid": "FIXC1",
+     "url": "https://water.noaa.gov/gauges/FIXC1",
+     "floodStages": {
+      "action": 12,
+      "minor": 14,
+      "moderate": 18,
+      "major": 22
+     },
+     "forecast": {
+      "crestStage": 5.4,
+      "crestTime": "2026-11-16T12:00:00Z",
+      "crestFlowCfs": 1234,
+      "category": "no_flooding"
+     }
+    },
+    "flowCfs": {
+     "value": 812.0,
+     "time": "2026-11-15T18:00:00Z"
+    }
+   }
+  ],
+  "forecast": {
+   "status": "ok",
+   "updated": "2026-11-15T18:00:00Z",
+   "sourceUrl": "https://example.test/fc",
+   "periods": [
+    {
+     "name": "Tonight",
+     "tempF": 48,
+     "short": "Clear",
+     "windDir": "N",
+     "windMph": "5 mph"
+    }
+   ]
+  },
+  "links": [
+   {
+    "label": "Fixture link",
+    "url": "https://example.test/"
+   }
+  ]
+ },
+ "jordan-lake": {
+  "ok": true,
+  "generatedAt": "2026-11-15T18:00:00Z",
+  "region": {
+   "id": "jordan-lake",
+   "name": "Jordan Lake",
+   "area": "Fixture area",
+   "waterType": "freshwater",
+   "instrumentSet": "freshwater-lake",
+   "anchor": {
+    "label": "the dam"
+   }
+  },
+  "alerts": {
+   "status": "ok",
+   "items": []
+  },
+  "lake": {
+   "usgs": "00000001",
+   "siteName": "Fixture dam",
+   "url": "https://waterdata.usgs.gov/",
+   "elevation": {
+    "value": 251.3,
+    "time": "2026-11-15T18:00:00Z"
+   },
+   "vsGuideFt": -0.2,
+   "guideCurveFt": 251.5,
+   "change24hFt": 0.05,
+   "change7dFt": -0.3,
+   "guideCurveChecked": "2026-11-15",
+   "guideCurveSource": "https://example.test/usace",
+   "series7d": [
+    [
+     "2026-11-15T18:00:00Z",
+     251.1
+    ],
+    [
+     "2026-11-15T18:00:00Z",
+     251.2
+    ],
+    [
+     "2026-11-15T18:00:00Z",
+     251.25
+    ],
+    [
+     "2026-11-15T18:00:00Z",
+     251.3
+    ]
+   ],
+   "nwps": {
+    "status": "ok",
+    "lid": "FIXL1",
+    "floodStages": {
+     "action": 260,
+     "minor": 264,
+     "moderate": 268,
+     "major": 272
+    }
+   }
+  },
+  "waterTemp": {
+   "status": "ok",
+   "usgs": "00000002",
+   "f": 61.0,
+   "c": 16.1,
+   "note": "Fixture",
+   "time": "2026-11-15T18:00:00Z"
+  },
+  "release": {
+   "label": "Below dam",
+   "usgs": "00000003",
+   "url": "https://waterdata.usgs.gov/monitoring-location/00000003/",
+   "stageFt": {
+    "value": 4.12,
+    "time": "2026-11-15T18:00:00Z"
+   },
+   "floodStages": {
+    "action": 12,
+    "minor": 14,
+    "moderate": 18,
+    "major": 22
+   },
+   "regulated": true,
+   "regulatedNote": "Regulated flow.",
+   "note": "Fixture gauge note.",
+   "nwpsMinusUsgsFt": 0.5,
+   "band": {
+    "key": "normal",
+    "label": "Normal"
+   },
+   "stats": {
+    "years": "1990-2025",
+    "p10": 300,
+    "p50": 800
+   },
+   "nwps": {
+    "status": "ok",
+    "lid": "FIXR1",
+    "url": "https://water.noaa.gov/gauges/FIXR1",
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "forecast": {
+     "crestStage": 5.4,
+     "crestTime": "2026-11-16T12:00:00Z",
+     "crestFlowCfs": 1234,
+     "category": "no_flooding"
+    }
+   },
+   "flowCfs": {
+    "value": 812.0,
+    "time": "2026-11-15T18:00:00Z"
+   },
+   "tileTitle": "Release below dam"
+  },
+  "rain": {
+   "status": "ok",
+   "usgs": "00000004",
+   "time": "2026-11-15T18:00:00Z",
+   "last24In": 0.1,
+   "last7dIn": 0.6,
+   "qpf": {
+    "status": "ok",
+    "next24In": 0.2,
+    "next72In": 0.5,
+    "updated": "2026-11-15T18:00:00Z",
+    "sourceUrl": "https://example.test/qpf"
+   }
+  },
+  "river": [
+   {
+    "label": "River gauge A",
+    "usgs": "00000005",
+    "url": "https://waterdata.usgs.gov/monitoring-location/00000005/",
+    "stageFt": {
+     "value": 4.12,
+     "time": "2026-11-15T18:00:00Z"
+    },
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "regulated": true,
+    "regulatedNote": "Regulated flow.",
+    "note": "Fixture gauge note.",
+    "nwpsMinusUsgsFt": 0.5,
+    "band": {
+     "key": "normal",
+     "label": "Normal"
+    },
+    "stats": {
+     "years": "1990-2025",
+     "p10": 300,
+     "p50": 800
+    },
+    "nwps": {
+     "status": "ok",
+     "lid": "FIXA1",
+     "url": "https://water.noaa.gov/gauges/FIXA1",
+     "floodStages": {
+      "action": 12,
+      "minor": 14,
+      "moderate": 18,
+      "major": 22
+     },
+     "forecast": {
+      "crestStage": 5.4,
+      "crestTime": "2026-11-16T12:00:00Z",
+      "crestFlowCfs": 1234,
+      "category": "no_flooding"
+     }
+    },
+    "flowCfs": {
+     "value": 812.0,
+     "time": "2026-11-15T18:00:00Z"
+    }
+   },
+   {
+    "label": "River gauge B",
+    "usgs": "00000006",
+    "url": "https://waterdata.usgs.gov/monitoring-location/00000006/",
+    "stageFt": {
+     "value": 4.12,
+     "time": "2026-11-15T18:00:00Z"
+    },
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "regulated": true,
+    "regulatedNote": "Regulated flow.",
+    "note": "Fixture gauge note.",
+    "nwpsMinusUsgsFt": 0.5,
+    "band": {
+     "key": "normal",
+     "label": "Normal"
+    },
+    "stats": {
+     "years": "1990-2025",
+     "p10": 300,
+     "p50": 800
+    },
+    "nwps": {
+     "status": "ok",
+     "lid": "FIXB1",
+     "url": "https://water.noaa.gov/gauges/FIXB1",
+     "floodStages": {
+      "action": 12,
+      "minor": 14,
+      "moderate": 18,
+      "major": 22
+     },
+     "forecast": {
+      "crestStage": 5.4,
+      "crestTime": "2026-11-16T12:00:00Z",
+      "crestFlowCfs": 1234,
+      "category": "no_flooding"
+     }
+    },
+    "stageOnly": true,
+    "flowNote": "Stage only at this gauge."
+   }
+  ],
+  "inflows": [
+   {
+    "label": "Inflow C",
+    "usgs": "00000007",
+    "url": "https://waterdata.usgs.gov/monitoring-location/00000007/",
+    "stageFt": {
+     "value": 4.12,
+     "time": "2026-11-15T18:00:00Z"
+    },
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "regulated": true,
+    "regulatedNote": "Regulated flow.",
+    "note": "Fixture gauge note.",
+    "nwpsMinusUsgsFt": 0.5,
+    "band": {
+     "key": "normal",
+     "label": "Normal"
+    },
+    "stats": {
+     "years": "1990-2025",
+     "p10": 300,
+     "p50": 800
+    },
+    "nwps": {
+     "status": "ok",
+     "lid": "FIXC1",
+     "url": "https://water.noaa.gov/gauges/FIXC1",
+     "floodStages": {
+      "action": 12,
+      "minor": 14,
+      "moderate": 18,
+      "major": 22
+     },
+     "forecast": {
+      "crestStage": 5.4,
+      "crestTime": "2026-11-16T12:00:00Z",
+      "crestFlowCfs": 1234,
+      "category": "no_flooding"
+     }
+    },
+    "flowCfs": {
+     "value": 812.0,
+     "time": "2026-11-15T18:00:00Z"
+    }
+   }
+  ],
+  "forecast": {
+   "status": "ok",
+   "updated": "2026-11-15T18:00:00Z",
+   "sourceUrl": "https://example.test/fc",
+   "periods": [
+    {
+     "name": "Tonight",
+     "tempF": 48,
+     "short": "Clear",
+     "windDir": "N",
+     "windMph": "5 mph"
+    }
+   ]
+  },
+  "links": [
+   {
+    "label": "Fixture link",
+    "url": "https://example.test/"
+   }
+  ]
+ },
+ "neuse-river": {
+  "ok": true,
+  "generatedAt": "2026-11-15T18:00:00Z",
+  "region": {
+   "id": "neuse-river",
+   "name": "Neuse River",
+   "area": "Fixture reach",
+   "waterType": "freshwater",
+   "instrumentSet": "freshwater-river",
+   "anchor": {
+    "label": "this reach"
+   }
+  },
+  "alerts": {
+   "status": "ok",
+   "items": [
+    {
+     "event": "Flood Watch",
+     "ends": "2026-11-16T05:00:00Z"
+    }
+   ]
+  },
+  "waterTemp": {
+   "status": "ok",
+   "usgs": "00000008",
+   "f": 58.0,
+   "c": 14.4,
+   "note": "Fixture",
+   "time": "2026-11-15T18:00:00Z"
+  },
+  "river": [
+   {
+    "label": "Reach gauge 1",
+    "usgs": "00000009",
+    "url": "https://waterdata.usgs.gov/monitoring-location/00000009/",
+    "stageFt": {
+     "value": 4.12,
+     "time": "2026-11-15T18:00:00Z"
+    },
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "regulated": true,
+    "regulatedNote": "Regulated flow.",
+    "note": "Fixture gauge note.",
+    "nwpsMinusUsgsFt": 0.5,
+    "band": {
+     "key": "normal",
+     "label": "Normal"
+    },
+    "stats": {
+     "years": "1990-2025",
+     "p10": 300,
+     "p50": 800
+    },
+    "nwps": {
+     "status": "ok",
+     "lid": "FIXD1",
+     "url": "https://water.noaa.gov/gauges/FIXD1",
+     "floodStages": {
+      "action": 12,
+      "minor": 14,
+      "moderate": 18,
+      "major": 22
+     },
+     "forecast": {
+      "crestStage": 5.4,
+      "crestTime": "2026-11-16T12:00:00Z",
+      "crestFlowCfs": 1234,
+      "category": "no_flooding"
+     }
+    },
+    "flowCfs": {
+     "value": 812.0,
+     "time": "2026-11-15T18:00:00Z"
+    }
+   },
+   {
+    "label": "Reach gauge 2",
+    "usgs": "00000010",
+    "url": "https://waterdata.usgs.gov/monitoring-location/00000010/",
+    "stageFt": {
+     "value": 4.12,
+     "time": "2026-11-15T18:00:00Z"
+    },
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "regulated": true,
+    "regulatedNote": "Regulated flow.",
+    "note": "Fixture gauge note.",
+    "nwpsMinusUsgsFt": 0.5,
+    "band": {
+     "key": "normal",
+     "label": "Normal"
+    },
+    "stats": {
+     "years": "1990-2025",
+     "p10": 300,
+     "p50": 800
+    },
+    "nwps": {
+     "status": "ok",
+     "lid": "FIXE1",
+     "url": "https://water.noaa.gov/gauges/FIXE1",
+     "floodStages": {
+      "action": 12,
+      "minor": 14,
+      "moderate": 18,
+      "major": 22
+     },
+     "forecast": {
+      "crestStage": 5.4,
+      "crestTime": "2026-11-16T12:00:00Z",
+      "crestFlowCfs": 1234,
+      "category": "no_flooding"
+     }
+    },
+    "flowCfs": {
+     "value": 812.0,
+     "time": "2026-11-15T18:00:00Z"
+    }
+   },
+   {
+    "label": "Reach gauge 3",
+    "usgs": "00000011",
+    "url": "https://waterdata.usgs.gov/monitoring-location/00000011/",
+    "stageFt": {
+     "value": 4.12,
+     "time": "2026-11-15T18:00:00Z"
+    },
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "regulated": true,
+    "regulatedNote": "Regulated flow.",
+    "note": "Fixture gauge note.",
+    "nwpsMinusUsgsFt": 0.5,
+    "band": {
+     "key": "normal",
+     "label": "Normal"
+    },
+    "stats": {
+     "years": "1990-2025",
+     "p10": 300,
+     "p50": 800
+    },
+    "nwps": {
+     "status": "ok",
+     "lid": "FIXF1",
+     "url": "https://water.noaa.gov/gauges/FIXF1",
+     "floodStages": {
+      "action": 12,
+      "minor": 14,
+      "moderate": 18,
+      "major": 22
+     },
+     "forecast": {
+      "crestStage": 5.4,
+      "crestTime": "2026-11-16T12:00:00Z",
+      "crestFlowCfs": 1234,
+      "category": "no_flooding"
+     }
+    },
+    "stageOnly": true,
+    "flowNote": "Stage only at this gauge."
+   }
+  ],
+  "forecast": {
+   "status": "ok",
+   "updated": "2026-11-15T18:00:00Z",
+   "sourceUrl": "https://example.test/fc",
+   "periods": [
+    {
+     "name": "Tonight",
+     "tempF": 50,
+     "short": "Cloudy",
+     "windDir": "S",
+     "windMph": "7 mph"
+    }
+   ]
+  },
+  "links": []
+ },
+ "cape-fear-river": {
+  "ok": true,
+  "generatedAt": "2026-11-15T18:00:00Z",
+  "region": {
+   "id": "cape-fear-river",
+   "name": "Cape Fear River",
+   "area": "Fixture reach",
+   "waterType": "freshwater",
+   "instrumentSet": "freshwater-river",
+   "anchor": {
+    "label": "this reach"
+   }
+  },
+  "alerts": {
+   "status": "ok",
+   "items": []
+  },
+  "waterTemp": {
+   "status": "ok",
+   "usgs": "00000008",
+   "f": 58.0,
+   "c": 14.4,
+   "note": "Fixture",
+   "time": "2026-11-15T18:00:00Z"
+  },
+  "river": [
+   {
+    "label": "Reach gauge 1",
+    "usgs": "00000009",
+    "url": "https://waterdata.usgs.gov/monitoring-location/00000009/",
+    "stageFt": {
+     "value": 4.12,
+     "time": "2026-11-15T18:00:00Z"
+    },
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "regulated": true,
+    "regulatedNote": "Regulated flow.",
+    "note": "Fixture gauge note.",
+    "nwpsMinusUsgsFt": 0.5,
+    "band": {
+     "key": "normal",
+     "label": "Normal"
+    },
+    "stats": {
+     "years": "1990-2025",
+     "p10": 300,
+     "p50": 800
+    },
+    "nwps": {
+     "status": "ok",
+     "lid": "FIXD1",
+     "url": "https://water.noaa.gov/gauges/FIXD1",
+     "floodStages": {
+      "action": 12,
+      "minor": 14,
+      "moderate": 18,
+      "major": 22
+     },
+     "forecast": {
+      "crestStage": 5.4,
+      "crestTime": "2026-11-16T12:00:00Z",
+      "crestFlowCfs": 1234,
+      "category": "no_flooding"
+     }
+    },
+    "flowCfs": {
+     "value": 812.0,
+     "time": "2026-11-15T18:00:00Z"
+    }
+   },
+   {
+    "label": "Reach gauge 2",
+    "usgs": "00000010",
+    "url": "https://waterdata.usgs.gov/monitoring-location/00000010/",
+    "stageFt": {
+     "value": 4.12,
+     "time": "2026-11-15T18:00:00Z"
+    },
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "regulated": true,
+    "regulatedNote": "Regulated flow.",
+    "note": "Fixture gauge note.",
+    "nwpsMinusUsgsFt": 0.5,
+    "band": {
+     "key": "normal",
+     "label": "Normal"
+    },
+    "stats": {
+     "years": "1990-2025",
+     "p10": 300,
+     "p50": 800
+    },
+    "nwps": {
+     "status": "ok",
+     "lid": "FIXE1",
+     "url": "https://water.noaa.gov/gauges/FIXE1",
+     "floodStages": {
+      "action": 12,
+      "minor": 14,
+      "moderate": 18,
+      "major": 22
+     },
+     "forecast": {
+      "crestStage": 5.4,
+      "crestTime": "2026-11-16T12:00:00Z",
+      "crestFlowCfs": 1234,
+      "category": "no_flooding"
+     }
+    },
+    "flowCfs": {
+     "value": 812.0,
+     "time": "2026-11-15T18:00:00Z"
+    }
+   },
+   {
+    "label": "Reach gauge 3",
+    "usgs": "00000011",
+    "url": "https://waterdata.usgs.gov/monitoring-location/00000011/",
+    "stageFt": {
+     "value": 4.12,
+     "time": "2026-11-15T18:00:00Z"
+    },
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "regulated": true,
+    "regulatedNote": "Regulated flow.",
+    "note": "Fixture gauge note.",
+    "nwpsMinusUsgsFt": 0.5,
+    "band": {
+     "key": "normal",
+     "label": "Normal"
+    },
+    "stats": {
+     "years": "1990-2025",
+     "p10": 300,
+     "p50": 800
+    },
+    "nwps": {
+     "status": "ok",
+     "lid": "FIXF1",
+     "url": "https://water.noaa.gov/gauges/FIXF1",
+     "floodStages": {
+      "action": 12,
+      "minor": 14,
+      "moderate": 18,
+      "major": 22
+     },
+     "forecast": {
+      "crestStage": 5.4,
+      "crestTime": "2026-11-16T12:00:00Z",
+      "crestFlowCfs": 1234,
+      "category": "no_flooding"
+     }
+    },
+    "stageOnly": true,
+    "flowNote": "Stage only at this gauge."
+   }
+  ],
+  "forecast": {
+   "status": "ok",
+   "updated": "2026-11-15T18:00:00Z",
+   "sourceUrl": "https://example.test/fc",
+   "periods": [
+    {
+     "name": "Tonight",
+     "tempF": 50,
+     "short": "Cloudy",
+     "windDir": "S",
+     "windMph": "7 mph"
+    }
+   ]
+  },
+  "links": []
+ },
+ "falls-lake#alerts-unavailable": {
+  "ok": true,
+  "generatedAt": "2026-11-15T18:00:00Z",
+  "region": {
+   "id": "falls-lake",
+   "name": "Falls Lake",
+   "area": "Fixture area",
+   "waterType": "freshwater",
+   "instrumentSet": "freshwater-lake",
+   "anchor": {
+    "label": "the dam"
+   }
+  },
+  "alerts": {
+   "status": "error"
+  },
+  "lake": {
+   "usgs": "00000001",
+   "siteName": "Fixture dam",
+   "url": "https://waterdata.usgs.gov/",
+   "elevation": {
+    "value": 251.3,
+    "time": "2026-11-15T18:00:00Z"
+   },
+   "vsGuideFt": -0.2,
+   "guideCurveFt": 251.5,
+   "change24hFt": 0.05,
+   "change7dFt": -0.3,
+   "guideCurveChecked": "2026-11-15",
+   "guideCurveSource": "https://example.test/usace",
+   "series7d": [
+    [
+     "2026-11-15T18:00:00Z",
+     251.1
+    ],
+    [
+     "2026-11-15T18:00:00Z",
+     251.2
+    ],
+    [
+     "2026-11-15T18:00:00Z",
+     251.25
+    ],
+    [
+     "2026-11-15T18:00:00Z",
+     251.3
+    ]
+   ],
+   "nwps": {
+    "status": "ok",
+    "lid": "FIXL1",
+    "floodStages": {
+     "action": 260,
+     "minor": 264,
+     "moderate": 268,
+     "major": 272
+    }
+   }
+  },
+  "waterTemp": {
+   "status": "ok",
+   "usgs": "00000002",
+   "f": 61.0,
+   "c": 16.1,
+   "note": "Fixture",
+   "time": "2026-11-15T18:00:00Z"
+  },
+  "release": {
+   "label": "Below dam",
+   "usgs": "00000003",
+   "url": "https://waterdata.usgs.gov/monitoring-location/00000003/",
+   "stageFt": {
+    "value": 4.12,
+    "time": "2026-11-15T18:00:00Z"
+   },
+   "floodStages": {
+    "action": 12,
+    "minor": 14,
+    "moderate": 18,
+    "major": 22
+   },
+   "regulated": true,
+   "regulatedNote": "Regulated flow.",
+   "note": "Fixture gauge note.",
+   "nwpsMinusUsgsFt": 0.5,
+   "band": {
+    "key": "normal",
+    "label": "Normal"
+   },
+   "stats": {
+    "years": "1990-2025",
+    "p10": 300,
+    "p50": 800
+   },
+   "nwps": {
+    "status": "ok",
+    "lid": "FIXR1",
+    "url": "https://water.noaa.gov/gauges/FIXR1",
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "forecast": {
+     "crestStage": 5.4,
+     "crestTime": "2026-11-16T12:00:00Z",
+     "crestFlowCfs": 1234,
+     "category": "no_flooding"
+    }
+   },
+   "flowCfs": {
+    "value": 812.0,
+    "time": "2026-11-15T18:00:00Z"
+   },
+   "tileTitle": "Release below dam"
+  },
+  "rain": {
+   "status": "ok",
+   "usgs": "00000004",
+   "time": "2026-11-15T18:00:00Z",
+   "last24In": 0.1,
+   "last7dIn": 0.6,
+   "qpf": {
+    "status": "ok",
+    "next24In": 0.2,
+    "next72In": 0.5,
+    "updated": "2026-11-15T18:00:00Z",
+    "sourceUrl": "https://example.test/qpf"
+   }
+  },
+  "river": [
+   {
+    "label": "River gauge A",
+    "usgs": "00000005",
+    "url": "https://waterdata.usgs.gov/monitoring-location/00000005/",
+    "stageFt": {
+     "value": 4.12,
+     "time": "2026-11-15T18:00:00Z"
+    },
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "regulated": true,
+    "regulatedNote": "Regulated flow.",
+    "note": "Fixture gauge note.",
+    "nwpsMinusUsgsFt": 0.5,
+    "band": {
+     "key": "normal",
+     "label": "Normal"
+    },
+    "stats": {
+     "years": "1990-2025",
+     "p10": 300,
+     "p50": 800
+    },
+    "nwps": {
+     "status": "ok",
+     "lid": "FIXA1",
+     "url": "https://water.noaa.gov/gauges/FIXA1",
+     "floodStages": {
+      "action": 12,
+      "minor": 14,
+      "moderate": 18,
+      "major": 22
+     },
+     "forecast": {
+      "crestStage": 5.4,
+      "crestTime": "2026-11-16T12:00:00Z",
+      "crestFlowCfs": 1234,
+      "category": "no_flooding"
+     }
+    },
+    "flowCfs": {
+     "value": 812.0,
+     "time": "2026-11-15T18:00:00Z"
+    }
+   },
+   {
+    "label": "River gauge B",
+    "usgs": "00000006",
+    "url": "https://waterdata.usgs.gov/monitoring-location/00000006/",
+    "stageFt": {
+     "value": 4.12,
+     "time": "2026-11-15T18:00:00Z"
+    },
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "regulated": true,
+    "regulatedNote": "Regulated flow.",
+    "note": "Fixture gauge note.",
+    "nwpsMinusUsgsFt": 0.5,
+    "band": {
+     "key": "normal",
+     "label": "Normal"
+    },
+    "stats": {
+     "years": "1990-2025",
+     "p10": 300,
+     "p50": 800
+    },
+    "nwps": {
+     "status": "ok",
+     "lid": "FIXB1",
+     "url": "https://water.noaa.gov/gauges/FIXB1",
+     "floodStages": {
+      "action": 12,
+      "minor": 14,
+      "moderate": 18,
+      "major": 22
+     },
+     "forecast": {
+      "crestStage": 5.4,
+      "crestTime": "2026-11-16T12:00:00Z",
+      "crestFlowCfs": 1234,
+      "category": "no_flooding"
+     }
+    },
+    "stageOnly": true,
+    "flowNote": "Stage only at this gauge."
+   }
+  ],
+  "inflows": [
+   {
+    "label": "Inflow C",
+    "usgs": "00000007",
+    "url": "https://waterdata.usgs.gov/monitoring-location/00000007/",
+    "stageFt": {
+     "value": 4.12,
+     "time": "2026-11-15T18:00:00Z"
+    },
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "regulated": true,
+    "regulatedNote": "Regulated flow.",
+    "note": "Fixture gauge note.",
+    "nwpsMinusUsgsFt": 0.5,
+    "band": {
+     "key": "normal",
+     "label": "Normal"
+    },
+    "stats": {
+     "years": "1990-2025",
+     "p10": 300,
+     "p50": 800
+    },
+    "nwps": {
+     "status": "ok",
+     "lid": "FIXC1",
+     "url": "https://water.noaa.gov/gauges/FIXC1",
+     "floodStages": {
+      "action": 12,
+      "minor": 14,
+      "moderate": 18,
+      "major": 22
+     },
+     "forecast": {
+      "crestStage": 5.4,
+      "crestTime": "2026-11-16T12:00:00Z",
+      "crestFlowCfs": 1234,
+      "category": "no_flooding"
+     }
+    },
+    "flowCfs": {
+     "value": 812.0,
+     "time": "2026-11-15T18:00:00Z"
+    }
+   }
+  ],
+  "forecast": {
+   "status": "ok",
+   "updated": "2026-11-15T18:00:00Z",
+   "sourceUrl": "https://example.test/fc",
+   "periods": [
+    {
+     "name": "Tonight",
+     "tempF": 48,
+     "short": "Clear",
+     "windDir": "N",
+     "windMph": "5 mph"
+    }
+   ]
+  },
+  "links": [
+   {
+    "label": "Fixture link",
+    "url": "https://example.test/"
+   }
+  ]
+ },
+ "jordan-lake#alerts-unavailable": {
+  "ok": true,
+  "generatedAt": "2026-11-15T18:00:00Z",
+  "region": {
+   "id": "jordan-lake",
+   "name": "Jordan Lake",
+   "area": "Fixture area",
+   "waterType": "freshwater",
+   "instrumentSet": "freshwater-lake",
+   "anchor": {
+    "label": "the dam"
+   }
+  },
+  "alerts": {
+   "status": "error"
+  },
+  "lake": {
+   "usgs": "00000001",
+   "siteName": "Fixture dam",
+   "url": "https://waterdata.usgs.gov/",
+   "elevation": {
+    "value": 251.3,
+    "time": "2026-11-15T18:00:00Z"
+   },
+   "vsGuideFt": -0.2,
+   "guideCurveFt": 251.5,
+   "change24hFt": 0.05,
+   "change7dFt": -0.3,
+   "guideCurveChecked": "2026-11-15",
+   "guideCurveSource": "https://example.test/usace",
+   "series7d": [
+    [
+     "2026-11-15T18:00:00Z",
+     251.1
+    ],
+    [
+     "2026-11-15T18:00:00Z",
+     251.2
+    ],
+    [
+     "2026-11-15T18:00:00Z",
+     251.25
+    ],
+    [
+     "2026-11-15T18:00:00Z",
+     251.3
+    ]
+   ],
+   "nwps": {
+    "status": "ok",
+    "lid": "FIXL1",
+    "floodStages": {
+     "action": 260,
+     "minor": 264,
+     "moderate": 268,
+     "major": 272
+    }
+   }
+  },
+  "waterTemp": {
+   "status": "ok",
+   "usgs": "00000002",
+   "f": 61.0,
+   "c": 16.1,
+   "note": "Fixture",
+   "time": "2026-11-15T18:00:00Z"
+  },
+  "release": {
+   "label": "Below dam",
+   "usgs": "00000003",
+   "url": "https://waterdata.usgs.gov/monitoring-location/00000003/",
+   "stageFt": {
+    "value": 4.12,
+    "time": "2026-11-15T18:00:00Z"
+   },
+   "floodStages": {
+    "action": 12,
+    "minor": 14,
+    "moderate": 18,
+    "major": 22
+   },
+   "regulated": true,
+   "regulatedNote": "Regulated flow.",
+   "note": "Fixture gauge note.",
+   "nwpsMinusUsgsFt": 0.5,
+   "band": {
+    "key": "normal",
+    "label": "Normal"
+   },
+   "stats": {
+    "years": "1990-2025",
+    "p10": 300,
+    "p50": 800
+   },
+   "nwps": {
+    "status": "ok",
+    "lid": "FIXR1",
+    "url": "https://water.noaa.gov/gauges/FIXR1",
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "forecast": {
+     "crestStage": 5.4,
+     "crestTime": "2026-11-16T12:00:00Z",
+     "crestFlowCfs": 1234,
+     "category": "no_flooding"
+    }
+   },
+   "flowCfs": {
+    "value": 812.0,
+    "time": "2026-11-15T18:00:00Z"
+   },
+   "tileTitle": "Release below dam"
+  },
+  "rain": {
+   "status": "ok",
+   "usgs": "00000004",
+   "time": "2026-11-15T18:00:00Z",
+   "last24In": 0.1,
+   "last7dIn": 0.6,
+   "qpf": {
+    "status": "ok",
+    "next24In": 0.2,
+    "next72In": 0.5,
+    "updated": "2026-11-15T18:00:00Z",
+    "sourceUrl": "https://example.test/qpf"
+   }
+  },
+  "river": [
+   {
+    "label": "River gauge A",
+    "usgs": "00000005",
+    "url": "https://waterdata.usgs.gov/monitoring-location/00000005/",
+    "stageFt": {
+     "value": 4.12,
+     "time": "2026-11-15T18:00:00Z"
+    },
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "regulated": true,
+    "regulatedNote": "Regulated flow.",
+    "note": "Fixture gauge note.",
+    "nwpsMinusUsgsFt": 0.5,
+    "band": {
+     "key": "normal",
+     "label": "Normal"
+    },
+    "stats": {
+     "years": "1990-2025",
+     "p10": 300,
+     "p50": 800
+    },
+    "nwps": {
+     "status": "ok",
+     "lid": "FIXA1",
+     "url": "https://water.noaa.gov/gauges/FIXA1",
+     "floodStages": {
+      "action": 12,
+      "minor": 14,
+      "moderate": 18,
+      "major": 22
+     },
+     "forecast": {
+      "crestStage": 5.4,
+      "crestTime": "2026-11-16T12:00:00Z",
+      "crestFlowCfs": 1234,
+      "category": "no_flooding"
+     }
+    },
+    "flowCfs": {
+     "value": 812.0,
+     "time": "2026-11-15T18:00:00Z"
+    }
+   },
+   {
+    "label": "River gauge B",
+    "usgs": "00000006",
+    "url": "https://waterdata.usgs.gov/monitoring-location/00000006/",
+    "stageFt": {
+     "value": 4.12,
+     "time": "2026-11-15T18:00:00Z"
+    },
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "regulated": true,
+    "regulatedNote": "Regulated flow.",
+    "note": "Fixture gauge note.",
+    "nwpsMinusUsgsFt": 0.5,
+    "band": {
+     "key": "normal",
+     "label": "Normal"
+    },
+    "stats": {
+     "years": "1990-2025",
+     "p10": 300,
+     "p50": 800
+    },
+    "nwps": {
+     "status": "ok",
+     "lid": "FIXB1",
+     "url": "https://water.noaa.gov/gauges/FIXB1",
+     "floodStages": {
+      "action": 12,
+      "minor": 14,
+      "moderate": 18,
+      "major": 22
+     },
+     "forecast": {
+      "crestStage": 5.4,
+      "crestTime": "2026-11-16T12:00:00Z",
+      "crestFlowCfs": 1234,
+      "category": "no_flooding"
+     }
+    },
+    "stageOnly": true,
+    "flowNote": "Stage only at this gauge."
+   }
+  ],
+  "inflows": [
+   {
+    "label": "Inflow C",
+    "usgs": "00000007",
+    "url": "https://waterdata.usgs.gov/monitoring-location/00000007/",
+    "stageFt": {
+     "value": 4.12,
+     "time": "2026-11-15T18:00:00Z"
+    },
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "regulated": true,
+    "regulatedNote": "Regulated flow.",
+    "note": "Fixture gauge note.",
+    "nwpsMinusUsgsFt": 0.5,
+    "band": {
+     "key": "normal",
+     "label": "Normal"
+    },
+    "stats": {
+     "years": "1990-2025",
+     "p10": 300,
+     "p50": 800
+    },
+    "nwps": {
+     "status": "ok",
+     "lid": "FIXC1",
+     "url": "https://water.noaa.gov/gauges/FIXC1",
+     "floodStages": {
+      "action": 12,
+      "minor": 14,
+      "moderate": 18,
+      "major": 22
+     },
+     "forecast": {
+      "crestStage": 5.4,
+      "crestTime": "2026-11-16T12:00:00Z",
+      "crestFlowCfs": 1234,
+      "category": "no_flooding"
+     }
+    },
+    "flowCfs": {
+     "value": 812.0,
+     "time": "2026-11-15T18:00:00Z"
+    }
+   }
+  ],
+  "forecast": {
+   "status": "ok",
+   "updated": "2026-11-15T18:00:00Z",
+   "sourceUrl": "https://example.test/fc",
+   "periods": [
+    {
+     "name": "Tonight",
+     "tempF": 48,
+     "short": "Clear",
+     "windDir": "N",
+     "windMph": "5 mph"
+    }
+   ]
+  },
+  "links": [
+   {
+    "label": "Fixture link",
+    "url": "https://example.test/"
+   }
+  ]
+ },
+ "neuse-river#alerts-unavailable": {
+  "ok": true,
+  "generatedAt": "2026-11-15T18:00:00Z",
+  "region": {
+   "id": "neuse-river",
+   "name": "Neuse River",
+   "area": "Fixture reach",
+   "waterType": "freshwater",
+   "instrumentSet": "freshwater-river",
+   "anchor": {
+    "label": "this reach"
+   }
+  },
+  "alerts": {
+   "status": "error"
+  },
+  "waterTemp": {
+   "status": "ok",
+   "usgs": "00000008",
+   "f": 58.0,
+   "c": 14.4,
+   "note": "Fixture",
+   "time": "2026-11-15T18:00:00Z"
+  },
+  "river": [
+   {
+    "label": "Reach gauge 1",
+    "usgs": "00000009",
+    "url": "https://waterdata.usgs.gov/monitoring-location/00000009/",
+    "stageFt": {
+     "value": 4.12,
+     "time": "2026-11-15T18:00:00Z"
+    },
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "regulated": true,
+    "regulatedNote": "Regulated flow.",
+    "note": "Fixture gauge note.",
+    "nwpsMinusUsgsFt": 0.5,
+    "band": {
+     "key": "normal",
+     "label": "Normal"
+    },
+    "stats": {
+     "years": "1990-2025",
+     "p10": 300,
+     "p50": 800
+    },
+    "nwps": {
+     "status": "ok",
+     "lid": "FIXD1",
+     "url": "https://water.noaa.gov/gauges/FIXD1",
+     "floodStages": {
+      "action": 12,
+      "minor": 14,
+      "moderate": 18,
+      "major": 22
+     },
+     "forecast": {
+      "crestStage": 5.4,
+      "crestTime": "2026-11-16T12:00:00Z",
+      "crestFlowCfs": 1234,
+      "category": "no_flooding"
+     }
+    },
+    "flowCfs": {
+     "value": 812.0,
+     "time": "2026-11-15T18:00:00Z"
+    }
+   },
+   {
+    "label": "Reach gauge 2",
+    "usgs": "00000010",
+    "url": "https://waterdata.usgs.gov/monitoring-location/00000010/",
+    "stageFt": {
+     "value": 4.12,
+     "time": "2026-11-15T18:00:00Z"
+    },
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "regulated": true,
+    "regulatedNote": "Regulated flow.",
+    "note": "Fixture gauge note.",
+    "nwpsMinusUsgsFt": 0.5,
+    "band": {
+     "key": "normal",
+     "label": "Normal"
+    },
+    "stats": {
+     "years": "1990-2025",
+     "p10": 300,
+     "p50": 800
+    },
+    "nwps": {
+     "status": "ok",
+     "lid": "FIXE1",
+     "url": "https://water.noaa.gov/gauges/FIXE1",
+     "floodStages": {
+      "action": 12,
+      "minor": 14,
+      "moderate": 18,
+      "major": 22
+     },
+     "forecast": {
+      "crestStage": 5.4,
+      "crestTime": "2026-11-16T12:00:00Z",
+      "crestFlowCfs": 1234,
+      "category": "no_flooding"
+     }
+    },
+    "flowCfs": {
+     "value": 812.0,
+     "time": "2026-11-15T18:00:00Z"
+    }
+   },
+   {
+    "label": "Reach gauge 3",
+    "usgs": "00000011",
+    "url": "https://waterdata.usgs.gov/monitoring-location/00000011/",
+    "stageFt": {
+     "value": 4.12,
+     "time": "2026-11-15T18:00:00Z"
+    },
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "regulated": true,
+    "regulatedNote": "Regulated flow.",
+    "note": "Fixture gauge note.",
+    "nwpsMinusUsgsFt": 0.5,
+    "band": {
+     "key": "normal",
+     "label": "Normal"
+    },
+    "stats": {
+     "years": "1990-2025",
+     "p10": 300,
+     "p50": 800
+    },
+    "nwps": {
+     "status": "ok",
+     "lid": "FIXF1",
+     "url": "https://water.noaa.gov/gauges/FIXF1",
+     "floodStages": {
+      "action": 12,
+      "minor": 14,
+      "moderate": 18,
+      "major": 22
+     },
+     "forecast": {
+      "crestStage": 5.4,
+      "crestTime": "2026-11-16T12:00:00Z",
+      "crestFlowCfs": 1234,
+      "category": "no_flooding"
+     }
+    },
+    "stageOnly": true,
+    "flowNote": "Stage only at this gauge."
+   }
+  ],
+  "forecast": {
+   "status": "ok",
+   "updated": "2026-11-15T18:00:00Z",
+   "sourceUrl": "https://example.test/fc",
+   "periods": [
+    {
+     "name": "Tonight",
+     "tempF": 50,
+     "short": "Cloudy",
+     "windDir": "S",
+     "windMph": "7 mph"
+    }
+   ]
+  },
+  "links": []
+ },
+ "cape-fear-river#alerts-unavailable": {
+  "ok": true,
+  "generatedAt": "2026-11-15T18:00:00Z",
+  "region": {
+   "id": "cape-fear-river",
+   "name": "Cape Fear River",
+   "area": "Fixture reach",
+   "waterType": "freshwater",
+   "instrumentSet": "freshwater-river",
+   "anchor": {
+    "label": "this reach"
+   }
+  },
+  "alerts": {
+   "status": "error"
+  },
+  "waterTemp": {
+   "status": "ok",
+   "usgs": "00000008",
+   "f": 58.0,
+   "c": 14.4,
+   "note": "Fixture",
+   "time": "2026-11-15T18:00:00Z"
+  },
+  "river": [
+   {
+    "label": "Reach gauge 1",
+    "usgs": "00000009",
+    "url": "https://waterdata.usgs.gov/monitoring-location/00000009/",
+    "stageFt": {
+     "value": 4.12,
+     "time": "2026-11-15T18:00:00Z"
+    },
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "regulated": true,
+    "regulatedNote": "Regulated flow.",
+    "note": "Fixture gauge note.",
+    "nwpsMinusUsgsFt": 0.5,
+    "band": {
+     "key": "normal",
+     "label": "Normal"
+    },
+    "stats": {
+     "years": "1990-2025",
+     "p10": 300,
+     "p50": 800
+    },
+    "nwps": {
+     "status": "ok",
+     "lid": "FIXD1",
+     "url": "https://water.noaa.gov/gauges/FIXD1",
+     "floodStages": {
+      "action": 12,
+      "minor": 14,
+      "moderate": 18,
+      "major": 22
+     },
+     "forecast": {
+      "crestStage": 5.4,
+      "crestTime": "2026-11-16T12:00:00Z",
+      "crestFlowCfs": 1234,
+      "category": "no_flooding"
+     }
+    },
+    "flowCfs": {
+     "value": 812.0,
+     "time": "2026-11-15T18:00:00Z"
+    }
+   },
+   {
+    "label": "Reach gauge 2",
+    "usgs": "00000010",
+    "url": "https://waterdata.usgs.gov/monitoring-location/00000010/",
+    "stageFt": {
+     "value": 4.12,
+     "time": "2026-11-15T18:00:00Z"
+    },
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "regulated": true,
+    "regulatedNote": "Regulated flow.",
+    "note": "Fixture gauge note.",
+    "nwpsMinusUsgsFt": 0.5,
+    "band": {
+     "key": "normal",
+     "label": "Normal"
+    },
+    "stats": {
+     "years": "1990-2025",
+     "p10": 300,
+     "p50": 800
+    },
+    "nwps": {
+     "status": "ok",
+     "lid": "FIXE1",
+     "url": "https://water.noaa.gov/gauges/FIXE1",
+     "floodStages": {
+      "action": 12,
+      "minor": 14,
+      "moderate": 18,
+      "major": 22
+     },
+     "forecast": {
+      "crestStage": 5.4,
+      "crestTime": "2026-11-16T12:00:00Z",
+      "crestFlowCfs": 1234,
+      "category": "no_flooding"
+     }
+    },
+    "flowCfs": {
+     "value": 812.0,
+     "time": "2026-11-15T18:00:00Z"
+    }
+   },
+   {
+    "label": "Reach gauge 3",
+    "usgs": "00000011",
+    "url": "https://waterdata.usgs.gov/monitoring-location/00000011/",
+    "stageFt": {
+     "value": 4.12,
+     "time": "2026-11-15T18:00:00Z"
+    },
+    "floodStages": {
+     "action": 12,
+     "minor": 14,
+     "moderate": 18,
+     "major": 22
+    },
+    "regulated": true,
+    "regulatedNote": "Regulated flow.",
+    "note": "Fixture gauge note.",
+    "nwpsMinusUsgsFt": 0.5,
+    "band": {
+     "key": "normal",
+     "label": "Normal"
+    },
+    "stats": {
+     "years": "1990-2025",
+     "p10": 300,
+     "p50": 800
+    },
+    "nwps": {
+     "status": "ok",
+     "lid": "FIXF1",
+     "url": "https://water.noaa.gov/gauges/FIXF1",
+     "floodStages": {
+      "action": 12,
+      "minor": 14,
+      "moderate": 18,
+      "major": 22
+     },
+     "forecast": {
+      "crestStage": 5.4,
+      "crestTime": "2026-11-16T12:00:00Z",
+      "crestFlowCfs": 1234,
+      "category": "no_flooding"
+     }
+    },
+    "stageOnly": true,
+    "flowNote": "Stage only at this gauge."
+   }
+  ],
+  "forecast": {
+   "status": "ok",
+   "updated": "2026-11-15T18:00:00Z",
+   "sourceUrl": "https://example.test/fc",
+   "periods": [
+    {
+     "name": "Tonight",
+     "tempF": 50,
+     "short": "Cloudy",
+     "windDir": "S",
+     "windMph": "7 mph"
+    }
+   ]
+  },
+  "links": []
+ }
+}
