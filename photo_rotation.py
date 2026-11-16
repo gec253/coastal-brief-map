@@ -77,6 +77,10 @@ def validate(e, base: Path) -> tuple[dict | None, str]:
         return None, "bad width/height"
     if w <= 0 or h <= 0:
         return None, "bad width/height"
+    if h > w:
+        # The daily feature is a wide frame (21:9 desktop): portrait phone shots crop badly,
+        # so only landscape (or square) photographs rotate. Portrait ones stay in the mosaic.
+        return None, "portrait"
     if not _COLOR.match(str(e.get("placeholder") or "")):
         return None, "bad placeholder"
     if not _focal_ok(e.get("focal")):
@@ -335,14 +339,20 @@ def focal_style(photo: dict) -> str:
     return "--fp-m:%s;--fp-d:%s;background-color:%s" % (m, d, photo["placeholder"])
 
 
+def _squash(s) -> str:
+    return re.sub(r"[^0-9a-z]+", "", str(s or "").casefold())
+
+
 def horizon_html(photo: dict) -> str:
-    """Same structure and classes as the Bodie horizon it replaces (.hz / .hz-img / .hz-cap)."""
+    """Same structure and classes as the Bodie horizon it replaces (.hz / .hz-img / .hz-cap).
+    The location line is dropped when the description already names it (no repeated text)."""
     title = photo.get("description") or photo["location"]
-    meta = " · ".join(b for b in ((photo["location"] if photo.get("description") else ""), photo.get("date") or "") if b)
+    loc = photo["location"] if photo.get("description") and _squash(photo["location"]) not in _squash(title) else ""
+    meta = " · ".join(b for b in (loc, photo.get("date") or "") if b)
     return (
         '<section class="hz hz-rot" aria-labelledby="hz-h" data-photo="%s" data-category="%s">'
         '<div class="hz-img" style="%s">%s</div>'
-        '<div class="hz-cap"><h2 id="hz-h" class="hz-t">%s</h2>%s<p class="hz-c">%s</p></div></section>'
+        '<div class="hz-cap"><p class="hz-k">Today\u2019s photograph</p><h2 id="hz-h" class="hz-t">%s</h2>%s<p class="hz-c">%s</p></div></section>'
     ) % (_esc(photo["id"]), _esc(photo["category"]), _esc(focal_style(photo)), picture_html(photo),
          _esc(title, False), ('<p class="hz-m">%s</p>' % _esc(meta, False)) if meta else "", credit_html(photo))
 

@@ -488,7 +488,12 @@ class Refinement(unittest.TestCase):
         self.assertIn('href="https://creativecommons.org/licenses/by-sa/2.0/"', mz)
 
     def test_salt_view_has_no_falls_photo(self):
+        # The Falls Lake lake-view hero never leads a salt view. (The daily featured photo may be
+        # the Falls Lake rotation entry on some days, captioned as Falls Lake; that section and its
+        # preload are excluded here. Before Nov 16 this test failed on days the rotation picked it.)
         h = render("hybrid", salt("wilmington"), photos=ALL_PHOTOS)
+        h = re.sub(r'<section class="hz hz-rot".*?</section>', "", h, flags=re.S)
+        h = re.sub(r'<link rel="preload" as="image"[^>]*>', "", h)
         self.assertNotIn("falls-lake-pier", h)
         self.assertNotIn('class="cr-a"', h.split("</style>", 1)[-1])
 

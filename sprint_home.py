@@ -910,10 +910,23 @@ def conditions_html(m: dict, *, variant: str, public: bool = False) -> str:
                           if rid == "falls-lake" and _brief_on() else "")
     if m.get("water") == "fresh":
         dash = "/lake?region=%s" % rid
-    elif public:   # the old dashboard lives at /dashboard once / is this page
+    else:   # "/" is the Hybrid page itself; the map, chart, radar and tide tables live on /dashboard
         dash = "/dashboard?region=%s" % rid if rid else "/dashboard"
-    else:
-        dash = "/?region=%s" % rid if rid else "/"
+    if variant == "hybrid":
+        return (
+            '<section class="cg cg-%s" id="conditions" aria-labelledby="cg-h" data-conditions>'
+            '<header class="cg-head"><h2 id="cg-h">Conditions at a Glance</h2>'
+            '<p class="cg-where">%s</p>'
+            '<p class="cg-upd">%s</p></header>'
+            "%s%s%s%s"
+            '<div class="cg-foot">%s%s</div>'
+            "</section>"
+        ) % (
+            variant, _esc(reg.get("name") or ""),
+            ("Updated %s" % _esc(m["updated"])) if m.get("updated") else "",
+            body, tiles, *_extras(m, more, variant),
+            region_rail(rid, public=public), tools_html(dash, m.get("water") == "fresh", brief_link),
+        )
     return (
         '<section class="cg cg-%s" id="conditions" aria-labelledby="cg-h" data-conditions>'
         '<header class="cg-head"><h2 id="cg-h">Conditions at a Glance</h2>'
@@ -927,10 +940,27 @@ def conditions_html(m: dict, *, variant: str, public: bool = False) -> str:
         variant, _esc(reg.get("name") or ""),
         ("Updated %s" % _esc(m["updated"])) if m.get("updated") else "",
         body, tiles, *_extras(m, more, variant),
-        (region_rail(rid, public=public) if variant == "hybrid" else
-         '<details class="cg-region"><summary>Change water</summary><nav aria-label="Regions">%s</nav></details>' % "".join(links)),
+        '<details class="cg-region"><summary>Change water</summary><nav aria-label="Regions">%s</nav></details>' % "".join(links),
         _esc(dash, True), brief_link,
     )
+
+
+# Map/chart/radar/tide tables on the dashboard. Anchors exist in index.html (#map-section, #tide-search);
+# #map-chart / #map-radar are read by app.js, which scrolls to the map and switches that layer on.
+TOOLS_SALT = (("Nautical chart", "#map-chart"), ("Radar", "#map-radar"), ("Tide tables", "#tide-search"))
+
+
+def tools_html(dash: str, fresh: bool, brief_link: str = "") -> str:
+    """Clear, 44px chart and radar navigation under the instruments. Presentation only."""
+    if fresh:
+        items = '<a class="cg-tool cg-tool-main" href="%s">Full dashboard</a>' % _esc(dash, True)
+    else:
+        items = "".join('<a class="cg-tool" href="%s%s">%s</a>' % (_esc(dash, True), a, n) for n, a in TOOLS_SALT)
+        items += '<a class="cg-tool cg-tool-main" href="%s">Full dashboard</a>' % _esc(dash, True)
+    brief = brief_link.replace('class="cg-link"', 'class="cg-tool cg-tool-brief"') if brief_link else ""
+    return ('<nav class="cg-tools" aria-label="Maps, charts and the Morning Brief">'
+            '<p class="cg-tools-k">%s</p><div class="cg-tools-l">%s%s</div></nav>') % (
+        "More readings" if fresh else "Map, chart &amp; radar", items, brief)
 
 
 # ---------------------------------------------------------------- page chrome
@@ -952,38 +982,45 @@ def _brief_on() -> bool:
 PUBLIC_BRIEF_SALT = ("crystal-coast", "hatteras")   # the coastal briefs that are public today
 
 
-def masthead_html(variant: str, public: bool = False, water: str = "salt") -> str:
+def _hybrid_masthead(public: bool, water: str) -> str:
+    """Newspaper-style nameplate: navy dateline ear, nameplate, brass-and-navy double rule, section nav.
+    The rule keeps the .wave-settle line the wave intro lands on."""
     if public:
-        return (
-            '<header class="mh mh-hybrid">'
-            '<div class="mh-plate"><p class="mh-date"><time>%s</time><span class="mh-motto">From the rivers to the sounds to the sea</span></p>'
-            '<h1 class="mh-name"><a href="/">The Coastal Brief</a></h1>'
-            '<svg class="mh-rule" viewBox="0 0 1200 4" preserveAspectRatio="none" aria-hidden="true" focusable="false">'
-            '<line class="wave-settle" x1="0" y1="2" x2="1200" y2="2"/></svg>'
-            '<nav class="mh-sec" aria-label="Sections"><a href="/"%s>Saltwater</a><a href="%s"%s>Freshwater</a>'
-            '%s<a href="/catch-wall">Catch Wall</a>'
-            '<a href="/dashboard">Map &amp; tides</a></nav></div>'
-            "</header>"
-        ) % (_esc(_today()), "" if water == "fresh" else ' aria-current="page"',
-             "/?region=falls-lake" if public_fresh_ids() else "/lake",
-             ' aria-current="page"' if water == "fresh" else "",
-             '<a href="/brief?region=crystal-coast" id="nav-brief">Morning Brief</a>' if _brief_on() else "")
+        fresh_href = "/?region=falls-lake" if public_fresh_ids() else "/lake"
+        brief = '<a href="/brief?region=crystal-coast" id="nav-brief">Morning Brief</a>' if _brief_on() else ""
+        flag = ""
+    else:
+        fresh_href = "/preview/home-hybrid?region=falls-lake"
+        brief = '<a href="/brief?region=crystal-coast">Morning Brief</a>'
+        flag = '<p class="pv-flag">Private concept · %s</p>' % _esc(TITLES["hybrid"])
+    salt_href = "/" if public else "/preview/home-hybrid"
+    return (
+        '<header class="mh mh-hybrid">%s'
+        '<div class="mh-ear"><div class="mh-ear-in"><p class="mh-date"><time>%s</time></p></div></div>'
+        '<div class="mh-plate"><h1 class="mh-name"><a href="/">The Coastal Brief</a></h1>'
+        '<div class="mh-rules" aria-hidden="true"><span class="mh-rule-heavy"></span>'
+        '<svg class="mh-rule" viewBox="0 0 1200 4" preserveAspectRatio="none" aria-hidden="true" focusable="false">'
+        '<line class="wave-settle" x1="0" y1="2" x2="1200" y2="2"/></svg></div>'
+        '<p class="mh-motto">From the rivers to the sounds to the sea</p>'
+        '<nav class="mh-sec" aria-label="Sections"><a href="%s"%s>Saltwater</a><a href="%s"%s>Freshwater</a>'
+        '%s<a href="/catch-wall">Catch Wall</a><a href="/dashboard">Map &amp; tides</a></nav></div>'
+        "</header>"
+    ) % (flag, _esc(_today()), salt_href, "" if water == "fresh" else ' aria-current="page"',
+         fresh_href, ' aria-current="page"' if water == "fresh" else "", brief)
+
+
+def masthead_html(variant: str, public: bool = False, water: str = "salt") -> str:
+    if public or variant == "hybrid":
+        return _hybrid_masthead(public, water)
     return (
         '<header class="mh mh-%s"><p class="pv-flag">Private concept · %s</p>'
-        + ('<div class="mh-plate"><p class="mh-date"><time>%s</time><span class="mh-motto">From the rivers to the sounds to the sea</span></p>'
-           '<h1 class="mh-name"><a href="/">The Coastal Brief</a></h1>'
-           '<svg class="mh-rule" viewBox="0 0 1200 4" preserveAspectRatio="none" aria-hidden="true" focusable="false">'
-           '<line class="wave-settle" x1="0" y1="2" x2="1200" y2="2"/></svg>'
-           '<nav class="mh-sec" aria-label="Sections"><a href="/">Saltwater</a><a href="/lake">Freshwater</a>'
-           '<a href="/brief">Morning Brief</a><a href="/catch-wall">Catch Wall</a></nav></div>'
-           if variant == "hybrid" else
-           '<div class="mh-bar">'
-           '<nav class="mh-nav" aria-label="Sections"><a href="/brief">Morning Brief</a><a href="/lake">Lakes &amp; rivers</a><a href="/catch-wall">Catch Wall</a></nav></div>'
-           '<div class="mh-plate"><h1 class="mh-name"><a href="/">The Coastal Brief</a></h1>'
-           '<svg class="mh-rule" viewBox="0 0 1200 4" preserveAspectRatio="none" aria-hidden="true" focusable="false">'
-           '<line class="wave-settle" x1="0" y1="2" x2="1200" y2="2"/></svg>'
-           '<p class="mh-date"><time>%s</time><span class="mh-motto">From the rivers to the sounds to the sea</span></p></div>')
-        + "</header>"
+        '<div class="mh-bar">'
+        '<nav class="mh-nav" aria-label="Sections"><a href="/brief">Morning Brief</a><a href="/lake">Lakes &amp; rivers</a><a href="/catch-wall">Catch Wall</a></nav></div>'
+        '<div class="mh-plate"><h1 class="mh-name"><a href="/">The Coastal Brief</a></h1>'
+        '<svg class="mh-rule" viewBox="0 0 1200 4" preserveAspectRatio="none" aria-hidden="true" focusable="false">'
+        '<line class="wave-settle" x1="0" y1="2" x2="1200" y2="2"/></svg>'
+        '<p class="mh-date"><time>%s</time><span class="mh-motto">From the rivers to the sounds to the sea</span></p></div>'
+        "</header>"
     ) % (variant, _esc(TITLES[variant]), _esc(_today()))
 
 
@@ -1238,6 +1275,14 @@ MZ_CTA = ('<aside class="mz mz-cta"><p class="mz-cta-k">Catch Wall</p><p class="
           '<a class="mz-cta-a" href="/catch-wall">Share yours on the Catch Wall</a></aside>')
 
 
+# Daily photo: the placeholder colour shows first, then the decoded image fades in once (no flash, no CLS:
+# the frame's aspect-ratio is fixed). Runs inline right after the frame so it is set before the image paints.
+# Already-cached images are left alone. Reduced motion: no transition (CSS).
+FP_FADE_JS = ("<script>(function(){var i=document.querySelector('.hz-rot .hz-img img');if(!i||i.complete)return;"
+              "var w=i.parentNode.closest('.hz-img');w.classList.add('fp-wait');var d=0;function r(){if(d)return;d=1;w.classList.remove('fp-wait');}"
+              "if(i.decode){i.decode().then(r,r);}i.addEventListener('load',r);i.addEventListener('error',r);setTimeout(r,4000);})();</script>")
+
+
 BRAND_LINE = ('<div class="bl"><p class="bl-p"><span class="bl-k">The Coastal Brief —</span> '
               '<span class="bl-t">Know the Water. Live the Coast.</span></p></div>')
 
@@ -1275,7 +1320,7 @@ def page_hybrid(m: dict, P: dict, public: bool = False) -> str:
     cells.append(MZ_CTA)
     grid_cls = "mz-grid" + ("" if full else " mz-loose mz-n%d" % len(placed))
     if hero and hero is P.get("featured"):
-        horizon = photo_rotation.horizon_html(hero)
+        horizon = photo_rotation.horizon_html(hero) + FP_FADE_JS
     elif hero:
         horizon = (
             '<section class="hz%s" aria-labelledby="hz-h"><div class="hz-img">%s</div>'

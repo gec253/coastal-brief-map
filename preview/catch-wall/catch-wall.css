@@ -5,8 +5,6 @@ html[data-page="catch-wall"]{
   --cap:#40596A;
 }
 @media (prefers-color-scheme:dark){html[data-page="catch-wall"]{--cap:#C9BCA5}}
-.mh-hybrid .mh-name{font:560 2.25rem/1.02 var(--f-display);letter-spacing:-.018em}
-.mh-nav a[aria-current="page"]{box-shadow:inset 0 -2px 0 #C4A36A}
 .brass{display:block;width:100%;height:3px;margin-top:16px}
 
 /* intro */
@@ -91,7 +89,6 @@ html[data-page="catch-wall"]{
 .lb-cr{font:italic 400 .86rem/1.4 var(--f-ui);color:#C9BCA5;margin-top:4px}
 
 @media (min-width:1000px){
-  .mh-hybrid .mh-name{font-size:3.4rem}
   .cw-head{padding:30px 32px 6px}
   .cw-h{font-size:3.6rem}
   .cw-dek{font-size:1.2rem}
@@ -105,4 +102,29 @@ html[data-page="catch-wall"]{
   .lb-in{max-width:1200px;margin:0 auto}
   .lb-fig{flex-direction:row}
   .lb-fig figcaption{width:320px;border-top:0;border-left:1px solid rgba(243,230,208,.12);padding:24px}
+}
+
+/* Nov 16: featured catch, contribution card in the mosaic, calmer captions */
+.ws-plates{gap:28px}
+.pl-cap{row-gap:1px}
+.pl-t{font-size:1.25rem}
+.pl-cr{font-size:.84rem}
+.pl-feat{grid-column:2;justify-self:start;display:inline-flex;align-items:center;gap:6px;margin:0 0 4px;padding:4px 8px 3px;border:1px solid #A7864F;border-radius:2px;
+  background:#F3EAD6;color:#5E4419;font:600 .74rem/1 var(--f-num);letter-spacing:.18em;text-transform:uppercase}
+.pl-feat::before{content:"";width:7px;height:7px;background:#A7864F;transform:rotate(45deg)}
+@media (prefers-color-scheme:dark){.pl-feat{background:#2A2210;color:#E8D6AE;border-color:#C4A36A}}
+.pl-f .pl-frame{box-shadow:0 0 0 1px rgba(167,134,79,.55),0 14px 30px -18px rgba(6,20,30,.7)}
+.pl-f .pl-no{color:#8A6A3A}
+.pl-join{margin:0 16px;padding:18px 16px 14px;border-radius:4px;border-top:3px solid #C4A36A;
+  background:linear-gradient(160deg,#0E3A57,#071C29);color:#F3EEE3}
+.ws-fresh .pl-join{background:linear-gradient(160deg,#1F3A2E,#132820)}
+.pl-join-k{font:600 .74rem/1 var(--f-num);letter-spacing:.18em;text-transform:uppercase;color:#E8D6AE}
+.pl-join-h{font:500 1.35rem/1.2 var(--f-display);margin:6px 0}
+.pl-join p{color:#E2DACB;max-width:34em;font-size:.95rem}
+.pl-join .cw-submit{color:#FBF3E4;margin-top:6px}
+.pl-join .cw-submit:focus-visible{outline:3px solid #D9BE86;outline-offset:2px}
+@media (min-width:1000px){
+  .ws-plates{gap:32px}
+  .pl-join{margin:0;padding:24px 22px 18px}
+  .pl-join-h{font-size:1.55rem}
 }

@@ -28,6 +28,7 @@ SIZES = {
     "pl-b": "(min-width: 1000px) 440px, 78vw",
     "pl-c": "(min-width: 1000px) 380px, 62vw",
     "pl-d": "(min-width: 1000px) 600px, 100vw",
+    "pl-f": "(min-width: 1000px) 600px, 100vw",
 }
 SECTIONS = (
     ("salt", "Saltwater", "Sounds, inlets and the coast"),
@@ -65,6 +66,19 @@ def catch_photos(live: list[dict] | None = None) -> list[dict]:
         seen.add(pid)
         out.append(dict(p))
     return out
+
+
+def featured_catch(photos: list[dict], day=None) -> dict | None:
+    """One highlighted catch per America/New_York day, the same for every visitor.
+    Approved catches only (catch_photos already filters), ordered by their stored id so the
+    pick never depends on list order; day ordinal modulo the count. No randomness."""
+    pool = sorted((p for p in photos if is_approved(p) and p.get("category") == "fishing"), key=lambda p: str(p.get("id") or ""))
+    if not pool:
+        return None
+    if day is None:
+        import photo_rotation
+        day = photo_rotation.et_date()
+    return pool[day.toordinal() % len(pool)]
 
 
 def water(p: dict) -> str:
@@ -145,30 +159,44 @@ def _caption(p: dict, n: int) -> str:
     return "".join(bits)
 
 
-def plate(p: dict, i: int, n: int, eager: bool) -> str:
-    shape = SHAPES[(n - 1) % len(SHAPES)]
+def plate(p: dict, i: int, n: int, eager: bool, feat: bool = False) -> str:
+    shape = "pl-f" if feat else SHAPES[(n - 1) % len(SHAPES)]
     w, h = int(p.get("w") or 1600), int(p.get("h") or 1200)
-    cw, ch = crop(shape, w, h)
+    cw, ch = ((4, 5) if h > w * 1.1 else (4, 3)) if feat else crop(shape, w, h)
     load = 'loading="eager" fetchpriority="high"' if eager else 'loading="lazy"'
     img = (
         '<img src="%s" srcset="%s" sizes="%s" width="%d" height="%d" alt="%s" %s decoding="async">'
         % (_esc(_src(p)), _srcset(p), SIZES[shape], w, h, _esc(alt(p)), load)
     )
+    label = '<span class="pl-feat">Featured catch</span>' if feat else ""
     return (
-        '<figure class="pl %s" style="--crop:%d / %d">'
+        '<figure class="pl %s" style="--crop:%d / %d"%s>'
         '<a class="pl-open" href="%s" data-i="%d" aria-label="Open photo: %s">'
         '<span class="pl-frame">%s</span></a>'
-        '<figcaption class="pl-cap">%s</figcaption></figure>'
-    ) % (shape, cw, ch, _esc(_src(p, "1600")), i, _esc(title(p) + (", " + place(p) if place(p) else "")),
-         img, _caption(p, n))
+        '<figcaption class="pl-cap">%s%s</figcaption></figure>'
+    ) % (shape, cw, ch, ' data-featured="1"' if feat else "", _esc(_src(p, "1600")), i,
+         _esc(title(p) + (", " + place(p) if place(p) else "")), img, label, _caption(p, n))
 
 
 def _count(n: int) -> str:
     return "%d %s" % (n, "photo" if n == 1 else "photos")
 
 
-def body_html(photos: list[dict]) -> str:
+CONTRIB = (
+    '<aside class="pl pl-join" aria-labelledby="cw-j-h"><p class="pl-join-k">Catch Wall</p>'
+    '<h2 id="cw-j-h" class="pl-join-h">Have a catch from Carolina water?</h2>'
+    '<p>Send the photograph with the species and where you caught it. We review every picture before it appears, '
+    'and we credit you by name if you give one.</p>'
+    '<a class="cw-submit" href="%s">Submit your catch <span aria-hidden="true">\u2192</span></a></aside>'
+) % SUBMIT_HREF
+
+
+def body_html(photos: list[dict], day=None) -> str:
+    feat = featured_catch(photos, day)
     groups = {k: [p for p in photos if water(p) == k] for k, _, _ in SECTIONS}
+    if feat:   # the featured catch leads its own section (shown once, never duplicated)
+        k = water(feat)
+        groups[k] = [feat] + [p for p in groups[k] if p is not feat]
     order = [p for k, _, _ in SECTIONS for p in groups[k]]
     index = {id(p): i for i, p in enumerate(order)}
     chips = "".join(
@@ -189,13 +217,18 @@ def body_html(photos: list[dict]) -> str:
     ) % (chips, SUBMIT_HREF)
     secs = []
     first = True
+    shown = [k for k, _, _ in SECTIONS if groups[k]]
+    # contribution card: in the shorter column (desktop) so the two columns end together
+    join_at = min(shown, key=lambda k: (len(groups[k]), shown.index(k))) if shown else None
     for k, label, sub in SECTIONS:
         items = groups[k]
         if not items:
             continue  # no empty sections or placeholder slots
         plates = []
         for n, p in enumerate(items, start=1):
-            plates.append(plate(p, index[id(p)], n, eager=first and n == 1))
+            plates.append(plate(p, index[id(p)], n, eager=first and n == 1, feat=p is feat))
+        if k == join_at:
+            plates.append(CONTRIB)
         first = False
         secs.append(
             '<section class="ws ws-%s" id="sec-%s" aria-labelledby="ws-%s-h">'
@@ -205,13 +238,9 @@ def body_html(photos: list[dict]) -> str:
         )
     if not secs:
         secs.append('<p class="cw-none" role="status">Photographs are unavailable right now. Please try again shortly.</p>')
-    foot = (
-        '<aside class="cw-foot" aria-labelledby="cw-f-h"><h2 id="cw-f-h" class="cw-f-h">Have a catch from Carolina water?</h2>'
-        '<p>Send the photograph with the species and where you caught it. We review every picture before it appears, '
-        'and we credit you by name if you give one.</p>'
-        '<a class="cw-submit" href="%s">Submit your catch <span aria-hidden="true">\u2192</span></a></aside>'
-    ) % SUBMIT_HREF
-    return intro + '<div class="ws-wrap">' + "".join(secs) + "</div>" + foot, order
+    if not shown:
+        secs.append(CONTRIB)
+    return intro + '<div class="ws-wrap">' + "".join(secs) + "</div>", order
 
 
 def dialog_html() -> str:
@@ -266,16 +295,12 @@ def _payload(order: list[dict]) -> str:
 
 
 def masthead_html() -> str:
-    return (
-        '<header class="mh mh-hybrid"><p class="pv-flag">Private preview \u00b7 Catch Wall redesign</p>'
-        '<div class="mh-bar"><nav class="mh-nav" aria-label="Sections"><a href="/brief">Morning Brief</a>'
-        '<a href="/lake">Lakes &amp; rivers</a><a href="/preview/catch-wall" aria-current="page">Catch Wall</a></nav></div>'
-        '<div class="mh-plate"><p class="mh-name"><a href="/">The Coastal Brief</a></p>'
-        '<svg class="mh-rule" viewBox="0 0 1200 4" preserveAspectRatio="none" aria-hidden="true" focusable="false">'
-        '<rect width="1200" height="4" fill="url(#cw-brass)"/></svg>'
-        '<p class="mh-date"><time>%s</time><span class="mh-motto">From the rivers to the sounds to the sea</span></p></div>'
-        '</header>'
-    ) % _esc(sprint_home._today())
+    """Same newspaper masthead as the Hybrid homepage; the page's own h1 is "The Catch Wall"."""
+    m = sprint_home._hybrid_masthead(False, "salt")
+    m = m.replace('<h1 class="mh-name">', '<p class="mh-name">', 1).replace("</a></h1>", "</a></p>", 1)
+    m = m.replace(' aria-current="page">Saltwater', ">Saltwater", 1)
+    m = m.replace('<a href="/catch-wall">Catch Wall</a>', '<a href="/preview/catch-wall" aria-current="page">Catch Wall</a>', 1)
+    return m.replace("Private concept · C · Hybrid", "Private preview · Catch Wall redesign", 1)
 
 
 BRASS_DEFS = (

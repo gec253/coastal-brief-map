@@ -1609,6 +1609,16 @@
   initTheme();
   initRadarControls();
   armLazyMap();
+  // Deep links from the homepage instruments: /dashboard#map-chart, #map-radar (also wind, waves, sst).
+  // Presentation only: picks the same layer a chip click would, then brings the map into view.
+  (function mapDeepLink() {
+    const m = /^#map-(chart|radar|wind|waves|sst)$/.exec(location.hash || "");
+    const sec = $("map-section");
+    if (!m || !sec) return;
+    if (m[1] === "chart") setBase("chart");
+    else setMarine(m[1]);
+    requestAnimationFrame(function () { sec.scrollIntoView({ block: "start" }); });
+  })();
   function whenIdle(fn) {
     if ("requestIdleCallback" in window) requestIdleCallback(fn, { timeout: 2500 });
     else setTimeout(fn, 1);

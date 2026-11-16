@@ -281,3 +281,34 @@ body.mb-preview-brief .mb-placeholder {
   }
   body.mb-preview-brief .mb-tools { display: none !important; }
 }
+
+/* ---- Nov 16: same identity as the Hybrid homepage (presentation only) ----
+   Navy masthead with a brass hairline, ivory page, Pamlico-green kicker instead of copper,
+   a navy section badge, and Captain's Take marked as EDITORIAL-style interpretation with a
+   brass square (distinct from the Observed dot / Predicted diamond / Forecast bar). */
+body.mb-preview-brief { background: #F7F3EA; }
+html[data-theme="dark"] body.mb-preview-brief { background: #06141E; }
+body.mb-preview-brief .mb-top { border-bottom: 3px solid #071C29; box-shadow: 0 1px 0 #C4A36A; }
+body.mb-preview-brief .wordmark { font-family: "Fraunces", Georgia, serif; font-weight: 600; letter-spacing: -0.01em; }
+body.mb-preview-brief .mb-badge {
+  background: #071C29; color: #F3E6D0;
+  border-bottom: 2px solid #C4A36A; border-radius: 2px;
+  letter-spacing: 0.16em;
+}
+html[data-water="freshwater"] body.mb-preview-brief .mb-badge { background: #1F3A2E; }
+body.mb-preview-brief .mb-kicker { color: #2F5D57; }
+html[data-water="freshwater"] body.mb-preview-brief .mb-kicker { color: #4E6B3F; }
+html[data-theme="dark"] body.mb-preview-brief .mb-kicker { color: #9CC9BE; }
+body.mb-preview-brief .mb h1 { color: #071C29; letter-spacing: -0.02em; }
+html[data-theme="dark"] body.mb-preview-brief .mb h1 { color: #F6F1E7; }
+body.mb-preview-brief .mb-interp {
+  color: #5E4419; background: #F3EAD6; border-color: #A7864F; border-radius: 2px;
+}
+body.mb-preview-brief .mb-interp::before {
+  content: ""; width: 6px; height: 6px; margin-right: 6px; background: #A7864F;
+}
+html[data-theme="dark"] body.mb-preview-brief .mb-interp { color: #E8D6AE; background: #2A2210; border-color: #C4A36A; }
+body.mb-preview-brief .mb-gc { border-radius: 8px; }
+body.mb-preview-brief .mb-gkind { letter-spacing: 0.12em; }
+/* the private-preview notice keeps AA contrast on the dark page */
+html[data-theme="dark"] body.mb-preview-brief .mb-pv > p:first-child { color: #F2A08F !important; }
