@@ -4,26 +4,26 @@
    "label": "Lake level",
    "stale": false,
    "station": "02087182",
-   "time": "5:30 AM ET"
+   "time": "4:45 AM ET"
   },
   {
    "label": "Water temp",
    "stale": false,
    "station": "02087182",
-   "time": "5:30 AM ET"
+   "time": "4:45 AM ET"
   }
  ],
- "issueDate": "2026-11-15",
- "issuedAt": "2026-11-15T10:56:14.386518+00:00",
- "issuedEt": "Sun Nov 15, 5:56 AM ET",
+ "issueDate": "2026-11-16",
+ "issuedAt": "2026-11-16T10:15:02.032415+00:00",
+ "issuedEt": "Mon Nov 16, 5:15 AM ET",
  "items": [
   [
    "Alerts",
-   "Freeze Warning until 8:00 AM ET."
+   "No NWS alerts at the dam."
   ],
   [
    "Lake level",
-   "244.98 ft (NGVD29), 6.52 ft below the 251.5 ft guide curve; -0.05 ft in 24 h."
+   "244.94 ft (NGVD29), 6.56 ft below the 251.5 ft guide curve; -0.05 ft in 24 h."
   ],
   [
    "Dam release",
@@ -31,11 +31,11 @@
   ],
   [
    "Inflows",
-   "Eno River near Durham 6.8 cfs, much below normal; Flat River at Bahama 3.1 cfs, much below normal."
+   "Eno River near Durham 6.8 cfs, below normal; Flat River at Bahama 2.9 cfs, much below normal."
   ],
   [
    "Water temp",
-   "61°F at the dam sensor."
+   "60°F at the dam sensor."
   ],
   [
    "Rain",
@@ -43,12 +43,12 @@
   ],
   [
    "Weather",
-   "Widespread Frost, high 32°F, wind NW 3 mph."
+   "Clear, high 34°F, wind N 2 mph."
   ]
  ],
  "missing": [],
  "ok": true,
- "reason": "on-request",
+ "reason": "scheduled",
  "region": {
   "anchor": {
    "label": "Falls Lake Dam (USGS 02087182)",
@@ -64,12 +64,11 @@
  "regionId": "falls-lake",
  "sources": "USGS, USACE Wilmington District, NWS",
  "take": [
-  "The lake is 6.5 ft below its guide curve, so more shoreline is exposed than usual; check NCWRC ramp notices before launching.",
-  "Flow below the dam is very low for the date.",
-  "Check the Freeze Warning before an early start."
+  "The lake is 6.6 ft below its guide curve, so more shoreline is exposed than usual; check NCWRC ramp notices before launching.",
+  "Flow below the dam is very low for the date."
  ],
  "validation": {
-  "checkedAt": "2026-11-15T10:56:14.386518+00:00",
+  "checkedAt": "2026-11-16T10:15:02.032415+00:00",
   "checks": [
    "region",
    "location",
@@ -81,5 +80,5 @@
   "status": "ok"
  },
  "waterType": "freshwater",
- "words": 118
+ "words": 108
 }
