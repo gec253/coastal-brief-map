@@ -145,12 +145,15 @@ def _wind_tile(r, name="Wind", tid="wind") -> dict:
                      src=_station(r), when=et_time(r.get("time")), off="")
     if st == "off" or not _num(spd):
         return _tile(id=tid, name=name, state="off", src=_station(r))
-    return _tile(
+    t = _tile(
         id=tid, name=name, state=st, dir=v.get("dirCompass") or "", num=str(_r0(spd)), unit="kt",
-        sub=("Gust %s kt" % _r0(gust)) if _num(gust) else GUST_MISSING,
+        sub="" if _num(gust) else GUST_MISSING,
         src=_station(r), when=et_time(r.get("time")),
         dial=v.get("dirDeg") if _num(v.get("dirDeg")) else None,
     )
+    if _num(gust):
+        t["gust"] = str(_r0(gust))
+    return t
 
 
 def _seas_tile(r) -> dict:
@@ -255,6 +258,12 @@ def _water_tile(R) -> dict:
                 # An old buoy reading must not ride along looking current next to a fresh inshore one.
                 t["sub"] += " (stale, last report %s)" % et_time(off.get("time"))
             t["offshore_label"] = offshore_label(off)
+            t["off_read"] = {
+                "num": str(_r0(ov["f"])),
+                "unit": "°F",
+                "src": offshore_where(off),
+                "when": et_time(off.get("time")),
+            }
         return t
     if _state(off) != "off":
         # No inshore sensor here (Nags Head, Emerald Isle, Topsail): the offshore
@@ -670,17 +679,24 @@ def figure(p: dict | None, cls: str, sizes: str, slot_title: str = "", ratio: st
 # ---------------------------------------------------------------- instruments markup
 
 def _dial(deg) -> str:
-    """Rim marker at the bearing the wind comes from (true north up)."""
+    """Compass with an arrow at the bearing the wind comes from (true north up)."""
     if deg is None:
         return ""
     a = math.radians(float(deg))
-    x, y = 20 + 15 * math.sin(a), 20 - 15 * math.cos(a)
+    # tip on the rim (from-direction); shaft points toward the centre
+    tx, ty = 20 + 14 * math.sin(a), 20 - 14 * math.cos(a)
+    bx, by = 20 + 3 * math.sin(a), 20 - 3 * math.cos(a)
+    px, py = math.cos(a), math.sin(a)  # perpendicular
+    l1x, l1y = tx - 5.2 * math.sin(a) + 4.2 * px, ty + 5.2 * math.cos(a) + 4.2 * py
+    l2x, l2y = tx - 5.2 * math.sin(a) - 4.2 * px, ty + 5.2 * math.cos(a) - 4.2 * py
     return (
         '<svg class="t-dial" viewBox="0 0 40 40" aria-hidden="true" focusable="false">'
-        '<circle cx="20" cy="20" r="15" class="d-rim"/>'
-        '<path d="M20 3v4M20 33v4M3 20h4M33 20h4" class="d-tick"/>'
-        '<circle cx="%.2f" cy="%.2f" r="3.6" class="d-mark"/></svg>'
-    ) % (x, y)
+        '<circle cx="20" cy="20" r="15.5" class="d-rim"/>'
+        '<path d="M20 3v3.5M20 33.5v3.5M3 20h3.5M33.5 20h3.5" class="d-tick"/>'
+        '<text x="20" y="11.5" class="d-n" text-anchor="middle">N</text>'
+        '<line x1="%.2f" y1="%.2f" x2="%.2f" y2="%.2f" class="d-shaft"/>'
+        '<path d="M%.2f %.2f L%.2f %.2f L%.2f %.2f Z" class="d-mark"/></svg>'
+    ) % (bx, by, tx, ty, tx, ty, l1x, l1y, l2x, l2y)
 
 
 def _tide_spark(t: dict) -> str:
@@ -716,7 +732,8 @@ def _tide_spark(t: dict) -> str:
                 min(max(X(e["t"]), 8), W - 8), Y(e["v"]) - 5 if e.get("type") == "H" else Y(e["v"]) + 11, "H" if e.get("type") == "H" else "L"))
     nowm = '<path d="M%.1f 2V%.1f" class="s-now"/>' % (X(now), H - 2)
     if yn is not None:
-        nowm += '<circle cx="%.1f" cy="%.1f" r="3" class="s-nowdot"/>' % (X(now), Y(yn))
+        nowm += '<circle cx="%.1f" cy="%.1f" r="5" class="s-nowring"/>' % (X(now), Y(yn))
+        nowm += '<circle cx="%.1f" cy="%.1f" r="2.6" class="s-nowdot"/>' % (X(now), Y(yn))
     obs = ('<circle cx="%.1f" cy="%.1f" r="3.4" class="s-obs"/>' % (X(ob[0]), Y(ob[1]))) if ob else ""
     label = "Tide curve, %s, from 3 hours ago to 12 hours ahead%s." % (method, "; dot marks the latest observed level" if ob else "")
     legend = '<span class="s-k s-k-pred">%s</span>' % _esc("Predicted" + ((" · " + t["curve_from"]) if t.get("curve_from") else ""))
@@ -766,11 +783,53 @@ def tile_html(t: dict, big: bool = False) -> str:
                 read.append('<span class="t-unit">%s</span>' % _esc(t["unit"]))
         else:
             read.append('<span class="t-num num-off">—</span>')
-        out.append('<p class="t-read">%s%s</p>' % ("".join(read), _dial(t.get("dial"))))
-        if t.get("note"):
+        dial = _dial(t.get("dial"))
+        if t["id"] == "wind" and dial:
+            out.append('<p class="t-read t-read-wind">%s<span class="t-wind-vals">%s</span></p>' % (dial, "".join(read)))
+        else:
+            out.append('<p class="t-read">%s%s</p>' % ("".join(read), dial))
+        if t.get("gust"):
+            out.append('<p class="t-gust"><span class="t-gust-k">Gust</span> <span class="t-gust-n">%s</span> <span class="t-gust-u">kt</span></p>' % _esc(t["gust"]))
+        # Data (audit-nov16): prefer label / offshore_label when present; otherwise
+        # keep the current Inshore station / Offshore buoy wording. Never reword the fields.
+        if t.get("label"):
+            out.append('<p class="t-label">%s</p>' % _esc(t["label"]))
+        elif t.get("note"):
             out.append('<p class="t-note">%s</p>' % _esc(t["note"]))
-        if t["sub"]:
-            out.append('<p class="t-sub">%s</p>' % _esc(t["sub"]))
+        o = t.get("off_read") or {}
+        off_lab = t.get("offshore_label") or ""
+        sub = t["sub"] or ""
+        stale_m = re.search(r"\(stale, last report [^)]+\)", sub)
+        stale_txt = ""
+        if isinstance(o.get("stale"), str) and o["stale"]:
+            stale_txt = o["stale"]
+        elif stale_m:
+            stale_txt = stale_m.group(0)
+        if off_lab or o:
+            bits = ['<div class="t-offread%s">' % (" is-stale" if stale_txt else "")]
+            if not off_lab:
+                bits.append('<p class="t-offread-k">Offshore buoy</p>')
+            if o.get("num"):
+                bits.append(
+                    '<p class="t-read t-read-off"><span class="t-off-num">%s</span><span class="t-unit">%s</span></p>'
+                    % (_esc(o.get("num") or ""), _esc(o.get("unit") or ""))
+                )
+            src = off_lab or o.get("src") or ""
+            when = (' <time>%s</time>' % _esc(o["when"])) if o.get("when") and not off_lab else ""
+            if src or when:
+                bits.append('<p class="t-offread-src">%s%s</p>' % (_esc(src), when))
+            if stale_txt:
+                bits.append('<p class="t-stale">%s</p>' % _esc(stale_txt))
+            bits.append("</div>")
+            out.append("".join(bits))
+        elif sub:
+            if stale_m:
+                head = sub[:stale_m.start()].rstrip()
+                if head:
+                    out.append('<p class="t-sub">%s</p>' % _esc(head))
+                out.append('<p class="t-stale">%s</p>' % _esc(stale_m.group(0)))
+            else:
+                out.append('<p class="t-sub">%s</p>' % _esc(sub))
         if t.get("obs"):
             out.append('<p class="t-sub t-obs">%s</p>' % _esc(t["obs"]))
         if t.get("fc"):
@@ -1168,6 +1227,14 @@ PUBLIC_FOOTER = """<div class="ft-pub">
 _CSS_COMMENT = re.compile(r"/\*.*?\*/", re.S)
 
 
+def _feedback_embed() -> str:
+    try:
+        import feedback
+        return feedback.embed_html()
+    except Exception:
+        return ""
+
+
 def _shell(variant: str, main: str, shot: bool, water: str = "salt", public: bool = False, preload: str = "") -> bytes:
     intro_css = wave_intro._css()
     page = """<!DOCTYPE html>
@@ -1193,7 +1260,7 @@ def _shell(variant: str, main: str, shot: bool, water: str = "salt", public: boo
 %(mast)s
 <main id="main">%(main)s</main>
 <footer class="ft"><div class="ft-in">
-%(foot)s%(replay)s</div></footer>
+%(foot)s%(fb)s%(replay)s</div></footer>
 <script>
 %(ijs)s
 </script>
@@ -1215,6 +1282,7 @@ def _shell(variant: str, main: str, shot: bool, water: str = "salt", public: boo
         "v": variant, "shot": " data-shot" if shot else "", "title": _esc(TITLES[variant]),
         "css": css, "icss": icss, "boot": wave_intro._BOOT, "overlay": wave_intro._OVERLAY,
         "mast": masthead_html(variant, public=public, water=water), "main": main, "replay": wave_intro._REPLAY, "ijs": wave_intro._js(),
+        "fb": _feedback_embed(),
     }
     return page.encode("utf-8")
 
@@ -1329,6 +1397,80 @@ FP_FADE_JS = ("<script>(function(){var i=document.querySelector('.hz-rot .hz-img
               "if(i.decode){i.decode().then(r,r);}i.addEventListener('load',r);i.addEventListener('error',r);setTimeout(r,4000);})();</script>")
 
 
+CHARACTER_LINE = "More than the forecast. It's a way of life."
+
+
+def _character_photo(m: dict, P: dict) -> dict | None:
+    """A licensed rotation frame that is not today's horizon. Salt pages stay salt-eligible."""
+    fresh = m.get("water") == "fresh"
+    hero_id = ""
+    if not fresh:
+        hero_id = ((P.get("featured") or {}).get("id") or "")
+    elif (m.get("region") or {}).get("id") == "falls-lake":
+        hero_id = "falls-lake-pier"
+    try:
+        man = photo_rotation.active()
+        if not man:
+            return None
+        photos = [e for e in man["photos"] if e.get("approved")]
+        if fresh:
+            pool = [e for e in photos if e.get("category") == "freshwater" or photo_rotation.is_inland(e)]
+        else:
+            pool = [e for e in photos if photo_rotation.salt_eligible(e)]
+        pool = [e for e in pool if e.get("id") != hero_id]
+        if not pool:
+            return None
+        from datetime import timedelta
+        shot = photo_rotation.pick(pool, photo_rotation.et_date() + timedelta(days=1))
+        return photo_rotation.resolve(shot, approved_photos()) if shot else None
+    except Exception:
+        return None
+
+
+def _character_picture(photo: dict) -> str:
+    """Lazy, compact <picture> from a rotation entry. Credits and alt stay as stored."""
+    srcs = photo.get("sources") or {}
+    fmts = [(f, m) for f, m in photo_rotation.FORMATS if srcs.get(f)]
+    if not fmts:
+        return ""
+    parts = []
+    for fmt, mime in fmts[:-1]:
+        parts.append('<source type="%s" srcset="%s" sizes="(min-width:1000px) 280px, 100vw">' % (
+            mime, photo_rotation.srcset(srcs[fmt])))
+    last = srcs[fmts[-1][0]]
+    fb_w = 640 if 640 in last else (800 if 800 in last else min(last))
+    alt = photo.get("alt") or photo.get("description") or photo.get("location") or ""
+    w, h = int(photo.get("width") or 1600), int(photo.get("height") or 1000)
+    return '<picture>%s<img src="%s" srcset="%s" sizes="(min-width:1000px) 280px, 100vw" alt="%s" width="%d" height="%d" loading="lazy" decoding="async"></picture>' % (
+        "".join(parts), _esc(photo_rotation.src_url(last[fb_w]), True),
+        photo_rotation.srcset(last), _esc(alt, True), w, h)
+
+
+def character_html(m: dict, P: dict) -> str:
+    """Compact editorial band below conditions / forecast / advisories."""
+    photo = _character_photo(m, P)
+    fig = ""
+    if photo:
+        cap = photo.get("description") or photo.get("location") or ""
+        loc = photo.get("location") or ""
+        if cap and loc and photo_rotation._squash(loc) in photo_rotation._squash(cap):
+            loc = ""
+        credit = photo_rotation.credit_html(photo)
+        meta = " · ".join(b for b in (cap, loc) if b)
+        pic = _character_picture(photo)
+        if pic:
+            fig = (
+                '<figure class="cb-life-fig" data-photo="%s" data-category="%s">%s'
+                '<figcaption>%s%s</figcaption></figure>'
+            ) % (_esc(photo["id"], True), _esc(photo.get("category") or "", True), pic,
+                 ('<span class="cb-life-cap">%s</span> ' % _esc(meta)) if meta else "",
+                 '<span class="cb-life-cr">%s</span>' % credit)
+    return (
+        '<aside class="cb-life" aria-labelledby="cb-life-h">'
+        '<p id="cb-life-h" class="cb-life-t">%s</p>%s</aside>'
+    ) % (_esc(CHARACTER_LINE), fig)
+
+
 BRAND_LINE = ('<div class="bl"><p class="bl-p"><span class="bl-k">The Coastal Brief —</span> '
               '<span class="bl-t">Know the Water. Live the Coast.</span></p></div>')
 
@@ -1378,6 +1520,7 @@ def page_hybrid(m: dict, P: dict, public: bool = False) -> str:
         horizon = '<div class="hz-none" aria-hidden="true"></div>'
     return (
         conditions_html(m, variant="hybrid", public=public)
+        + character_html(m, P)
         + horizon
         + BRAND_LINE
         + '<section class="mzs" aria-labelledby="mz-h"><p class="kicker"><span class="dm dm-sq" aria-hidden="true"></span>Catch Wall · Coastal Life</p>'

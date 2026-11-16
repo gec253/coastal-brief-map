@@ -2481,6 +2481,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self._json_private(brief.wake(include_fresh=freshwater.flag_on() or bool(_preview_secret())))
         if parsed.path in ("/catch-wall", "/catch-wall/"):
             return self._send_html(ROOT / "catch-wall.html", share="catch-wall")
+        if parsed.path in ("/feedback", "/feedback/"):
+            return self._feedback_get(parsed)
         if parsed.path == "/api/health":
             return self._send_json({"ok": True})
         if parsed.path == "/api/snapshot":
@@ -2793,6 +2795,9 @@ class Handler(SimpleHTTPRequestHandler):
             except photos.StorageError as e:
                 sys.stderr.write("admin list: %s\n" % e)
                 return self._json_private({"ok": False, "error": "Storage error."}, 502)
+        if parsed.path == "/api/admin/feedback":
+            import feedback
+            return self._json_private(feedback.admin_list())
         if parsed.path == "/api/admin/session":
             return self._json_private({"ok": True, "csrf": csrf})
         m = re.fullmatch(r"/api/admin/image/([0-9a-f-]{36})/(thumb|400|800|1600)", parsed.path)
@@ -2820,11 +2825,14 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urlparse(self.path)
-        routes = ("/api/photos/submit", "/api/admin/login", "/api/admin/logout", "/api/admin/action")
+        routes = ("/api/photos/submit", "/api/admin/login", "/api/admin/logout", "/api/admin/action",
+                  "/api/feedback", "/feedback")
         if parsed.path not in routes:
             return self._json_private({"ok": False, "error": "Not found."}, 404)
         # Flag off (or not configured): refuse before reading any body.
         pv = self._preview_ok()
+        if parsed.path in ("/api/feedback", "/feedback"):
+            return self._feedback_post(parsed)
         if parsed.path == "/api/photos/submit" and not photos.uploads_available(pv):
             return self._json_private({"ok": False, "error": "Not found."}, 404)
         if parsed.path != "/api/photos/submit" and not photos.admin_available(pv):
@@ -2859,6 +2867,39 @@ class Handler(SimpleHTTPRequestHandler):
         if parsed.path == "/api/admin/logout":
             return self._json_private({"ok": True}, 200, photos.session_cookie("", clear=True))
         status, payload = photos.admin_action(body)
+        return self._json_private(payload, status)
+
+    def _feedback_get(self, parsed):
+        import feedback
+        q = parse_qs(parsed.query or "")
+        sent = (q.get("sent") or [""])[0] == "1"
+        values = {"page": (q.get("from") or [""])[0]}
+        data = feedback.page_html(sent=sent, values=values)
+        return self._send_bytes(data, "text/html; charset=utf-8")
+
+    def _feedback_post(self, parsed):
+        import feedback
+        if not self._same_origin():
+            return self._json_private({"ok": False, "error": "Cross-site request refused."}, 403)
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            length = -1
+        if length < 0 or length > 64 * 1024:
+            self.close_connection = True
+            return self._json_private({"ok": False, "error": "That message is too long."}, 413)
+        body = self.rfile.read(length) if length else b""
+        data = feedback.parse_body(self.headers.get("Content-Type", ""), body)
+        status, payload = feedback.submit(data, self._client_ip(), self.headers.get("User-Agent", ""))
+        if parsed.path == "/feedback":
+            html = feedback.page_html(sent=payload.get("ok"), error=payload.get("error") or "", values=data)
+            self.send_response(200 if payload.get("ok") else status)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(html)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(html)
+            return
         return self._json_private(payload, status)
 
     def _send_html(self, path: Path, share: str | None = None, region_id: str | None = None, preview: bool = False):

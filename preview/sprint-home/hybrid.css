@@ -416,3 +416,102 @@ html[data-water="fresh"] .cg-hybrid{background:linear-gradient(180deg,#E8EADF,#D
   .mh-hybrid .mh-sec{-webkit-mask-image:none;mask-image:none;padding-right:0;justify-content:center}
   .mh-hybrid .mh-sec a{padding:0 8px;font-size:.82rem}
 }
+
+/* ===== Nov 16b: refine the mobile homepage, do not add height for decoration ===== */
+@media (max-width:639px){
+  .mh-ear-in{min-height:28px}
+  .mh-ear .mh-date{font-size:.64rem;letter-spacing:.14em}
+  .mh-hybrid .mh-plate{padding:6px 12px 0}
+  .mh-hybrid .mh-name{font-size:2.18rem}
+  .mh-rules{margin-top:4px;gap:1px}
+  .mh-rule-heavy{height:2px}
+  .mh-hybrid .mh-rules .mh-rule{height:3px}
+  .mh-hybrid .mh-motto{margin:3px 0 0;font-size:.84rem}
+  .mh-hybrid .mh-sec{margin-top:4px;justify-content:center}
+  .mh-hybrid .mh-sec a{padding:0 10px}
+  .cg-hybrid{padding:8px 10px 8px}
+  .cg-hybrid .cg-head{margin-bottom:4px}
+  .cg-hybrid .cg-where{font-size:1.22rem}
+  .cg-hybrid .t{padding:7px 9px 6px}
+  .cg-hybrid .t-num{font-size:2.35rem}
+  .cg-hybrid .t-name{font-size:.78rem;letter-spacing:.12em}
+  .cg-hybrid .al{margin-bottom:5px}
+}
+/* cards: flex so metadata sits at the bottom and dead space shrinks */
+.cg-hybrid .t{display:flex;flex-direction:column}
+.cg-hybrid .t-src{margin-top:auto;font-size:.64rem;letter-spacing:.01em;font-weight:500;color:var(--band-ink-3)}
+/* type: primary reading, then secondary, then station metadata */
+.cg-hybrid .t-read{align-items:baseline}
+.cg-hybrid .t-dir{font-size:1.15rem;letter-spacing:.04em}
+.cg-hybrid .t-sub,.cg-hybrid .t-note,.cg-hybrid .t-obs,.cg-hybrid .t-then{font-size:.8rem;font-weight:550;color:var(--band-ink)}
+.cg-hybrid .t-note{color:var(--band-ink-2);font-size:.72rem;font-weight:500}
+/* wind: compass + gust as a clear secondary value */
+.cg-hybrid .t-dial{width:42px;height:42px;flex:none;margin-left:0}
+.cg-hybrid .t-read-wind{display:flex;align-items:center;gap:8px;margin-top:2px}
+.cg-hybrid .t-wind-vals{display:flex;align-items:baseline;gap:4px;min-width:0}
+.d-rim,.d-tick,.d-shaft{fill:none;stroke:rgba(201,214,222,.7);stroke-width:1.2;stroke-linecap:round}
+.d-shaft{stroke:#E8D6AE;stroke-width:1.8}
+.d-mark{fill:#E8D6AE;stroke:#0A2132;stroke-width:.6}
+.d-n{font:700 6.5px var(--f-ui);fill:rgba(232,214,174,.95)}
+.t-gust{display:flex;align-items:baseline;gap:5px;margin:2px 0 0;color:var(--band-ink)}
+.t-gust-k{font:700 .62rem/1 var(--f-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--band-ink-2)}
+.t-gust-n{font:600 1.35rem/.95 var(--f-display);font-variant-numeric:tabular-nums lining-nums;color:var(--num);letter-spacing:-.02em}
+.t-gust-u{font:600 .8rem/1 var(--f-num);color:var(--band-ink-2)}
+/* inshore vs offshore water: a distinct, scannable offshore block. Never relabelled. */
+.t-offread{margin-top:6px;padding:6px 8px 5px;border:1px dashed rgba(182,213,244,.55);border-radius:4px;background:rgba(182,213,244,.08)}
+.t-offread-k{font:700 .62rem/1 var(--f-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--pred);margin:0 0 2px}
+.t-read-off{margin:0}
+.cg-hybrid .t-off-num{font:600 1.7rem/.95 var(--f-display);font-variant-numeric:tabular-nums lining-nums;color:var(--num);letter-spacing:-.02em}
+.t-offread-src{margin:3px 0 0;font:500 .64rem/1.3 var(--f-ui);color:var(--pred)}
+.t-offread-src time{margin-left:.3em;color:var(--band-ink-3)}
+/* tide Now marker: a solid ivory line and a brass-ringed dot */
+.cg-hybrid .s-now{stroke:#F3E6D0;stroke-width:1.6;stroke-dasharray:none}
+.s-nowring{fill:none;stroke:#C4A36A;stroke-width:1.7}
+.s-nowdot{fill:#FFFDF8}
+.s-k-now::before{width:0;height:10px;border-left:2px solid #F3E6D0}
+/* subtle depth on the band, not extra space */
+.cg-hybrid .t{box-shadow:inset 0 1px 0 rgba(255,255,255,.1),inset 0 0 0 1px rgba(0,0,0,.14),0 1px 1px rgba(6,20,30,.2),0 8px 18px -12px rgba(6,20,30,.55)}
+
+/* Carolina character: one compact band below conditions, forecast and advisories */
+.cb-life{display:grid;gap:8px;padding:10px 14px 12px;background:linear-gradient(180deg,#0A2133,#071C29);color:#F3E6D0;
+  border-top:1px solid rgba(196,163,106,.55);border-bottom:3px solid #A7864F}
+.cb-life-t{margin:0;font:italic 500 1.15rem/1.25 var(--f-display);color:#F6F1E7;text-wrap:pretty}
+.cb-life-fig{margin:0;display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:center}
+.cb-life-fig picture,.cb-life-fig img{display:block;width:96px;height:72px;object-fit:cover;border-radius:2px}
+.cb-life-fig figcaption{min-width:0;font-size:.74rem;line-height:1.35;color:#E8D6AE}
+.cb-life-cap{display:block;color:#F3E6D0;font-weight:600}
+.cb-life-cr,.cb-life-cr a{color:#D3B47C}
+.cb-life-cr a{display:inline;min-height:0}
+@media (min-width:1000px){
+  .cb-life{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);align-items:center;gap:24px;padding:14px 32px;
+    margin:0 -32px}
+  .cb-life-t{font-size:1.55rem}
+  .cb-life-fig{grid-template-columns:140px 1fr}
+  .cb-life-fig picture,.cb-life-fig img{width:140px;height:96px}
+}
+@media (prefers-color-scheme:dark){
+  .cb-life{background:linear-gradient(180deg,#0C2436,#081821)}
+}
+
+/* ===== Nov 16b: Data audit labels — wrap long strings, stale, swell, unknown alerts ===== */
+.cg-hybrid .t-label,.cg-hybrid .t-obs,.cg-hybrid .t-src,.cg-hybrid .t-st,
+.cg-hybrid .t-offread-src,.cg-hybrid .t-sub,.cg-hybrid .t-then,.s-legend{
+  overflow-wrap:anywhere;word-break:break-word;white-space:normal}
+.cg-hybrid .t-label{margin:3px 0 0;font:600 .78rem/1.35 var(--f-ui);color:var(--band-ink);letter-spacing:.01em}
+.t-offread-src,.t-src .t-st{overflow-wrap:anywhere}
+.t-stale{margin:3px 0 0;font:600 .72rem/1.35 var(--f-ui);color:#F6B59B;letter-spacing:.01em}
+.t-offread.is-stale{border-color:rgba(246,181,155,.55);background:rgba(246,181,155,.1)}
+/* Swell with no real swell data: muted, not an error */
+.cg-hybrid .t-swell.is-off{border-color:var(--card-edge);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.cg-hybrid .t-swell.is-off .t-offline,.cg-hybrid .t-swell.is-off .t-note,.cg-hybrid .t-swell.is-off .t-src{
+  color:var(--band-ink-3);font-weight:500}
+.cg-hybrid .t-swell.is-off .t-num,.sx-swell.is-off .sx-v{color:var(--band-ink-3)}
+.sx-swell.is-off .sx-sub{color:var(--ink-2)}
+/* Could-not-check alerts: ivory/grey, never the all-clear look */
+.cg-hybrid .al-unknown{background:#F3F1EA;border-color:#C5C0B3;border-left:6px solid #6F6A60;color:#2A2822}
+.cg-hybrid .al-unknown .al-ev,.cg-hybrid .al-unknown .al-meta,.cg-hybrid .al-unknown .al-link{color:#2A2822}
+@media (prefers-color-scheme:dark){
+  .t-stale{color:#F6B59B}
+  .cg-hybrid .al-unknown{background:#1C1B18;border-color:#5A564C;border-left-color:#8D877C;color:#E8E4D8}
+  .cg-hybrid .al-unknown .al-ev,.cg-hybrid .al-unknown .al-meta,.cg-hybrid .al-unknown .al-link{color:#E8E4D8}
+}

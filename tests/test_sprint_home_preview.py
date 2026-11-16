@@ -228,7 +228,7 @@ class Render(unittest.TestCase):
         self.assertEqual(nums(h), [])
 
     def test_every_image_is_credited(self):
-        credit_re = re.compile(r'<(?:span|p) class="(?:ph-credit|mz-credit|hz-c)">(.*?)</(?:span|p)>', re.S)
+        credit_re = re.compile(r'<(?:span|p) class="(?:ph-credit|mz-credit|hz-c|cb-life-cr)">(.*?)</(?:span|p)>', re.S)
         ok_credit = re.compile(r"^(Community photo · (Catch Wall|Coastal Life)|Photo: .+)$")
         for v in sprint_home.CONCEPTS:
             h = render(v, salt("wilmington"))
@@ -492,7 +492,12 @@ class Refinement(unittest.TestCase):
         h = render("hybrid", salt("wilmington"), photos=ALL_PHOTOS)
         self.assertNotIn("falls-lake-pier", h)
         self.assertNotIn('data-category="freshwater"', h)
-        self.assertNotIn('class="cr-a"', h.split("</style>", 1)[-1])
+        after = h.split("</style>", 1)[-1]
+        for href in re.findall(r'<a class="cr-a" href="([^"]+)"', after):
+            self.assertNotIn("sergesegal", href)
+            self.assertNotIn("52741376400", href)
+            self.assertNotIn("Falls_Lake", href)
+            self.assertNotIn("falls-lake", href)
 
     def test_test_data_banner_on_fixtures_only(self):
         h = render("hybrid", salt("wilmington", alerts=alerts("Gale Warning")))

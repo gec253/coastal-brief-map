@@ -40,7 +40,7 @@
 </head>
 <body class="admin-page">
   <header class="ad-top">
-    <p class="ad-brand">The Coastal Brief · Photo review</p>
+    <p class="ad-brand">The Coastal Brief · Review</p>
     <button type="button" id="ad-logout" class="ad-ghost" hidden>Sign out</button>
   </header>
   <main class="ad-main">
@@ -57,6 +57,7 @@
         <a href="#approved" data-status="approved">Published</a>
         <a href="#rejected" data-status="rejected">Rejected</a>
         <a href="#removed" data-status="removed">Removed</a>
+        <a href="#feedback" data-status="feedback">Feedback</a>
       </nav>
       <p class="ad-status" id="ad-status" role="status"></p>
       <ul class="ad-list" id="ad-list"></ul>
@@ -90,16 +91,24 @@
   document.querySelectorAll(".ad-tabs a").forEach(function (a) {
     a.addEventListener("click", function (e) { e.preventDefault(); status = a.dataset.status; load(); });
   });
-  const LABEL = { pending: "pending", approved: "published", rejected: "rejected", removed: "removed" };
+  const LABEL = { pending: "pending", approved: "published", rejected: "rejected", removed: "removed", feedback: "feedback" };
+  function whenET(iso){ if(!iso) return ""; try { return new Date(iso).toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short" }) + " ET"; } catch(e){ return iso; } }
+  function fbCard(it){
+    const fields = [["like","What they like"],["confusing","What's confusing"],["missing","What's missing"],["bugs","Bugs or wrong information"]];
+    let h = '<li class="ad-card"><div class="ad-body"><p class="ad-meta">' + esc(whenET(it.created_at)) + (it.page ? " · " + esc(it.page) : "") + (it.email ? " · " + esc(it.email) : "") + (it.ip ? " · " + esc(it.ip) : "") + "</p>";
+    fields.forEach(function(kv){ if(it[kv[0]]) h += "<p><strong>" + esc(kv[1]) + ":</strong> " + esc(it[kv[0]]) + "</p>"; });
+    return h + "</div></li>";
+  }
   function load() {
     tabSync();
     $("ad-status").textContent = "Loading…";
-    api("/api/admin/list?status=" + status).then(function (r) {
+    const path = status === "feedback" ? "/api/admin/feedback" : "/api/admin/list?status=" + status;
+    api(path).then(function (r) {
       if (r._status === 401) { showLogin(); return; }
       if (!r.ok) { $("ad-status").textContent = r.error || "Could not load."; return; }
       if (r.regions) regions = r.regions;
       $("ad-status").textContent = r.items.length ? r.items.length + " " + LABEL[status] : "Nothing " + LABEL[status] + ".";
-      $("ad-list").innerHTML = r.items.map(card).join("");
+      $("ad-list").innerHTML = r.items.map(status === "feedback" ? fbCard : card).join("");
     });
   }
   function card(it) {

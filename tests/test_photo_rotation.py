@@ -263,7 +263,10 @@ class Overrides(unittest.TestCase):
         return r.status, r.read()
 
     def _photo(self, body):
-        m = re.search(rb'data-photo="([a-z0-9-]+)"', body)
+        # The featured daily photograph (.hz-rot), not the compact Coastal Life band.
+        m = re.search(rb'class="[^"]*hz-rot[^"]*"[^>]*data-photo="([a-z0-9-]+)"', body)
+        if not m:
+            m = re.search(rb'data-photo="([a-z0-9-]+)"', body)
         return m.group(1).decode() if m else None
 
     def test_public_path_ignores_overrides(self):

@@ -94,8 +94,9 @@ class Content(unittest.TestCase):
             self.assertNotIn(bad, doc)
         fresh_only = render([APPROVED[0]])
         self.assertIn('id="sec-fresh"', fresh_only)
-        self.assertNotIn('id="sec-salt"', fresh_only)  # empty sections are omitted, not shown blank
-        self.assertNotIn('chip-salt', fresh_only)
+        self.assertIn('id="sec-salt"', fresh_only)  # a clean empty state, not a blank or placeholder slot
+        self.assertIn("No saltwater catches on the wall yet.", fresh_only)
+        self.assertIn("chip-salt", fresh_only)
 
     def test_salt_and_fresh_sections_and_jump_chips(self):
         doc = render()
@@ -110,7 +111,9 @@ class Content(unittest.TestCase):
         self.assertTrue(hrefs)
         self.assertTrue(all(h == "/catch-wall" for h in hrefs), hrefs)
         self.assertNotIn("/api/photos/submit", doc)
-        self.assertNotIn("<form", doc)
+        # Photo submit stays a link. The only form on the preview is the visitor feedback form.
+        self.assertNotIn('id="share-form"', doc)
+        self.assertIn('id="fb-form"', doc)
 
     def test_lazy_below_fold_and_accessible_detail(self):
         body = main_part(render())

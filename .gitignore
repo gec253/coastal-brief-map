@@ -16,3 +16,7 @@ TEST-LOG.md
 tide-test-results.json
 data/radar-usage.json
 data/radar-usage.json.tmp
+
+# Local feedback store (prototype; not for production)
+data/feedback.json
+data/feedback.json.tmp

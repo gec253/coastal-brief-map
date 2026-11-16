@@ -113,7 +113,9 @@ class PublicCatchWallBrief(unittest.TestCase):
         self.assertIn(re.search(r'<dialog class="share-dlg".*?</dialog>', old, re.S).group(0), h)
         js = (ROOT / "catch-wall-public.js").read_text(encoding="utf-8")
         self.assertIn('fetch("/api/photos/submit"', js)
-        self.assertNotRegex(h, r'<form[^>]*action=')   # no new forms or endpoints
+        # share form is unchanged (no action); the feedback form posts to /feedback
+        self.assertNotRegex(h, r'<form(?![^>]*(id="fb-form"|id="share-form"))[^>]*action=')
+        self.assertIn('<form class="fb-form" id="fb-form" method="post" action="/feedback"', h)
 
     def test_catch_wall_fallback_serves_previous_render_on_exception(self):
         import catch_wall_preview

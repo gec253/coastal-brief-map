@@ -205,7 +205,7 @@ def submit_cta(public: bool, primary: bool) -> str:
             + SOON % (' id="share-soon"' if primary else " data-share-soon"))
 
 
-def body_html(photos: list[dict], day=None, public: bool = False) -> str:
+def body_html(photos: list[dict], day=None, public: bool = False, show_empty: bool = True) -> str:
     feat = featured_catch(photos, day)
     groups = {k: [p for p in photos if water(p) == k] for k, _, _ in SECTIONS}
     if feat:   # the featured catch leads its own section (shown once, never duplicated)
@@ -215,14 +215,15 @@ def body_html(photos: list[dict], day=None, public: bool = False) -> str:
     index = {id(p): i for i, p in enumerate(order)}
     chips = "".join(
         '<a class="chip chip-%s" href="#sec-%s"><span class="chip-k">%s</span><span class="chip-n">%s</span></a>'
-        % (k, k, _esc(label), _esc(_count(len(groups[k])))) for k, label, _ in SECTIONS if groups[k]
+        % (k, k, _esc(label), _esc(_count(len(groups[k]))))
+        for k, label, _ in SECTIONS if groups[k] or show_empty
     )
     intro = (
         '<section class="cw-head" aria-labelledby="cw-h">'
-        '<p class="kicker"><span class="dm dm-sq" aria-hidden="true"></span>Community photographs \u00b7 Fishing</p>'
+        '<p class="kicker"><span class="dm dm-sq" aria-hidden="true"></span>Catch Wall \u00b7 Fishing photographs</p>'
         '<h1 id="cw-h" class="cw-h">The Catch Wall</h1>'
         '<p class="cw-dek">Catches from North Carolina water, from the sounds to the reservoirs, shown as anglers sent them. '
-        'Every photograph is reviewed before it appears here.</p>'
+        'Every photograph is reviewed before it appears here. Coastal Life photographs stay on Coastal Life.</p>'
         '<div class="cw-act"><nav class="chips" aria-label="Jump to water type">%s</nav>'
         '%s</div>'
         '<svg class="brass" viewBox="0 0 1200 4" preserveAspectRatio="none" aria-hidden="true" focusable="false">'
@@ -237,11 +238,16 @@ def body_html(photos: list[dict], day=None, public: bool = False) -> str:
     join_at = min(shown, key=lambda k: (len(groups[k]), shown.index(k))) if shown else None
     for k, label, sub in SECTIONS:
         items = groups[k]
-        if not items:
-            continue  # no empty sections or placeholder slots
+        if not items and not show_empty:
+            continue
         plates = []
         for n, p in enumerate(items, start=1):
             plates.append(plate(p, index[id(p)], n, eager=first and n == 1, feat=p is feat))
+        if not items:
+            plates.append(
+                '<p class="cw-empty" role="status">No %s catches on the wall yet. Approved photographs will appear here.</p>'
+                % _esc(label.lower())
+            )
         if k == join_at:
             plates.append(contrib)
         first = False
@@ -444,14 +450,22 @@ def public_page(water_q: str = "all") -> bytes:
     live = [p for p in state["photos"] if w == "all" or water(p) == w]
     if state.get("unavailable") or not catch_photos(live):
         raise NotReady("no approved catches to show" if not state.get("unavailable") else "photos unavailable")
-    return page(live, public=True)
+    return page(live, public=True, show_empty=(w == "all"))
 
 
-def page(live: list[dict] | None = None, public: bool = False) -> bytes:
+def _feedback_embed() -> str:
+    try:
+        import feedback
+        return feedback.embed_html()
+    except Exception:
+        return ""
+
+
+def page(live: list[dict] | None = None, public: bool = False, show_empty: bool = True) -> bytes:
     """public=False: /preview/catch-wall (unchanged). public=True: /catch-wall, approved photos only,
     no preview chrome, indexable, with the existing share dialog and catch-wall-public.js."""
     photos = catch_photos(live)
-    main, order = body_html(photos, public=public)
+    main, order = body_html(photos, public=public, show_empty=show_empty)
     first = order[0] if order else None
     preload = ""
     if first and _src(first):
@@ -459,14 +473,15 @@ def page(live: list[dict] | None = None, public: bool = False) -> bytes:
             _esc(_src(first)), _srcset(first), SIZES["pl-a"])
     if public:
         dialog = dialog_html() + "\n" + share_dialog_html()
-        foot = PUBLIC_FOOT
+        foot = PUBLIC_FOOT[:-len("</div></footer>")] + _feedback_embed() + "</div></footer>"
         boot = json.dumps({"view": "catch", "water": "all", "photos": []})
         scripts = ('<script>window.__CW_BOOT=%s;</script>\n<script src="/catch-wall-public.js" defer></script>\n'
                    '<script src="/brief-link.js" defer></script>\n' % boot)
     else:
         dialog = dialog_html()
         foot = ('<footer class="ft"><div class="ft-in"><p>Private preview. Photographs are approved Catch Wall submissions, '
-                'shown with only the details each submission includes and credited as stored.</p></div></footer>')
+                'shown with only the details each submission includes and credited as stored.</p>'
+                + _feedback_embed() + '</div></footer>')
         scripts = ""
     out = """<!DOCTYPE html>
 <html lang="en" data-sprint="hybrid" data-page="catch-wall">

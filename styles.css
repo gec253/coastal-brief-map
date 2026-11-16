@@ -1041,10 +1041,39 @@ a.site-title { display: inline-flex; align-items: center; gap: 10px; }
   color: var(--d-ink);
 }
 .dash-alert.is-clear { background: var(--d-inst-2); border: 1px solid var(--d-edge-2); color: var(--d-ink-2); }
-.dash-alert.is-unknown { background: #E8E6E0; border: 1px solid rgba(11, 42, 61, 0.22); color: #3E5868; }
-.is-unknown .al-dot { background: #5C6570; }
-[data-theme="dark"] .dash-alert.is-unknown { background: #1A2A35; border: 1px solid rgba(185, 201, 207, 0.28); color: #B9C9CF; }
-[data-theme="dark"] .is-unknown .al-dot { background: #8A96A0; }
+/* Could-not-check: ivory/grey, grey mark — never the seaglass all-clear. */
+.dash-alert.is-unknown {
+  background: #F3F1EA;
+  border: 1px solid #8A8580;
+  color: #2A2822;
+}
+.dash-alert.is-unknown .al-dot { background: #8A8580; box-shadow: none; }
+.dash-alert.is-unknown .al-ev,
+.dash-alert.is-unknown .al-meta { color: #2A2822; }
+html[data-theme="dark"] .dash-alert.is-unknown,
+[data-theme="dark"] .dash-alert.is-unknown,
+html[data-page="lake"][data-theme="dark"] .dash-alert.is-unknown,
+html[data-home="folio"][data-theme="dark"] .dash-alert.is-unknown {
+  background: #1C1B18;
+  border-color: #5A564C;
+  color: #E8E4D8;
+}
+html[data-theme="dark"] .dash-alert.is-unknown .al-dot,
+[data-theme="dark"] .dash-alert.is-unknown .al-dot { background: #8D877C; box-shadow: none; }
+html[data-theme="dark"] .dash-alert.is-unknown .al-ev,
+html[data-theme="dark"] .dash-alert.is-unknown .al-meta,
+[data-theme="dark"] .dash-alert.is-unknown .al-ev,
+[data-theme="dark"] .dash-alert.is-unknown .al-meta { color: #E8E4D8; }
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) .dash-alert.is-unknown {
+    background: #1C1B18;
+    border-color: #5A564C;
+    color: #E8E4D8;
+  }
+  html:not([data-theme="light"]) .dash-alert.is-unknown .al-dot { background: #8D877C; box-shadow: none; }
+  html:not([data-theme="light"]) .dash-alert.is-unknown .al-ev,
+  html:not([data-theme="light"]) .dash-alert.is-unknown .al-meta { color: #E8E4D8; }
+}
 .al-item { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
 .al-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--seaglass); flex: 0 0 auto; align-self: center; }
 .is-active .al-dot { background: var(--copper); box-shadow: 0 0 0 4px rgba(169, 99, 58, 0.18); }
