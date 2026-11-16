@@ -1040,7 +1040,11 @@ a.site-title { display: inline-flex; align-items: center; gap: 10px; }
   border: 1px solid rgba(169, 99, 58, 0.55);
   color: var(--d-ink);
 }
-.dash-alert.is-clear, .dash-alert.is-unknown { background: var(--d-inst-2); border: 1px solid var(--d-edge-2); color: var(--d-ink-2); }
+.dash-alert.is-clear { background: var(--d-inst-2); border: 1px solid var(--d-edge-2); color: var(--d-ink-2); }
+.dash-alert.is-unknown { background: #E8E6E0; border: 1px solid rgba(11, 42, 61, 0.22); color: #3E5868; }
+.is-unknown .al-dot { background: #5C6570; }
+[data-theme="dark"] .dash-alert.is-unknown { background: #1A2A35; border: 1px solid rgba(185, 201, 207, 0.28); color: #B9C9CF; }
+[data-theme="dark"] .is-unknown .al-dot { background: #8A96A0; }
 .al-item { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
 .al-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--seaglass); flex: 0 0 auto; align-self: center; }
 .is-active .al-dot { background: var(--copper); box-shadow: 0 0 0 4px rgba(169, 99, 58, 0.18); }

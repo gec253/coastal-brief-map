@@ -81,7 +81,9 @@ class AlertsUnknownNotClear(unittest.TestCase):
         dash = (root / "dashboard.js").read_text()
         self.assertIn('(a && a.status === "ok" ? "is-clear" : "is-unknown")', dash)
         self.assertNotRegex(dash, r'is-clear";\s*\n\s*al\.innerHTML = \'<div class="al-item"><span class="al-dot"></span><span class="al-ev">Alerts unavailable')
-        self.assertIn(".dash-alert.is-clear, .dash-alert.is-unknown {", (root / "styles.css").read_text())
+        css = (root / "styles.css").read_text()
+        self.assertIn(".dash-alert.is-unknown {", css)
+        self.assertNotIn(".dash-alert.is-clear, .dash-alert.is-unknown", css)
 
 
 class NwpsForecastIsLabelledStageOnly(unittest.TestCase):
