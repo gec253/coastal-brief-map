@@ -24,7 +24,8 @@
 }
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
-body{margin:0;background:var(--page);color:var(--ink);font:400 1rem/1.5 var(--f-ui)}
+body{margin:0;background:var(--page);color:var(--ink);font:400 1rem/1.5 var(--f-ui);text-rendering:geometricPrecision}
+/* geometricPrecision: Chromium hinting of the variable Source Sans 3 at small sizes broke letter gaps ("wit h", "Nort h") */
 a{color:var(--link);text-underline-offset:.18em}
 a:focus-visible,summary:focus-visible,button:focus-visible{outline:2px solid var(--brass);outline-offset:2px;border-radius:2px}
 h1,h2,h3,p{margin:0}

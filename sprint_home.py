@@ -1435,13 +1435,13 @@ def _character_picture(photo: dict) -> str:
         return ""
     parts = []
     for fmt, mime in fmts[:-1]:
-        parts.append('<source type="%s" srcset="%s" sizes="(min-width:1000px) 280px, 100vw">' % (
+        parts.append('<source type="%s" srcset="%s" sizes="(min-width:1000px) 140px, 96px">' % (
             mime, photo_rotation.srcset(srcs[fmt])))
     last = srcs[fmts[-1][0]]
     fb_w = 640 if 640 in last else (800 if 800 in last else min(last))
     alt = photo.get("alt") or photo.get("description") or photo.get("location") or ""
     w, h = int(photo.get("width") or 1600), int(photo.get("height") or 1000)
-    return '<picture>%s<img src="%s" srcset="%s" sizes="(min-width:1000px) 280px, 100vw" alt="%s" width="%d" height="%d" loading="lazy" decoding="async"></picture>' % (
+    return '<picture>%s<img src="%s" srcset="%s" sizes="(min-width:1000px) 140px, 96px" alt="%s" width="%d" height="%d" loading="lazy" decoding="async"></picture>' % (
         "".join(parts), _esc(photo_rotation.src_url(last[fb_w]), True),
         photo_rotation.srcset(last), _esc(alt, True), w, h)
 
