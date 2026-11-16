@@ -63,3 +63,22 @@ class TideStations(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AlertsUnknownNotClear(unittest.TestCase):
+    """Could-not-check alerts are is-unknown, never the verified all-clear class."""
+
+    def test_homepage_boot(self):
+        import homepage_boot
+        self.assertEqual(homepage_boot.render_alerts_html({"status": "error", "items": []})[1], "is-unknown")
+        self.assertEqual(homepage_boot.render_alerts_html(None)[1], "is-unknown")
+        self.assertEqual(homepage_boot.render_alerts_html({"status": "ok", "items": [], "zones": ["AMZ158"]})[1], "is-clear")
+
+    def test_client_scripts_and_style(self):
+        root = Path(__file__).resolve().parents[1]
+        lake = (root / "lake.js").read_text()
+        self.assertIn('a.status !== "ok") { box.className = "dash-alert is-unknown"', lake)
+        dash = (root / "dashboard.js").read_text()
+        self.assertIn('(a && a.status === "ok" ? "is-clear" : "is-unknown")', dash)
+        self.assertNotRegex(dash, r'is-clear";\s*\n\s*al\.innerHTML = \'<div class="al-item"><span class="al-dot"></span><span class="al-ev">Alerts unavailable')
+        self.assertIn(".dash-alert.is-clear, .dash-alert.is-unknown {", (root / "styles.css").read_text())

@@ -698,7 +698,8 @@
     const items = (a && a.items) || [];
     if (!items.length) {
       box.hidden = false;
-      box.className = "dash-alert is-clear";
+      // Could-not-check is is-unknown, not is-clear (same rule as preview_copy.apply_advisory_kind).
+      box.className = "dash-alert " + (a && a.status === "ok" ? "is-clear" : "is-unknown");
       // Same three-part layout as an active alert, so the box keeps its height.
       box.innerHTML = (a && a.status === "ok"
         ? '<div class="al-item"><span class="al-dot"></span><span class="al-ev">No NWS alerts right now</span><span class="al-meta">No watches, warnings, or advisories for ' + esc((a.zones || []).join(", ")) + ".</span></div>"
@@ -1067,7 +1068,7 @@
     if (badge) { badge.textContent = "Readings unavailable"; badge.classList.add("amber"); }
     const al = $("dash-alert");
     if (al && al.classList.contains("is-pending")) {
-      al.className = "dash-alert is-clear";
+      al.className = "dash-alert is-unknown";
       al.innerHTML = '<div class="al-item"><span class="al-dot"></span><span class="al-ev">Alerts unavailable</span><span class="al-meta">Could not check NWS alerts. See weather.gov before heading out.</span></div><a class="al-link" href="https://www.weather.gov/mhx/" target="_blank" rel="noopener">NWS details</a>';
     }
     const gs = $("glance-strip");

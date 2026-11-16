@@ -177,13 +177,14 @@ def render_alerts_html(a: dict | None) -> tuple[str, str]:
                 + _esc(zones)
                 + ".</span></div>"
             )
+            cls = "is-clear"
         else:
             inner = (
                 '<div class="al-item"><span class="al-dot"></span>'
                 '<span class="al-ev">Alerts unavailable</span>'
                 '<span class="al-meta">Could not check NWS alerts. See weather.gov before heading out.</span></div>'
             )
-        cls = "is-clear"
+            cls = "is-unknown"  # could not check: not painted as a verified all-clear
     else:
         parts = []
         for it in items:

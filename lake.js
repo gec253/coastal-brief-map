@@ -158,7 +158,7 @@
     const box = $("fw-alert");
     const link = '<a class="al-link" href="https://alerts.weather.gov/" target="_blank" rel="noopener">NWS alerts</a>';
     const loc = where || "this location";
-    if (!a || a.status !== "ok") { box.className = "dash-alert is-clear"; box.innerHTML = '<div class="al-item"><span class="al-dot"></span><span class="al-ev">Alerts unavailable</span><span class="al-meta">Could not check NWS alerts. See weather.gov.</span></div>' + link; return; }
+    if (!a || a.status !== "ok") { box.className = "dash-alert is-unknown"; box.innerHTML = '<div class="al-item"><span class="al-dot"></span><span class="al-ev">Alerts unavailable</span><span class="al-meta">Could not check NWS alerts. See weather.gov.</span></div>' + link; return; }
     if (!a.items.length) { box.className = "dash-alert is-clear"; box.innerHTML = '<div class="al-item"><span class="al-dot"></span><span class="al-ev">No NWS alerts right now</span><span class="al-meta">No watches, warnings, or advisories at ' + esc(loc) + ".</span></div>" + link; return; }
     box.className = "dash-alert is-active";
     box.innerHTML = a.items.map((it) => '<div class="al-item"><span class="al-dot"></span><span class="al-ev">' + esc(it.event) + '</span><span class="al-meta">' + (it.ends ? "until " + esc(when(it.ends)) : "") + "</span></div>").join("") + link;
