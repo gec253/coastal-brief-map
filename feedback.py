@@ -1,7 +1,10 @@
 """Visitor feedback for the invited soft launch. Presentation and a small storage interface.
 
-Storage is a local JSON file for now (JsonFileStore). Production storage needs Ed's
-sign-off; this module never talks to Supabase or Render. Public pages get an
+Storage: when the Catch Wall's Supabase backend is configured (SUPABASE_URL plus the
+server-side secret key, see photos.backend()), each submission is written as a private
+JSON object under feedback/ in the existing private pending bucket (SupabaseFeedbackStore;
+approved by Ed on Nov 16, 2026). Otherwise (local dev, tests) it falls back to a local
+JSON file (JsonFileStore). Feedback is never publicly readable. Public pages get an
 unobtrusive Feedback button; submissions are reviewed inside the existing
 password-protected /admin.
 """
@@ -86,19 +89,78 @@ class JsonFileStore:
         return items
 
 
+class SupabaseFeedbackStore:
+    """One private JSON object per submission under feedback/ in the Catch Wall's private
+    pending bucket, using the same server-side Supabase client as photos.py."""
+
+    PREFIX = "feedback"
+    MAX_LIST = 200
+
+    def __init__(self, backend):
+        self.b = backend
+        self.bucket = backend.pending
+
+    def _check_private(self) -> None:
+        # Never write feedback into a bucket that is publicly readable.
+        if self.b.bucket_public(self.bucket) is True:
+            raise RuntimeError("feedback bucket is public; refusing to store feedback there")
+
+    def save(self, rec: dict) -> dict:
+        self._check_private()
+        stamp = (rec.get("created_at") or "").replace("-", "").replace(":", "").replace("+0000", "Z")
+        key = "%s/%s-%s.json" % (self.PREFIX, stamp[:15] or "unknown", rec.get("id") or uuid.uuid4())
+        self.b.put(self.bucket, key, json.dumps(rec, ensure_ascii=False).encode("utf-8"),
+                   "application/json")
+        return rec
+
+    def list(self) -> list[dict]:
+        body = self.b._req(
+            "POST", "/storage/v1/object/list/%s" % self.bucket,
+            json.dumps({"prefix": self.PREFIX, "limit": self.MAX_LIST, "offset": 0,
+                        "sortBy": {"column": "name", "order": "desc"}}).encode(),
+            {"Content-Type": "application/json"})[1]
+        try:
+            names = [o.get("name") for o in json.loads(body or b"[]") if isinstance(o, dict)]
+        except ValueError:
+            names = []
+        items = []
+        for name in names:
+            if not name or not name.endswith(".json"):
+                continue
+            try:
+                rec = json.loads(self.b.get(self.bucket, "%s/%s" % (self.PREFIX, name)) or b"{}")
+            except ValueError:
+                continue
+            if isinstance(rec, dict):
+                items.append(rec)
+        items.sort(key=lambda r: r.get("created_at") or "", reverse=True)
+        return items
+
+
+def _default_store() -> FeedbackStore:
+    try:
+        import photos
+        b = photos.backend()
+    except Exception:  # noqa: BLE001 - never let storage discovery break the form
+        b = None
+    if b is not None and getattr(b, "name", "") == "supabase":
+        return SupabaseFeedbackStore(b)
+    return JsonFileStore()
+
+
 _store: FeedbackStore | None = None
 _hits: dict[str, list[float]] = {}
 _hits_lock = threading.Lock()
 
 
 def set_store(store: FeedbackStore | None) -> None:
-    """Tests inject a store; None restores the default JSON file."""
+    """Tests inject a store; None restores the default (Supabase if configured, else JSON)."""
     global _store
     _store = store
 
 
 def store() -> FeedbackStore:
-    return _store if _store is not None else JsonFileStore()
+    return _store if _store is not None else _default_store()
 
 
 def _trim(s, n: int) -> str:
@@ -145,6 +207,15 @@ def reset_rate() -> None:
         _hits.clear()
 
 
+def _ip_tag(ip: str) -> str:
+    """Salted hash (same as Catch Wall submissions) so stored feedback holds no raw IPs."""
+    try:
+        import photos
+        return "h:" + photos.ip_hash((ip or "")[:64])
+    except Exception:  # noqa: BLE001
+        return ""
+
+
 def submit(data: dict, ip: str, ua: str = "") -> tuple[int, dict]:
     """Validate, rate-limit and store. A filled honeypot looks like success and is dropped."""
     clean, err = validate(data)
@@ -157,13 +228,15 @@ def submit(data: dict, ip: str, ua: str = "") -> tuple[int, dict]:
     rec = {
         "id": str(uuid.uuid4()),
         "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "ip": (ip or "")[:64],
+        "ip": _ip_tag(ip),
         "ua": (ua or "")[:200],
         **clean,
     }
     try:
         store().save(rec)
-    except OSError:
+    except Exception as e:  # noqa: BLE001 - OSError, photos.StorageError, private-bucket guard
+        import sys
+        sys.stderr.write("feedback save failed: %s\n" % type(e).__name__)
         return 503, {"ok": False, "error": "Feedback could not be saved right now."}
     return 200, {"ok": True, "message": SENT, "id": rec["id"]}
 
@@ -186,7 +259,13 @@ def parse_body(content_type: str, body: bytes) -> dict:
 
 def admin_list() -> dict:
     items = []
-    for r in store().list():
+    try:
+        rows = store().list()
+    except Exception as e:  # noqa: BLE001
+        import sys
+        sys.stderr.write("feedback list failed: %s\n" % type(e).__name__)
+        return {"ok": False, "error": "Feedback storage error.", "items": []}
+    for r in rows:
         items.append({k: r.get(k, "") for k in (
             "id", "created_at", "ip", "ua", "page", "email", *FIELDS)})
     return {"ok": True, "items": items}
