@@ -82,3 +82,21 @@ class AlertsUnknownNotClear(unittest.TestCase):
         self.assertIn('(a && a.status === "ok" ? "is-clear" : "is-unknown")', dash)
         self.assertNotRegex(dash, r'is-clear";\s*\n\s*al\.innerHTML = \'<div class="al-item"><span class="al-dot"></span><span class="al-ev">Alerts unavailable')
         self.assertIn(".dash-alert.is-clear, .dash-alert.is-unknown {", (root / "styles.css").read_text())
+
+
+class NwpsForecastIsLabelledStageOnly(unittest.TestCase):
+    def test_forecast_block(self):
+        from unittest import mock
+        import freshwater
+        gauge = {"name": "Neuse at Clayton", "flood": {"categories": {"minor": {"stage": 9}}},
+                 "status": {"observed": {}, "forecast": {"primary": 4.2, "floodCategory": "no_flooding"}}}
+        sf = {"issuedTime": "2026-11-16T12:00:00Z", "primaryUnits": "ft", "secondaryUnits": "kcfs",
+              "data": [{"validTime": "2026-11-17T00:00:00Z", "primary": 4.2, "secondary": 1.3},
+                       {"validTime": "2026-11-17T06:00:00Z", "primary": 4.5, "secondary": 1.5}]}
+        with mock.patch.object(freshwater, "_get_json", side_effect=lambda url, ttl: sf if "stageflow" in url else gauge):
+            out = freshwater.nwps("CLYN7")
+        fc = out["forecast"]
+        self.assertEqual(fc["kind"], "forecast")
+        self.assertEqual(fc["crestStage"], 4.5)
+        self.assertNotIn("crestFlowCfs", fc)
+        self.assertNotIn("kcfs", repr(fc))

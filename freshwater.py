@@ -222,9 +222,9 @@ def nwps(lid):
         pts = [p for p in pts if p[1] is not None]
         if pts:
             crest = max(pts, key=lambda p: p[1])
-            out["forecast"] = {"issued": sf.get("issuedTime"), "units": [sf.get("primaryUnits"), sf.get("secondaryUnits")],
+            # Stage only: NWPS forecast flow (a rating-curve estimate) is not passed on (stage-only rule).
+            out["forecast"] = {"kind": "forecast", "issued": sf.get("issuedTime"), "units": [sf.get("primaryUnits")],
                                "crestStage": crest[1], "crestTime": crest[0],
-                               "crestFlowCfs": round(crest[2] * 1000) if crest[2] is not None and (sf.get("secondaryUnits") == "kcfs") else None,
                                "category": fc.get("floodCategory"), "end": pts[-1][0],
                                "series": [[p[0], p[1]] for p in pts]}
     return out
