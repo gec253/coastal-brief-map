@@ -1,0 +1,1107 @@
+{
+  "title": "The Coastal Brief — daily featured photograph rotation",
+  "created": "2026-11-15",
+  "timezone": "America/New_York",
+  "note": "One photograph per Eastern Time calendar day, the same for every visitor, changing at midnight ET. Only entries with approved:true rotate. Community Catch Wall and Coastal Life photographs stay in the mosaic; they are not in this rotation. Captions, locations and credits are taken from the source pages. Private prototype; not deployed.",
+  "photos": [
+    {
+      "id": "bodie-sunrise",
+      "category": "heritage",
+      "location": "Bodie Island Lighthouse, Cape Hatteras National Seashore, North Carolina",
+      "description": "Sunrise at the Bodie Island Lighthouse, October 13, 2023.",
+      "alt": "Bodie Island Lighthouse and keepers' quarters at sunrise, Cape Hatteras National Seashore",
+      "photographer": "National Park Service, Cape Hatteras National Seashore",
+      "credit": "Photo: National Park Service, Cape Hatteras National Seashore (public domain)",
+      "license": "Public domain",
+      "license_url": "",
+      "source_url": "https://npgallery.nps.gov/AssetDetail/3011f0d3-bb6a-4b82-8fef-ca0b654e8040",
+      "width": 1600,
+      "height": 1200,
+      "sources": {
+        "avif": {
+          "640": "bodie-sunrise/bodie-sunrise-640.avif",
+          "1024": "bodie-sunrise/bodie-sunrise-1024.avif",
+          "1600": "bodie-sunrise/bodie-sunrise-1600.avif"
+        },
+        "webp": {
+          "640": "bodie-sunrise/bodie-sunrise-640.webp",
+          "1024": "bodie-sunrise/bodie-sunrise-1024.webp",
+          "1600": "bodie-sunrise/bodie-sunrise-1600.webp"
+        },
+        "jpg": {
+          "640": "bodie-sunrise/bodie-sunrise-640.jpg",
+          "1024": "bodie-sunrise/bodie-sunrise-1024.jpg",
+          "1600": "bodie-sunrise/bodie-sunrise-1600.jpg"
+        }
+      },
+      "placeholder": "#6f7b7e",
+      "focal": {
+        "mobile": "36% 50%",
+        "desktop": "50% 8%"
+      },
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "October 13, 2023"
+    },
+    {
+      "id": "cape-lookout-sunrise",
+      "category": "heritage",
+      "location": "Cape Lookout Lighthouse, Cape Lookout National Seashore, North Carolina",
+      "description": "The Cape Lookout Lighthouse on Cape Lookout National Seashore at sunrise, on the way out to sea.",
+      "alt": "Cape Lookout Lighthouse on Cape Lookout National Seashore at sunrise, on the way out to sea",
+      "photographer": "Ldicktel",
+      "credit": "Photo: Ldicktel, CC BY-SA 4.0",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Cape_Lookout_at_sunrise.jpg",
+      "width": 4032,
+      "height": 3024,
+      "sources": {
+        "avif": {
+          "640": "cape-lookout-sunrise/cape-lookout-sunrise-640.avif",
+          "1024": "cape-lookout-sunrise/cape-lookout-sunrise-1024.avif",
+          "1600": "cape-lookout-sunrise/cape-lookout-sunrise-1600.avif"
+        },
+        "webp": {
+          "640": "cape-lookout-sunrise/cape-lookout-sunrise-640.webp",
+          "1024": "cape-lookout-sunrise/cape-lookout-sunrise-1024.webp",
+          "1600": "cape-lookout-sunrise/cape-lookout-sunrise-1600.webp"
+        },
+        "jpg": {
+          "640": "cape-lookout-sunrise/cape-lookout-sunrise-640.jpg",
+          "1024": "cape-lookout-sunrise/cape-lookout-sunrise-1024.jpg",
+          "1600": "cape-lookout-sunrise/cape-lookout-sunrise-1600.jpg"
+        }
+      },
+      "placeholder": "#8da7bf",
+      "focal": "55% 42%",
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "June 24, 2019"
+    },
+    {
+      "id": "cape-hatteras-lighthouse",
+      "category": "heritage",
+      "location": "Cape Hatteras Light Station, Cape Hatteras National Seashore, Buxton, North Carolina",
+      "description": "Cape Hatteras Light Station, Cape Hatteras National Seashore, Buxton, North Carolina.",
+      "alt": "Cape Hatteras Light Station, the black-and-white striped tower, at Cape Hatteras National Seashore in Buxton, North Carolina",
+      "photographer": "Ken Lund",
+      "credit": "Photo: Ken Lund, CC BY-SA 2.0",
+      "license": "CC BY-SA 2.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/2.0/",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Cape_Hatteras_Light_Station_(Lighthouse),_Cape_Hatteras_National_Seashore,_Buxton,_North_Carolina_(14268133980).jpg",
+      "width": 4000,
+      "height": 3000,
+      "sources": {
+        "avif": {
+          "640": "cape-hatteras-lighthouse/cape-hatteras-lighthouse-640.avif",
+          "1024": "cape-hatteras-lighthouse/cape-hatteras-lighthouse-1024.avif",
+          "1600": "cape-hatteras-lighthouse/cape-hatteras-lighthouse-1600.avif",
+          "2400": "cape-hatteras-lighthouse/cape-hatteras-lighthouse-2400.avif"
+        },
+        "webp": {
+          "640": "cape-hatteras-lighthouse/cape-hatteras-lighthouse-640.webp",
+          "1024": "cape-hatteras-lighthouse/cape-hatteras-lighthouse-1024.webp",
+          "1600": "cape-hatteras-lighthouse/cape-hatteras-lighthouse-1600.webp",
+          "2400": "cape-hatteras-lighthouse/cape-hatteras-lighthouse-2400.webp"
+        },
+        "jpg": {
+          "640": "cape-hatteras-lighthouse/cape-hatteras-lighthouse-640.jpg",
+          "1024": "cape-hatteras-lighthouse/cape-hatteras-lighthouse-1024.jpg",
+          "1600": "cape-hatteras-lighthouse/cape-hatteras-lighthouse-1600.jpg",
+          "2400": "cape-hatteras-lighthouse/cape-hatteras-lighthouse-2400.jpg"
+        }
+      },
+      "placeholder": "#809cbe",
+      "focal": "50% 28%",
+      "approved": true,
+      "date_accessed": "2026-11-15"
+    },
+    {
+      "id": "currituck-beach-light",
+      "category": "heritage",
+      "location": "Currituck Beach Lighthouse",
+      "description": "Currituck Beach Lighthouse.",
+      "alt": "The red-brick Currituck Beach Lighthouse rising above trees",
+      "photographer": "Stryker33",
+      "credit": "Photo: Stryker33, CC BY-SA 3.0",
+      "license": "CC BY-SA 3.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Currituck_Beach_Light.JPG",
+      "width": 3296,
+      "height": 1854,
+      "sources": {
+        "avif": {
+          "640": "currituck-beach-light/currituck-beach-light-640.avif",
+          "1024": "currituck-beach-light/currituck-beach-light-1024.avif",
+          "1600": "currituck-beach-light/currituck-beach-light-1600.avif"
+        },
+        "webp": {
+          "640": "currituck-beach-light/currituck-beach-light-640.webp",
+          "1024": "currituck-beach-light/currituck-beach-light-1024.webp",
+          "1600": "currituck-beach-light/currituck-beach-light-1600.webp"
+        },
+        "jpg": {
+          "640": "currituck-beach-light/currituck-beach-light-640.jpg",
+          "1024": "currituck-beach-light/currituck-beach-light-1024.jpg",
+          "1600": "currituck-beach-light/currituck-beach-light-1600.jpg"
+        }
+      },
+      "placeholder": "#919994",
+      "focal": "50% 35%",
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "September 1, 2012"
+    },
+    {
+      "id": "oak-island-light",
+      "category": "heritage",
+      "location": "Oak Island Lighthouse, Caswell Beach, North Carolina",
+      "description": "Oak Island Lighthouse at Caswell Beach, North Carolina.",
+      "alt": "Oak Island Lighthouse at Caswell Beach, North Carolina, with its black, white and gray bands",
+      "photographer": "Thomas Shaw",
+      "credit": "Photo: Thomas Shaw, CC BY-SA 4.0",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Oak_Island_Light_North_Carolina.jpg",
+      "width": 6000,
+      "height": 4000,
+      "sources": {
+        "avif": {
+          "640": "oak-island-light/oak-island-light-640.avif",
+          "1024": "oak-island-light/oak-island-light-1024.avif",
+          "1600": "oak-island-light/oak-island-light-1600.avif"
+        },
+        "webp": {
+          "640": "oak-island-light/oak-island-light-640.webp",
+          "1024": "oak-island-light/oak-island-light-1024.webp",
+          "1600": "oak-island-light/oak-island-light-1600.webp"
+        },
+        "jpg": {
+          "640": "oak-island-light/oak-island-light-640.jpg",
+          "1024": "oak-island-light/oak-island-light-1024.jpg",
+          "1600": "oak-island-light/oak-island-light-1600.jpg"
+        }
+      },
+      "placeholder": "#5c5b51",
+      "focal": "62% 28%",
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "August 3, 2016"
+    },
+    {
+      "id": "autumn-sunrise-caha",
+      "category": "lifestyle",
+      "location": "Cape Hatteras National Seashore, North Carolina",
+      "description": "The sun over the Atlantic Ocean at Cape Hatteras National Seashore.",
+      "alt": "The sun over the Atlantic Ocean at Cape Hatteras National Seashore",
+      "photographer": "Cape Hatteras National Seashore (U.S. National Park Service)",
+      "credit": "Photo: U.S. National Park Service, Cape Hatteras National Seashore (public domain)",
+      "license": "Public domain",
+      "license_url": "",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Autumn_Sunrise_(14943845957).jpg",
+      "width": 4718,
+      "height": 2653,
+      "sources": {
+        "avif": {
+          "640": "autumn-sunrise-caha/autumn-sunrise-caha-640.avif",
+          "1024": "autumn-sunrise-caha/autumn-sunrise-caha-1024.avif",
+          "1600": "autumn-sunrise-caha/autumn-sunrise-caha-1600.avif",
+          "2400": "autumn-sunrise-caha/autumn-sunrise-caha-2400.avif"
+        },
+        "webp": {
+          "640": "autumn-sunrise-caha/autumn-sunrise-caha-640.webp",
+          "1024": "autumn-sunrise-caha/autumn-sunrise-caha-1024.webp",
+          "1600": "autumn-sunrise-caha/autumn-sunrise-caha-1600.webp",
+          "2400": "autumn-sunrise-caha/autumn-sunrise-caha-2400.webp"
+        },
+        "jpg": {
+          "640": "autumn-sunrise-caha/autumn-sunrise-caha-640.jpg",
+          "1024": "autumn-sunrise-caha/autumn-sunrise-caha-1024.jpg",
+          "1600": "autumn-sunrise-caha/autumn-sunrise-caha-1600.jpg",
+          "2400": "autumn-sunrise-caha/autumn-sunrise-caha-2400.jpg"
+        }
+      },
+      "placeholder": "#606161",
+      "focal": "50% 42%",
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "November 21, 2013"
+    },
+    {
+      "id": "dawn-at-topsail",
+      "category": "lifestyle",
+      "location": "Topsail Island, North Carolina",
+      "description": "Pre-sunrise at Topsail Island, North Carolina.",
+      "alt": "Pre-sunrise sky over the water at Topsail Island, North Carolina",
+      "photographer": "William Poteat",
+      "credit": "Photo: William Poteat, CC BY-SA 4.0",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Dawn_at_Topsail.jpg",
+      "width": 3872,
+      "height": 2592,
+      "sources": {
+        "avif": {
+          "640": "dawn-at-topsail/dawn-at-topsail-640.avif",
+          "1024": "dawn-at-topsail/dawn-at-topsail-1024.avif",
+          "1600": "dawn-at-topsail/dawn-at-topsail-1600.avif",
+          "2400": "dawn-at-topsail/dawn-at-topsail-2400.avif"
+        },
+        "webp": {
+          "640": "dawn-at-topsail/dawn-at-topsail-640.webp",
+          "1024": "dawn-at-topsail/dawn-at-topsail-1024.webp",
+          "1600": "dawn-at-topsail/dawn-at-topsail-1600.webp",
+          "2400": "dawn-at-topsail/dawn-at-topsail-2400.webp"
+        },
+        "jpg": {
+          "640": "dawn-at-topsail/dawn-at-topsail-640.jpg",
+          "1024": "dawn-at-topsail/dawn-at-topsail-1024.jpg",
+          "1600": "dawn-at-topsail/dawn-at-topsail-1600.jpg",
+          "2400": "dawn-at-topsail/dawn-at-topsail-2400.jpg"
+        }
+      },
+      "placeholder": "#6a6972",
+      "focal": "50% 45%",
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "June 24, 2014"
+    },
+    {
+      "id": "sea-oats-sunset-beach",
+      "category": "lifestyle",
+      "location": "Sunset Beach, North Carolina",
+      "description": "Sea oats at Sunset Beach, North Carolina.",
+      "alt": "Sea oats on the dunes at Sunset Beach, North Carolina",
+      "photographer": "Ryan Hagerty",
+      "credit": "Photo: Ryan Hagerty/USFWS (public domain)",
+      "license": "Public domain",
+      "license_url": "",
+      "source_url": "https://www.fws.gov/media/sea-oats-sunset-beach-north-carolina-0",
+      "width": 5760,
+      "height": 3840,
+      "sources": {
+        "avif": {
+          "640": "sea-oats-sunset-beach/sea-oats-sunset-beach-640.avif",
+          "1024": "sea-oats-sunset-beach/sea-oats-sunset-beach-1024.avif",
+          "1600": "sea-oats-sunset-beach/sea-oats-sunset-beach-1600.avif",
+          "2400": "sea-oats-sunset-beach/sea-oats-sunset-beach-2400.avif"
+        },
+        "webp": {
+          "640": "sea-oats-sunset-beach/sea-oats-sunset-beach-640.webp",
+          "1024": "sea-oats-sunset-beach/sea-oats-sunset-beach-1024.webp",
+          "1600": "sea-oats-sunset-beach/sea-oats-sunset-beach-1600.webp",
+          "2400": "sea-oats-sunset-beach/sea-oats-sunset-beach-2400.webp"
+        },
+        "jpg": {
+          "640": "sea-oats-sunset-beach/sea-oats-sunset-beach-640.jpg",
+          "1024": "sea-oats-sunset-beach/sea-oats-sunset-beach-1024.jpg",
+          "1600": "sea-oats-sunset-beach/sea-oats-sunset-beach-1600.jpg",
+          "2400": "sea-oats-sunset-beach/sea-oats-sunset-beach-2400.jpg"
+        }
+      },
+      "placeholder": "#585555",
+      "focal": "50% 68%",
+      "approved": true,
+      "date_accessed": "2026-11-15"
+    },
+    {
+      "id": "shrimp-boats-wanchese",
+      "category": "saltwater",
+      "location": "Wanchese harbor, North Carolina",
+      "description": "Shrimp boats in the harbor at Wanchese, North Carolina.",
+      "alt": "Shrimp boats in the harbor at Wanchese, North Carolina",
+      "photographer": "Geographer",
+      "credit": "Photo: Geographer (public domain)",
+      "license": "Public domain",
+      "license_url": "",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Shrimp_Boats.JPG",
+      "width": 3872,
+      "height": 2592,
+      "sources": {
+        "avif": {
+          "640": "shrimp-boats-wanchese/shrimp-boats-wanchese-640.avif",
+          "1024": "shrimp-boats-wanchese/shrimp-boats-wanchese-1024.avif",
+          "1600": "shrimp-boats-wanchese/shrimp-boats-wanchese-1600.avif"
+        },
+        "webp": {
+          "640": "shrimp-boats-wanchese/shrimp-boats-wanchese-640.webp",
+          "1024": "shrimp-boats-wanchese/shrimp-boats-wanchese-1024.webp",
+          "1600": "shrimp-boats-wanchese/shrimp-boats-wanchese-1600.webp"
+        },
+        "jpg": {
+          "640": "shrimp-boats-wanchese/shrimp-boats-wanchese-640.jpg",
+          "1024": "shrimp-boats-wanchese/shrimp-boats-wanchese-1024.jpg",
+          "1600": "shrimp-boats-wanchese/shrimp-boats-wanchese-1600.jpg"
+        }
+      },
+      "placeholder": "#8892a1",
+      "focal": "45% 50%",
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "May 2008"
+    },
+    {
+      "id": "bayboro-commercial-boats",
+      "category": "saltwater",
+      "location": "Bay River, Bayboro, North Carolina",
+      "description": "Commercial fishing boats on the Bay River, Bayboro, North Carolina.",
+      "alt": "Commercial fishing boats on the Bay River, Bayboro, North Carolina",
+      "photographer": "SaltySaltyTears",
+      "credit": "Photo: SaltySaltyTears, CC0 1.0",
+      "license": "CC0 1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Commercial_fishing_boats_on_the_Bay_River,_Bayboro,_North_Carolina.jpg",
+      "width": 2050,
+      "height": 1476,
+      "sources": {
+        "avif": {
+          "640": "bayboro-commercial-boats/bayboro-commercial-boats-640.avif",
+          "1024": "bayboro-commercial-boats/bayboro-commercial-boats-1024.avif",
+          "1600": "bayboro-commercial-boats/bayboro-commercial-boats-1600.avif"
+        },
+        "webp": {
+          "640": "bayboro-commercial-boats/bayboro-commercial-boats-640.webp",
+          "1024": "bayboro-commercial-boats/bayboro-commercial-boats-1024.webp",
+          "1600": "bayboro-commercial-boats/bayboro-commercial-boats-1600.webp"
+        },
+        "jpg": {
+          "640": "bayboro-commercial-boats/bayboro-commercial-boats-640.jpg",
+          "1024": "bayboro-commercial-boats/bayboro-commercial-boats-1024.jpg",
+          "1600": "bayboro-commercial-boats/bayboro-commercial-boats-1600.jpg"
+        }
+      },
+      "placeholder": "#a4a2a1",
+      "focal": "40% 48%",
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "November 3, 2021"
+    },
+    {
+      "id": "silver-lake-harbor",
+      "category": "saltwater",
+      "location": "Silver Lake Harbor, Ocracoke Island, North Carolina",
+      "description": "Silver Lake Harbor, Ocracoke Island, North Carolina.",
+      "alt": "Silver Lake Harbor on Ocracoke Island, North Carolina",
+      "photographer": "bobistraveling",
+      "credit": "Photo: bobistraveling, CC BY 2.0",
+      "license": "CC BY 2.0",
+      "license_url": "https://creativecommons.org/licenses/by/2.0/",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Silver_Lake_Harbor_Ocracoke_Island_NC_0334_(26016019873).jpg",
+      "width": 4320,
+      "height": 3240,
+      "sources": {
+        "avif": {
+          "640": "silver-lake-harbor/silver-lake-harbor-640.avif",
+          "1024": "silver-lake-harbor/silver-lake-harbor-1024.avif",
+          "1600": "silver-lake-harbor/silver-lake-harbor-1600.avif"
+        },
+        "webp": {
+          "640": "silver-lake-harbor/silver-lake-harbor-640.webp",
+          "1024": "silver-lake-harbor/silver-lake-harbor-1024.webp",
+          "1600": "silver-lake-harbor/silver-lake-harbor-1600.webp"
+        },
+        "jpg": {
+          "640": "silver-lake-harbor/silver-lake-harbor-640.jpg",
+          "1024": "silver-lake-harbor/silver-lake-harbor-1024.jpg",
+          "1600": "silver-lake-harbor/silver-lake-harbor-1600.jpg"
+        }
+      },
+      "placeholder": "#989f9e",
+      "focal": "45% 50%",
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "April 13, 2016"
+    },
+    {
+      "id": "fishing-boat-oak-island-ferry",
+      "category": "saltwater",
+      "location": "Photographed from the Oak Island Ferry, North Carolina",
+      "description": "A fishing boat, photographed from the Oak Island Ferry.",
+      "alt": "A fishing boat photographed from the Oak Island Ferry, North Carolina",
+      "photographer": "BobAMac5761",
+      "credit": "Photo: BobAMac5761, CC BY-SA 4.0",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Fishing-Boat.jpg",
+      "width": 5209,
+      "height": 3473,
+      "sources": {
+        "avif": {
+          "640": "fishing-boat-oak-island-ferry/fishing-boat-oak-island-ferry-640.avif",
+          "1024": "fishing-boat-oak-island-ferry/fishing-boat-oak-island-ferry-1024.avif",
+          "1600": "fishing-boat-oak-island-ferry/fishing-boat-oak-island-ferry-1600.avif"
+        },
+        "webp": {
+          "640": "fishing-boat-oak-island-ferry/fishing-boat-oak-island-ferry-640.webp",
+          "1024": "fishing-boat-oak-island-ferry/fishing-boat-oak-island-ferry-1024.webp",
+          "1600": "fishing-boat-oak-island-ferry/fishing-boat-oak-island-ferry-1600.webp"
+        },
+        "jpg": {
+          "640": "fishing-boat-oak-island-ferry/fishing-boat-oak-island-ferry-640.jpg",
+          "1024": "fishing-boat-oak-island-ferry/fishing-boat-oak-island-ferry-1024.jpg",
+          "1600": "fishing-boat-oak-island-ferry/fishing-boat-oak-island-ferry-1600.jpg"
+        }
+      },
+      "placeholder": "#87a2be",
+      "focal": "35% 48%",
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "August 28, 2021"
+    },
+    {
+      "id": "swan-quarter-landing",
+      "category": "saltwater",
+      "location": "Swan Quarter Landing, North Carolina",
+      "description": "Swan Quarter Landing, North Carolina.",
+      "alt": "A boat at Swan Quarter Landing, North Carolina",
+      "photographer": "Ingrid Lemme",
+      "credit": "Photo: Ingrid Lemme (public domain)",
+      "license": "Public domain",
+      "license_url": "",
+      "source_url": "https://commons.wikimedia.org/wiki/File:SQ_fast_boat.jpg",
+      "width": 3648,
+      "height": 2736,
+      "sources": {
+        "avif": {
+          "640": "swan-quarter-landing/swan-quarter-landing-640.avif",
+          "1024": "swan-quarter-landing/swan-quarter-landing-1024.avif",
+          "1600": "swan-quarter-landing/swan-quarter-landing-1600.avif"
+        },
+        "webp": {
+          "640": "swan-quarter-landing/swan-quarter-landing-640.webp",
+          "1024": "swan-quarter-landing/swan-quarter-landing-1024.webp",
+          "1600": "swan-quarter-landing/swan-quarter-landing-1600.webp"
+        },
+        "jpg": {
+          "640": "swan-quarter-landing/swan-quarter-landing-640.jpg",
+          "1024": "swan-quarter-landing/swan-quarter-landing-1024.jpg",
+          "1600": "swan-quarter-landing/swan-quarter-landing-1600.jpg"
+        }
+      },
+      "placeholder": "#908b85",
+      "focal": "50% 48%",
+      "approved": true,
+      "date_accessed": "2026-11-15"
+    },
+    {
+      "id": "oyster-boat-nc",
+      "category": "heritage",
+      "location": "North Carolina",
+      "description": "Oyster boat in North Carolina.",
+      "alt": "An oyster boat in North Carolina",
+      "photographer": "Carol M. Highsmith",
+      "credit": "Photo: Carol M. Highsmith, Library of Congress (public domain)",
+      "license": "Public domain",
+      "license_url": "",
+      "source_url": "https://www.loc.gov/pictures/item/2011632094/",
+      "width": 6767,
+      "height": 5411,
+      "sources": {
+        "avif": {
+          "640": "oyster-boat-nc/oyster-boat-nc-640.avif",
+          "1024": "oyster-boat-nc/oyster-boat-nc-1024.avif",
+          "1600": "oyster-boat-nc/oyster-boat-nc-1600.avif"
+        },
+        "webp": {
+          "640": "oyster-boat-nc/oyster-boat-nc-640.webp",
+          "1024": "oyster-boat-nc/oyster-boat-nc-1024.webp",
+          "1600": "oyster-boat-nc/oyster-boat-nc-1600.webp"
+        },
+        "jpg": {
+          "640": "oyster-boat-nc/oyster-boat-nc-640.jpg",
+          "1024": "oyster-boat-nc/oyster-boat-nc-1024.jpg",
+          "1600": "oyster-boat-nc/oyster-boat-nc-1600.jpg"
+        }
+      },
+      "placeholder": "#52636f",
+      "focal": "48% 48%",
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "between 1980 and 2006 (as stated by the Library of Congress)"
+    },
+    {
+      "id": "jennettes-pier",
+      "category": "saltwater",
+      "location": "Jennette's Pier",
+      "description": "Jennette's Pier.",
+      "alt": "Jennette's Pier extending into the water",
+      "photographer": "Roger Mulligan",
+      "credit": "Photo: Roger Mulligan, CC BY 2.0",
+      "license": "CC BY 2.0",
+      "license_url": "https://creativecommons.org/licenses/by/2.0/",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Jennette%27s_Pier-3725-Edit_(36524404973).jpg",
+      "width": 3977,
+      "height": 2679,
+      "sources": {
+        "avif": {
+          "640": "jennettes-pier/jennettes-pier-640.avif",
+          "1024": "jennettes-pier/jennettes-pier-1024.avif",
+          "1600": "jennettes-pier/jennettes-pier-1600.avif"
+        },
+        "webp": {
+          "640": "jennettes-pier/jennettes-pier-640.webp",
+          "1024": "jennettes-pier/jennettes-pier-1024.webp",
+          "1600": "jennettes-pier/jennettes-pier-1600.webp"
+        },
+        "jpg": {
+          "640": "jennettes-pier/jennettes-pier-640.jpg",
+          "1024": "jennettes-pier/jennettes-pier-1024.jpg",
+          "1600": "jennettes-pier/jennettes-pier-1600.jpg"
+        }
+      },
+      "placeholder": "#959ea9",
+      "focal": "55% 45%",
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "September 19, 2017"
+    },
+    {
+      "id": "duck-sunset",
+      "category": "lifestyle",
+      "location": "Duck, North Carolina",
+      "description": "Sunset at Duck, North Carolina.",
+      "alt": "Sunset at Duck, North Carolina",
+      "photographer": "Watts",
+      "credit": "Photo: Watts, CC BY 4.0",
+      "license": "CC BY 4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Sunset_-_Duck_-_North_Carolina.jpg",
+      "width": 8962,
+      "height": 5981,
+      "sources": {
+        "avif": {
+          "640": "duck-sunset/duck-sunset-640.avif",
+          "1024": "duck-sunset/duck-sunset-1024.avif",
+          "1600": "duck-sunset/duck-sunset-1600.avif"
+        },
+        "webp": {
+          "640": "duck-sunset/duck-sunset-640.webp",
+          "1024": "duck-sunset/duck-sunset-1024.webp",
+          "1600": "duck-sunset/duck-sunset-1600.webp"
+        },
+        "jpg": {
+          "640": "duck-sunset/duck-sunset-640.jpg",
+          "1024": "duck-sunset/duck-sunset-1024.jpg",
+          "1600": "duck-sunset/duck-sunset-1600.jpg"
+        }
+      },
+      "placeholder": "#655543",
+      "focal": "50% 55%",
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "October 23, 2025"
+    },
+    {
+      "id": "manteo-roanoke-marshes-light",
+      "category": "heritage",
+      "location": "Manteo, North Carolina",
+      "description": "2004 replica of the original Roanoke Marshes Light, in Manteo, North Carolina.",
+      "alt": "The 2004 replica of Roanoke Marshes Light in Manteo, North Carolina",
+      "photographer": "Morgan Riley",
+      "credit": "Photo: Morgan Riley, CC BY 3.0",
+      "license": "CC BY 3.0",
+      "license_url": "https://creativecommons.org/licenses/by/3.0/",
+      "source_url": "https://commons.wikimedia.org/wiki/File:New_Roanoke_Marshes_Light,_Manteo,_North_Carolina.JPG",
+      "width": 3264,
+      "height": 2448,
+      "sources": {
+        "avif": {
+          "640": "manteo-roanoke-marshes-light/manteo-roanoke-marshes-light-640.avif",
+          "1024": "manteo-roanoke-marshes-light/manteo-roanoke-marshes-light-1024.avif",
+          "1600": "manteo-roanoke-marshes-light/manteo-roanoke-marshes-light-1600.avif"
+        },
+        "webp": {
+          "640": "manteo-roanoke-marshes-light/manteo-roanoke-marshes-light-640.webp",
+          "1024": "manteo-roanoke-marshes-light/manteo-roanoke-marshes-light-1024.webp",
+          "1600": "manteo-roanoke-marshes-light/manteo-roanoke-marshes-light-1600.webp"
+        },
+        "jpg": {
+          "640": "manteo-roanoke-marshes-light/manteo-roanoke-marshes-light-640.jpg",
+          "1024": "manteo-roanoke-marshes-light/manteo-roanoke-marshes-light-1024.jpg",
+          "1600": "manteo-roanoke-marshes-light/manteo-roanoke-marshes-light-1600.jpg"
+        }
+      },
+      "placeholder": "#99a3ae",
+      "focal": "50% 42%",
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "May 14, 2012"
+    },
+    {
+      "id": "november-fishing-cape-point",
+      "category": "saltwater",
+      "location": "Cape Point, Cape Hatteras National Seashore, North Carolina",
+      "description": "November fishing at Cape Point.",
+      "alt": "People surf fishing at Cape Point, Cape Hatteras National Seashore, North Carolina",
+      "photographer": "Cape Hatteras National Seashore (U.S. National Park Service)",
+      "credit": "Photo: U.S. National Park Service, Cape Hatteras National Seashore (public domain)",
+      "license": "Public domain",
+      "license_url": "",
+      "source_url": "https://commons.wikimedia.org/wiki/File:November_fishing_at_Cape_Point_(51682179413).jpg",
+      "width": 4032,
+      "height": 3024,
+      "sources": {
+        "avif": {
+          "640": "november-fishing-cape-point/november-fishing-cape-point-640.avif",
+          "1024": "november-fishing-cape-point/november-fishing-cape-point-1024.avif",
+          "1600": "november-fishing-cape-point/november-fishing-cape-point-1600.avif"
+        },
+        "webp": {
+          "640": "november-fishing-cape-point/november-fishing-cape-point-640.webp",
+          "1024": "november-fishing-cape-point/november-fishing-cape-point-1024.webp",
+          "1600": "november-fishing-cape-point/november-fishing-cape-point-1600.webp"
+        },
+        "jpg": {
+          "640": "november-fishing-cape-point/november-fishing-cape-point-640.jpg",
+          "1024": "november-fishing-cape-point/november-fishing-cape-point-1024.jpg",
+          "1600": "november-fishing-cape-point/november-fishing-cape-point-1600.jpg"
+        }
+      },
+      "placeholder": "#85898b",
+      "focal": "50% 55%",
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "November 8, 2021"
+    },
+    {
+      "id": "surf-fishing-hatteras-pier",
+      "category": "heritage",
+      "location": "Hatteras pier, Outer Banks, North Carolina",
+      "description": "Surf fishing from the Hatteras pier on North Carolina's Outer Banks.",
+      "alt": "Surf fishing beside Hatteras pier on the Outer Banks, North Carolina",
+      "photographer": "Carol M. Highsmith",
+      "credit": "Photo: Carol M. Highsmith, Library of Congress (public domain)",
+      "license": "Public domain",
+      "license_url": "",
+      "source_url": "https://www.loc.gov/pictures/item/2011632387/",
+      "width": 6540,
+      "height": 5053,
+      "sources": {
+        "avif": {
+          "640": "surf-fishing-hatteras-pier/surf-fishing-hatteras-pier-640.avif",
+          "1024": "surf-fishing-hatteras-pier/surf-fishing-hatteras-pier-1024.avif",
+          "1600": "surf-fishing-hatteras-pier/surf-fishing-hatteras-pier-1600.avif"
+        },
+        "webp": {
+          "640": "surf-fishing-hatteras-pier/surf-fishing-hatteras-pier-640.webp",
+          "1024": "surf-fishing-hatteras-pier/surf-fishing-hatteras-pier-1024.webp",
+          "1600": "surf-fishing-hatteras-pier/surf-fishing-hatteras-pier-1600.webp"
+        },
+        "jpg": {
+          "640": "surf-fishing-hatteras-pier/surf-fishing-hatteras-pier-640.jpg",
+          "1024": "surf-fishing-hatteras-pier/surf-fishing-hatteras-pier-1024.jpg",
+          "1600": "surf-fishing-hatteras-pier/surf-fishing-hatteras-pier-1600.jpg"
+        }
+      },
+      "placeholder": "#72798e",
+      "focal": "45% 48%",
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "between 1980 and 2006 (as stated by the Library of Congress)"
+    },
+    {
+      "id": "crabbing-mattamuskeet",
+      "category": "heritage",
+      "location": "Lake Mattamuskeet, North Carolina",
+      "description": "Crabbing the canals and Lake Mattamuskeet.",
+      "alt": "A person crabbing along the canals at Lake Mattamuskeet, North Carolina, with the Lake Mattamuskeet Lodge and its lighthouse-style tower behind",
+      "photographer": "U.S. Fish and Wildlife Service (Southeast Region)",
+      "credit": "Photo: U.S. Fish and Wildlife Service (public domain)",
+      "license": "Public domain",
+      "license_url": "",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Crabbing_Mattamuskeet_(26334453213).jpg",
+      "width": 2988,
+      "height": 5312,
+      "sources": {
+        "avif": {
+          "640": "crabbing-mattamuskeet/crabbing-mattamuskeet-640.avif",
+          "1024": "crabbing-mattamuskeet/crabbing-mattamuskeet-1024.avif",
+          "1600": "crabbing-mattamuskeet/crabbing-mattamuskeet-1600.avif"
+        },
+        "webp": {
+          "640": "crabbing-mattamuskeet/crabbing-mattamuskeet-640.webp",
+          "1024": "crabbing-mattamuskeet/crabbing-mattamuskeet-1024.webp",
+          "1600": "crabbing-mattamuskeet/crabbing-mattamuskeet-1600.webp"
+        },
+        "jpg": {
+          "640": "crabbing-mattamuskeet/crabbing-mattamuskeet-640.jpg",
+          "1024": "crabbing-mattamuskeet/crabbing-mattamuskeet-1024.jpg",
+          "1600": "crabbing-mattamuskeet/crabbing-mattamuskeet-1600.jpg"
+        }
+      },
+      "placeholder": "#73777b",
+      "focal": "50% 45%",
+      "approved": false,
+      "date_accessed": "2026-11-15",
+      "date": "August 28, 2015",
+      "hold": "Upright this photograph is portrait (2988×5312). The original file carried EXIF orientation 8, which rotated the already-upright pixels onto their side. Variants were regenerated from the raw upright pixels with orientation stripped. Ed asked for landscape photos only, so this entry stays approved:false and is not in the daily rotation."
+    },
+    {
+      "id": "currituck-banks-reserve",
+      "category": "lifestyle",
+      "location": "Currituck Banks Reserve",
+      "description": "View of the sound from the Currituck Banks Reserve.",
+      "alt": "View of the sound from the Currituck Banks Reserve",
+      "photographer": "Indy beetle",
+      "credit": "Photo: Indy beetle, CC0 1.0",
+      "license": "CC0 1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Currituck_Banks_Reserve_view.jpg",
+      "width": 5712,
+      "height": 4284,
+      "sources": {
+        "avif": {
+          "640": "currituck-banks-reserve/currituck-banks-reserve-640.avif",
+          "1024": "currituck-banks-reserve/currituck-banks-reserve-1024.avif",
+          "1600": "currituck-banks-reserve/currituck-banks-reserve-1600.avif"
+        },
+        "webp": {
+          "640": "currituck-banks-reserve/currituck-banks-reserve-640.webp",
+          "1024": "currituck-banks-reserve/currituck-banks-reserve-1024.webp",
+          "1600": "currituck-banks-reserve/currituck-banks-reserve-1600.webp"
+        },
+        "jpg": {
+          "640": "currituck-banks-reserve/currituck-banks-reserve-640.jpg",
+          "1024": "currituck-banks-reserve/currituck-banks-reserve-1024.jpg",
+          "1600": "currituck-banks-reserve/currituck-banks-reserve-1600.jpg"
+        }
+      },
+      "placeholder": "#818f8f",
+      "focal": "50% 48%",
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "August 16, 2026"
+    },
+    {
+      "id": "salt-marsh-new-hanover",
+      "category": "lifestyle",
+      "location": "New Hanover County, North Carolina",
+      "description": "Salt marsh with tidal pools and the sound beyond, New Hanover County, North Carolina.",
+      "alt": "Salt marsh with tidal pools and the sound beyond, New Hanover County, North Carolina",
+      "photographer": "Z3lvs",
+      "credit": "Photo: Z3lvs, CC0 1.0",
+      "license": "CC0 1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Salt_marsh_with_tidal_pools_and_the_sound_beyond,_New_Hanover_County,_North_Carolina.jpg",
+      "width": 4032,
+      "height": 3024,
+      "sources": {
+        "avif": {
+          "640": "salt-marsh-new-hanover/salt-marsh-new-hanover-640.avif",
+          "1024": "salt-marsh-new-hanover/salt-marsh-new-hanover-1024.avif",
+          "1600": "salt-marsh-new-hanover/salt-marsh-new-hanover-1600.avif"
+        },
+        "webp": {
+          "640": "salt-marsh-new-hanover/salt-marsh-new-hanover-640.webp",
+          "1024": "salt-marsh-new-hanover/salt-marsh-new-hanover-1024.webp",
+          "1600": "salt-marsh-new-hanover/salt-marsh-new-hanover-1600.webp"
+        },
+        "jpg": {
+          "640": "salt-marsh-new-hanover/salt-marsh-new-hanover-640.jpg",
+          "1024": "salt-marsh-new-hanover/salt-marsh-new-hanover-1024.jpg",
+          "1600": "salt-marsh-new-hanover/salt-marsh-new-hanover-1600.jpg"
+        }
+      },
+      "placeholder": "#8e9380",
+      "focal": "50% 45%",
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "March 26, 2023"
+    },
+    {
+      "id": "falls-lake-pier",
+      "category": "freshwater",
+      "location": "Falls Lake, North Carolina",
+      "description": "Fishing pier, Falls Lake, North Carolina.",
+      "alt": "People on a wooden fishing pier at Falls Lake, North Carolina, with still water and woods beyond",
+      "photographer": "Sergiy Galyonkin",
+      "credit": "Photo: Sergiy Galyonkin, CC BY-SA 2.0 (cropped from the original)",
+      "license": "CC BY-SA 2.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/2.0/",
+      "source_url": "https://www.flickr.com/photos/sergesegal/52741376400/",
+      "width": 5208,
+      "height": 3906,
+      "sources": {
+        "avif": {
+          "640": "falls-lake-pier/falls-lake-pier-640.avif",
+          "1024": "falls-lake-pier/falls-lake-pier-1024.avif",
+          "1600": "falls-lake-pier/falls-lake-pier-1600.avif"
+        },
+        "webp": {
+          "640": "falls-lake-pier/falls-lake-pier-640.webp",
+          "1024": "falls-lake-pier/falls-lake-pier-1024.webp",
+          "1600": "falls-lake-pier/falls-lake-pier-1600.webp"
+        },
+        "jpg": {
+          "640": "falls-lake-pier/falls-lake-pier-640.jpg",
+          "1024": "falls-lake-pier/falls-lake-pier-1024.jpg",
+          "1600": "falls-lake-pier/falls-lake-pier-1600.jpg"
+        }
+      },
+      "placeholder": "#777773",
+      "focal": {
+        "mobile": "60% 50%",
+        "desktop": "50% 64%"
+      },
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "March 5, 2023"
+    },
+    {
+      "id": "jordan-lake-ebenezer",
+      "category": "freshwater",
+      "location": "Jordan Lake State Recreation Area, Ebenezer Church area, North Carolina",
+      "description": "Shoreline of Jordan Lake at the Ebenezer Church area, Jordan Lake State Recreation Area.",
+      "alt": "Shoreline of Jordan Lake at the Ebenezer Church area, Jordan Lake State Recreation Area",
+      "photographer": "Gerry Dincher",
+      "credit": "Photo: Gerry Dincher, CC BY-SA 2.0",
+      "license": "CC BY-SA 2.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/2.0/",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Jordan_Lake_from_Ebenezer_Church_shore.jpg",
+      "width": 3648,
+      "height": 2736,
+      "sources": {
+        "avif": {
+          "640": "jordan-lake-ebenezer/jordan-lake-ebenezer-640.avif",
+          "1024": "jordan-lake-ebenezer/jordan-lake-ebenezer-1024.avif",
+          "1600": "jordan-lake-ebenezer/jordan-lake-ebenezer-1600.avif"
+        },
+        "webp": {
+          "640": "jordan-lake-ebenezer/jordan-lake-ebenezer-640.webp",
+          "1024": "jordan-lake-ebenezer/jordan-lake-ebenezer-1024.webp",
+          "1600": "jordan-lake-ebenezer/jordan-lake-ebenezer-1600.webp"
+        },
+        "jpg": {
+          "640": "jordan-lake-ebenezer/jordan-lake-ebenezer-640.jpg",
+          "1024": "jordan-lake-ebenezer/jordan-lake-ebenezer-1024.jpg",
+          "1600": "jordan-lake-ebenezer/jordan-lake-ebenezer-1600.jpg"
+        }
+      },
+      "placeholder": "#847c72",
+      "focal": "50% 45%",
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "October 1, 2013"
+    },
+    {
+      "id": "fontana-lake-dock",
+      "category": "freshwater",
+      "location": "Fontana Lake, Fontana Dam, North Carolina",
+      "description": "Dock on Fontana Lake at Fontana Dam, North Carolina.",
+      "alt": "A dock on Fontana Lake at Fontana Dam, North Carolina",
+      "photographer": "Warren LeMay",
+      "credit": "Photo: Warren LeMay, CC BY-SA 2.0",
+      "license": "CC BY-SA 2.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/2.0/",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Dock,_Fontana_Lake,_Fontana_Dam,_NC.jpg",
+      "width": 3976,
+      "height": 2982,
+      "sources": {
+        "avif": {
+          "640": "fontana-lake-dock/fontana-lake-dock-640.avif",
+          "1024": "fontana-lake-dock/fontana-lake-dock-1024.avif",
+          "1600": "fontana-lake-dock/fontana-lake-dock-1600.avif"
+        },
+        "webp": {
+          "640": "fontana-lake-dock/fontana-lake-dock-640.webp",
+          "1024": "fontana-lake-dock/fontana-lake-dock-1024.webp",
+          "1600": "fontana-lake-dock/fontana-lake-dock-1600.webp"
+        },
+        "jpg": {
+          "640": "fontana-lake-dock/fontana-lake-dock-640.jpg",
+          "1024": "fontana-lake-dock/fontana-lake-dock-1024.jpg",
+          "1600": "fontana-lake-dock/fontana-lake-dock-1600.jpg"
+        }
+      },
+      "placeholder": "#71887f",
+      "focal": "50% 55%",
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "August 8, 2021"
+    },
+    {
+      "id": "linville-falls",
+      "category": "freshwater",
+      "location": "Linville Falls, Linville Gorge, Burke County, North Carolina",
+      "description": "Linville Falls, seen from just downstream on the Linville River in the Linville Gorge.",
+      "alt": "Linville Falls, seen from just downstream on the Linville River in the Linville Gorge",
+      "photographer": "Ken Thomas",
+      "credit": "Photo: Ken Thomas (public domain)",
+      "license": "Public domain",
+      "license_url": "",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Linville_Falls-27527-3.jpg",
+      "width": 2000,
+      "height": 1500,
+      "sources": {
+        "avif": {
+          "640": "linville-falls/linville-falls-640.avif",
+          "1024": "linville-falls/linville-falls-1024.avif",
+          "1600": "linville-falls/linville-falls-1600.avif"
+        },
+        "webp": {
+          "640": "linville-falls/linville-falls-640.webp",
+          "1024": "linville-falls/linville-falls-1024.webp",
+          "1600": "linville-falls/linville-falls-1600.webp"
+        },
+        "jpg": {
+          "640": "linville-falls/linville-falls-640.jpg",
+          "1024": "linville-falls/linville-falls-1024.jpg",
+          "1600": "linville-falls/linville-falls-1600.jpg"
+        }
+      },
+      "placeholder": "#515a3f",
+      "focal": "55% 55%",
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "June 1, 2008"
+    },
+    {
+      "id": "neuse-river-cliffs",
+      "category": "freshwater",
+      "location": "Cliffs of the Neuse State Park, North Carolina",
+      "description": "View across the Neuse River from the overlook in Cliffs of the Neuse State Park, North Carolina.",
+      "alt": "View across the Neuse River from the overlook in Cliffs of the Neuse State Park, North Carolina",
+      "photographer": "Fredlyfish4",
+      "credit": "Photo: Fredlyfish4, CC BY-SA 4.0",
+      "license": "CC BY-SA 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Neuse_River_at_Cliffs_of_the_Neuse_State_Park_2020.jpg",
+      "width": 4606,
+      "height": 1798,
+      "sources": {
+        "avif": {
+          "640": "neuse-river-cliffs/neuse-river-cliffs-640.avif",
+          "1024": "neuse-river-cliffs/neuse-river-cliffs-1024.avif",
+          "1600": "neuse-river-cliffs/neuse-river-cliffs-1600.avif"
+        },
+        "webp": {
+          "640": "neuse-river-cliffs/neuse-river-cliffs-640.webp",
+          "1024": "neuse-river-cliffs/neuse-river-cliffs-1024.webp",
+          "1600": "neuse-river-cliffs/neuse-river-cliffs-1600.webp"
+        },
+        "jpg": {
+          "640": "neuse-river-cliffs/neuse-river-cliffs-640.jpg",
+          "1024": "neuse-river-cliffs/neuse-river-cliffs-1024.jpg",
+          "1600": "neuse-river-cliffs/neuse-river-cliffs-1600.jpg"
+        }
+      },
+      "placeholder": "#506068",
+      "focal": "50% 48%",
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "November 14, 2020"
+    },
+    {
+      "id": "cape-fear-southport",
+      "category": "freshwater",
+      "location": "Cape Fear River, Southport, North Carolina",
+      "description": "The Cape Fear River at Southport.",
+      "alt": "The Cape Fear River at Southport, North Carolina",
+      "photographer": "David Broad",
+      "credit": "Photo: David Broad, CC BY 3.0",
+      "license": "CC BY 3.0",
+      "license_url": "https://creativecommons.org/licenses/by/3.0/",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Cape_Fear_River_-_Southport_-_panoramio.jpg",
+      "width": 4288,
+      "height": 2848,
+      "sources": {
+        "avif": {
+          "640": "cape-fear-southport/cape-fear-southport-640.avif",
+          "1024": "cape-fear-southport/cape-fear-southport-1024.avif",
+          "1600": "cape-fear-southport/cape-fear-southport-1600.avif",
+          "2400": "cape-fear-southport/cape-fear-southport-2400.avif"
+        },
+        "webp": {
+          "640": "cape-fear-southport/cape-fear-southport-640.webp",
+          "1024": "cape-fear-southport/cape-fear-southport-1024.webp",
+          "1600": "cape-fear-southport/cape-fear-southport-1600.webp",
+          "2400": "cape-fear-southport/cape-fear-southport-2400.webp"
+        },
+        "jpg": {
+          "640": "cape-fear-southport/cape-fear-southport-640.jpg",
+          "1024": "cape-fear-southport/cape-fear-southport-1024.jpg",
+          "1600": "cape-fear-southport/cape-fear-southport-1600.jpg",
+          "2400": "cape-fear-southport/cape-fear-southport-2400.jpg"
+        }
+      },
+      "placeholder": "#b6c1c7",
+      "focal": "50% 45%",
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "June 8, 2015"
+    },
+    {
+      "id": "mattamuskeet-sunset",
+      "category": "freshwater",
+      "location": "Mattamuskeet National Wildlife Refuge, North Carolina",
+      "description": "Sunset at Lake Mattamuskeet.",
+      "alt": "Sunset at Lake Mattamuskeet, Mattamuskeet National Wildlife Refuge, North Carolina",
+      "photographer": "Allie Stewart",
+      "credit": "Photo: Allie Stewart/USFWS (public domain)",
+      "license": "Public domain",
+      "license_url": "",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Sunset_at_Lake_Mattamuskeet_(12331105795).jpg",
+      "width": 4000,
+      "height": 3000,
+      "sources": {
+        "avif": {
+          "640": "mattamuskeet-sunset/mattamuskeet-sunset-640.avif",
+          "1024": "mattamuskeet-sunset/mattamuskeet-sunset-1024.avif",
+          "1600": "mattamuskeet-sunset/mattamuskeet-sunset-1600.avif"
+        },
+        "webp": {
+          "640": "mattamuskeet-sunset/mattamuskeet-sunset-640.webp",
+          "1024": "mattamuskeet-sunset/mattamuskeet-sunset-1024.webp",
+          "1600": "mattamuskeet-sunset/mattamuskeet-sunset-1600.webp"
+        },
+        "jpg": {
+          "640": "mattamuskeet-sunset/mattamuskeet-sunset-640.jpg",
+          "1024": "mattamuskeet-sunset/mattamuskeet-sunset-1024.jpg",
+          "1600": "mattamuskeet-sunset/mattamuskeet-sunset-1600.jpg"
+        }
+      },
+      "placeholder": "#735f52",
+      "focal": "50% 48%",
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "June 15, 2013"
+    },
+    {
+      "id": "nantahala-family",
+      "category": "lifestyle",
+      "location": "Nantahala River",
+      "description": "A family silhouette on the Nantahala River.",
+      "alt": "A family silhouette on the Nantahala River",
+      "photographer": "joiseyshowaa",
+      "credit": "Photo: joiseyshowaa, CC BY-SA 2.0",
+      "license": "CC BY-SA 2.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/2.0/",
+      "source_url": "https://commons.wikimedia.org/wiki/File:A_family_silhouette_-_Nantahala_River_(6241324149).jpg",
+      "width": 2168,
+      "height": 1456,
+      "sources": {
+        "avif": {
+          "640": "nantahala-family/nantahala-family-640.avif",
+          "1024": "nantahala-family/nantahala-family-1024.avif",
+          "1600": "nantahala-family/nantahala-family-1600.avif"
+        },
+        "webp": {
+          "640": "nantahala-family/nantahala-family-640.webp",
+          "1024": "nantahala-family/nantahala-family-1024.webp",
+          "1600": "nantahala-family/nantahala-family-1600.webp"
+        },
+        "jpg": {
+          "640": "nantahala-family/nantahala-family-640.jpg",
+          "1024": "nantahala-family/nantahala-family-1024.jpg",
+          "1600": "nantahala-family/nantahala-family-1600.jpg"
+        }
+      },
+      "placeholder": "#392f25",
+      "focal": "50% 45%",
+      "approved": true,
+      "date_accessed": "2026-11-15",
+      "date": "July 25, 2010"
+    }
+  ]
+}

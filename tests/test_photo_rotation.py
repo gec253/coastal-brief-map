@@ -33,10 +33,16 @@ def entry(i, cat, loc=None, **kw):
     return e
 
 
+BODIE = R.ROOT / "static" / "featured-photos" / "bodie-sunrise"
+
+
 def write_manifest(entries, d: Path) -> Path:
     (d / "photos").mkdir(exist_ok=True)
-    for f in ("bodie-sunrise-800.webp", "bodie-sunrise-800.jpg"):
-        (d / "photos" / f).write_bytes((FIX.parent / "photos" / f).read_bytes())
+    for name, src in (
+        ("bodie-sunrise-800.webp", BODIE / "bodie-sunrise-640.webp"),
+        ("bodie-sunrise-800.jpg", BODIE / "bodie-sunrise-640.jpg"),
+    ):
+        (d / "photos" / name).write_bytes(src.read_bytes())
     p = d / "manifest.json"
     p.write_text(json.dumps({"photos": entries}))
     return p
@@ -53,7 +59,7 @@ def assert_interleaved(tc, order):
 class Selection(unittest.TestCase):
     def setUp(self):
         self.man = R.load(FIX)
-        self.photos = [dict(p, sources={"jpg": {800: "x.jpg"}}) if p.get("catch_wall_id") else p for p in self.man["photos"]]
+        self.photos = list(self.man["photos"])
 
     def test_et_midnight_boundary(self):
         # 23:59:59 ET on Nov 15 (04:59:59Z Nov 16) is still Nov 15; 00:00:00 ET is Nov 16.
@@ -84,12 +90,18 @@ class Manifest(unittest.TestCase):
     def test_fixture_is_valid_and_approved_only(self):
         man = R.load(FIX)
         ids = [p["id"] for p in man["photos"]]
+        self.assertEqual(len(ids), 29)
         self.assertIn("bodie-sunrise", ids)
         self.assertIn("falls-lake-pier", ids)
-        self.assertNotIn("cw-striped-bass-roanoke", ids)   # approved:false
-        self.assertIn(("cw-striped-bass-roanoke", "not approved"), man["skipped"])
+        self.assertNotIn("crabbing-mattamuskeet", ids)   # portrait when upright; approved:false
+        self.assertIn(("crabbing-mattamuskeet", "not approved"), man["skipped"])
+        self.assertFalse(any(p.get("catch_wall_id") for p in man["photos"]))
+        for p in man["photos"]:
+            self.assertTrue(p["approved"] is True)
+            self.assertGreaterEqual(p["width"], p["height"], p["id"])
         falls = next(p for p in man["photos"] if p["id"] == "falls-lake-pier")
         self.assertIn("Falls Lake", falls["location"])
+        self.assertNotIn("Jordan Lake", falls["location"])
 
     def test_bad_entries_skipped(self):
         with tempfile.TemporaryDirectory() as d:
@@ -163,7 +175,7 @@ class Render(unittest.TestCase):
         self.assertIn('imagesizes="100vw"', pre)
         self.assertIn('width="1600" height="1200"', pic)
         self.assertIn("image/webp", pic)
-        self.assertIn("-800.jpg", pic)
+        self.assertIn("-640.jpg", pic)
         self.assertIn('alt="%s"' % p["alt"].replace("'", "&#x27;"), pic)
 
     def test_page_preload_and_hero_agree(self):
@@ -182,13 +194,28 @@ class Render(unittest.TestCase):
         self.assertIn('href="https://www.flickr.com/photos/sergesegal/52741376400/" rel="noopener">Sergiy Galyonkin</a>', falls)
         self.assertIn("public domain", R.credit_html(R.featured(photo_id="bodie-sunrise", approved=[])))
 
+    def test_caption_uses_manifest_fields(self):
+        p = R.featured(photo_id="cape-lookout-sunrise", approved=[])
+        hz = R.horizon_html(p)
+        self.assertIn(p["location"], hz)
+        self.assertIn(p["description"], hz)
+        self.assertIn("Ldicktel", hz)
+        self.assertIn('href="https://creativecommons.org/licenses/by-sa/4.0/" rel="noopener license">CC BY-SA 4.0</a>', hz)
+        self.assertIn(p["source_url"], hz)
+
     def test_community_entry_uses_store_and_drops_when_unapproved(self):
+        # Community shots stay in the mosaic, not the repo rotation. resolve() still
+        # fills a catch_wall_id entry from the approved store when a manifest has one.
         rec = {"id": "3e41ed83-23a3-4032-8a5f-c7957b788e3f", "src": {"800": "https://x.example/a-800.webp", "1600": "https://x.example/a-1600.webp"}}
-        p = R.featured(photo_id="cw-red-drum-new-bern", approved=[rec])
-        self.assertEqual(p["sources"], {"webp": {800: rec["src"]["800"], 1600: rec["src"]["1600"]}})
-        self.assertIn("Community photo · Catch Wall", R.horizon_html(p))
-        # Not in the approved store: the override is ignored and a manifest photo shows instead.
-        self.assertNotEqual(R.featured(photo_id="cw-red-drum-new-bern", approved=[])["id"], "cw-red-drum-new-bern")
+        cw = entry(9, "saltwater", "New Bern · Neuse River", id="cw-red-drum-new-bern",
+                   credit="Community photo · Catch Wall", photographer="", license="",
+                   catch_wall_id="3e41ed83-23a3-4032-8a5f-c7957b788e3f", sources={})
+        with tempfile.TemporaryDirectory() as d:
+            man = R.load(write_manifest([entry(1, "heritage"), cw], Path(d)))
+            p = R.featured(photo_id="cw-red-drum-new-bern", approved=[rec], manifest=man)
+            self.assertEqual(p["sources"], {"webp": {800: rec["src"]["800"], 1600: rec["src"]["1600"]}})
+            self.assertIn("Community photo · Catch Wall", R.horizon_html(p))
+            self.assertNotEqual(R.featured(photo_id="cw-red-drum-new-bern", approved=[], manifest=man)["id"], "cw-red-drum-new-bern")
 
 
 class Overrides(unittest.TestCase):
@@ -259,10 +286,10 @@ class Overrides(unittest.TestCase):
         self.assertEqual(s, 404)
 
     def test_only_manifest_files_are_served(self):
-        s, b = self._get("/featured-photos/photos/bodie-sunrise-800.jpg")
+        s, b = self._get("/featured-photos/bodie-sunrise/bodie-sunrise-640.jpg")
         self.assertEqual(s, 200)
         self.assertTrue(b.startswith(b"\xff\xd8"))
-        for bad in ("/featured-photos/photos/../../server.py", "/featured-photos/CREDITS.md", "/featured-photos/photos/nope-800.jpg"):
+        for bad in ("/featured-photos/bodie-sunrise/../../server.py", "/featured-photos/photo-rotation.json", "/featured-photos/bodie-sunrise/nope-640.jpg"):
             self.assertEqual(self._get(bad)[0], 404, bad)
 
 

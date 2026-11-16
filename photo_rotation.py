@@ -1,4 +1,4 @@
-"""Daily featured photo for the Hybrid homepage (private prototype, design/photo-rotation).
+"""Daily featured photo for the Hybrid homepage (private prototype, scout/photo-rotation).
 
 One photo per America/New_York calendar day, the same for every visitor, chosen server-side:
 
@@ -7,14 +7,12 @@ One photo per America/New_York calendar day, the same for every visitor, chosen 
 
 The manifest is JSON ({"photos": [entry, ...]}). Lookup order:
   1. $PHOTO_ROTATION_MANIFEST, if set
-  2. /workspace/photo-rotation/manifest.json (Scout's sourced set)
-  3. preview/sprint-home/photo-rotation.json (fixture: photos already approved in the repo)
+  2. static/featured-photos/photo-rotation.json (in-repo, the production-visible copy)
 The first file that parses AND yields at least one valid approved entry wins.
 
 Entries that fail validation are skipped (and listed in load()["skipped"]), never rendered.
-Community entries carry "catch_wall_id" and empty "sources": their files come from the
-approved Catch Wall store at render time, so stored captions are never copied or overridden
-and an un-approved submission drops out on its own.
+Only approved:true landscape photographs rotate. Community Catch Wall and Coastal Life
+photographs stay in the mosaic; catch_wall_id resolution remains for tests and compatibility.
 """
 from __future__ import annotations
 
@@ -28,8 +26,7 @@ from zoneinfo import ZoneInfo
 
 ET = ZoneInfo("America/New_York")
 ROOT = Path(__file__).resolve().parent
-FIXTURE = ROOT / "preview" / "sprint-home" / "photo-rotation.json"
-SCOUT_MANIFEST = Path("/workspace/photo-rotation/manifest.json")
+FIXTURE = ROOT / "static" / "featured-photos" / "photo-rotation.json"
 ROUTE = "/featured-photos/"
 CATEGORIES = ("saltwater", "freshwater", "heritage", "lifestyle")
 FORMATS = (("avif", "image/avif"), ("webp", "image/webp"), ("jpg", "image/jpeg"))
@@ -48,7 +45,7 @@ def _esc(s, quote=True) -> str:
 
 def manifest_candidates() -> list[Path]:
     env = (os.environ.get("PHOTO_ROTATION_MANIFEST") or "").strip()
-    return ([Path(env)] if env else []) + [SCOUT_MANIFEST, FIXTURE]
+    return ([Path(env)] if env else []) + [FIXTURE]
 
 
 # ------------------------------------------------------------------ validation

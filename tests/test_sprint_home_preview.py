@@ -228,9 +228,8 @@ class Render(unittest.TestCase):
         self.assertEqual(nums(h), [])
 
     def test_every_image_is_credited(self):
-        credit_re = re.compile(r'<(?:span|p) class="(?:ph-credit|mz-credit|hz-c)">([^<]+)</(?:span|p)>')
-        ok_credit = re.compile(r"^(Community photo · (Catch Wall|Coastal Life)|"
-                               r"Photo: National Park Service, Cape Hatteras National Seashore \(public domain\))$")
+        credit_re = re.compile(r'<(?:span|p) class="(?:ph-credit|mz-credit|hz-c)">(.*?)</(?:span|p)>', re.S)
+        ok_credit = re.compile(r"^(Community photo · (Catch Wall|Coastal Life)|Photo: .+)$")
         for v in sprint_home.CONCEPTS:
             h = render(v, salt("wilmington"))
             body = h[h.index("<main"):]
@@ -241,7 +240,8 @@ class Render(unittest.TestCase):
                 nxt = min([j for j in imgs if j > i] + [len(body)])
                 m = credit_re.search(body, i, nxt)
                 self.assertTrue(m, (v, body[i:i + 160]))
-                self.assertRegex(m.group(1), ok_credit)
+                plain = re.sub(r"<[^>]+>", "", m.group(1))
+                self.assertRegex(plain, ok_credit)
                 self.assertRegex(body[i:body.index(">", i)], r'width="\d+" height="\d+"')
             if v == "hybrid":
                 self.assertNotIn("Awaiting real material", h)
@@ -408,7 +408,7 @@ class Refinement(unittest.TestCase):
         with mock.patch.object(sprint_home, "_featured", return_value=sprint_home.photo_rotation.featured(photo_id="bodie-sunrise", approved=[])):
             h = render("hybrid", salt("wilmington"))
         hz = h[h.index('<section class="hz'):]
-        self.assertIn("/featured-photos/photos/bodie-sunrise-800.webp", hz[:2000])
+        self.assertIn("/featured-photos/bodie-sunrise/bodie-sunrise-640.webp", hz[:2000])
         self.assertIn('width="1600" height="1200"', hz[:2000])
         self.assertIn("Photo: National Park Service, Cape Hatteras National Seashore (public domain)", hz[:2500])
         self.assertTrue((sprint_home.DIR / "CREDITS.md").is_file())
