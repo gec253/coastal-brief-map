@@ -41,6 +41,9 @@ class MockSupabase(photos.SupabaseBackend):
             bucket, key = path[len("/storage/v1/object/"):].split("/", 1)
             key = unquote(key)
             if method == "POST":
+                # the real pending bucket only allows image/webp
+                if (headers or {}).get("Content-Type") != "image/webp":
+                    raise photos.StorageError("POST -> 415 invalid_mime_type")
                 self.objects[(bucket, key)] = body
                 return 200, b"{}"
             if method == "GET":

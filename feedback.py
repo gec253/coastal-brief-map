@@ -95,6 +95,7 @@ class SupabaseFeedbackStore:
 
     PREFIX = "feedback"
     MAX_LIST = 200
+    CTYPE = "image/webp"
 
     def __init__(self, backend):
         self.b = backend
@@ -109,8 +110,11 @@ class SupabaseFeedbackStore:
         self._check_private()
         stamp = (rec.get("created_at") or "").replace("-", "").replace(":", "").replace("+0000", "Z")
         key = "%s/%s-%s.json" % (self.PREFIX, stamp[:15] or "unknown", rec.get("id") or uuid.uuid4())
+        # The private pending bucket only accepts image/webp (allowed_mime_types, see
+        # docs/PHOTO_UPLOADS_SETUP.md). Rather than change bucket config, the JSON bytes are
+        # sent under that declared type; the object stays private and is parsed as JSON on read.
         self.b.put(self.bucket, key, json.dumps(rec, ensure_ascii=False).encode("utf-8"),
-                   "application/json")
+                   self.CTYPE)
         return rec
 
     def list(self) -> list[dict]:
@@ -236,7 +240,7 @@ def submit(data: dict, ip: str, ua: str = "") -> tuple[int, dict]:
         store().save(rec)
     except Exception as e:  # noqa: BLE001 - OSError, photos.StorageError, private-bucket guard
         import sys
-        sys.stderr.write("feedback save failed: %s\n" % type(e).__name__)
+        sys.stderr.write("feedback save failed: %s %s\n" % (type(e).__name__, str(e)[:300]))
         return 503, {"ok": False, "error": "Feedback could not be saved right now."}
     return 200, {"ok": True, "message": SENT, "id": rec["id"]}
 
@@ -263,7 +267,7 @@ def admin_list() -> dict:
         rows = store().list()
     except Exception as e:  # noqa: BLE001
         import sys
-        sys.stderr.write("feedback list failed: %s\n" % type(e).__name__)
+        sys.stderr.write("feedback list failed: %s %s\n" % (type(e).__name__, str(e)[:300]))
         return {"ok": False, "error": "Feedback storage error.", "items": []}
     for r in rows:
         items.append({k: r.get(k, "") for k in (
