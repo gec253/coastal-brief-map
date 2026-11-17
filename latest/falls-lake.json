@@ -4,18 +4,18 @@
    "label": "Lake level",
    "stale": false,
    "station": "02087182",
-   "time": "6:15 AM ET"
+   "time": "4:45 AM ET"
   },
   {
    "label": "Water temp",
    "stale": false,
    "station": "02087182",
-   "time": "6:15 AM ET"
+   "time": "4:45 AM ET"
   }
  ],
- "issueDate": "2026-11-16",
- "issuedAt": "2026-11-16T11:35:01.513465+00:00",
- "issuedEt": "Mon Nov 16, 6:35 AM ET",
+ "issueDate": "2026-11-17",
+ "issuedAt": "2026-11-17T10:15:02.060515+00:00",
+ "issuedEt": "Tue Nov 17, 5:15 AM ET",
  "items": [
   [
    "Alerts",
@@ -23,15 +23,15 @@
   ],
   [
    "Lake level",
-   "244.94 ft (NGVD29), 6.56 ft below the 251.5 ft guide curve; -0.03 ft in 24 h."
+   "244.90 ft (NGVD29), 6.60 ft below the 251.5 ft guide curve; -0.04 ft in 24 h."
   ],
   [
    "Dam release",
-   "60 cfs below Falls Dam (regulated), much below normal."
+   "60 cfs below Falls Dam (regulated)."
   ],
   [
    "Inflows",
-   "Eno River near Durham 6.8 cfs, below normal; Flat River at Bahama 2.9 cfs, much below normal."
+   "Eno River near Durham 7.2 cfs, much below normal; Flat River at Bahama 2.9 cfs, much below normal."
   ],
   [
    "Water temp",
@@ -43,12 +43,12 @@
   ],
   [
    "Weather",
-   "Sunny, high 58°F, wind N 1 to 6 mph."
+   "Clear, high 30°F, wind NW 1 mph."
   ]
  ],
  "missing": [],
  "ok": true,
- "reason": "on-request",
+ "reason": "scheduled",
  "region": {
   "anchor": {
    "label": "Falls Lake Dam (USGS 02087182)",
@@ -64,11 +64,10 @@
  "regionId": "falls-lake",
  "sources": "USGS, USACE Wilmington District, NWS",
  "take": [
-  "The lake is 6.6 ft below its guide curve, so more shoreline is exposed than usual; check NCWRC ramp notices before launching.",
-  "Flow below the dam is very low for the date."
+  "The lake is 6.6 ft below its guide curve, so more shoreline is exposed than usual; check NCWRC ramp notices before launching."
  ],
  "validation": {
-  "checkedAt": "2026-11-16T11:35:01.513465+00:00",
+  "checkedAt": "2026-11-17T10:15:02.060515+00:00",
   "checks": [
    "region",
    "location",
@@ -80,5 +79,5 @@
   "status": "ok"
  },
  "waterType": "freshwater",
- "words": 110
+ "words": 96
 }
