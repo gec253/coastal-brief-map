@@ -11,24 +11,24 @@
    "label": "Barometer",
    "stale": false,
    "station": "8654467",
-   "time": "5:06 AM ET"
+   "time": "5:12 AM ET"
   },
   {
    "label": "Water level",
    "stale": false,
    "station": "8654467",
-   "time": "5:06 AM ET"
+   "time": "5:12 AM ET"
   },
   {
    "label": "Water temp",
    "stale": false,
    "station": "8654467",
-   "time": "5:06 AM ET"
+   "time": "5:12 AM ET"
   }
  ],
  "issueDate": "2026-11-17",
- "issuedAt": "2026-11-17T10:15:00.934705+00:00",
- "issuedEt": "Tue Nov 17, 5:15 AM ET",
+ "issuedAt": "2026-11-17T10:21:08.294462+00:00",
+ "issuedEt": "Tue Nov 17, 5:21 AM ET",
  "items": [
   [
    "Advisories",
@@ -44,7 +44,7 @@
   ],
   [
    "Pressure",
-   "30.49 inHg, steady."
+   "30.50 inHg, steady."
   ],
   [
    "Marine forecast",
@@ -94,7 +94,7 @@
   "Offshore water is 12°F warmer than inshore."
  ],
  "validation": {
-  "checkedAt": "2026-11-17T10:15:00.934705+00:00",
+  "checkedAt": "2026-11-17T10:21:08.294462+00:00",
   "checks": [
    "region",
    "location",
