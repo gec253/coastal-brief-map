@@ -861,7 +861,7 @@ def marine_block(mcfg):
 
 
 def alerts_block(zones):
-    url = "https://api.weather.gov/alerts/active?zone=" + ",".join(zones)
+    url = "https://api.weather.gov/alerts/active?status=actual&zone=" + ",".join(zones)
     d = nws_json(url, TTL_ALERTS)
     if d is None:
         return {"status": "unavailable", "items": []}
@@ -869,6 +869,8 @@ def alerts_block(zones):
     seen = set()
     for f in d.get("features") or []:
         p = f.get("properties") or {}
+        if (p.get("status") or "Actual") != "Actual":
+            continue  # skip NWS test/exercise messages
         key = (p.get("event"), p.get("ends") or p.get("expires"))
         if key in seen:
             continue

@@ -81,6 +81,8 @@ def _items_from_geojson(data: dict) -> list[dict]:
     items, seen = [], set()
     for f in (data or {}).get("features") or []:
         p = f.get("properties") or {}
+        if (p.get("status") or "Actual") != "Actual":
+            continue  # skip NWS test/exercise messages
         key = p.get("id") or (p.get("event"), p.get("ends") or p.get("expires"))
         if key in seen:
             continue
@@ -97,7 +99,7 @@ def _items_from_geojson(data: dict) -> list[dict]:
 
 
 def fetch_zone(zone_id: str) -> dict:
-    url = "https://api.weather.gov/alerts/active?zone=%s" % zone_id
+    url = "https://api.weather.gov/alerts/active?status=actual&zone=%s" % zone_id
     data, err = _get_json(url)
     if data is None:
         return {"id": zone_id, "status": "failed", "items": [], "error": err, "sourceUrl": url}

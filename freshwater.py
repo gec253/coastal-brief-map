@@ -267,12 +267,14 @@ def qpf_block(fcfg, now):
 
 
 def alerts_point(lat, lon):
-    d = _get_json("https://api.weather.gov/alerts/active?point=%.4f,%.4f" % (lat, lon), 300)
+    d = _get_json("https://api.weather.gov/alerts/active?status=actual&point=%.4f,%.4f" % (lat, lon), 300)
     if d is None:
         return {"status": "unavailable", "items": []}
     items, seen = [], set()
     for f in d.get("features") or []:
         p = f.get("properties") or {}
+        if (p.get("status") or "Actual") != "Actual":
+            continue  # skip NWS test/exercise messages
         key = (p.get("event"), p.get("ends") or p.get("expires"))
         if key in seen:
             continue

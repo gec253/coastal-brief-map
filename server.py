@@ -383,7 +383,7 @@ def _ugc_from_alert(props: dict) -> set[str]:
 
 def evaluate_ads(existing: dict | None = None) -> dict:
     """Apply the approved ad-pause rule to live NWS alerts for NC marine zones."""
-    url = "https://api.weather.gov/alerts/active?area=NC"
+    url = "https://api.weather.gov/alerts/active?area=NC&status=actual"
     status, ctype, body = fetch_url(url, tries=3)
     alerts_out = []
     hard_hits = []
@@ -397,6 +397,8 @@ def evaluate_ads(existing: dict | None = None) -> dict:
             fetch_ok = False
         for feat in payload.get("features") or []:
             props = feat.get("properties") or {}
+            if (props.get("status") or "Actual") != "Actual":
+                continue  # NWS test/exercise/draft messages are never real alerts
             event = (props.get("event") or "").strip()
             ev_l = event.lower()
             codes = _ugc_from_alert(props)
