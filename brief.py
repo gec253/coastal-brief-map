@@ -151,6 +151,42 @@ def _dir_word(delta, unit, up="up", down="down", flat="steady", eps=0.0):
 
 
 # ------------------------------------------------------------------ saltwater brief
+# Brief-only wind backup (Ed approved plan item 2, t322u, Nov 18 2026). The region's configured wind
+# reading stays the primary (Hatteras: Diamond Shoals buoy 41025, offshore). Only when the primary is
+# not "ok" under the existing staleness rule (conditions.STALE_MIN / staleAfterMin) does the brief use
+# the shore station's wind, which conditions.assemble already fetches as "harborWind", and only if
+# that reading is itself "ok" under its own rule (45 min). The backup is labeled as a coastal (shore)
+# observation with its station and time, the stale buoy is still named as not used, and the two are
+# never blended. The map's wind tile is unchanged.
+WIND_BACKUP = {
+    "hatteras": {"reading": "harborWind", "station": "8654467", "name": "USCG Station Hatteras",
+                 "setting": "shore station at Hatteras Inlet", "short": "USCG Hatteras (shore)",
+                 "primaryName": "offshore buoy 41025"},
+}
+SHORE_WIND_NOTE = "Shore wind usually reads lighter than offshore."
+
+
+def _wind_backup(rid: str, R: dict):
+    """The configured backup wind reading for this region when it is fresh, else None."""
+    cfg = WIND_BACKUP.get(rid)
+    if not cfg:
+        return cfg, None
+    r = R.get(cfg["reading"]) or {}
+    if (r.get("status") == "ok" and r.get("time") and (r.get("station") or {}).get("id") == cfg["station"]
+            and (r.get("values") or {}).get("speedKt") is not None and (r.get("values") or {}).get("dirCompass")):
+        return cfg, r
+    return cfg, None
+
+
+def _primary_state(r: dict | None) -> str:
+    """'stale since 12:30 AM ET' or 'not reporting', for an unusable primary wind reading."""
+    if r and r.get("status") == "stale" and r.get("time"):
+        return "stale since %s" % _t(r["time"])
+    if r and r.get("lastReport"):
+        return "stale since %s" % _t(r["lastReport"])
+    return "not reporting"
+
+
 def _no_inshore_sensor(rid: str) -> bool:
     """True when the region config lists no inshore water-temp source at all (data/regions.json)."""
     try:
@@ -201,16 +237,47 @@ def build_salt(rid: str, now: datetime) -> dict:
         missing.append("advisories")
 
     wind_tr = seas_tr = pres_tr = None
+    wind_src = None
     if ok("wind"):
         w = R["wind"]; v = w["values"]; fr("Wind", w)
         wind_tr = _trend(w["station"]["id"], "WSPD", now, conditions.MS_TO_KT)
         line = "%d kt from the %s, gusting %d, at %s" % (round(v["speedKt"]), v["dirCompass"], round(v["gustKt"] or v["speedKt"]), w["station"]["name"])
+        if rid in WIND_BACKUP:  # name the offshore buoy and its observation time, so primary and backup read differently
+            line += " (offshore buoy %s, observed %s)" % (w["station"].get("id"), _t(w["time"]))
         if wind_tr:
             line += "; %s from %d kt %d h earlier" % ("up" if wind_tr["now"] - wind_tr["then"] > 2 else "down" if wind_tr["then"] - wind_tr["now"] > 2 else "about steady", round(wind_tr["then"]), wind_tr["hours"])
             pres_tr = _trend(w["station"]["id"], "PRES", now)
         items.append(("Wind", line + "."))
+        if rid in WIND_BACKUP:
+            wind_src = {"role": "primary", "type": "offshore", "station": w["station"].get("id"), "name": w["station"].get("name"),
+                        "observed": w["time"]}
     else:
-        miss("wind", R.get("wind"))
+        bcfg, bk = _wind_backup(rid, R)
+        prim = R.get("wind")
+        if bk:
+            # Primary stale or missing, shore station fresh: show the shore reading, labeled as such.
+            v = bk["values"]; state = _primary_state(prim)
+            fresh.append({"label": "Wind (coastal backup)", "time": _t(bk["time"]), "station": bcfg["station"], "stale": False})
+            line = ("Coastal backup, %s (%s), observed %s: %d kt from the %s, gusting %d. %s %s, not used. %s"
+                    % (bcfg["name"], bcfg["setting"], _t(bk["time"]), round(v["speedKt"]), v["dirCompass"],
+                       round(v.get("gustKt") or v["speedKt"]), bcfg["primaryName"][0].upper() + bcfg["primaryName"][1:], state, SHORE_WIND_NOTE))
+            items.append(("Wind", line))
+            # Validation is unchanged: the stale primary is still listed, so the brief stays "partial"
+            # and the 5:15-5:30 retries keep trying for the buoy (a retry with the buoy back wins).
+            missing.append("offshore wind, %s (%s, not used; coastal backup shown)" % (bcfg["primaryName"], state.replace("stale since", "stale: last report")))
+            wind_src = {"role": "backup", "type": "coastal", "station": bcfg["station"], "name": bcfg["name"], "observed": bk["time"],
+                        "primary": {"station": ((prim or {}).get("station") or {}).get("id") or bcfg["primaryName"].split()[-1],
+                                    "state": state, "lastReport": (prim or {}).get("time") or (prim or {}).get("lastReport")}}
+        elif bcfg and bcfg["reading"] in R:
+            # Both stale or missing: no wind is shown; say why for each source.
+            b_r = R.get(bcfg["reading"]) or {}
+            b_state = _primary_state(b_r)
+            missing.append("wind (%s %s; coastal backup %s %s; neither used)"
+                           % (bcfg["primaryName"], _primary_state(prim).replace("stale since", "stale: last report"),
+                              bcfg["name"], b_state.replace("stale since", "stale: last report")))
+            wind_src = {"role": "none", "state": "unavailable"}
+        else:
+            miss("wind", prim)
     if ok("seas"):
         s = R["seas"]; v = s["values"]; fr("Seas", s)
         seas_tr = _trend(s["station"]["id"], "WVHT", now, conditions.M_TO_FT)
@@ -309,10 +376,13 @@ def build_salt(rid: str, now: datetime) -> dict:
             take.append("Offshore water is %d°F %s than inshore." % (round(abs(gap)), "warmer" if gap > 0 else "cooler"))
     if not take:
         take.append("No advisories and no big overnight changes in the readings.")
-    return {"region": d["region"], "waterType": "saltwater", "items": items, "freshness": fresh, "take": take[:4], "missing": missing,
+    out = {"region": d["region"], "waterType": "saltwater", "items": items, "freshness": fresh, "take": take[:4], "missing": missing,
             "marineZone": (d.get("marine") or {}).get("zone"), "marineUpdated": (d.get("marine") or {}).get("updated"),
             "forecastUpdated": fc.get("updated"),
             "sources": "NOAA NDBC, NOAA CO-OPS, NWS (api.weather.gov)"}
+    if wind_src:
+        out["windSource"] = wind_src
+    return out
 
 
 # ------------------------------------------------------------------ freshwater brief (Falls Lake)
@@ -712,7 +782,15 @@ def _glance(b: dict) -> list[dict]:
         return cells
     wind = _item(b, "Wind")
     m = re.search(r"(\d+)\s*kt from the (\w+)", wind)
-    if m:
+    src = b.get("windSource") or {}
+    if m and src.get("role") == "backup":
+        short = (WIND_BACKUP.get(b.get("regionId") or "") or {}).get("short") or src.get("name") or "shore station"
+        cells.append({"key": "Wind · coastal backup", "kind": "observed", "value": m.group(1), "unit": "kt",
+                      "sub": "from %s · %s" % (m.group(2), short), "tone": "wind"})
+    elif m and src.get("role") == "primary" and src.get("type") == "offshore":
+        cells.append({"key": "Wind", "kind": "observed", "value": m.group(1), "unit": "kt",
+                      "sub": "from %s · offshore buoy %s" % (m.group(2), src.get("station") or ""), "tone": "wind"})
+    elif m:
         cells.append({"key": "Wind", "kind": "observed", "value": m.group(1), "unit": "kt", "sub": "from " + m.group(2), "tone": "wind"})
     seas = _item(b, "Seas")
     m = re.search(r"([\d.]+)\s*ft every (\d+)\s*s from the (\w+)", seas)
