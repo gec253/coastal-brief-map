@@ -34,10 +34,15 @@ TTL_USACE = 6 * 3600
 STALE_H = 3           # a USGS reading older than this is labelled stale
 REJECT_H = 24         # older than this is treated as missing, not current
 ASSEMBLED_TTL = 300
+# A cached page older than ASSEMBLED_TTL but younger than this is served at once while a background
+# refresh runs, so a visitor never waits on slow USGS calls. Every reading keeps its own observation time.
+ASSEMBLED_SERVE_MAX = 1200
+WARM_EVERY = 240
 
 _POOL = ThreadPoolExecutor(max_workers=8)
 _LOCK = threading.Lock()
 _ASSEMBLED: dict[str, tuple[float, dict]] = {}
+_REFRESHING: set = set()
 
 
 def flag_on() -> bool:
@@ -350,7 +355,7 @@ def _attach_nwps(spec, block, nw):
     return block
 
 
-def assemble(rid):
+def assemble(rid, force=False):
     regs = regions()
     if rid not in regs:
         return 404, {"ok": False, "error": "Unknown freshwater region."}
@@ -366,10 +371,17 @@ def assemble(rid):
             return 404, {"ok": False, "error": "This freshwater view is not built yet."}
     else:
         return 404, {"ok": False, "error": "This freshwater view is not built yet."}
-    with _LOCK:
-        hit = _ASSEMBLED.get(rid)
-        if hit and time.time() - hit[0] < ASSEMBLED_TTL:
-            return 200, hit[1]
+    if not force:
+        with _LOCK:
+            hit = _ASSEMBLED.get(rid)
+            age = time.time() - hit[0] if hit else None
+            if hit and age < ASSEMBLED_TTL:
+                return 200, hit[1]
+            if hit and age < ASSEMBLED_SERVE_MAX:
+                if rid not in _REFRESHING:
+                    _REFRESHING.add(rid)
+                    threading.Thread(target=_refresh, args=(rid,), daemon=True).start()
+                return 200, hit[1]
     now = datetime.now(timezone.utc)
     et_today = (now - timedelta(hours=5)).date()  # stats are keyed by calendar day; ET is close enough
     lake = r.get("lake")
@@ -505,3 +517,37 @@ def assemble(rid):
     with _LOCK:
         _ASSEMBLED[rid] = (time.time(), payload)
     return 200, payload
+
+
+def _refresh(rid):
+    try:
+        assemble(rid, force=True)
+    except Exception as e:  # never let a refresh crash the server
+        import sys
+        sys.stderr.write("freshwater refresh %s failed: %s\n" % (rid, e))
+    finally:
+        with _LOCK:
+            _REFRESHING.discard(rid)
+
+
+def warm_ids() -> list:
+    """Regions worth keeping warm: public ones, plus the preview-only ones."""
+    out = []
+    for rid, r in regions().items():
+        if r.get("previewReady") and not r.get("draft"):
+            out.append(rid)
+    return out
+
+
+def start_warmer():
+    """Keep every freshwater page assembled in the background so the Freshwater tab opens instantly."""
+    def loop():
+        while True:
+            for rid in warm_ids():
+                with _LOCK:
+                    if rid in _REFRESHING:
+                        continue
+                    _REFRESHING.add(rid)
+                _refresh(rid)
+            time.sleep(WARM_EVERY)
+    threading.Thread(target=loop, name="freshwater-warmer", daemon=True).start()

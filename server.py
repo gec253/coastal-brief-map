@@ -3058,6 +3058,10 @@ def main():
     except Exception as e:
         sys.stderr.write("catch-wall cache warmup failed: %s\n" % e)
     brief.start_scheduler()
+    try:
+        freshwater.start_warmer()
+    except Exception as e:
+        sys.stderr.write("freshwater warmer failed to start: %s\n" % e)
     httpd = ThreadingHTTPServer((args.host, args.port), Handler)
     print("Coastal Brief map at http://%s:%s/" % (args.host, args.port), flush=True)
     try:
