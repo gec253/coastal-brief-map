@@ -13,9 +13,9 @@
    "time": "4:45 AM ET"
   }
  ],
- "issueDate": "2026-11-17",
- "issuedAt": "2026-11-17T10:15:02.060515+00:00",
- "issuedEt": "Tue Nov 17, 5:15 AM ET",
+ "issueDate": "2026-11-18",
+ "issuedAt": "2026-11-18T10:15:03.288038+00:00",
+ "issuedEt": "Wed Nov 18, 5:15 AM ET",
  "items": [
   [
    "Alerts",
@@ -23,19 +23,19 @@
   ],
   [
    "Lake level",
-   "244.90 ft (NGVD29), 6.60 ft below the 251.5 ft guide curve; -0.04 ft in 24 h."
+   "244.85 ft (NGVD29), 6.65 ft below the 251.5 ft guide curve; -0.05 ft in 24 h."
   ],
   [
    "Dam release",
-   "60 cfs below Falls Dam (regulated)."
+   "60 cfs below Falls Dam (regulated), much below normal."
   ],
   [
    "Inflows",
-   "Eno River near Durham 7.2 cfs, much below normal; Flat River at Bahama 2.9 cfs, much below normal."
+   "Eno River near Durham 7.2 cfs, much below normal; Flat River at Bahama 3.1 cfs, much below normal."
   ],
   [
    "Water temp",
-   "60°F at the dam sensor."
+   "59°F at the dam sensor."
   ],
   [
    "Rain",
@@ -43,7 +43,7 @@
   ],
   [
    "Weather",
-   "Clear, high 30°F, wind NW 1 mph."
+   "Clear, high 33°F, wind N 1 mph."
   ]
  ],
  "missing": [],
@@ -64,10 +64,11 @@
  "regionId": "falls-lake",
  "sources": "USGS, USACE Wilmington District, NWS",
  "take": [
-  "The lake is 6.6 ft below its guide curve, so more shoreline is exposed than usual; check NCWRC ramp notices before launching."
+  "The lake is 6.7 ft below its guide curve, so more shoreline is exposed than usual; check NCWRC ramp notices before launching.",
+  "Flow below the dam is very low for the date."
  ],
  "validation": {
-  "checkedAt": "2026-11-17T10:15:02.060515+00:00",
+  "checkedAt": "2026-11-18T10:15:03.288038+00:00",
   "checks": [
    "region",
    "location",
@@ -79,5 +80,5 @@
   "status": "ok"
  },
  "waterType": "freshwater",
- "words": 96
+ "words": 109
 }
