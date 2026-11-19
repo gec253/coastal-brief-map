@@ -1,11 +1,11 @@
 {
- "forecastUpdated": "2026-11-19T10:20:36+00:00",
+ "forecastUpdated": "2026-11-19T09:06:03+00:00",
  "freshness": [
   {
    "label": "Wind",
    "stale": false,
    "station": "CLKN7",
-   "time": "5:40 AM ET"
+   "time": "4:50 AM ET"
   },
   {
    "label": "Seas",
@@ -17,24 +17,24 @@
    "label": "Barometer",
    "stale": false,
    "station": "8656483",
-   "time": "6:00 AM ET"
+   "time": "5:06 AM ET"
   },
   {
    "label": "Water level",
    "stale": false,
    "station": "8656483",
-   "time": "6:00 AM ET"
+   "time": "5:06 AM ET"
   },
   {
    "label": "Water temp",
    "stale": false,
    "station": "8656483",
-   "time": "6:00 AM ET"
+   "time": "5:06 AM ET"
   }
  ],
  "issueDate": "2026-11-19",
- "issuedAt": "2026-11-19T11:13:01.580563+00:00",
- "issuedEt": "Thu Nov 19, 6:13 AM ET",
+ "issuedAt": "2026-11-19T10:15:00.001874+00:00",
+ "issuedEt": "Thu Nov 19, 5:15 AM ET",
  "items": [
   [
    "Advisories",
@@ -42,7 +42,7 @@
   ],
   [
    "Wind",
-   "10 kt from the NNE, gusting 14, at Cape Lookout; about steady from 11 kt 10 h earlier."
+   "8 kt from the NNE, gusting 12, at Cape Lookout; about steady from 8 kt 10 h earlier."
   ],
   [
    "Seas",
@@ -50,11 +50,11 @@
   ],
   [
    "Swell",
-   "0.3 ft at 15 s from the E (split from the buoy spectrum)."
+   "0.3 ft at 11 s from the ESE (split from the buoy spectrum)."
   ],
   [
    "Pressure",
-   "30.44 inHg, steady, down 1.7 hPa over 10 h at CLKN7."
+   "30.43 inHg, steady, down 1.8 hPa over 10 h at CLKN7."
   ],
   [
    "Marine forecast",
@@ -62,7 +62,7 @@
   ],
   [
    "Rain",
-   "1% chance through tonight; mostly sunny, high 69°F."
+   "0% chance through tonight; mostly clear, high 43°F."
   ],
   [
    "Tides",
@@ -77,7 +77,7 @@
  "marineZone": "AMZ158",
  "missing": [],
  "ok": true,
- "reason": "on-request",
+ "reason": "scheduled",
  "region": {
   "anchor": {
    "label": "Beaufort Inlet",
@@ -102,7 +102,7 @@
   "Offshore water is 10°F warmer than inshore."
  ],
  "validation": {
-  "checkedAt": "2026-11-19T11:13:01.580563+00:00",
+  "checkedAt": "2026-11-19T10:15:00.001874+00:00",
   "checks": [
    "region",
    "location",
