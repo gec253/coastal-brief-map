@@ -1273,7 +1273,6 @@ NIGHT_BOOT = (
     'imagesrcset="%s" imagesizes="50vw">' % (_STRIP_MEDIA[k], _strip_srcset(k, side, "avif"))
     for k in ("phone", "wide") for side in ("l", "r")
 )).replace("<", "\\u003c")
-STRIP_CREDIT = "Photo: Ed Cogdell / The Coastal Brief"
 STRIP_ALT = "Two long wooden docks over sound-side water, with marsh grass and red glasswort in the foreground"
 
 
@@ -1297,8 +1296,8 @@ def night_strip_html() -> str:
     then JPEG. The box has a fixed CSS height and each img carries width/height, so showing it never
     shifts later content. The right half is a continuation of the same photo, so it has empty alt text.
     No place name: the location is not confirmed."""
-    fig = '<figure class="nstrip">%s%s<figcaption class="nstrip-cr">%s</figcaption></figure>' % (
-        _strip_half("l", STRIP_ALT), _strip_half("r", ""), STRIP_CREDIT)
+    fig = '<figure class="nstrip">%s%s</figure>' % (
+        _strip_half("l", STRIP_ALT), _strip_half("r", ""))
     # Markup lives in a JS string (with "<" escaped) so the default page carries no extra element at all.
     js = json.dumps(fig).replace("<", "\\u003c")
     return (

@@ -26,7 +26,13 @@ class NightStripFinal(unittest.TestCase):
         # Markup is escaped in the script string, so it does not create images without the switch.
         self.assertNotIn('<figure', salt)
         self.assertIn('\\u003cfigure', salt)
-        self.assertIn(home.STRIP_CREDIT, salt)
+        self.assertNotIn('Photo: Ed Cogdell / The Coastal Brief', salt)
+        self.assertNotIn('figcaption', home.night_strip_html())
+        self.assertNotIn('nstrip-cr', home.night_strip_html())
+        self.assertIn(home.STRIP_ALT, home.night_strip_html())
+        credits = ROOT / 'static/night-strip/CREDITS.md'
+        self.assertTrue(credits.is_file())
+        self.assertIn('Photo: Ed Cogdell / The Coastal Brief', credits.read_text())
 
     def test_half_strip_sources_and_dimensions(self):
         for side in ('l','r'):
@@ -50,13 +56,13 @@ class NightStripFinal(unittest.TestCase):
         self.assertIn('type=\\"image/avif\\"', home.NIGHT_BOOT)
         self.assertIn('imagesizes=\\"50vw\\"', home.NIGHT_BOOT)
 
-    def test_night_wash_spans_both_halves_below_credit(self):
+    def test_night_wash_spans_both_halves_without_credit_css(self):
         css = (ROOT / 'preview/sprint-home/hybrid.css').read_text()
         rule = css[css.index('/* Night only: one continuous wash'):]
         self.assertIn('@media (prefers-color-scheme:dark)', rule)
         self.assertIn('html[data-water="salt"][data-night="b"] .nstrip::after', rule)
         self.assertIn('inset:0;z-index:2;pointer-events:none;background:#0F2B44;opacity:.38', rule)
-        self.assertIn('html[data-water="salt"][data-night="b"] .nstrip-cr{z-index:3}', rule)
+        self.assertNotIn('nstrip-cr', css)
         self.assertNotIn('filter:', rule)
         self.assertNotIn('height:', rule)
         self.assertNotIn('width:', rule)

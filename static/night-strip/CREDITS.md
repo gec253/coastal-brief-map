@@ -2,14 +2,15 @@
 
 Opt-in: `?strip=1&night=1` (natural photo and chart, in day or night; Coastal blue tokens paint in dark mode only).
 `?strip=natural` is an alias for `?strip=1`; `?night=b` is an alias for `?night=1`. No A, daytime tint option, or phone chart gate.
-Night only: a single continuous CSS overlay, #0F2B44 at 38% opacity, softens both photo halves; the credit remains above it.
+Night only: a single continuous CSS overlay, #0F2B44 at 38% opacity, softens both photo halves.
 Image files, crops and dimensions are unchanged by this presentation layer.
 Plain `/` has no extra image requests or strip element. Nothing is deployed.
 
 ## Ed Cogdell photograph
 
 - Photographer / owner: Ed Cogdell, The Coastal Brief. Owner-supplied November 19, 2026, approved for site use.
-- Credit shown exactly: **Photo: Ed Cogdell / The Coastal Brief**
+- Internal credit record: **Photo: Ed Cogdell / The Coastal Brief**
+- No visible credit label is shown on the strip, in day or night, per Ed (November 19, 2026).
 - Sound-side water, two wooden docks, marsh grass and red glasswort; no boat. Location unconfirmed.
 - Original: `/workspace/design-night-1119/source/ed-sound-docks-marsh.jpg`, 1500 × 532, 182,031 bytes;
   SHA-256 `679293a60d29dc4b1d6c3f1329cb8282f24182f4fb43b1bcd182c1466431005c`. Original / EXIF not committed.
