@@ -1011,12 +1011,10 @@ def conditions_html(m: dict, *, variant: str, public: bool = False) -> str:
         if _brief_on():
             import site_chrome
             tgt, own = site_chrome.brief_target(rid)
-            # A coastal region without its own brief links the nearest one and says so (never a 404).
-            # Jordan Lake and the Neuse keep no tools link, as before (Nov 16 decision).
-            if own or m.get("water") != "fresh":
-                label = ("Today\'s Morning Brief" if own else
-                         "Nearest Morning Brief: %s" % _esc(site_chrome.region_name(tgt) or tgt))
-                brief_link = '<a class="cg-link" href="/brief?region=%s">%s</a>' % (_esc(tgt, True), label)
+            # Ed (Nov 19, t336u): always this region's own /brief page. Without a published brief
+            # that is the "No Morning Brief for this area" page (with a way back), never another region.
+            label = "Today\'s Morning Brief" if own else "Morning Brief: not yet available here"
+            brief_link = '<a class="cg-link" href="/brief?region=%s">%s</a>' % (_esc(tgt, True), label)
     if m.get("water") == "fresh":
         dash = "/lake?region=%s" % rid
     else:   # "/" is the Hybrid page itself; the map, chart, radar and tide tables live on /dashboard

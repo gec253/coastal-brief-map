@@ -106,6 +106,10 @@ class MastheadPreview(unittest.TestCase):
             "styles.css",
             "catch-wall.html",
             "region-nav.js",
+            # Ed (Nov 19 launch audit, t336u) changed the Morning Brief link rule: each region opens
+            # its own /brief page. brief-link.js is the only file that rule touches here; its
+            # behavior is covered by tests/test_launch_audit_1119.py instead of this byte lock.
+            "brief-link.js",
         )
     )
 

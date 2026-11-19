@@ -182,17 +182,69 @@ class WholeMsWind(unittest.TestCase):
 
 # ------------------------------------------------------------------ items 4, 5, 6, 7, 8, 9, 10, 11
 class BriefTargets(unittest.TestCase):
+    """Ed (Nov 19, t336u): every Morning Brief link opens the region's own /brief page."""
     def test_targets(self):
         with mock.patch.object(site_chrome, "public_brief_regions", lambda: ["crystal-coast", "hatteras", "falls-lake"]):
-            self.assertEqual(site_chrome.brief_target("hatteras"), ("hatteras", True))
-            self.assertEqual(site_chrome.brief_target("falls-lake"), ("falls-lake", True))
-            self.assertEqual(site_chrome.brief_target("wilmington"), ("crystal-coast", False))
-            self.assertEqual(site_chrome.brief_target("nags-head"), ("hatteras", False))
-            self.assertEqual(site_chrome.brief_target("jordan-lake"), ("falls-lake", False))
-            self.assertEqual(site_chrome.brief_target("nope"), ("crystal-coast", False))
-        with mock.patch.object(site_chrome, "public_brief_regions", lambda: ["crystal-coast", "hatteras"]):
-            self.assertEqual(site_chrome.brief_target("neuse-river"), ("crystal-coast", False))
+            for rid in OWN:
+                self.assertEqual(site_chrome.brief_target(rid), (rid, True))
+            for rid in NONE:
+                self.assertEqual(site_chrome.brief_target(rid), (rid, False))
+            self.assertEqual(site_chrome.brief_target(None), ("crystal-coast", True))
 
+
+OWN = ("crystal-coast", "hatteras", "falls-lake")
+NONE = ("nags-head", "wilmington", "emerald-isle", "topsail", "jordan-lake", "neuse-river")
+
+
+def _brief_hrefs(html: str) -> dict:
+    """href of every Morning Brief link the page itself owns (header, rail card, tools link)."""
+    out = {}
+    for key, pat in (("header", r'<a href="([^"]*)" id="nav-brief"'),
+                     ("card", r'<a class="folio-card" href="([^"]*)" id="folio-brief"'),
+                     ("tools", r'<a class="cg-tool cg-tool-brief" href="([^"]*)"')):
+        m = re.search(pat, html)
+        if m:
+            out[key] = m.group(1)
+    return out
+
+
+class BriefLinkJs(unittest.TestCase):
+    """Runs brief-link.js in node with a stub DOM: page load and a picker change (dashboard.js calls sync(id))."""
+    def _run(self, search, path, stored, sync_to=None):
+        import subprocess
+        js = (ROOT / "brief-link.js").read_text()
+        harness = """
+const els = {"nav-brief": {href: ""}, "folio-brief": {href: ""}};
+global.document = {getElementById: (k) => els[k] || null};
+global.window = global;
+global.location = {search: %s, pathname: %s};
+global.localStorage = {getItem: () => %s};
+%s
+const out = {load: [els["nav-brief"].href, els["folio-brief"].href]};
+if (%s) { CoastalBriefLink.sync(%s); out.change = [els["nav-brief"].href, els["folio-brief"].href]; }
+console.log(JSON.stringify(out));
+""" % (json.dumps(search), json.dumps(path), json.dumps(stored), js, "true" if sync_to else "false", json.dumps(sync_to))
+        return json.loads(subprocess.check_output(["node", "-e", harness], text=True))
+
+    def test_each_region_on_load(self):
+        for rid in OWN + NONE:
+            self.assertEqual(self._run("?region=" + rid, "/dashboard", None)["load"], ["/brief?region=" + rid] * 2, rid)
+
+    def test_lake_pages(self):
+        self.assertEqual(self._run("", "/lake", None)["load"][0], "/brief?region=falls-lake")
+        for rid in ("jordan-lake", "neuse-river"):
+            self.assertEqual(self._run("?region=" + rid, "/lake", None)["load"][0], "/brief?region=" + rid)
+
+    def test_dashboard_picker_change_and_default(self):
+        r = self._run("", "/dashboard", None, sync_to="nags-head")
+        self.assertEqual(r["load"][0], "/brief?region=crystal-coast")  # no param, nothing stored: page default
+        self.assertEqual(r["change"], ["/brief?region=nags-head"] * 2)
+        r = self._run("", "/dashboard", "topsail", sync_to="hatteras")
+        self.assertEqual(r["load"][0], "/brief?region=topsail")  # page's current (stored) region
+        self.assertEqual(r["change"][0], "/brief?region=hatteras")
+
+    def test_garbage_id_is_not_passed_through(self):
+        self.assertEqual(self._run('?region=<x>"', "/dashboard", None)["load"][0], "/brief?region=crystal-coast")
 
 
 class Css(unittest.TestCase):
@@ -291,17 +343,55 @@ class Pages(unittest.TestCase):
         self.assertEqual(st, 200)
         self.assertEqual(re.search(r"<title>([^<]*)</title>", body).group(1), "Coastal Life \u2014 The Coastal Brief")
 
-    def test_home_header_brief_follows_region(self):
+    def test_home_header_keeps_map_link(self):
         import sprint_home
         with mock.patch.object(conditions, "assemble", _fake_assemble):
-            for rid, want in (("hatteras", "hatteras"), ("wilmington", "crystal-coast"), ("nags-head", "hatteras")):
-                html = sprint_home.page("hybrid", rid, public=True).decode("utf-8")
-                self.assertIn('<a href="/brief?region=%s" id="nav-brief">' % want, html, rid)
-                self.assertIn('class="mh-maps" href="/dashboard">Map<span class="mh-maps-x"> &amp; tides</span>', html)
-            html = sprint_home.page("hybrid", "wilmington", public=True).decode("utf-8")
-            self.assertIn('href="/brief?region=crystal-coast">Nearest Morning Brief:', html)
             html = sprint_home.page("hybrid", "hatteras", public=True).decode("utf-8")
-            self.assertIn('href="/brief?region=hatteras">Today\'s Morning Brief</a>', html)
+        self.assertIn('class="mh-maps" href="/dashboard">Map<span class="mh-maps-x"> &amp; tides</span>', html)
+
+    def test_every_page_links_own_brief_never_crystal_coast(self):
+        import sprint_home
+        import sys
+        sys.path.insert(0, str(ROOT / "tests"))
+        from test_sprint_home_preview import fresh_jordan
+
+        def fresh_payload(rid):
+            pl = fresh_jordan(); pl.pop("testData", None)
+            pl["region"] = {"id": rid, "name": rid.replace("-", " ").title()}
+            return 200, pl
+        with mock.patch.object(conditions, "assemble", _fake_assemble), \
+             mock.patch("freshwater.assemble", side_effect=lambda rid, *a, **k: fresh_payload(rid)):
+            for rid in OWN + NONE:
+                fresh = rid in ("falls-lake", "jordan-lake", "neuse-river")
+                pages = {"home": sprint_home.page("hybrid", rid, public=True).decode("utf-8")}
+                if fresh:
+                    pages["lake"] = self._get("/lake?region=" + rid)[1]
+                else:
+                    st, pages["dashboard"] = self._get("/dashboard?region=" + rid)
+                    self.assertEqual(st, 200, rid)
+                for name, html in pages.items():
+                    hrefs = _brief_hrefs(html)
+                    self.assertIn("header", hrefs, (rid, name))
+                    if name == "home":
+                        self.assertIn("tools", hrefs, rid)
+                    for k, h in hrefs.items():
+                        self.assertEqual(h, "/brief?region=" + rid, (rid, name, k))
+                tools = re.search(r'class="cg-tool cg-tool-brief" href="[^"]*">([^<]*)<', pages["home"]).group(1)
+                self.assertEqual(tools, "Today's Morning Brief" if rid in OWN else "Morning Brief: not yet available here", rid)
+
+    def test_unavailable_pages_lead_back_to_the_region(self):
+        for rid, name, back, full in (("nags-head", "Nags Head", "/?region=nags-head", "/dashboard?region=nags-head"),
+                                      ("wilmington", "Wilmington", "/?region=wilmington", "/dashboard?region=wilmington"),
+                                      ("jordan-lake", "Jordan Lake", "/?region=jordan-lake", "/lake?region=jordan-lake"),
+                                      ("neuse-river", "Neuse River", "/?region=neuse-river", "/lake?region=neuse-river")):
+            st, body = self._get("/brief?region=" + rid)
+            self.assertEqual(st, 404, rid)
+            self.assertIn("No Morning Brief for this area", body)
+            self.assertRegex(body, r'<a class="nf-cta" href="%s">\u2190 Back to %s' % (re.escape(back), re.escape(name)))
+            self.assertIn('class="nf-alt" href="%s"' % full, body)
+            self.assertIn('class="mh-sec"', body)
+            self.assertEqual(_brief_hrefs(body).get("header"), None)  # site_chrome nav has no #nav-brief id
+            self.assertRegex(body, r'<nav class="mh-sec"[^>]*>.*href="/brief\?region=%s"[^>]*>Morning Brief' % rid)
 
 
 if __name__ == "__main__":

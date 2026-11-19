@@ -2037,6 +2037,19 @@ _LAKE_ALERT_JS = """<script>
 _LAKE_REGIONS = {b"falls-lake", b"jordan-lake", b"neuse-river", b"cape-fear-river"}
 
 
+def _brief_nav_for(data: bytes, rid: str | None) -> bytes:
+    """Server-render the header Morning Brief href for the page's region (brief-link.js keeps it in
+    step after a picker change). Own brief when published, else that region's unavailable page."""
+    if not rid:
+        return data
+    tgt = site_chrome.brief_target(rid)[0].encode("ascii", "ignore")
+    data = data.replace(b'<a href="/brief?region=crystal-coast" id="nav-brief">',
+                        b'<a href="/brief?region=' + tgt + b'" id="nav-brief">', 1)
+    # The Map page's "Morning Brief" rail card follows the same rule.
+    return data.replace(b'<a class="folio-card" href="/brief?region=crystal-coast" id="folio-brief">',
+                        b'<a class="folio-card" href="/brief?region=' + tgt + b'" id="folio-brief">', 1)
+
+
 def _paint_public_lake(data: bytes, region: str = "falls-lake") -> bytes:
     """Presentation-only Folio chrome and alert folding on public /lake."""
     data = _install_folio_chrome(data, "lake")
@@ -2046,6 +2059,7 @@ def _paint_public_lake(data: bytes, region: str = "falls-lake") -> bytes:
     if rid not in _LAKE_REGIONS:
         rid = b"falls-lake"
     data = _set_html_attr(data, b"data-region", rid)
+    data = _brief_nav_for(data, rid.decode("ascii"))
     # Server-rendered <title> follows the region (it was always "Falls Lake"; audit item 6).
     lake_name = {b"falls-lake": b"Falls Lake", b"jordan-lake": b"Jordan Lake", b"neuse-river": b"Neuse River",
                  b"cape-fear-river": b"Cape Fear River"}.get(rid, b"Falls Lake")
@@ -2928,7 +2942,7 @@ class Handler(SimpleHTTPRequestHandler):
         if not path.is_file():
             return self.send_error(404, "file not found")
         if path.name == "index.html":
-            data = _public_home_html(region_id, preview=preview)
+            data = _brief_nav_for(_public_home_html(region_id, preview=preview), region_id)
         elif share == "catch-wall" and (redesign := _public_catch_wall_redesign(
                 (parse_qs(urlparse(getattr(self, "path", "") or "").query).get("water") or ["all"])[0])) is not None:
             data = redesign  # complete page with its own title, canonical and share meta

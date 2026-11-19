@@ -46,7 +46,9 @@ class BriefHeaderLink(unittest.TestCase):
             status, body, _ = self._get(path)
             self.assertEqual(status, 200, msg=path)
             self.assertIn('id="nav-brief"', body, msg=path)
-            self.assertIn('href="/brief?region=crystal-coast"', body, msg=path)
+            # Ed (Nov 19, t336u): the link is the page's own region; /lake is Falls Lake.
+            want = "falls-lake" if path.startswith("/lake") else "crystal-coast"
+            self.assertIn('href="/brief?region=%s" id="nav-brief"' % want, body, msg=path)
             self.assertIn("Morning Brief", body, msg=path)
             self.assertIn("/brief-link.js", body, msg=path)
 
@@ -65,19 +67,19 @@ class BriefHeaderLink(unittest.TestCase):
         from pathlib import Path
         # Re-check the mapping in Python so the documented fallback stays honest.
         # (The same rules live in brief-link.js.)
+        # Ed (Nov 19, t336u): every region opens its own /brief page (its brief, or its
+        # "No Morning Brief for this area" page); only a missing or malformed id uses the default.
+        import re
+
         def brief_region(id):
-            if id in ("crystal-coast", "hatteras"):
-                return id
-            if id == "falls-lake":
-                return "falls-lake"
-            return "crystal-coast"
+            return id if id and re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", id) and len(id) <= 40 else "crystal-coast"
         self.assertEqual(brief_region("hatteras"), "hatteras")
         self.assertEqual(brief_region("crystal-coast"), "crystal-coast")
         self.assertEqual(brief_region("falls-lake"), "falls-lake")
-        self.assertEqual(brief_region("jordan-lake"), "crystal-coast")
-        self.assertEqual(brief_region("neuse-river"), "crystal-coast")
-        self.assertEqual(brief_region("atlantic-beach"), "crystal-coast")
+        self.assertEqual(brief_region("jordan-lake"), "jordan-lake")
+        self.assertEqual(brief_region("neuse-river"), "neuse-river")
+        self.assertEqual(brief_region("nags-head"), "nags-head")
         self.assertEqual(brief_region(None), "crystal-coast")
         js = (Path(__file__).resolve().parents[1] / "brief-link.js").read_text()
-        self.assertIn('id === "falls-lake"', js)
-        self.assertIn("jordan", js.lower() + "Jordan Lake and Neuse")  # documented in the file header
+        self.assertIn("/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id)", js)
+        self.assertIn("Never another region's brief", js)  # documented in the file header

@@ -153,7 +153,11 @@ class HybridPublic(unittest.TestCase):
         self.assertNotIn(b"falls-lake-pier", b)
         self.assertIn(b'class="hz-none"', b)
         self.assertIn(b'href="/lake?region=jordan-lake">Full dashboard', b)
-        self.assertNotIn(b'href="/brief?region=', b.split(b'class="cg-foot"')[1].split(b"</section>")[0])
+        # Ed (Nov 19, t336u): Jordan's brief link opens its own unavailable page, never Falls Lake or Crystal Coast.
+        foot = b.split(b'class="cg-foot"')[1].split(b"</section>")[0]
+        self.assertIn(b'href="/brief?region=jordan-lake"', foot)
+        self.assertNotIn(b'href="/brief?region=falls-lake"', foot)
+        self.assertNotIn(b'href="/brief?region=crystal-coast"', foot)
         self._no_concept(b)
 
     def test_neuse_renders(self):

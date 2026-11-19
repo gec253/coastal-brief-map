@@ -7,7 +7,8 @@ from __future__ import annotations
 
 import html
 
-# Regions without a public brief use the nearest region that has one (same coast or same basin).
+# Nearest region with a brief (same coast or same basin). Used only to suggest a brief on the
+# "No Morning Brief for this area" page; links never redirect there (Ed, Nov 19, t336u).
 NEAREST_BRIEF = {
     "wilmington": "crystal-coast",
     "emerald-isle": "crystal-coast",
@@ -49,15 +50,15 @@ def public_brief_regions() -> list[str]:
 
 
 def brief_target(rid: str | None) -> tuple[str, bool]:
-    """(region whose brief to link, True when that is the region's own brief)."""
-    avail = public_brief_regions()
+    """(region whose /brief page to link, True when that region has a published brief).
+
+    Ed (Nov 19, t336u): always the region's own /brief page. A region without a published brief
+    gets its own "No Morning Brief for this area" page, never another region's brief. Only an
+    absent id uses the site default (crystal-coast)."""
     rid = (rid or "").strip()
-    if rid in avail:
-        return rid, True
-    near = NEAREST_BRIEF.get(rid)
-    if near in avail:
-        return near, False
-    return (DEFAULT_BRIEF if DEFAULT_BRIEF in avail or not avail else avail[0]), False
+    if not rid:
+        return DEFAULT_BRIEF, DEFAULT_BRIEF in public_brief_regions()
+    return rid, rid in public_brief_regions()
 
 
 def region_name(rid: str) -> str:
@@ -116,6 +117,11 @@ a.skip:focus{left:12px;top:12px;background:#fff;padding:8px;z-index:10}
 .nf li a{display:flex;align-items:center;min-height:44px;padding:0 14px;border:1px solid var(--line-2);border-radius:6px;background:var(--paper);color:var(--ink);text-decoration:none;font-weight:600}
 .nf li a:hover{border-color:var(--brass)}
 .nf li a:focus-visible{outline:3px solid var(--brass);outline-offset:2px}
+.nf .nf-back{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 6px}
+.nf .nf-cta,.nf .nf-alt{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:6px;font-weight:700;text-decoration:none}
+.nf .nf-cta{background:#0E3A57;color:#FFFDF8;border:1px solid #071C29}
+.nf .nf-alt{border:1px solid var(--line-2);background:var(--paper);color:var(--ink)}
+.nf .nf-cta:focus-visible,.nf .nf-alt:focus-visible{outline:3px solid var(--brass);outline-offset:2px}
 .nf .nf-k{font:600 .72rem/1 "Barlow Condensed",system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2);margin:18px 0 0}
 @media (prefers-color-scheme:dark){
   :root{--paper:#0E2433;--page:#071C29;--ink:#F3EEE3;--ink-2:#B9C7CF;--line-2:#29506B}
@@ -146,9 +152,12 @@ def page(title: str, heading: str, body_html: str, current: str = "", brief_rid:
     return out.encode("utf-8")
 
 
-def _brief_links(exclude: str = "") -> str:
+def _brief_links(exclude: str = "", first: str | None = None) -> str:
     items = []
-    for rid in public_brief_regions():
+    regs = public_brief_regions()
+    if first in regs:  # nearest first
+        regs = [first] + [r for r in regs if r != first]
+    for rid in regs:
         if rid == exclude:
             continue
         nm = region_name(rid) or rid.replace("-", " ").title()
@@ -156,19 +165,35 @@ def _brief_links(exclude: str = "") -> str:
     return "<ul>%s</ul>" % "".join(items) if items else ""
 
 
+def _is_fresh(rid: str) -> bool:
+    try:
+        import freshwater
+        return rid in (freshwater.regions() or {})
+    except Exception:
+        return False
+
+
 def no_brief_page(rid: str) -> bytes:
-    """/brief?region=<a region with no public brief>: explain, link the briefs that exist."""
+    """/brief?region=<a region with no published brief>: say so plainly, lead with a clear way back
+    to that region's conditions, then list the briefs that exist. Private ids are never named."""
     name = region_name(rid)
     if name:
-        near, _own = brief_target(rid)
-        near_name = region_name(near) or near
-        lead = ("<p>%s does not have its own Morning Brief yet. Live readings for %s are on the "
-                '<a href="%s">conditions page</a>. The nearest Morning Brief is %s.</p>'
-                % (_esc(name), _esc(name), _esc("/?region=%s" % rid, True), _esc(near_name)))
+        # Way back first: the region's conditions page (the homepage view for that region, salt or
+        # fresh), plus its full dashboard (/dashboard for the coast, /lake for lakes and rivers).
+        full = ("/lake?region=%s" % rid, "Full lake &amp; river dashboard") if _is_fresh(rid) else \
+               ("/dashboard?region=%s" % rid, "Map, tides &amp; full dashboard")
+        lead = ("<p>%s does not have a Morning Brief yet. Live readings for %s are on its conditions page.</p>"
+                '<p class="nf-back"><a class="nf-cta" href="%s">\u2190 Back to %s conditions</a>'
+                '<a class="nf-alt" href="%s">%s</a></p>'
+                % (_esc(name), _esc(name), _esc("/?region=%s" % rid, True), _esc(name), _esc(full[0], True), full[1]))
+        near = NEAREST_BRIEF.get(rid)
+        others = '<p class="nf-k">Morning Briefs for other areas</p>' + _brief_links(first=near)
     else:
-        lead = "<p>There is no Morning Brief for that area.</p>"
-    body = lead + '<p class="nf-k">Today\u2019s Morning Briefs</p>' + _brief_links()
-    return page("No Morning Brief here", "No Morning Brief for this area", body, current="brief", brief_rid=rid if name else None)
+        lead = ('<p>There is no Morning Brief for that area.</p>'
+                '<p class="nf-back"><a class="nf-cta" href="/">\u2190 Back to conditions</a></p>')
+        others = '<p class="nf-k">Today\u2019s Morning Briefs</p>' + _brief_links()
+    return page("No Morning Brief here", "No Morning Brief for this area", lead + others,
+                current="brief", brief_rid=rid if name else None)
 
 
 def region_not_found_page(api_hint: bool = False) -> bytes:
