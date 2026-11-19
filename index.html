@@ -31,6 +31,10 @@
         }
         document.documentElement.setAttribute("data-theme", t);
         if (/[?&]tiles=v1\b/.test(location.search)) document.documentElement.removeAttribute("data-tiles");
+        // Night-strip prototype (private): ?night=a|b picks a dark token set, ?chart=1 the phone chart texture.
+        var nq = /[?&]night=([ab])\b/.exec(location.search);
+        if (nq) document.documentElement.setAttribute("data-night", nq[1]);
+        if (/[?&]chart=1\b/.test(location.search)) document.documentElement.setAttribute("data-mastchart", "");
       } catch (e) {}
     })();
   </script>

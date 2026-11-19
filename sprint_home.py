@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import html
 import math
+import json
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -1238,6 +1239,53 @@ def _feedback_embed() -> str:
         return ""
 
 
+# Night-strip prototype (design/night-strip-1119, private): opt-in preview switches only.
+# ?night=a|b sets html[data-night] (dark-theme token sets), ?strip=natural|tint shows the coastal
+# photo strip under the masthead (saltwater only), ?chart=1 draws the faint NOAA chart texture
+# behind the nameplate. With no query the page is unchanged.
+NIGHT_BOOT = (
+    '<script>(function(){try{var q=new URLSearchParams(location.search||""),d=document.documentElement,'
+    'n=q.get("night"),s=q.get("strip");if(n==="a"||n==="b")d.setAttribute("data-night",n);'
+    'if(s==="natural"||s==="tint")d.setAttribute("data-strip",s);'
+    'if(q.get("chart")==="1")d.setAttribute("data-mastchart","");}catch(e){}})();</script>\n'
+)
+STRIP_CREDIT = "Photo: Ed Cogdell / The Coastal Brief"
+
+
+def night_strip_html() -> str:
+    """Slim panoramic strip of Ed's own photograph (owner-supplied, approved). Inserted only when
+    ?strip= asks for it, so the default page makes no request and has no extra layout. Art-directed crops:
+    4.42:1 for phones, 7.32:1 from 640px up; WebP with JPEG fallback. The box has a fixed CSS height, so
+    showing it never shifts later content. No place name: the location is not confirmed."""
+    d = "/static/night-strip/docks-"
+    ss = lambda kind, ext, ws: ", ".join("%s%s-%d.%s %dw" % (d, kind, w, ext, w) for w in ws)
+    fig = (
+        '<figure class="nstrip"><picture>'
+        '<source media="(min-width: 640px)" type="image/webp" srcset="%s" sizes="100vw">'
+        '<source media="(min-width: 640px)" type="image/jpeg" srcset="%s" sizes="100vw">'
+        '<source type="image/webp" srcset="%s" sizes="100vw">'
+        '<img src="%sphone-800.jpg" srcset="%s" sizes="100vw" width="1200" height="271" '
+        'alt="Two long wooden docks over sound-side water, with marsh grass and red glasswort in the foreground" '
+        'decoding="async" fetchpriority="high"></picture>'
+        '<figcaption class="nstrip-cr">%s</figcaption></figure>'
+    ) % (ss("wide", "webp", (1000, 1500)), ss("wide", "jpg", (1000, 1500)), ss("phone", "webp", (800, 1200)),
+         d, ss("phone", "jpg", (800, 1200)), STRIP_CREDIT)
+    # Markup lives in a JS string (with "<" escaped) so the default page carries no extra element at all.
+    js = json.dumps(fig).replace("<", "\\u003c")
+    return (
+        '<script>(function(){if(document.documentElement.hasAttribute("data-strip"))'
+        'document.currentScript.insertAdjacentHTML("beforebegin",%s);})();</script>' % js
+    )
+
+
+def _with_strip(mast: str, water: str) -> str:
+    """The strip sits inside the masthead's <header> (a landmark), directly under the section nav."""
+    i = mast.rfind("</header>")
+    if water != "salt" or i < 0:
+        return mast
+    return mast[:i] + night_strip_html() + mast[i:]
+
+
 def _shell(variant: str, main: str, shot: bool, water: str = "salt", public: bool = False, preload: str = "") -> bytes:
     intro_css = wave_intro._css()
     page = """<!DOCTYPE html>
@@ -1256,7 +1304,7 @@ def _shell(variant: str, main: str, shot: bool, water: str = "salt", public: boo
 %(css)s<style id="wave-intro-css">
 %(icss)s
 </style>
-%(boot)s</head>
+%(boot)s%(nboot)s</head>
 <body>
 %(defs)s%(overlay)s
 <a class="skip" href="#conditions">Skip to Conditions at a Glance</a>
@@ -1284,8 +1332,9 @@ def _shell(variant: str, main: str, shot: bool, water: str = "salt", public: boo
         "water": water, "defs": getattr(wave_intro, "_DEFS", ""),
         "v": variant, "shot": " data-shot" if shot else "", "title": _esc(TITLES[variant]),
         "css": css, "icss": icss, "boot": wave_intro._BOOT, "overlay": wave_intro._OVERLAY,
-        "mast": masthead_html(variant, public=public, water=water), "main": main, "replay": wave_intro._REPLAY, "ijs": wave_intro._js(),
+        "mast": _with_strip(masthead_html(variant, public=public, water=water), water), "main": main, "replay": wave_intro._REPLAY, "ijs": wave_intro._js(),
         "fb": _feedback_embed(),
+        "nboot": NIGHT_BOOT,
     }
     return page.encode("utf-8")
 

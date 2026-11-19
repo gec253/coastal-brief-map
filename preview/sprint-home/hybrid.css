@@ -522,3 +522,44 @@ html[data-water="fresh"] .cg-hybrid{background:linear-gradient(180deg,#E8EADF,#D
   .rr-l{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 36px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 36px),transparent);padding-right:36px}
   .rr-l::after{content:"";flex:none;width:1px}
 }
+
+/* ===================== Night-strip prototype (design/night-strip-1119, private) =====================
+   Opt-in only: html[data-night="a"|"b"] (via ?night=), html[data-strip] (?strip=), html[data-mastchart] (?chart=1).
+   Saltwater only; freshwater faces are untouched. Token-level: the rules below re-point existing tokens. */
+@media (prefers-color-scheme:dark){
+  /* A · Slate helm: balanced slate-blue surfaces, cool ivory type */
+  html[data-sprint="hybrid"][data-water="salt"][data-night="a"]{
+    --page:#1B2937;--paper:#22364A;--band:#1F3243;--band-edge:#3A5468;
+    --card-1:#2D475E;--card-2:#263F54;--card-edge:#57789A;
+    --line:rgba(226,235,242,.18);--line-2:rgba(226,235,242,.34);
+    --ink:#F4EFE6;--ink-2:#C8D3DC;--accent:#A6D1EE;--accent-2:#A3D9C8;--link:#A6D1EE;
+    --obs-bg:#1F3D36;--pred-bg:#1E3550;--fc-bg:#43361F;
+    --night-lift:inset 0 1px 0 rgba(255,255,255,.10),0 0 0 1px rgba(4,12,20,.22),0 2px 4px rgba(4,12,20,.26),0 12px 24px -16px rgba(4,12,20,.7)}
+  /* B · Coastal blue: deeper Atlantic blue with a Carolina-blue accent */
+  html[data-sprint="hybrid"][data-water="salt"][data-night="b"]{
+    --page:#0F2B44;--paper:#163A58;--band:#133550;--band-edge:#2E5D82;
+    --card-1:#20507A;--card-2:#1A4669;--card-edge:#5189B4;
+    --line:rgba(214,232,245,.18);--line-2:rgba(214,232,245,.34);
+    --ink:#F6F1E7;--ink-2:#CCDCE8;--accent:#B3DDF5;--accent-2:#A4DECF;--link:#B3DDF5;--band-ink-3:#BCC9D3;
+    --obs-bg:#17423D;--pred-bg:#193E5E;--fc-bg:#47391F;
+    --night-lift:inset 0 1px 0 rgba(255,255,255,.12),0 0 0 1px rgba(3,14,26,.24),0 2px 4px rgba(3,14,26,.28),0 12px 24px -16px rgba(3,14,26,.72)}
+  html[data-water="salt"][data-night] .cg-hybrid{background:linear-gradient(180deg,var(--band),var(--page));border-top-color:var(--band-edge)}
+  html[data-water="salt"][data-night] .cg-hybrid .t{box-shadow:var(--night-lift)}
+  html[data-water="salt"][data-night] .cg-hybrid .fc,html[data-water="salt"][data-night] .cg-strip{border-color:var(--band-edge)}
+}
+
+/* faint NOAA chart 11545 linework behind the nameplate (same public-domain crop as the dashboard masthead) */
+html[data-mastchart] .mh-hybrid .mh-plate{position:relative;isolation:isolate}
+html[data-mastchart] .mh-hybrid .mh-plate::before{content:"";position:absolute;left:0;right:0;top:0;bottom:46px;z-index:-1;pointer-events:none;
+  background:#0E3A57;-webkit-mask:url("/branding/masthead-chart.webp") 62% 46%/cover no-repeat;mask:url("/branding/masthead-chart.webp") 62% 46%/cover no-repeat;opacity:.08}
+@media (prefers-color-scheme:dark){html[data-mastchart] .mh-hybrid .mh-plate::before{background:#E6DCC8;opacity:.10}}
+
+/* slim panoramic coastal strip directly under the masthead; fixed height so CLS stays 0 */
+.nstrip{position:relative;margin:0;height:88px;overflow:hidden;background:#A9B9C6;border-bottom:1px solid rgba(196,163,106,.55)}
+.nstrip img{width:100%;height:100%;object-fit:cover;object-position:50% 50%}
+.nstrip-cr{position:absolute;right:6px;bottom:5px;z-index:2;margin:0;padding:2px 7px;border-radius:3px;background:rgba(7,28,41,.8);color:#F6F1E7;font:500 .66rem/1.35 var(--f-ui);letter-spacing:.01em}
+html[data-strip="tint"] .nstrip::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:#4B9CD3;mix-blend-mode:color;opacity:.38}
+html[data-strip="tint"] .nstrip img{filter:saturate(.85) brightness(1.04)}
+@media (min-width:640px){.nstrip{height:112px}}
+@media (min-width:1024px){.nstrip{height:132px}}

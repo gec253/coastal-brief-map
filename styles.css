@@ -4372,3 +4372,53 @@ html[data-page="lake"][data-region="cape-fear-river"] #fw-river-sec {
 /* /lake: stale NWS forecast line. A quiet amber rule, the bold "issued … · stale" note in full ink. No fill, no alarm. */
 .fw-meta.is-stale { padding-left: 8px; border-left: 2px solid rgba(201, 138, 46, 0.75); }
 .fw-meta.is-stale strong { color: var(--d-ink); font-weight: 700; }
+
+/* ===================== Night-strip prototype (design/night-strip-1119, private) =====================
+   Opt-in dark token sets: ?night=a|b sets html[data-night]; production dark is unchanged without it.
+   Token-level only: the blocks below re-point existing dark tokens and the v2 tile faces. */
+/* A · Slate helm */
+html[data-theme="dark"][data-night="a"] {
+  --sand: #1B2937; --white: #16232F; --card: #263A4D; --line: #3E5870; --ink: #F4EFE6; --muted: #C2CED8;
+  --d-panel: #213447; --d-inst: #2B4459; --d-inst-2: #243B4F;
+  --d-edge: rgba(206, 224, 238, 0.24); --d-edge-2: rgba(206, 224, 238, 0.12);
+  --d-ink: #F6F1E7; --d-ink-2: #C8D4DD; --d-accent: #A6D1EE; --d-face-hi: #31506A; --d-face-lo: #233A4E;
+  --copper-lt: #E9AE82; --copper-ink: #E9AE82;
+  --folio-edge: rgba(206, 224, 238, 0.22);
+  --folio-lift: inset 0 1px 0 rgba(255, 255, 255, 0.10), 0 0 0 1px rgba(4, 12, 20, 0.22), 0 2px 4px rgba(4, 12, 20, 0.26), 0 12px 24px -16px rgba(4, 12, 20, 0.7);
+}
+:root[data-tiles="v2"][data-theme="dark"][data-night="a"] .inst-wind { --d-inst: #2D4357; --d-inst-2: #253849; --d-edge: rgba(206, 224, 238, 0.24); }
+:root[data-tiles="v2"][data-theme="dark"][data-night="a"] .inst-swell { --d-inst: #26496B; --d-inst-2: #1F3E5B; --d-edge: rgba(166, 209, 238, 0.26); }
+:root[data-tiles="v2"][data-theme="dark"][data-night="a"] .inst-seas { --d-inst: #254A4B; --d-inst-2: #1E3E3F; --d-edge: rgba(163, 217, 200, 0.24); }
+:root[data-tiles="v2"][data-theme="dark"][data-night="a"] .inst-tide { --d-inst: #3B382F; --d-inst-2: #302D26; --d-edge: rgba(245, 238, 226, 0.20); }
+:root[data-tiles="v2"][data-theme="dark"][data-night="a"] .inst-water { --d-inst: #24494F; --d-inst-2: #1D3D43; --d-edge: rgba(163, 217, 200, 0.24); }
+/* B · Coastal blue */
+html[data-theme="dark"][data-night="b"] {
+  --sand: #102D46; --white: #0E2840; --card: #1B4467; --line: #3A6A90; --ink: #F6F1E7; --muted: #C9DAE7;
+  --d-panel: #15395A; --d-inst: #1F4C72; --d-inst-2: #194163;
+  --d-edge: rgba(179, 221, 245, 0.26); --d-edge-2: rgba(179, 221, 245, 0.13);
+  --d-ink: #F7F3EA; --d-ink-2: #CCDDEA; --d-accent: #B3DDF5; --d-face-hi: #255A84; --d-face-lo: #1A4466;
+  --copper-lt: #F1BE95; --copper-ink: #F1BE95;
+  --folio-edge: rgba(179, 221, 245, 0.24);
+  --folio-lift: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 0 0 1px rgba(3, 14, 26, 0.24), 0 2px 4px rgba(3, 14, 26, 0.28), 0 12px 24px -16px rgba(3, 14, 26, 0.72);
+}
+:root[data-tiles="v2"][data-theme="dark"][data-night="b"] .inst-wind { --d-inst: #224D70; --d-inst-2: #1B425F; --d-edge: rgba(179, 221, 245, 0.26); }
+:root[data-tiles="v2"][data-theme="dark"][data-night="b"] .inst-swell { --d-inst: #1D5381; --d-inst-2: #17476F; --d-edge: rgba(179, 221, 245, 0.28); }
+:root[data-tiles="v2"][data-theme="dark"][data-night="b"] .inst-seas { --d-inst: #1B5258; --d-inst-2: #16464B; --d-edge: rgba(164, 222, 207, 0.26); }
+:root[data-tiles="v2"][data-theme="dark"][data-night="b"] .inst-tide { --d-inst: #3C3A31; --d-inst-2: #312F28; --d-edge: rgba(245, 238, 226, 0.20); }
+:root[data-tiles="v2"][data-theme="dark"][data-night="b"] .inst-water { --d-inst: #1B5561; --d-inst-2: #164953; --d-edge: rgba(164, 222, 207, 0.26); }
+/* clearer card separation: surface step + hairline + soft lift */
+html[data-theme="dark"][data-night] .inst { box-shadow: var(--folio-lift); }
+/* Phone chart texture (opt-in ?chart=1). Ed's Nov 14 rule keeps it off phones by default. */
+@media (max-width: 760px) {
+  html[data-mastchart] header.site[data-identity]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: url("/branding/masthead-chart.webp") 62% 42% / auto 160% no-repeat;
+    opacity: 0.13;
+  }
+}
+/* forecast source links fell back to the UA dark link colour (#9E9EFF, 4.2:1 on the B card) */
+html[data-theme="dark"][data-night] #fc-foot a { color: var(--d-accent); }
