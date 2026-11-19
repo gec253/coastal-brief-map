@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Animated NOAA GFS model wind forecast for coastal North Carolina. Model forecast, not station readings.">
+  <title>Wind · model forecast — The Coastal Brief</title>
+  <script>
+    (function () { var d = document.documentElement, t = null;
+      try { var q = /[?&]theme=(light|dark)\b/.exec(location.search); t = q ? q[1] : localStorage.getItem("coastalBrief.theme"); } catch (e) {}
+      if (t !== "light" && t !== "dark") t = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      d.setAttribute("data-theme", t); if (t === "dark") d.setAttribute("data-night", "b"); })();
+  </script>
+  <link rel="preload" href="/vendor/leaflet/leaflet.js" as="script">
+  <link rel="preload" href="/api/wind-grid" as="fetch" crossorigin="anonymous">
+  <link rel="preconnect" href="https://services.arcgisonline.com" crossorigin>
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="/wind.css">
+</head>
+<body data-wind-view="viewer">
+<div class="helm">
+  <header class="w-top">
+    <a class="w-brand" href="/"><span class="w-brand-a">The Coastal Brief</span><span class="w-brand-b">Wind</span></a>
+    <span class="w-badge" id="w-badge">Model forecast</span>
+    <span class="w-clock"><span class="w-k">Now</span> <time id="w-clock">--:-- ET</time></span>
+  </header>
+  <section class="w-strip" aria-label="Model run and valid time, Eastern Time">
+    <div class="w-cell"><span class="w-k">Model run</span><span class="w-v" id="w-run">—</span></div>
+    <div class="w-cell"><span class="w-k">Valid</span><span class="w-v" id="w-valid">—</span></div>
+    <div class="w-cell w-cell-fh"><span class="w-k">Fcst hour</span><span class="w-v" id="w-fh">—</span></div>
+  </section>
+  <main class="w-stage" id="w-stage">
+    <div id="wmap" role="region" aria-label="Map of coastal North Carolina with animated NOAA GFS model wind. Tap or click the map to read the model wind at that point."></div>
+    <div class="w-legend" role="img" aria-label="Wind speed colour scale in knots, 0 to 35 and over">
+      <canvas id="w-ramp" width="168" height="8" aria-hidden="true"></canvas>
+      <span class="w-ticks" aria-hidden="true"><span>0</span><span>10</span><span>20</span><span>30</span><span>35+ kt</span></span>
+    </div>
+    <p class="w-read" id="w-read" aria-live="polite" hidden></p>
+    <p class="w-attrib">Wind: <a href="https://www.nco.ncep.noaa.gov/pmb/products/gfs/" rel="noopener">NOAA NCEP GFS</a> 0.25° model forecast · Basemap: Esri, HERE, Garmin, © OpenStreetMap contributors, and the GIS user community</p>
+    <p class="w-status" id="w-status" role="status">Loading NOAA GFS model wind…</p>
+    <details class="w-about">
+      <summary aria-label="About this model wind"><span aria-hidden="true">i</span></summary>
+      <div class="w-about-body">
+        <p><strong>Model forecast, not measurements.</strong> Flow lines show the NOAA GFS computer forecast of 10&nbsp;m wind on a 0.25° grid (cells about 25&nbsp;km across), updated four times a day. Brighter, thicker and faster lines mean stronger wind.</p>
+        <p>Values between grid points are interpolated, so harbors, inlets and the sounds are coarser than they look. Near the shore the model often reads lighter than stations such as Cape Lookout (CLKN7) and Beaufort (BFTN7). Check station and buoy readings before you go.</p>
+        <p>Times are Eastern (ET). Basemap: Esri. Wind data: NOAA NCEP.</p>
+      </div>
+    </details>
+  </main>
+  <nav class="w-ctl" aria-label="Wind viewer controls">
+    <button type="button" class="w-btn w-play" id="w-play" aria-pressed="true">
+      <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+      <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
+      <span class="w-lbl" id="w-play-lbl">Pause</span>
+    </button>
+    <div class="w-step" role="group" aria-label="Forecast hour">
+      <button type="button" class="w-btn w-arrow" id="w-prev" aria-label="Earlier forecast hour" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <output class="w-hour" id="w-hour" aria-live="polite"><span class="w-hour-a">Nearest hour</span><span class="w-hour-b">+0 h</span></output>
+      <button type="button" class="w-btn w-arrow" id="w-next" aria-label="Later forecast hour"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+    </div>
+    <button type="button" class="w-btn" id="w-center" aria-label="Recenter on the North Carolina coast">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6.5"/><path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4"/></svg>
+      <span class="w-lbl">Coast</span>
+    </button>
+    <button type="button" class="w-btn" id="w-locate" aria-label="Show model wind at my location">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0113 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>
+      <span class="w-lbl">Me</span>
+    </button>
+  </nav>
+</div>
+<script src="/vendor/leaflet/leaflet.js" defer></script>
+<script src="/lab/wind.js" defer></script>
+<script src="/wind/viewer.js" defer></script>
+</body>
+</html>

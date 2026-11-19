@@ -233,7 +233,7 @@ def cache_get_any(url: str) -> tuple[int, str, bytes] | None:
 # docs, and test fixtures are not.
 _STATIC_EXT = {".html", ".css", ".js", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".avif", ".ico",
                ".woff2", ".json", ".txt", ".xml", ".webmanifest", ".map"}
-_STATIC_DENY_PREFIX = ("/.", "/admin", "/preview/", "/branding/og-masthead.html", "/branding/render-og-masthead.", "/wind-lab.", "/lake.", "/tiles-lab.", "/docs/", "/tests/", "/scripts/", "/__pycache__/", "/requirements")
+_STATIC_DENY_PREFIX = ("/.", "/admin", "/preview/", "/branding/og-masthead.html", "/branding/render-og-masthead.", "/wind-lab.", "/wind.", "/wind-viewer.", "/lake.", "/tiles-lab.", "/docs/", "/tests/", "/scripts/", "/__pycache__/", "/requirements")
 
 
 def _static_allowed(path: str) -> bool:
@@ -2296,6 +2296,7 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 <a class="card" href="/preview/brief/neuse-river"><b>Preview brief · Neuse River</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
 <a class="card" href="/lake?region=cape-fear-river"><b>Cape Fear River</b><span>Private preview: Lillington to Lock 1, main-stem stage and flow, NWPS forecasts. Cookie-gated, not public.</span></a>
 <a class="card" href="/preview/brief/cape-fear-river"><b>Preview brief · Cape Fear River</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
+<a class="card" href="/wind"><b>Wind viewer</b><span>Dedicated animated model wind (NOAA GFS forecast), private review</span></a>
 <a class="card" href="/lab/wind"><b>Wind flow</b><span>Animated model wind (NOAA GFS forecast)</span></a>
 <a class="card" href="/lab/tiles"><b>Tile designs</b><span>The instrument tile prototype</span></a>
 <a class="card" href="/preview/masthead?c=c"><b>Masthead concepts</b><span>Three directions for a cinematic gold wave-to-masthead reveal (A editorial, B nautical, C hybrid). Replay from the bar at the bottom.</span></a>
@@ -2637,16 +2638,27 @@ class Handler(SimpleHTTPRequestHandler):
             if parsed.path == "/lab/tiles":
                 return self._send_private(ROOT / "tiles-lab.html", "text/html; charset=utf-8")
             return self._send_private(ROOT / "tiles-lab.js", "text/javascript; charset=utf-8")
-        if parsed.path in ("/lab/wind", "/lab/wind.js", "/api/wind-grid"):
-            # Prototype, off unless WIND_PARTICLES_ENABLED=1. Not linked from the site.
+        if parsed.path in ("/lab/wind", "/lab/wind.js", "/api/wind-grid", "/wind", "/wind.css", "/wind/viewer.js"):
+            # Private: off unless WIND_PARTICLES_ENABLED=1 or the preview cookie. Not linked from the site.
+            # /wind is the dedicated viewer; /lab/wind stays as the prototype; both share wind-lab.js.
             pv = self._preview_ok()
             if not (_flag("WIND_PARTICLES_ENABLED") or pv):
                 return self.send_error(404, "not found")
+            if parsed.path == "/wind":
+                return self._send_private(ROOT / "wind.html", "text/html; charset=utf-8")
+            if parsed.path == "/wind.css":
+                return self._send_private(ROOT / "wind.css", "text/css; charset=utf-8")
+            if parsed.path == "/wind/viewer.js":
+                return self._send_private(ROOT / "wind-viewer.js", "text/javascript; charset=utf-8")
             if parsed.path == "/lab/wind":
                 return self._send_private(ROOT / "wind-lab.html", "text/html; charset=utf-8")
             if parsed.path == "/lab/wind.js":
                 return self._send_private(ROOT / "wind-lab.js", "text/javascript; charset=utf-8")
-            g = windgrid.latest_grid()
+            try:
+                ahead = int((parse_qs(parsed.query).get("ahead") or ["0"])[0])
+            except ValueError:
+                ahead = 0
+            g = windgrid.latest_grid(ahead=ahead if ahead in windgrid.AHEAD_HOURS else 0)
             if pv and not _flag("WIND_PARTICLES_ENABLED"):
                 return self._json_private(g, 200 if g.get("ok") else 502)
             return self._send_json(g, cache_s=600 if g.get("ok") else 60, status=200 if g.get("ok") else 502)

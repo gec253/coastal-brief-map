@@ -1,6 +1,6 @@
 """Gridded 10 m wind (U/V) from NOAA GFS 0.25° via the NOMADS GRIB filter.
 
-PROTOTYPE, OFF BY DEFAULT (env WIND_PARTICLES_ENABLED). Standard library only:
+PRIVATE, OFF BY DEFAULT (env WIND_PARTICLES_ENABLED or the preview cookie); feeds /lab/wind and /wind. Standard library only:
 the NOMADS filter returns a sub-region with simple packing (GRIB2 data template
 5.0) on a regular lat/lon grid (template 3.0), which is small enough to decode
 here without eccodes. Values are a MODEL FORECAST, never observations.
@@ -8,6 +8,7 @@ here without eccodes. Values are a MODEL FORECAST, never observations.
 from __future__ import annotations
 
 import datetime as dt
+import math
 import struct
 import threading
 import time
@@ -98,19 +99,61 @@ def _fetch(url: str) -> bytes:
         return r.read()
 
 
-def latest_grid(now: float | None = None) -> dict:
-    """Newest GFS run with the forecast hour nearest to now. Cached 30 minutes."""
+KT_PER_MS = 1.943844
+AHEAD_HOURS = (0, 3, 6, 9, 12)   # forecast-hour steps offered by /wind (each one NOMADS file, cached)
+_DIRS = ("N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW")
+
+
+def speed_kt(u: float, v: float) -> float:
+    """Wind speed in knots from U/V in m/s."""
+    return (u * u + v * v) ** 0.5 * KT_PER_MS
+
+
+def from_deg(u: float, v: float) -> float:
+    """Meteorological direction the wind blows FROM, degrees true (0 = N, 90 = E)."""
+    return (math.degrees(math.atan2(-u, -v)) + 360.0) % 360.0
+
+
+def compass(deg: float) -> str:
+    return _DIRS[int(round(deg / 22.5)) % 16]
+
+
+def sample(g: dict, lat: float, lon: float):
+    """Bilinear U/V (m/s) at lat/lon from a latest_grid() payload; None outside the grid.
+    Mirrors uvAt() in wind-lab.js, so tests can hold the two to the same raw nodes."""
+    north = (g["scan"] & 0x40) == 0
+    nx, ny = g["nx"], g["ny"]
+    fx = (lon - g["lo1"]) / g["dx"]
+    fy = (g["la1"] - lat) / g["dy"] if north else (lat - g["la1"]) / g["dy"]
+    if not (0 <= fx <= nx - 1 and 0 <= fy <= ny - 1):
+        return None
+    x0, y0 = int(fx), int(fy)
+    x1, y1 = min(x0 + 1, nx - 1), min(y0 + 1, ny - 1)
+    tx, ty = fx - x0, fy - y0
+    out = []
+    for arr in (g["u"], g["v"]):
+        out.append(arr[y0 * nx + x0] * (1 - tx) * (1 - ty) + arr[y0 * nx + x1] * tx * (1 - ty)
+                   + arr[y1 * nx + x0] * (1 - tx) * ty + arr[y1 * nx + x1] * tx * ty)
+    return out[0], out[1]
+
+
+def latest_grid(now: float | None = None, ahead: int = 0) -> dict:
+    """Newest GFS run with the forecast hour nearest to now (+ ahead hours). Cached 30 minutes
+    per step. ahead must be one of AHEAD_HOURS; anything else is treated as 0."""
     now = now or time.time()
+    ahead = ahead if ahead in AHEAD_HOURS else 0
+    key = "v" if ahead == 0 else "v+%d" % ahead
     with _lock:
-        hit = _cache.get("v")
+        hit = _cache.get(key)
         if hit and now - hit[0] < 1800:
             return hit[1]
     utc = dt.datetime.fromtimestamp(now, dt.timezone.utc)
+    target = utc + dt.timedelta(hours=ahead)
     cycle = utc.replace(minute=0, second=0, microsecond=0, hour=(utc.hour // 6) * 6)
     last_err = "no run found"
     for back in range(0, 4):                  # current cycle, then up to 18 h older
         run = cycle - dt.timedelta(hours=6 * back)
-        fh = max(0, min(120, round((utc - run).total_seconds() / 3600)))
+        fh = max(0, min(120, round((target - run).total_seconds() / 3600)))
         q = {"dir": "/gfs.%s/%02d/atmos" % (run.strftime("%Y%m%d"), run.hour),
              "file": "gfs.t%02dz.pgrb2.0p25.f%03d" % (run.hour, fh),
              "var_UGRD": "on", "var_VGRD": "on", "lev_10_m_above_ground": "on", "subregion": ""}
@@ -134,10 +177,10 @@ def latest_grid(now: float | None = None) -> dict:
             "run": u["ref"].strftime("%Y-%m-%dT%H:%MZ"), "valid": valid.strftime("%Y-%m-%dT%H:%MZ"),
             "forecastHour": u["fhour"], "units": "m/s",
             "nx": g["nx"], "ny": g["ny"], "la1": g["la1"], "lo1": lo1, "dx": g["dx"], "dy": g["dy"],
-            "scan": g["scan"],
+            "scan": g["scan"], "ahead": ahead,
             "u": [round(x, 2) for x in u["values"]], "v": [round(x, 2) for x in v["values"]],
         }
         with _lock:
-            _cache["v"] = (now, out)
+            _cache[key] = (now, out)
         return out
     return {"ok": False, "error": "Model wind is unavailable right now.", "detail": last_err}
