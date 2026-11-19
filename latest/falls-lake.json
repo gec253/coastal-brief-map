@@ -4,18 +4,18 @@
    "label": "Lake level",
    "stale": false,
    "station": "02087182",
-   "time": "4:45 AM ET"
+   "time": "5:45 AM ET"
   },
   {
    "label": "Water temp",
    "stale": false,
    "station": "02087182",
-   "time": "4:45 AM ET"
+   "time": "5:45 AM ET"
   }
  ],
  "issueDate": "2026-11-19",
- "issuedAt": "2026-11-19T10:15:02.837480+00:00",
- "issuedEt": "Thu Nov 19, 5:15 AM ET",
+ "issuedAt": "2026-11-19T11:13:01.748774+00:00",
+ "issuedEt": "Thu Nov 19, 6:13 AM ET",
  "items": [
   [
    "Alerts",
@@ -48,7 +48,7 @@
  ],
  "missing": [],
  "ok": true,
- "reason": "scheduled",
+ "reason": "on-request",
  "region": {
   "anchor": {
    "label": "Falls Lake Dam (USGS 02087182)",
@@ -68,7 +68,7 @@
   "Flow below the dam is very low for the date."
  ],
  "validation": {
-  "checkedAt": "2026-11-19T10:15:02.837480+00:00",
+  "checkedAt": "2026-11-19T11:13:01.748774+00:00",
   "checks": [
    "region",
    "location",
