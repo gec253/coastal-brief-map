@@ -1239,37 +1239,66 @@ def _feedback_embed() -> str:
         return ""
 
 
-# Night-strip prototype (design/night-strip-1119, private): opt-in preview switches only.
-# ?night=a|b sets html[data-night] (dark-theme token sets), ?strip=natural|tint shows the coastal
-# photo strip under the masthead (saltwater only), ?chart=1 draws the faint NOAA chart texture
-# behind the nameplate. With no query the page is unchanged.
+# Night-strip prototype (design/night-strip-1119, private): opt-in preview switches only, so production
+# daytime is unchanged. ?night=1 sets html[data-night="b"] (the Coastal blue dark token set; it only paints
+# when the device is in dark mode), ?strip=1 shows the coastal photo strip under the masthead (saltwater
+# only). ?night=1 also turns on the faint NOAA chart texture behind the nameplate, phones included
+# (Ed reversed the Nov 14 no-texture-on-phones rule for this combination). With no query the page is unchanged.
+_STRIP_DIR = "/static/night-strip/docks-"
+# Exact-size art-directed crops, each cut into a left and a right half that sit edge to edge.
+# Phone box 390 x 88 (4.43:1 crop): halves 195 / 390 / 585 px wide = 1x / 2x / 3x.
+# Tablet box 768 x 112 (6.86:1 crop): halves 384 / 768 / 1152 px wide = 1x / 2x / 3x; cover-fit on wider screens.
+# Why halves: one full-width strip was the page's largest element, so Lighthouse timed LCP on the photo
+# (2.7 s simulated) instead of the forecast text (1.3-1.6 s). At the Lighthouse mobile viewport each half is smaller than that text block,
+# so LCP stays on the text while the photo still paints in the first frame. Visually identical.
+_STRIP_W = {"phone": (195, 390, 585), "wide": (384, 768, 1152)}
+
+
+def _strip_srcset(kind: str, side: str, ext: str) -> str:
+    return ", ".join("%s%s-%s-%d.%s %dw" % (_STRIP_DIR, kind, side, w, ext, w) for w in _STRIP_W[kind])
+
+
+_STRIP_MEDIA = {"phone": "(max-width: 639px)", "wide": "(min-width: 640px)"}
+# Both halves' AVIFs are preloaded from <head> (media-matched, high priority) so they download alongside
+# the fonts and are ready for the first paint.
 NIGHT_BOOT = (
     '<script>(function(){try{var q=new URLSearchParams(location.search||""),d=document.documentElement,'
-    'n=q.get("night"),s=q.get("strip");if(n==="a"||n==="b")d.setAttribute("data-night",n);'
-    'if(s==="natural"||s==="tint")d.setAttribute("data-strip",s);'
-    'if(q.get("chart")==="1")d.setAttribute("data-mastchart","");}catch(e){}})();</script>\n'
-)
+    'n=q.get("night"),s=q.get("strip");if(n==="1"||n==="b")d.setAttribute("data-night","b");'
+    'if(s==="1"||s==="natural"){d.setAttribute("data-strip","");'
+    'document.currentScript.insertAdjacentHTML("beforebegin",%s);}'
+    'if(d.hasAttribute("data-night"))d.setAttribute("data-mastchart","");'
+    '}catch(e){}})();</script>\n'
+) % json.dumps("".join(
+    '<link rel="preload" as="image" type="image/avif" fetchpriority="high" media="%s" '
+    'imagesrcset="%s" imagesizes="50vw">' % (_STRIP_MEDIA[k], _strip_srcset(k, side, "avif"))
+    for k in ("phone", "wide") for side in ("l", "r")
+)).replace("<", "\\u003c")
 STRIP_CREDIT = "Photo: Ed Cogdell / The Coastal Brief"
+STRIP_ALT = "Two long wooden docks over sound-side water, with marsh grass and red glasswort in the foreground"
+
+
+def _strip_half(side: str, alt: str) -> str:
+    srcs = "".join(
+        '<source media="%s" type="image/%s" srcset="%s" sizes="50vw">'
+        % (_STRIP_MEDIA["wide"], t, _strip_srcset("wide", side, e)) for t, e in (("avif", "avif"), ("webp", "webp"), ("jpeg", "jpg"))
+    ) + "".join(
+        '<source type="image/%s" srcset="%s" sizes="50vw">' % (t, _strip_srcset("phone", side, e))
+        for t, e in (("avif", "avif"), ("webp", "webp"))
+    )
+    return (
+        '<picture class="nstrip-%s">%s<img src="%sphone-%s-390.jpg" srcset="%s" sizes="50vw" width="195" height="88" '
+        'alt="%s" decoding="async" fetchpriority="high"></picture>'
+    ) % (side, srcs, _STRIP_DIR, side, _strip_srcset("phone", side, "jpg"), alt)
 
 
 def night_strip_html() -> str:
     """Slim panoramic strip of Ed's own photograph (owner-supplied, approved). Inserted only when
-    ?strip= asks for it, so the default page makes no request and has no extra layout. Art-directed crops:
-    4.42:1 for phones, 7.32:1 from 640px up; WebP with JPEG fallback. The box has a fixed CSS height, so
-    showing it never shifts later content. No place name: the location is not confirmed."""
-    d = "/static/night-strip/docks-"
-    ss = lambda kind, ext, ws: ", ".join("%s%s-%d.%s %dw" % (d, kind, w, ext, w) for w in ws)
-    fig = (
-        '<figure class="nstrip"><picture>'
-        '<source media="(min-width: 640px)" type="image/webp" srcset="%s" sizes="100vw">'
-        '<source media="(min-width: 640px)" type="image/jpeg" srcset="%s" sizes="100vw">'
-        '<source type="image/webp" srcset="%s" sizes="100vw">'
-        '<img src="%sphone-800.jpg" srcset="%s" sizes="100vw" width="1200" height="271" '
-        'alt="Two long wooden docks over sound-side water, with marsh grass and red glasswort in the foreground" '
-        'decoding="async" fetchpriority="high"></picture>'
-        '<figcaption class="nstrip-cr">%s</figcaption></figure>'
-    ) % (ss("wide", "webp", (1000, 1500)), ss("wide", "jpg", (1000, 1500)), ss("phone", "webp", (800, 1200)),
-         d, ss("phone", "jpg", (800, 1200)), STRIP_CREDIT)
+    ?strip=1 asks for it, so the default page makes no request and has no extra layout. AVIF, then WebP,
+    then JPEG. The box has a fixed CSS height and each img carries width/height, so showing it never
+    shifts later content. The right half is a continuation of the same photo, so it has empty alt text.
+    No place name: the location is not confirmed."""
+    fig = '<figure class="nstrip">%s%s<figcaption class="nstrip-cr">%s</figcaption></figure>' % (
+        _strip_half("l", STRIP_ALT), _strip_half("r", ""), STRIP_CREDIT)
     # Markup lives in a JS string (with "<" escaped) so the default page carries no extra element at all.
     js = json.dumps(fig).replace("<", "\\u003c")
     return (
@@ -1295,7 +1324,7 @@ def _shell(variant: str, main: str, shot: bool, water: str = "salt", public: boo
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 %(meta)s
 <meta name="color-scheme" content="light dark">
-<link rel="preload" href="/fonts/fraunces-var.woff2" as="font" type="font/woff2" crossorigin>
+%(nboot)s<link rel="preload" href="/fonts/fraunces-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/fraunces-italic-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/barlow-condensed-600.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/source-sans-3-var.woff2" as="font" type="font/woff2" crossorigin>
@@ -1304,7 +1333,7 @@ def _shell(variant: str, main: str, shot: bool, water: str = "salt", public: boo
 %(css)s<style id="wave-intro-css">
 %(icss)s
 </style>
-%(boot)s%(nboot)s</head>
+%(boot)s</head>
 <body>
 %(defs)s%(overlay)s
 <a class="skip" href="#conditions">Skip to Conditions at a Glance</a>

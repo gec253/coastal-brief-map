@@ -231,7 +231,7 @@ def cache_get_any(url: str) -> tuple[int, str, bytes] | None:
 
 # Only public site assets are served from the repo folder; source, config,
 # docs, and test fixtures are not.
-_STATIC_EXT = {".html", ".css", ".js", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".ico",
+_STATIC_EXT = {".html", ".css", ".js", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".avif", ".ico",
                ".woff2", ".json", ".txt", ".xml", ".webmanifest", ".map"}
 _STATIC_DENY_PREFIX = ("/.", "/admin", "/preview/", "/branding/og-masthead.html", "/branding/render-og-masthead.", "/wind-lab.", "/lake.", "/tiles-lab.", "/docs/", "/tests/", "/scripts/", "/__pycache__/", "/requirements")
 
