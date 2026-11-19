@@ -1,7 +1,9 @@
 # Final night-strip prototype (private, local only)
 
 Opt-in: `?strip=1&night=1` (natural photo and chart, in day or night; Coastal blue tokens paint in dark mode only).
-`?strip=natural` is an alias for `?strip=1`; `?night=b` is an alias for `?night=1`. No A, tint, or phone chart gate.
+`?strip=natural` is an alias for `?strip=1`; `?night=b` is an alias for `?night=1`. No A, daytime tint option, or phone chart gate.
+Night only: a single continuous CSS overlay, #0F2B44 at 38% opacity, softens both photo halves; the credit remains above it.
+Image files, crops and dimensions are unchanged by this presentation layer.
 Plain `/` has no extra image requests or strip element. Nothing is deployed.
 
 ## Ed Cogdell photograph

@@ -559,3 +559,10 @@ html[data-mastchart] .mh-hybrid .mh-plate::before{content:"";position:absolute;l
 .nstrip-cr{position:absolute;right:6px;bottom:5px;z-index:2;margin:0;padding:2px 7px;border-radius:3px;background:rgba(7,28,41,.8);color:#F6F1E7;font:500 .66rem/1.35 var(--f-ui);letter-spacing:.01em}
 @media (min-width:640px){.nstrip{height:112px}}
 @media (min-width:1024px){.nstrip{height:132px}}
+
+/* Night only: one continuous wash above both photo halves; the credit stays above it.
+   Same natural-color assets, box dimensions and daytime presentation. */
+@media (prefers-color-scheme:dark){
+  html[data-water="salt"][data-night="b"] .nstrip::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:#0F2B44;opacity:.38}
+  html[data-water="salt"][data-night="b"] .nstrip-cr{z-index:3}
+}

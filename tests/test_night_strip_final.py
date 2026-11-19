@@ -50,6 +50,17 @@ class NightStripFinal(unittest.TestCase):
         self.assertIn('type=\\"image/avif\\"', home.NIGHT_BOOT)
         self.assertIn('imagesizes=\\"50vw\\"', home.NIGHT_BOOT)
 
+    def test_night_wash_spans_both_halves_below_credit(self):
+        css = (ROOT / 'preview/sprint-home/hybrid.css').read_text()
+        rule = css[css.index('/* Night only: one continuous wash'):]
+        self.assertIn('@media (prefers-color-scheme:dark)', rule)
+        self.assertIn('html[data-water="salt"][data-night="b"] .nstrip::after', rule)
+        self.assertIn('inset:0;z-index:2;pointer-events:none;background:#0F2B44;opacity:.38', rule)
+        self.assertIn('html[data-water="salt"][data-night="b"] .nstrip-cr{z-index:3}', rule)
+        self.assertNotIn('filter:', rule)
+        self.assertNotIn('height:', rule)
+        self.assertNotIn('width:', rule)
+
     def test_chart_only_changes_opt_in_rule(self):
         css = (ROOT / 'preview/sprint-home/hybrid.css').read_text()
         self.assertIn('html[data-mastchart] .mh-hybrid .mh-plate::before', css)
