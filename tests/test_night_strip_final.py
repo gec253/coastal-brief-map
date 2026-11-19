@@ -1,4 +1,4 @@
-"""Private opt-in design guards; no data/instrument behavior changes."""
+"""Night-strip default-on guards; no data/instrument behavior changes."""
 import json
 import re
 import unittest
@@ -15,15 +15,26 @@ class NightStripFinal(unittest.TestCase):
             s = (ROOT / rel).read_text()
             for old in ('data-night="a"', 'night=a|b', 's==="tint"', 'data-strip="tint"', 'q.get("chart")'):
                 self.assertNotIn(old, s)
-        self.assertIn('n==="1"||n==="b"', home.NIGHT_BOOT)
-        self.assertIn('if(d.hasAttribute("data-night"))d.setAttribute("data-mastchart","")', home.NIGHT_BOOT)
+        # Defaults on; ?night=0 / ?strip=0 are the only off switches.
+        self.assertIn('n!=="0"', home.NIGHT_BOOT)
+        self.assertIn('d.setAttribute("data-night","b")', home.NIGHT_BOOT)
+        self.assertIn('d.setAttribute("data-mastchart","")', home.NIGHT_BOOT)
+        self.assertIn('s!=="0"', home.NIGHT_BOOT)
+        self.assertNotIn('if(d.hasAttribute("data-night"))d.setAttribute("data-mastchart","")', home.NIGHT_BOOT)
+        idx = (ROOT / 'index.html').read_text()
+        self.assertIn('night=0', idx)
+        self.assertNotIn('night=(1|b)', idx)
+        fresh = home._night_boot('fresh')
+        self.assertNotIn('data-strip', fresh)
+        self.assertNotIn('preload', fresh)
+        self.assertIn('data-night","b")', fresh)
 
-    def test_strip_is_opt_in_and_saltwater_only(self):
+    def test_strip_is_default_on_and_saltwater_only(self):
         mast = '<header>mast</header>'
         self.assertEqual(home._with_strip(mast, 'fresh'), mast)
         salt = home._with_strip(mast, 'salt')
         self.assertIn('hasAttribute("data-strip")', salt)
-        # Markup is escaped in the script string, so it does not create images without the switch.
+        # Markup is escaped in the script string; the boot sets data-strip unless ?strip=0.
         self.assertNotIn('<figure', salt)
         self.assertIn('\\u003cfigure', salt)
         self.assertNotIn('Photo: Ed Cogdell / The Coastal Brief', salt)

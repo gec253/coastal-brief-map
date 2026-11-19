@@ -523,9 +523,10 @@ html[data-water="fresh"] .cg-hybrid{background:linear-gradient(180deg,#E8EADF,#D
   .rr-l::after{content:"";flex:none;width:1px}
 }
 
-/* ===================== Night-strip prototype (design/night-strip-1119, private) =====================
-   Opt-in only: html[data-night="b"] (?night=1, dark mode only), html[data-strip] (?strip=1), and html[data-mastchart]
-   (set by ?night=1, in both day and night).
+/* ===================== Night-strip (design/night-strip-1119, approved default) =====================
+   html[data-night="b"] (dark mode only, existing prefers-color-scheme trigger), html[data-strip]
+   (saltwater photo strip), and html[data-mastchart] (day and night, phones included).
+   Defaults on; ?night=0 / ?strip=0 are harmless off overrides.
    Saltwater only; freshwater faces are untouched. Token-level: the rules below re-point existing tokens. */
 @media (prefers-color-scheme:dark){
   /* B · Coastal blue: deeper Atlantic blue with a Carolina-blue accent */

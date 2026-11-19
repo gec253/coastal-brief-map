@@ -1239,11 +1239,11 @@ def _feedback_embed() -> str:
         return ""
 
 
-# Night-strip prototype (design/night-strip-1119, private): opt-in preview switches only, so production
-# daytime is unchanged. ?night=1 sets html[data-night="b"] (the Coastal blue dark token set; it only paints
-# when the device is in dark mode), ?strip=1 shows the coastal photo strip under the masthead (saltwater
-# only). ?night=1 also turns on the faint NOAA chart texture behind the nameplate, phones included
-# (Ed reversed the Nov 14 no-texture-on-phones rule for this combination). With no query the page is unchanged.
+# Night-strip (design/night-strip-1119, approved default): Coastal Blue tokens (data-night="b")
+# paint only when the existing dark-mode trigger is on (prefers-color-scheme / data-theme).
+# The masthead chart texture is on in day and night, phones included (Ed reversed the Nov 14
+# no-texture-on-phones rule). The natural Oyster Point photo strip is on for saltwater pages only.
+# Harmless overrides: ?night=0 skips the Coastal Blue tokens; ?strip=0 hides the strip.
 _STRIP_DIR = "/static/night-strip/docks-"
 # Exact-size art-directed crops, each cut into a left and a right half that sit edge to edge.
 # Phone box 390 x 88 (4.43:1 crop): halves 195 / 390 / 585 px wide = 1x / 2x / 3x.
@@ -1260,19 +1260,30 @@ def _strip_srcset(kind: str, side: str, ext: str) -> str:
 
 _STRIP_MEDIA = {"phone": "(max-width: 639px)", "wide": "(min-width: 640px)"}
 # Both halves' AVIFs are preloaded from <head> (media-matched, high priority) so they download alongside
-# the fonts and are ready for the first paint.
-NIGHT_BOOT = (
-    '<script>(function(){try{var q=new URLSearchParams(location.search||""),d=document.documentElement,'
-    'n=q.get("night"),s=q.get("strip");if(n==="1"||n==="b")d.setAttribute("data-night","b");'
-    'if(s==="1"||s==="natural"){d.setAttribute("data-strip","");'
-    'document.currentScript.insertAdjacentHTML("beforebegin",%s);}'
-    'if(d.hasAttribute("data-night"))d.setAttribute("data-mastchart","");'
-    '}catch(e){}})();</script>\n'
-) % json.dumps("".join(
-    '<link rel="preload" as="image" type="image/avif" fetchpriority="high" media="%s" '
-    'imagesrcset="%s" imagesizes="50vw">' % (_STRIP_MEDIA[k], _strip_srcset(k, side, "avif"))
-    for k in ("phone", "wide") for side in ("l", "r")
-)).replace("<", "\\u003c")
+# the fonts and are ready for the first paint. Freshwater pages skip the strip and its preloads.
+def _night_boot(water: str = "salt") -> str:
+    """Head boot: Coastal Blue + chart texture by default; strip preloads on saltwater only."""
+    pre = ""
+    if water == "salt":
+        preloads = "".join(
+            '<link rel="preload" as="image" type="image/avif" fetchpriority="high" media="%s" '
+            'imagesrcset="%s" imagesizes="50vw">' % (_STRIP_MEDIA[k], _strip_srcset(k, side, "avif"))
+            for k in ("phone", "wide") for side in ("l", "r")
+        )
+        pre = (
+            'if(s!=="0"){d.setAttribute("data-strip","");'
+            'document.currentScript.insertAdjacentHTML("beforebegin",%s);}'
+        ) % json.dumps(preloads).replace("<", "\\u003c")
+    return (
+        '<script>(function(){try{var q=new URLSearchParams(location.search||""),d=document.documentElement,'
+        'n=q.get("night"),s=q.get("strip");if(n!=="0")d.setAttribute("data-night","b");'
+        '%s'
+        'd.setAttribute("data-mastchart","");'
+        '}catch(e){}})();</script>\n'
+    ) % pre
+
+
+NIGHT_BOOT = _night_boot("salt")
 STRIP_ALT = "Two long wooden docks over sound-side water, with marsh grass and red glasswort in the foreground"
 
 
@@ -1291,11 +1302,11 @@ def _strip_half(side: str, alt: str) -> str:
 
 
 def night_strip_html() -> str:
-    """Slim panoramic strip of Ed's own photograph (owner-supplied, approved). Inserted only when
-    ?strip=1 asks for it, so the default page makes no request and has no extra layout. AVIF, then WebP,
-    then JPEG. The box has a fixed CSS height and each img carries width/height, so showing it never
-    shifts later content. The right half is a continuation of the same photo, so it has empty alt text.
-    No place name: the location is not confirmed."""
+    """Slim panoramic strip of Ed's own photograph (owner-supplied, approved). Default-on for
+    saltwater pages; ?strip=0 is a harmless off override. AVIF, then WebP, then JPEG. The box has
+    a fixed CSS height and each img carries width/height, so showing it never shifts later content.
+    The right half is a continuation of the same photo, so it has empty alt text. No place name:
+    the location is not confirmed. No on-image credit (owner photo, Ed t345u)."""
     fig = '<figure class="nstrip">%s%s</figure>' % (
         _strip_half("l", STRIP_ALT), _strip_half("r", ""))
     # Markup lives in a JS string (with "<" escaped) so the default page carries no extra element at all.
@@ -1362,7 +1373,7 @@ def _shell(variant: str, main: str, shot: bool, water: str = "salt", public: boo
         "css": css, "icss": icss, "boot": wave_intro._BOOT, "overlay": wave_intro._OVERLAY,
         "mast": _with_strip(masthead_html(variant, public=public, water=water), water), "main": main, "replay": wave_intro._REPLAY, "ijs": wave_intro._js(),
         "fb": _feedback_embed(),
-        "nboot": NIGHT_BOOT,
+        "nboot": _night_boot(water),
     }
     return page.encode("utf-8")
 

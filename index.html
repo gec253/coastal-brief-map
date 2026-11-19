@@ -31,12 +31,12 @@
         }
         document.documentElement.setAttribute("data-theme", t);
         if (/[?&]tiles=v1\b/.test(location.search)) document.documentElement.removeAttribute("data-tiles");
-        // Night-strip prototype (private): ?night=1 picks the Coastal blue dark token set (dark mode only)
-        // and turns on the masthead chart texture, phones included.
-        if (/[?&]night=(1|b)\b/.test(location.search)) {
+        // Coastal Blue dark tokens (paint only when data-theme is dark) and the masthead
+        // chart texture, phones included. Default on; ?night=0 is a harmless off override.
+        if (!/[?&]night=0\b/.test(location.search)) {
           document.documentElement.setAttribute("data-night", "b");
-          document.documentElement.setAttribute("data-mastchart", "");
         }
+        document.documentElement.setAttribute("data-mastchart", "");
       } catch (e) {}
     })();
   </script>

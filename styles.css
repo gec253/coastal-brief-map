@@ -4373,8 +4373,9 @@ html[data-page="lake"][data-region="cape-fear-river"] #fw-river-sec {
 .fw-meta.is-stale { padding-left: 8px; border-left: 2px solid rgba(201, 138, 46, 0.75); }
 .fw-meta.is-stale strong { color: var(--d-ink); font-weight: 700; }
 
-/* ===================== Night-strip prototype (design/night-strip-1119, private) =====================
-   Opt-in dark token set B (Coastal blue): ?night=1 sets html[data-night="b"]; production dark is unchanged without it.
+/* ===================== Night-strip (design/night-strip-1119, approved default) =====================
+   Dark token set B (Coastal blue): html[data-night="b"] is set by default and paints only with
+   the existing data-theme="dark" trigger. ?night=0 is a harmless off override.
    Token-level only: the blocks below re-point existing dark tokens and the v2 tile faces. */
 /* B · Coastal blue */
 html[data-theme="dark"][data-night="b"] {
@@ -4393,8 +4394,8 @@ html[data-theme="dark"][data-night="b"] {
 :root[data-tiles="v2"][data-theme="dark"][data-night="b"] .inst-water { --d-inst: #1B5561; --d-inst-2: #164953; --d-edge: rgba(164, 222, 207, 0.26); }
 /* clearer card separation: surface step + hairline + soft lift */
 html[data-theme="dark"][data-night] .inst { box-shadow: var(--folio-lift); }
-/* Phone chart texture with ?night=1 (Ed approved it on phones for this combination, reversing the Nov 14
-   rule for it only). A 560px, 1-bit-alpha lossless copy of the same NOAA crop: 7 KB instead of 13 KB. */
+/* Phone chart texture (Ed approved it on phones, reversing the Nov 14 rule). A 560px,
+   1-bit-alpha lossless copy of the same NOAA crop: 7 KB instead of 13 KB. */
 @media (max-width: 760px) {
   html[data-mastchart] header.site[data-identity]::before {
     content: "";
