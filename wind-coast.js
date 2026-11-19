@@ -62,6 +62,7 @@
     function draw(t, c, polys) {
       const t0 = performance.now();
       const x = t.getContext("2d"), ox = c.x * 256, oy = c.y * 256;
+      x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, t.width, t.height);
       x.setTransform(dpr, 0, 0, dpr, 0, 0);
       const nw = unproject(ox - 2, oy - 2, c.z), se = unproject(ox + 258, oy + 258, c.z);
       x.beginPath();
@@ -89,8 +90,13 @@
     const queue = [];
     let pumping = false;
     function pump() {
-      const job = queue.shift();
-      if (job) { draw(job.t, job.c, job.polys); job.done(null, job.t); }
+      const t0 = performance.now();
+      let job = queue.shift();
+      if (job) { draw(job.t, job.c, job.polys); if (job.done) job.done(null, job.t); }
+      // Restyle jobs (theme switch) repaint tiles already on screen: a few per frame within ~6 ms.
+      while (job && job.restyle && queue.length && queue[0].restyle && performance.now() - t0 < 6) {
+        job = queue.shift(); draw(job.t, job.c, job.polys);
+      }
       if (queue.length) schedule(); else pumping = false;
     }
     function schedule() {
@@ -111,6 +117,22 @@
     });
     const l = new Coast({ updateWhenIdle: true, keepBuffer: 1, maxNativeZoom: 12 });
     l.stats = stats; l.data = data;
+    // Theme switch: new land/line colours, repaint the tiles already shown (no reload, no blank tiles).
+    l.restyle = function (o) {
+      for (const k in o) opts[k] = o[k];
+      for (let i = queue.length - 1; i >= 0; i--) if (queue[i].restyle) queue.splice(i, 1);
+      const tiles = this._tiles || {};
+      for (const key in tiles) {
+        const tl = tiles[key];
+        if (!tl.loaded || !tl.el) continue;
+        const c = tl.coords;
+        data(c.z >= CoastMath.HI_ZOOM ? "hi" : "lo").then(function (polys) {
+          queue.push({ t: tl.el, c: c, polys: polys, restyle: true });
+          if (!pumping) schedule();
+        });
+      }
+      return this;
+    };
     return l;
   }
   root.CBCoast = { layer: layer };

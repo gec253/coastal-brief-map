@@ -229,7 +229,7 @@ class ThemeAndPage(unittest.TestCase):
     def test_tiles_drawn_one_per_task_and_redraw_on_zoom(self):
         self.assertIn("L.GridLayer.extend", self.coast)
         self.assertIn("requestAnimationFrame(pump)", self.coast)              # one tile per frame
-        self.assertIn("const job = queue.shift();", self.coast)
+        self.assertIn("let job = queue.shift();", self.coast)
         self.assertIn("fadeAnimation: false", self.js)
         self.assertIn('c.z >= CoastMath.HI_ZOOM ? "hi" : "lo"', self.coast)    # detailed when zoomed in
         self.assertIn("HI_ZOOM: 8", self.coast)

@@ -51,12 +51,13 @@
 
   /* Particle layer on a Leaflet map. opts: dark, motion, frameMs (0 = every rAF, 33.3 = 30 fps),
      dprCap, maxParticles, density (px² per particle), observe (element for IntersectionObserver),
-     perf (HUD element parent or null). Returns { setGrid, setMotion, sample, stats }. */
+     perf (HUD element parent or null). Returns { setGrid, setMotion, setDark, sample, stats }. */
   function layer(map, opts) {
-    const dark = !!opts.dark;
+    let dark = !!opts.dark;
     const BUCKETS = 12, BMAX = 36;
     const bucketColor = [], bucketWidth = [];
-    for (let i = 0; i < BUCKETS; i++) { const kt = (i + 0.5) * BMAX / BUCKETS, c = rgb(kt, dark); bucketColor.push("rgba(" + c.join(",") + "," + (0.55 + 0.45 * i / (BUCKETS - 1)).toFixed(2) + ")"); bucketWidth.push(0.9 + 1.5 * i / (BUCKETS - 1)); }
+    function palette() { for (let i = 0; i < BUCKETS; i++) { const kt = (i + 0.5) * BMAX / BUCKETS, c = rgb(kt, dark); bucketColor[i] = "rgba(" + c.join(",") + "," + (0.55 + 0.45 * i / (BUCKETS - 1)).toFixed(2) + ")"; bucketWidth[i] = 0.9 + 1.5 * i / (BUCKETS - 1); } }
+    palette();
     let uvAt = null, motion = !!opts.motion;
     const canvas = L.DomUtil.create("canvas", "wind-particles");
     canvas.setAttribute("aria-hidden", "true");
@@ -165,6 +166,8 @@
         sync();
       },
       setMotion: function (on) { motion = !!on; ctx.clearRect(0, 0, w, h); if (!motion) drawArrows(); sync(); },
+      // Day/night palette swap in place: particles, positions, grid and loop are untouched.
+      setDark: function (on) { on = !!on; if (on === dark) return; dark = on; palette(); if (!motion && laidOut) drawArrows(); },
       sample: function (lat, lon) {
         const o = [0, 0];
         if (!uvAt || !uvAt(lat, lon, o)) return null;

@@ -6,7 +6,8 @@
   if (!W || !M || !window.L || !window.CBCoast) return;
   const $ = (id) => document.getElementById(id);
   const q = location.search;
-  const dark = document.documentElement.getAttribute("data-theme") === "dark";
+  const root = document.documentElement;
+  let dark = root.getAttribute("data-theme") === "dark";
   const mm = (s) => !!(window.matchMedia && matchMedia(s).matches);
   const osReduce = mm("(prefers-reduced-motion: reduce)");
   const coarse = mm("(pointer: coarse)");
@@ -25,7 +26,43 @@
   function tick() { $("w-clock").textContent = clockF.format(new Date()) + " ET"; }
   tick(); setInterval(tick, 15000);
 
-  (function ramp() { const c = $("w-ramp"), x = c.getContext("2d"); for (let i = 0; i < c.width; i++) { x.fillStyle = "rgb(" + M.rgb(i / c.width * 36, dark).join(",") + ")"; x.fillRect(i, 0, 1, c.height); } })();
+  function ramp() { const c = $("w-ramp"), x = c.getContext("2d"); for (let i = 0; i < c.width; i++) { x.fillStyle = "rgb(" + M.rgb(i / c.width * 36, dark).join(",") + ")"; x.fillRect(i, 0, 1, c.height); } }
+  ramp();
+
+  /* Theme: the same site preference as the Morning Brief and dashboard toggles (localStorage
+     "coastalBrief.theme" = "light" | "dark"; nothing stored = follow the phone's appearance).
+     wind.html applies it before first paint; this keeps it live without a reload: the sun/moon
+     toggle, other tabs (storage event), the phone switching appearance, and back/forward cache. */
+  const THEME_STORE = "coastalBrief.theme";
+  const sysDark = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+  const qTheme = (/[?&]theme=(light|dark)\b/.exec(q) || [])[1] || null;
+  let onTheme = null;            // set by boot(): repaint coastline + particles
+  function stored() { try { const t = localStorage.getItem(THEME_STORE); return t === "light" || t === "dark" ? t : null; } catch (e) { return null; } }
+  function resolved() { return stored() || (sysDark && sysDark.matches ? "dark" : "light"); }
+  const tbtn = $("w-theme");
+  function syncToggle() {
+    tbtn.setAttribute("aria-pressed", String(dark));
+    tbtn.title = dark ? "Switch to day mode" : "Switch to night mode";
+  }
+  function applyTheme(t, persist) {
+    t = t === "dark" ? "dark" : "light";
+    if (persist) { try { localStorage.setItem(THEME_STORE, t); } catch (e) {} }
+    const d = t === "dark";
+    if (d === dark && root.getAttribute("data-theme") === t) { syncToggle(); return; }
+    dark = d;
+    root.setAttribute("data-theme", t);
+    if (d) root.setAttribute("data-night", "b"); else root.removeAttribute("data-night");
+    syncToggle(); ramp();
+    if (onTheme) onTheme();
+  }
+  syncToggle();
+  tbtn.addEventListener("click", function () { applyTheme(dark ? "light" : "dark", true); });
+  window.addEventListener("storage", function (e) { if (e.key === THEME_STORE || e.key === null) applyTheme(resolved(), false); });
+  if (sysDark) {
+    const onSys = function () { if (!stored() && !qTheme) applyTheme(resolved(), false); };
+    if (sysDark.addEventListener) sysDark.addEventListener("change", onSys); else if (sysDark.addListener) sysDark.addListener(onSys);
+  }
+  window.addEventListener("pageshow", function (e) { if (e.persisted) applyTheme(qTheme && !stored() ? qTheme : resolved(), false); });
 
   const play = $("w-play"), status = $("w-status"), read = $("w-read");
   function setPlay() {
@@ -44,12 +81,16 @@
     await yieldTask();
     // Coastline: our own Census land polygons in the page palette (CSS --coast-*), drawn into <canvas>
     // tiles one per frame. No third-party tiles; a canvas tile can never be the LCP element.
-    const cs = getComputedStyle(document.documentElement);
+    const cs = getComputedStyle(root), bootDark = dark;
     const coast = window.CBCoast.layer({
       base: "/wind/coast-", land: cs.getPropertyValue("--coast-land").trim(),
       line: cs.getPropertyValue("--coast-line").trim(), lineWidth: dark ? 1 : 0.9,
     }).addTo(map);
     window.__coast = coast;
+    function coastStyle() {
+      const c = getComputedStyle(root);
+      return { land: c.getPropertyValue("--coast-land").trim(), line: c.getPropertyValue("--coast-line").trim(), lineWidth: dark ? 1 : 0.9 };
+    }
     await yieldTask();
     const wind = W.layer(map, {
       dark: dark, motion: motion, frameMs: fps === 30 ? 33.3 : 0,
@@ -57,8 +98,10 @@
       observe: $("w-stage"), perf: /[?&]perf=1\b/.test(q) ? $("w-stage") : null,
     });
     window.__windStats = wind.stats;
-    window.__windView = { map: map, wind: wind, fps: fps, phone: phone, motion: () => motion, grid: () => grid };
+    onTheme = function () { coast.restyle(coastStyle()); wind.setDark(dark); };
+    window.__windView = { map: map, wind: wind, fps: fps, phone: phone, motion: () => motion, grid: () => grid, dark: () => dark };
 
+    if (dark !== bootDark) onTheme();     // theme switched while the map was starting
     play.addEventListener("click", function () {
       motion = !motion; setPlay(); try { localStorage.setItem("coastalBrief.windMotion", motion ? "on" : "off"); } catch (e) {}
       wind.setMotion(motion);

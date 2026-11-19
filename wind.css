@@ -31,6 +31,14 @@ button { font: inherit; color: inherit; }
 .w-badge { margin-left: auto; flex: none; font-size: 11.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; background: var(--badge-bg); color: var(--badge-ink); padding: 5px 8px; border-radius: 6px; white-space: nowrap; }
 .w-clock { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.05; font-variant-numeric: tabular-nums; width: 88px; flex: none; white-space: nowrap; }
 .w-clock time { display: block; width: 100%; text-align: right; font-size: 15px; font-weight: 700; }
+/* day/night toggle: discreet, top bar, away from the bottom wind controls. Icon = the mode you switch to. */
+.w-theme { flex: none; width: 44px; height: 44px; margin-right: -6px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 22px; background: transparent; color: var(--ink-2); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.w-theme svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.w-theme .i-moon { fill: currentColor; stroke-width: 0; }
+.w-theme .i-sun, html[data-theme="dark"] .w-theme .i-moon { display: none; }
+html[data-theme="dark"] .w-theme .i-sun { display: block; }
+.w-theme:hover { background: var(--surf-2); }
+.w-theme:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
 .w-k { font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-2); font-weight: 600; }
 /* run / valid / forecast hour */
 .w-strip { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 1px; background: var(--edge); border-bottom: 1px solid var(--edge); }
@@ -84,6 +92,11 @@ html:not([data-theme="dark"]) .w-attrib a { color: #1F5C78; }
 .w-hour-b { font-size: 16px; font-weight: 800; white-space: nowrap; }
 .w-hud { position: absolute; z-index: 800; right: 60px; top: 10px; font: 12px/1.3 ui-monospace, Menlo, monospace; background: rgba(0,0,0,0.65); color: #fff; padding: 4px 7px; border-radius: 6px; pointer-events: none; }
 @media (max-width: 420px) {
+  .w-top { gap: 5px; padding-right: max(10px, env(safe-area-inset-right)); padding-left: max(10px, env(safe-area-inset-left)); }
+  .w-brand-a { font-size: 10px; letter-spacing: 0.05em; }
+  .w-badge { font-size: 10.5px; padding: 4px 6px; letter-spacing: 0.05em; }
+  .w-clock { width: 82px; }
+  .w-clock time { font-size: 14px; }
   .w-ctl { gap: 4px; }
   .w-btn { min-width: 48px; padding: 4px 4px; }
   .w-play { min-width: 56px; }
