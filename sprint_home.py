@@ -1006,12 +1006,17 @@ def conditions_html(m: dict, *, variant: str, public: bool = False) -> str:
     for r_id, name, cur in region_links(rid):
         links.append('<a href="?region=%s"%s>%s</a>' % (_esc(r_id, True), ' aria-current="true"' if cur else "", _esc(name)))
     brief_link = '<a class="cg-link" href="/brief?region=%s">Today\'s brief for this water</a>' % _esc(rid, True)
-    if public:   # only public briefs; same fallback as brief-link.js; no link when the brief is switched off
-        brief_link = ('<a class="cg-link" href="/brief?region=%s">Today\'s Morning Brief</a>'
-                      % _esc(rid if rid in PUBLIC_BRIEF_SALT else "crystal-coast", True)) if _brief_on() else ""
-        if m.get("water") == "fresh":   # only Falls Lake has a public freshwater brief
-            brief_link = ('<a class="cg-link" href="/brief?region=falls-lake">Today\'s Morning Brief</a>'
-                          if rid == "falls-lake" and _brief_on() else "")
+    if public:   # only public briefs; same rule as brief-link.js; no link when the brief is switched off
+        brief_link = ""
+        if _brief_on():
+            import site_chrome
+            tgt, own = site_chrome.brief_target(rid)
+            # A coastal region without its own brief links the nearest one and says so (never a 404).
+            # Jordan Lake and the Neuse keep no tools link, as before (Nov 16 decision).
+            if own or m.get("water") != "fresh":
+                label = ("Today\'s Morning Brief" if own else
+                         "Nearest Morning Brief: %s" % _esc(site_chrome.region_name(tgt) or tgt))
+                brief_link = '<a class="cg-link" href="/brief?region=%s">%s</a>' % (_esc(tgt, True), label)
     if m.get("water") == "fresh":
         dash = "/lake?region=%s" % rid
     else:   # "/" is the Hybrid page itself; the map, chart, radar and tide tables live on /dashboard
@@ -1107,7 +1112,7 @@ def _hybrid_masthead(public: bool, water: str) -> str:
         '<line class="wave-settle" x1="0" y1="2" x2="1200" y2="2"/></svg></div>'
         '<p class="mh-motto">From the rivers to the sounds to the sea</p>'
         '<nav class="mh-sec" aria-label="Sections"><a href="%s"%s>Saltwater</a><a href="%s"%s>Freshwater</a>'
-        '%s<a href="/catch-wall">Catch Wall</a><a class="mh-maps" href="/dashboard">Map &amp; tides</a></nav></div>'
+        '%s<a href="/catch-wall">Catch Wall</a><a class="mh-maps" href="/dashboard">Map<span class="mh-maps-x"> &amp; tides</span></a></nav></div>'
         "</header>"
     ) % (flag, _esc(_today()), salt_href, "" if water == "fresh" else ' aria-current="page"',
          fresh_href, ' aria-current="page"' if water == "fresh" else "", brief)
@@ -1560,6 +1565,11 @@ def page(variant: str, region_id: str | None = None, shot: bool = False, public:
         P["featured"] = None if fresh else _featured()
         data = _shell(variant, page_hybrid(m, P, public=True), shot, water=m.get("water") or "salt", public=True,
                       preload=photo_rotation.preload_html(P["featured"]))
+        # Header "Morning Brief" follows the region on screen (its own brief, else the nearest).
+        import site_chrome
+        tgt = site_chrome.brief_target(((m.get("region") or {}).get("id")) or region_id)[0]
+        data = data.replace(b'<a href="/brief?region=crystal-coast" id="nav-brief">',
+                            b'<a href="/brief?region=' + tgt.encode("ascii", "ignore") + b'" id="nav-brief">', 1)
         return data.replace(PHOTO_ROUTE.encode(), PUBLIC_PHOTO_ROUTE.encode())
     m = model(region_id)
     P = _photos()

@@ -410,9 +410,9 @@ html[data-water="fresh"] .cg-hybrid{background:linear-gradient(180deg,#E8EADF,#D
   .cg-hybrid .al-adv .al-ev,.cg-hybrid .al-adv .al-meta,.cg-hybrid .al-adv .al-link,
   .cg-hybrid .al-watch .al-ev,.cg-hybrid .al-watch .al-meta,.cg-hybrid .al-watch .al-link{color:#FBEFD2}
 }
-/* phones: the section nav drops "Map & tides" (chart, radar and tide buttons sit under the selector) */
+/* phones: all five sections stay in the nav; "Map & tides" reads "Map" to fit (launch audit item 8) */
 @media (max-width:639px){
-  .mh-hybrid .mh-sec a.mh-maps{display:none}
+  .mh-hybrid .mh-sec a.mh-maps .mh-maps-x{display:none}
   .mh-hybrid .mh-sec{-webkit-mask-image:none;mask-image:none;padding-right:0;justify-content:center}
   .mh-hybrid .mh-sec a{padding:0 8px;font-size:.82rem}
 }
@@ -428,7 +428,7 @@ html[data-water="fresh"] .cg-hybrid{background:linear-gradient(180deg,#E8EADF,#D
   .mh-hybrid .mh-rules .mh-rule{height:3px}
   .mh-hybrid .mh-motto{margin:3px 0 0;font-size:.84rem}
   .mh-hybrid .mh-sec{margin-top:4px;justify-content:center}
-  .mh-hybrid .mh-sec a{padding:0 10px}
+  .mh-hybrid .mh-sec a{padding:0 7px}
   .cg-hybrid{padding:8px 10px 8px}
   .cg-hybrid .cg-head{margin-bottom:4px}
   .cg-hybrid .cg-where{font-size:1.22rem}
@@ -514,4 +514,11 @@ html[data-water="fresh"] .cg-hybrid{background:linear-gradient(180deg,#E8EADF,#D
   .t-stale{color:#F6B59B}
   .cg-hybrid .al-unknown{background:#1C1B18;border-color:#5A564C;border-left-color:#8D877C;color:#E8E4D8}
   .cg-hybrid .al-unknown .al-ev,.cg-hybrid .al-unknown .al-meta,.cg-hybrid .al-unknown .al-link{color:#E8E4D8}
+}
+
+/* ===== Nov 19 launch audit item 9: phone region rows scroll sideways; fade the right edge so the
+   cut-off chip reads as "more this way". The extra end padding lets the last chip clear the fade. ===== */
+@media (max-width:639px){
+  .rr-l{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 36px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 36px),transparent);padding-right:36px}
+  .rr-l::after{content:"";flex:none;width:1px}
 }

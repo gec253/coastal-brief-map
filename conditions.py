@@ -231,6 +231,23 @@ def num(rec, key):
         return None
 
 
+def whole_ms_wind(rows, n: int = 6) -> bool:
+    """True when the station's recent wind rows (speed and gust) are all whole m/s, as some
+    NDBC buoys report (41064). Needs at least 3 rows with a speed to decide."""
+    vals = []
+    for rec in rows or []:
+        w = num(rec, "WSPD")
+        if w is None:
+            continue
+        vals.append(w)
+        g = num(rec, "GST")
+        if g is not None:
+            vals.append(g)
+        if len(vals) >= 2 * n:
+            break
+    return len(vals) >= 3 and all(abs(v - round(v)) < 1e-9 for v in vals)
+
+
 def first_row(rows, key):
     for rec in rows or []:
         if num(rec, key) is not None:
@@ -380,10 +397,18 @@ def ndbc_reading(kind: str, sid: str):
         if not rec:
             return None
         w, g, d = num(rec, "WSPD"), num(rec, "GST"), num(rec, "WDIR")
+        if whole_ms_wind(rows):
+            # The buoy reports whole m/s (about +/-1 kt), so a tenth of a knot would overstate it.
+            kt = lambda x: float(round(x * MS_TO_KT))
+            vals = {"speedKt": kt(w), "gustKt": kt(g) if g is not None else None,
+                    "dirDeg": d, "dirCompass": compass(d), "decimals": 0,
+                    "precisionNote": "Source reports whole m/s; shown to the nearest knot."}
+        else:
+            vals = {"speedKt": r1(w * MS_TO_KT), "gustKt": r1(g * MS_TO_KT) if g is not None else None,
+                    "dirDeg": d, "dirCompass": compass(d)}
         return {
             "time": rec["_dt"], "url": url,
-            "values": {"speedKt": r1(w * MS_TO_KT), "gustKt": r1(g * MS_TO_KT) if g is not None else None,
-                       "dirDeg": d, "dirCompass": compass(d)},
+            "values": vals,
             "raw": {"WSPD_ms": w, "GST_ms": g, "WDIR_degT": d},
             "rawUnits": "m/s, degrees true (direction the wind comes from)",
         }
@@ -890,12 +915,11 @@ def assemble(region_id: str | None, preview: bool = False) -> tuple[int, dict]:
     if region_id:
         if region_id in regions:
             rid = region_id
-        elif is_preview_salt_region(region_id) and not preview:
-            # A known private preview, requested without the cookie: 404, do not
-            # silently fall back to the public default.
-            return 404, {"ok": False, "error": "Unknown region."}
         else:
-            rid = cfg.get("default")
+            # Unknown, disabled, or a private preview requested without the cookie: 404.
+            # Never silently fall back to the public default (Nov 19 audit item 7), and never
+            # say which of those it was, so private region ids are not confirmed.
+            return 404, {"ok": False, "error": "Unknown region."}
     else:
         rid = cfg.get("default")
     if rid not in regions:

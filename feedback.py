@@ -384,6 +384,13 @@ CSS = """
 .fb-fab{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));z-index:8;
   background:#071C29;color:#F6F1E7;border-color:rgba(196,163,106,.85);box-shadow:0 8px 20px -12px rgba(4,14,22,.7)}
 html[data-page="feedback"] .fb-fab{display:none}
+/* Phones: a slim tab on the right edge instead of a 92x44 pill, so it sits over the page gutter and
+   not over readings or photos (launch audit item 10). Still always visible; 24x96 tap area. */
+@media (max-width:639px){
+  .fb-fab{right:0;bottom:max(96px,calc(env(safe-area-inset-bottom) + 84px));min-width:0;min-height:0;width:24px;height:96px;padding:0;
+    border-left:0;writing-mode:vertical-rl;transform:rotate(180deg);border-radius:0 8px 8px 0;
+    font-size:.72rem;letter-spacing:.08em}
+}
 .fb{width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24px);padding:0;border:1px solid #29506B;border-radius:8px;background:var(--paper,#FFFDF8);color:var(--ink,#102030);
   box-shadow:0 24px 60px -20px rgba(4,14,22,.6)}
 .fb::backdrop{background:rgba(4,14,22,.62)}
@@ -432,7 +439,8 @@ def footer_button() -> str:
 
 
 def page_html(sent: bool = False, error: str = "", values: dict | None = None) -> bytes:
-    """Standalone /feedback page, including the sent state."""
+    """Standalone /feedback page, including the sent state, with the standard section nav."""
+    import site_chrome
     values = values or {}
     if sent:
         body = (
@@ -480,17 +488,16 @@ def page_html(sent: bool = False, error: str = "", values: dict | None = None) -
 html,body{margin:0;background:var(--page);color:var(--ink);font:16px/1.4 var(--f-ui)}
 a.skip{position:absolute;left:-999px}
 a.skip:focus{left:12px;top:12px;background:#fff;padding:8px;z-index:10}
-.mh{background:#071C29;color:#F6F1E7;padding:12px 16px}
-.mh a{color:#F6F1E7;text-decoration:none;font:600 1.15rem/1 Fraunces,Georgia,serif}
+%s
 %s
 </style>
 </head>
 <body>
 <a class="skip" href="#main">Skip to feedback form</a>
-<header class="mh"><a href="/">The Coastal Brief</a></header>
+%s
 %s
 <script>%s</script>
 </body>
 </html>
-""" % (CSS.replace("</", "<\\/"), body, JS)
+""" % (site_chrome.NAV_CSS, CSS.replace("</", "<\\/"), site_chrome.nav_html(), body, JS)
     return html.encode("utf-8")

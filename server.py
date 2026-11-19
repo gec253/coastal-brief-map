@@ -1085,6 +1085,7 @@ import brief  # noqa: E402
 import wave_intro  # noqa: E402
 import sprint_home  # noqa: E402
 import photo_rotation  # noqa: E402
+import site_chrome  # noqa: E402
 
 # Header "Morning Brief" link is in the HTML behind this marker. When the kill
 # switch is on (MORNING_BRIEF_ENABLED=0/false/off), strip it so the nav never
@@ -2045,6 +2046,11 @@ def _paint_public_lake(data: bytes, region: str = "falls-lake") -> bytes:
     if rid not in _LAKE_REGIONS:
         rid = b"falls-lake"
     data = _set_html_attr(data, b"data-region", rid)
+    # Server-rendered <title> follows the region (it was always "Falls Lake"; audit item 6).
+    lake_name = {b"falls-lake": b"Falls Lake", b"jordan-lake": b"Jordan Lake", b"neuse-river": b"Neuse River",
+                 b"cape-fear-river": b"Cape Fear River"}.get(rid, b"Falls Lake")
+    data = data.replace(b"<title>Falls Lake \xc2\xb7 The Coastal Brief</title>",
+                        b"<title>" + lake_name + b" \xc2\xb7 The Coastal Brief</title>", 1)
     if rid == b"cape-fear-river":
         data = data.replace(
             b'var n={ "falls-lake":"Falls Lake"',
@@ -2163,6 +2169,7 @@ _SHARE_META = {
 _OG_TITLE_RE = re.compile(br'(<meta property="og:title" content=")[^"]*(")')
 _OG_URL_RE = re.compile(br'(<meta property="og:url" content=")[^"]*(")')
 _TW_TITLE_RE = re.compile(br'(<meta name="twitter:title" content=")[^"]*(")')
+_DOC_TITLE_RE = re.compile(br'(<title>)[^<]*(</title>)')
 
 
 def _apply_share_meta(data: bytes, page: str) -> bytes:
@@ -2173,6 +2180,7 @@ def _apply_share_meta(data: bytes, page: str) -> bytes:
     url = meta[1].encode("ascii")
     data = _OG_TITLE_RE.sub(lambda m: m.group(1) + title + m.group(2), data, count=1)
     data = _TW_TITLE_RE.sub(lambda m: m.group(1) + title + m.group(2), data, count=1)
+    data = _DOC_TITLE_RE.sub(lambda m: m.group(1) + title + m.group(2), data, count=1)  # tab title too
     data = _OG_URL_RE.sub(lambda m: m.group(1) + url + m.group(2), data, count=1)
     return data
 
@@ -2454,7 +2462,8 @@ class Handler(SimpleHTTPRequestHandler):
             # Cookie-gated freshwater preview (Cape Fear River): same cookie as /preview. Public 404s.
             if freshwater.is_preview_region(rid):
                 if not self._preview_ok():
-                    return self.send_error(404, "not found")
+                    # same page as an unknown id, so a private id is not confirmed
+                    return self._send_private(None, "text/html; charset=utf-8", site_chrome.region_not_found_page(), 404)
                 self.send_response(303)
                 self.send_header("Location", "/lake?region=%s" % rid)
                 self.send_header("Cache-Control", "no-store")
@@ -2464,13 +2473,18 @@ class Handler(SimpleHTTPRequestHandler):
             # Not-yet-public saltwater regions: same cookie as /preview. Public 404s.
             if conditions.is_preview_salt_region(rid):
                 if not self._preview_ok():
-                    return self.send_error(404, "not found")
+                    # same page as an unknown id, so a private id is not confirmed
+                    return self._send_private(None, "text/html; charset=utf-8", site_chrome.region_not_found_page(), 404)
                 data = _public_home_html(rid, preview=True)
                 if b'name="robots"' not in data:
                     data = data.replace(b"<head>", b'<head>\n  <meta name="robots" content="noindex, nofollow">', 1)
                 else:
                     data = data.replace(b'name="robots" content="index, follow"', b'name="robots" content="noindex, nofollow"')
                 return self._send_private(None, "text/html; charset=utf-8", data)
+            if rid and rid not in sprint_home.public_salt_ids():
+                # Unknown, disabled or not-public id: a clear not-found page, never Crystal Coast data
+                # under another name (launch audit item 7). The id itself is not echoed.
+                return self._send_private(None, "text/html; charset=utf-8", site_chrome.region_not_found_page(), 404)
             if parsed.path in ("/", "/index.html"):
                 return self._send_public_home(rid or None)
             return self._send_html(ROOT / "index.html", region_id=rid or None)
@@ -2577,8 +2591,14 @@ class Handler(SimpleHTTPRequestHandler):
             status, b = brief.get(rid, include_fresh=include_fresh)
             if parsed.path == "/api/brief":
                 return self._json_private(b, status)
+            if status == 404:
+                # A region without a public brief: a real page with the site nav and links to the
+                # briefs that exist (launch audit item 5). Private ids are never named.
+                return self._send_private(None, "text/html; charset=utf-8", site_chrome.no_brief_page(rid), 404)
             if status != 200:
-                return self._send_private(None, "text/html; charset=utf-8", ("<p>%s</p>" % html.escape(b.get("error", ""))).encode(), status)
+                return self._send_private(None, "text/html; charset=utf-8", site_chrome.page(
+                    "Morning Brief unavailable", "Morning Brief unavailable",
+                    "<p>%s</p>" % html.escape(b.get("error", "")), current="brief", brief_rid=rid), status)
             water = b.get("waterType") or ""
             rid_final = b.get("regionId") or (b.get("region") or {}).get("id") or rid
             # Indexable when the brief is on for the public. Falls Lake also needs the freshwater

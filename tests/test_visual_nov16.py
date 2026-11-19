@@ -173,9 +173,11 @@ class AlertStrip(unittest.TestCase):
 
     def test_phone_nav_drops_map_and_tides(self):
         h = render("hybrid", salt("wilmington"))
-        self.assertIn('<a class="mh-maps" href="/dashboard">Map &amp; tides</a>', h)
+        # Launch audit Nov 19 item 8 (Ed, t334u): phones keep the link, shortened to "Map".
+        self.assertIn('<a class="mh-maps" href="/dashboard">Map<span class="mh-maps-x"> &amp; tides</span></a>', h)
         css = (sprint_home.DIR / "hybrid.css").read_text(encoding="utf-8")
-        self.assertRegex(css, r"@media \(max-width:639px\)\{[^@]*\.mh-sec a\.mh-maps\{display:none\}")
+        self.assertRegex(css, r"@media \(max-width:639px\)\{[^@]*\.mh-sec a\.mh-maps \.mh-maps-x\{display:none\}")
+        self.assertNotRegex(css, r"\.mh-sec a\.mh-maps\{display:none\}")
         nav = re.search(r'<nav class="cg-tools".*?</nav>', h, re.S).group(0)
         self.assertIn("Nautical chart", nav)
         self.assertIn("Radar", nav)

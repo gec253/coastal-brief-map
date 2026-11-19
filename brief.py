@@ -197,6 +197,39 @@ def _no_inshore_sensor(rid: str) -> bool:
         return False
 
 
+def _is_ndbc(sid: str) -> bool:
+    try:
+        return ((conditions.load_regions().get("stations") or {}).get(sid) or {}).get("type") == "ndbc"
+    except Exception:
+        return False
+
+
+def _swell_at_seas_time(R: dict) -> dict:
+    """The swell reading, taken from the same NDBC spectral row as the seas observation when the two
+    come from one buoy and that row has swell fields; otherwise the swell reading unchanged (it then
+    carries its own observation time). Height, period and direction always come from one row."""
+    sw, se = R.get("swell") or {}, R.get("seas") or {}
+    sid = (sw.get("station") or {}).get("id")
+    if not (sid and se.get("status") == "ok" and (se.get("station") or {}).get("id") == sid
+            and se.get("time") and sw.get("time") != se.get("time")):
+        return sw
+    try:
+        rows, _url = conditions.ndbc_rows(sid, "spec")
+        want = datetime.fromisoformat(str(se["time"]).replace("Z", "+00:00"))
+        rec = next((r for r in rows or [] if r.get("_dt") == want), None)
+        if not rec:
+            return sw
+        swh, swp = conditions.num(rec, "SwH"), conditions.num(rec, "SwP")
+        swd = rec.get("SwD") if rec.get("SwD") not in (None, "MM", "N/A") else None
+        if swh is None or swp is None or not swd:
+            return sw
+        vals = dict(sw.get("values") or {})
+        vals.update({"heightFt": conditions.r1(swh * conditions.M_TO_FT), "periodS": conditions.r1(swp), "dirCompass": swd})
+        return {**sw, "time": se["time"], "values": vals}
+    except Exception:
+        return sw
+
+
 def build_salt(rid: str, now: datetime) -> dict:
     st, d = conditions.assemble(rid)
     if st != 200 or not d.get("ok"):
@@ -246,7 +279,6 @@ def build_salt(rid: str, now: datetime) -> dict:
             line += " (offshore buoy %s, observed %s)" % (w["station"].get("id"), _t(w["time"]))
         if wind_tr:
             line += "; %s from %d kt %d h earlier" % ("up" if wind_tr["now"] - wind_tr["then"] > 2 else "down" if wind_tr["then"] - wind_tr["now"] > 2 else "about steady", round(wind_tr["then"]), wind_tr["hours"])
-            pres_tr = _trend(w["station"]["id"], "PRES", now)
         items.append(("Wind", line + "."))
         if rid in WIND_BACKUP:
             wind_src = {"role": "primary", "type": "offshore", "station": w["station"].get("id"), "name": w["station"].get("name"),
@@ -289,18 +321,30 @@ def build_salt(rid: str, now: datetime) -> dict:
     else:
         miss("seas", R.get("seas"))
     if ok("swell"):
-        sw = R["swell"]["values"]
-        items.append(("Swell", "%.1f ft at %.0f s from the %s (split from the buoy spectrum)." % (sw["heightFt"], sw["periodS"], sw["dirCompass"])))
+        swr = _swell_at_seas_time(R)
+        sw = swr["values"]; fr("Swell", swr)
+        line = "%.1f ft at %.0f s from the %s (split from the buoy spectrum" % (sw["heightFt"], sw["periodS"], sw["dirCompass"])
+        if swr.get("time") and (not ok("seas") or swr.get("time") != R["seas"].get("time")):
+            line += ", observed %s" % _t(swr["time"])  # different row than the seas: give its own time
+        items.append(("Swell", line + ")."))
     elif "swell" in R:
         miss("swell", R["swell"])
     if "pressure" in R and not ok("pressure"):
         miss("pressure", R["pressure"])
     if ok("pressure"):
         p = R["pressure"]; fr("Barometer", p)
+        # Value, 3-hour trend and overnight trend all come from the station that produced the
+        # reading, and only that station is named (Nov 19: the value was CO-OPS 8654467 but the
+        # overnight trend and the name came from the wind buoy 41025).
+        pst = p.get("station") or {}
+        psid = pst.get("id")
+        if psid and _is_ndbc(psid):
+            pres_tr = _trend(psid, "PRES", now)
         # A buoy barometer may have no 3-hour change; say so instead of printing "None".
+        # CO-OPS has no NDBC overnight file: the reading's own 3-hour trend stands alone.
         line = "%.2f inHg, %s" % (p["values"]["inHg"], p["values"].get("trend") or "3-hour trend not reported")
-        if pres_tr:
-            line += ", %s hPa over %d h at %s" % (_dir_word(pres_tr["now"] - pres_tr["then"], "", "up", "down", "steady", 0.4), pres_tr["hours"], pres_tr["station"])
+        if pres_tr and pres_tr["station"] == psid:
+            line += ", %s hPa over %d h at %s" % (_dir_word(pres_tr["now"] - pres_tr["then"], "", "up", "down", "steady", 0.4), pres_tr["hours"], psid)
         items.append(("Pressure", line + "."))
     mar = d.get("marine") or {}
     mar_age, mar_upd = fc_age_h(mar)
@@ -578,11 +622,40 @@ def _previous(rid: str):
     return _stored(rid) or _archived(rid)
 
 
+def _today(rid: str, want: str):
+    """Today's published brief for a region, or None.
+
+    Checks memory and the local cache first, then the brief-archive copy (the same source get()
+    uses after a restart). A deploy wipes memory and cache/briefs, so without the archive check a
+    later wake or page view would rebuild today's 5:15 brief as "on-request" and the workflow would
+    archive that copy over the scheduled one (Nov 16 and Nov 19). An archived brief for today is
+    adopted as the stored brief, so it is served and never rebuilt."""
+    b = _stored(rid)
+    if b and b.get("issueDate") == want:
+        return b
+    a = _archived(rid)
+    if a and a.get("issueDate") == want:
+        with _lock:
+            cur = _mem.get(rid)
+            if cur and cur.get("issueDate") == want:
+                return cur
+            _mem[rid] = a
+        try:
+            STORE.mkdir(parents=True, exist_ok=True)
+            (STORE / ("%s.json" % rid)).write_text(json.dumps(a))
+        except OSError:
+            pass
+        return a
+    return None
+
+
 def _ensure(rid: str, reason: str, now: datetime, want: str) -> dict:
-    """Build today's brief once per region per day: concurrent callers wait, then reuse it."""
+    """Build today's brief once per region per day: concurrent callers wait, then reuse it.
+
+    "Already built today" includes a brief archived before a restart or deploy."""
     with _region_lock(rid):
-        b = _stored(rid)
-        if b and b.get("issueDate") == want:
+        b = _today(rid, want)
+        if b:
             return b
         return build(rid, reason, now)
 
@@ -612,7 +685,9 @@ def wake(include_fresh: bool = False, now: datetime | None = None, background: b
     if not auto_active(now):
         return {**base, "building": 0, "paused": "automatic publication ended after %s" % auto_until(), "regions": status(include_fresh, now)}
     on_time = PREP <= (e.hour, e.minute) <= (PUBLISH_BY[0], PUBLISH_BY[1] + 15)
-    todo = [rid for rid in enabled_regions(include_fresh) if not ((_stored(rid) or {}).get("issueDate") == want)]
+    # A brief already published today (in memory, the local cache, or the archive after a deploy)
+    # is never rebuilt by a wake.
+    todo = [rid for rid in enabled_regions(include_fresh) if not _today(rid, want)]
 
     def run():
         for rid in todo:
@@ -633,15 +708,9 @@ def get(rid: str, now: datetime | None = None, include_fresh: bool | None = None
         return 404, {"ok": False, "error": "No brief for this region."}
     now = now or datetime.now(timezone.utc)
     want = _issue_date(now)
-    b = _stored(rid)
-    if b and b.get("issueDate") == want:
+    b = _today(rid, want)  # memory/cache, or today's archived brief published before a restart
+    if b:
         return 200, b
-    if b is None:
-        a = _archived(rid)
-        if a and a.get("issueDate") == want:  # today's brief, published before a restart
-            with _lock:
-                _mem.setdefault(rid, a)
-            return 200, a
     if not auto_active(now):
         # Window over: never build a new brief. Keep the last one up, clearly dated.
         prev = _previous(rid)
@@ -673,8 +742,9 @@ def run_window(now_fn=lambda: datetime.now(timezone.utc), sleep_fn=time.sleep, r
     try:
         want = _issue_date(now_fn())
         # Skip regions that already have a complete brief for today (built by a wake or page view).
+        # An archived brief from today counts too (restart inside the window); a PARTIAL one still retries.
         pending = [rid for rid in regions_fn()
-                   if not ((_stored(rid) or {}).get("issueDate") == want and not (_stored(rid) or {}).get("missing"))]
+                   if not ((_today(rid, want) or {}).get("issueDate") == want and not (_stored(rid) or {}).get("missing"))]
     except Exception:
         return results
     while pending and _et(now_fn()) < deadline:

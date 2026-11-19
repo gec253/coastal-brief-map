@@ -182,6 +182,8 @@
     const v = val(r);
     stateClass(el, r);
     const has = isNum(v.speedKt);
+    // Whole-m/s buoys (e.g. 41064) come back as whole knots with decimals: 0; never show a false tenth.
+    const ktDec = v.decimals === 0 ? 0 : 1;
     if (!el.querySelector(".dial")) {
       el.innerHTML = head("Wind", r) +
         '<div class="wind-body"><div class="dial-wrap">' + windDialSvg() +
@@ -198,8 +200,8 @@
       ? '<span class="from-k">From</span><span class="from-c">' + esc(v.dirCompass) + '</span><span class="from-d">' + numSpan("wdir", v.dirDeg) + "°</span>"
       : '<span class="from-k">Direction</span><span class="from-c">—</span>';
     $("wind-reads").innerHTML =
-      "<div><dt>Sustained</dt><dd>" + (has ? fmt(v.speedKt, 1) + " kt" : "—") + "</dd></div>" +
-      "<div><dt>Gust</dt><dd>" + (isNum(v.gustKt) ? fmt(v.gustKt, 1) + " kt" : "—") + "</dd></div>" +
+      "<div><dt>Sustained</dt><dd>" + (has ? fmt(v.speedKt, ktDec) + " kt" : "—") + "</dd></div>" +
+      "<div><dt>Gust</dt><dd>" + (isNum(v.gustKt) ? fmt(v.gustKt, ktDec) + " kt" : "—") + "</dd></div>" +
       "<div><dt>Heading</dt><dd>" + (isNum(v.dirDeg) ? fmt(v.dirDeg) + "° true" : "—") + "</dd></div>";
     $("wind-src").innerHTML = srcCaption(r, { note: "The pointer sits on the side the wind is blowing from. Speeds are converted from m/s to knots (× 1.944)." });
     const needle = $("wind-needle");
@@ -1005,7 +1007,10 @@
     renderWater(R.waterTemp, R.waterTempOffshore);
     renderAir(R.airTemp);
     renderPressure(R.pressure);
-    renderHarbor(R.harborWind);
+    // The harbor line is a second station. When it is the same station as the main wind
+    // (Wilmington 8658163, or a fallback that lands on the harbor station) it would only repeat it.
+    const hw = R.harborWind, wsid = R.wind && R.wind.station && R.wind.station.id;
+    renderHarbor(hw && !(wsid && hw.station && hw.station.id === wsid) ? hw : null);
     tweenAll($("i-wind"));
     renderMarine(d.marine);
     renderForecast(d.forecast, d.region, d.marine);

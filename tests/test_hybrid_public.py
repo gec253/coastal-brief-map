@@ -170,9 +170,12 @@ class HybridPublic(unittest.TestCase):
         self.assertIn(b'data-sprint="hybrid" data-water="salt"', b)
 
     def test_freshwater_flag_off_falls_back(self):
+        # Launch audit Nov 19 item 7: a region that is not public (here: freshwater kill switch on)
+        # gets the not-found page with the site nav, never another region's data.
         s, _, b = self._fresh("falls-lake", env={"FRESHWATER_ENABLED": "0"})
-        self.assertEqual(s, 200)
-        self.assertIn(b'data-sprint="hybrid" data-water="salt"', b)
+        self.assertEqual(s, 404)
+        self.assertIn(b"Region not found", b)
+        self.assertIn(b'class="mh-sec"', b)
         # Ed (Nov 16): no freshwater photo on a saltwater page, the daily photo included. Asserted directly.
         self.assertNotIn(b"falls-lake-pier", b)
         self.assertNotIn(b'data-category="freshwater"', b)
@@ -196,10 +199,13 @@ class HybridPublic(unittest.TestCase):
         self.assertFalse(ids & set(PREVIEW_IDS), ids)
 
     def test_unknown_or_nonpublic_region_falls_back_to_default(self):
+        # Launch audit Nov 19 item 7: the public route answers an unknown id with a 404 page (no
+        # conditions fetched, id not echoed); sprint_home.page itself still never renders a private id.
         self.calls.clear()
         s, _, b = self._get("/?region=../../etc")
-        self.assertEqual(s, 200)
-        self.assertEqual(self.calls[-1], None)
+        self.assertEqual(s, 404)
+        self.assertEqual(self.calls, [])
+        self.assertNotIn(b"../../etc", b)
         b2 = sprint_home.page("hybrid", "carolina-kure", public=True)
         self.assertEqual(self.calls[-1], None)
         self.assertNotIn(b"carolina-kure", b2)
