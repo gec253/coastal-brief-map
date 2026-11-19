@@ -113,6 +113,22 @@ class MastheadPreview(unittest.TestCase):
         )
     )
 
+    def test_brief_link_js_still_served_and_loaded(self):
+        # Replaces the byte lock on brief-link.js (Ed, Nov 19, t336u/t337u): the file is still served
+        # as JavaScript, still exposes CoastalBriefLink.sync for the pickers, and every page with the
+        # header Morning Brief link (public pages and this masthead preview) still loads it.
+        status, body, hdrs = self._req("/brief-link.js")
+        self.assertEqual(status, 200)
+        self.assertIn("javascript", hdrs.get("content-type", ""))
+        self.assertIn(b"window.CoastalBriefLink = { sync: sync, briefRegion: briefRegion }", body)
+        self.assertIn(b'["nav-brief", "folio-brief"]', body)
+        for path, ck in (("/dashboard", None), ("/catch-wall", None), ("/coastal-life", None), ("/lake", None),
+                         ("/lake?region=jordan-lake", None), ("/preview/masthead", self._cookie())):
+            status, body, _ = self._req(path, env={"PREVIEW_KEY": self.KEY} if ck else None, cookie=ck)
+            self.assertEqual(status, 200, path)
+            self.assertIn(b'id="nav-brief"', body, path)
+            self.assertIn(b'src="/brief-link.js"', body, path)
+
     def test_public_files_match_origin_main(self):
         for rel in self.PUBLIC_FILES_LOCKED:
             committed = subprocess.check_output(["git", "show", "origin/main:" + rel], cwd=ROOT)
