@@ -232,7 +232,8 @@ class PageCopyAndControls(unittest.TestCase):
 
     def test_attribution_and_on_page_limitations(self):
         self.assertIn("NOAA NCEP GFS", self.html)
-        self.assertIn("Basemap: Esri, HERE, Garmin", self.html)
+        self.assertIn("Coastline: U.S. Census Bureau", self.html)
+        self.assertIn("not endorsed by the Census Bureau", self.html)
         self.assertIn("25&nbsp;km", self.html)
         self.assertIn("CLKN7", self.html)
         self.assertIn("BFTN7", self.html)
@@ -245,14 +246,14 @@ class PageCopyAndControls(unittest.TestCase):
         self.assertNotIn("@font-face", self.css)
         self.assertNotIn(".woff2", self.html + self.css)
         self.assertNotIn("fonts.googleapis", self.html)
-        own = sum((ROOT / f).stat().st_size for f in ("wind.html", "wind.css", "wind-viewer.js", "wind-lab.js"))
-        self.assertLess(own, 45 * 1024, own)
+        own = sum((ROOT / f).stat().st_size for f in ("wind.html", "wind.css", "wind-viewer.js", "wind-lab.js", "wind-coast.js"))
+        self.assertLess(own, 50 * 1024, own)
         self.assertLess((ROOT / "wind.css").stat().st_size, 12 * 1024)
         scripts = re.findall(r'<script src="([^"]+)"', self.html)
-        self.assertEqual(scripts, ["/vendor/leaflet/leaflet.js", "/lab/wind.js", "/wind/viewer.js"])
+        self.assertEqual(scripts, ["/vendor/leaflet/leaflet.js", "/lab/wind.js", "/wind/coast.js", "/wind/viewer.js"])
         self.assertTrue(all("defer" in s for s in re.findall(r"<script src=[^>]+>", self.html)))
-        # Esri tiles are drawn into <canvas>, never <img>, so a tile can't be the LCP element.
-        self.assertIn("L.GridLayer.extend", self.js)
+        # The basemap is our own coastline drawn into <canvas> tiles, never <img>, so it can't be the LCP element.
+        self.assertIn("CBCoast.layer", self.js)
         self.assertNotIn("L.tileLayer", self.js)
         # attribution is static HTML, painted with the chrome
         self.assertIn('class="w-attrib"', self.html)

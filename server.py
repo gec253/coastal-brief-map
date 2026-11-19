@@ -233,7 +233,7 @@ def cache_get_any(url: str) -> tuple[int, str, bytes] | None:
 # docs, and test fixtures are not.
 _STATIC_EXT = {".html", ".css", ".js", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".avif", ".ico",
                ".woff2", ".json", ".txt", ".xml", ".webmanifest", ".map"}
-_STATIC_DENY_PREFIX = ("/.", "/admin", "/preview/", "/branding/og-masthead.html", "/branding/render-og-masthead.", "/wind-lab.", "/wind.", "/wind-viewer.", "/lake.", "/tiles-lab.", "/docs/", "/tests/", "/scripts/", "/__pycache__/", "/requirements")
+_STATIC_DENY_PREFIX = ("/.", "/admin", "/preview/", "/branding/og-masthead.html", "/branding/render-og-masthead.", "/wind-lab.", "/wind.", "/wind-viewer.", "/wind-coast", "/lake.", "/tiles-lab.", "/docs/", "/tests/", "/scripts/", "/__pycache__/", "/requirements")
 
 
 def _static_allowed(path: str) -> bool:
@@ -2638,7 +2638,7 @@ class Handler(SimpleHTTPRequestHandler):
             if parsed.path == "/lab/tiles":
                 return self._send_private(ROOT / "tiles-lab.html", "text/html; charset=utf-8")
             return self._send_private(ROOT / "tiles-lab.js", "text/javascript; charset=utf-8")
-        if parsed.path in ("/lab/wind", "/lab/wind.js", "/api/wind-grid", "/wind", "/wind.css", "/wind/viewer.js"):
+        if parsed.path in ("/lab/wind", "/lab/wind.js", "/api/wind-grid", "/wind", "/wind.css", "/wind/viewer.js", "/wind/coast.js", "/wind/coast-lo.json", "/wind/coast-hi.json"):
             # Private: off unless WIND_PARTICLES_ENABLED=1 or the preview cookie. Not linked from the site.
             # /wind is the dedicated viewer; /lab/wind stays as the prototype; both share wind-lab.js.
             pv = self._preview_ok()
@@ -2650,6 +2650,12 @@ class Handler(SimpleHTTPRequestHandler):
                 return self._send_private(ROOT / "wind.css", "text/css; charset=utf-8")
             if parsed.path == "/wind/viewer.js":
                 return self._send_private(ROOT / "wind-viewer.js", "text/javascript; charset=utf-8")
+            if parsed.path == "/wind/coast.js":
+                return self._send_private(ROOT / "wind-coast.js", "text/javascript; charset=utf-8")
+            if parsed.path in ("/wind/coast-lo.json", "/wind/coast-hi.json"):
+                # Static Census coastline (public domain); private like the page, but cacheable for a day.
+                self._static_cache = "private, max-age=86400"
+                return self._send_private(ROOT / "wind-coast" / (parsed.path[-7:]), "application/json; charset=utf-8")
             if parsed.path == "/lab/wind":
                 return self._send_private(ROOT / "wind-lab.html", "text/html; charset=utf-8")
             if parsed.path == "/lab/wind.js":

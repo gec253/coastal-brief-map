@@ -26,12 +26,25 @@ Private, gated exactly like `/lab/wind`: 404 unless `WIND_PARTICLES_ENABLED=1` (
 
 ## Performance design
 
-- Esri basemap tiles are drawn into `<canvas>` (an `L.GridLayer`), tinted to the palette, so a third-party tile can never be the Largest Contentful Paint element. The chrome, strip, legend and attribution are static HTML and paint first.
+- The basemap is our own Census coastline (below), drawn into `<canvas>` tiles (an `L.GridLayer`), one tile per animation frame, so no tile can be the Largest Contentful Paint element and no frame commits several fresh tiles at once. The chrome, strip, legend and attribution are static HTML and paint first.
 - Fixed grid rows (`top / strip / stage / controls`) and fixed-width clock: CLS 0.
 - All scripts `defer`; Leaflet and the grid are preloaded; startup yields between map, tiles and particles.
 - Phones (touch, short side < 600 px) draw at **30 fps**, DPR capped at 1.5, ≤ 1,100 particles. iPad and desktop draw every frame (**60 fps**), DPR ≤ 2, ≤ 2,200 particles. The engine backs off particles if frames run long, and stops when the tab is hidden, the map is off-screen or moving.
 - `prefers-reduced-motion`: particles off by default; static colored arrows instead. The Flow/Pause button overrides and is remembered (`coastalBrief.windMotion`, shared with the lab).
 - `?fps=30|60` and `?perf=1` (HUD) are test aids.
+
+## Coastline basemap (replaces Esri on /wind, Nov 19 2026)
+
+- **Source:** U.S. Census Bureau, *2025 Cartographic Boundary File (SHP), State and Equivalent Entities for United States, 1:500,000* — `cb_2025_us_state_500k`, https://www2.census.gov/geo/tiger/GENZ2025/shp/cb_2025_us_state_500k.zip (metadata dated 2026-05; zip sha256 `9cbfe171dad1555e11770c981d8f4db9e687a65c86f5bdae684eeb487e2e9b80`). Public domain; the use constraint asks that the Census Bureau be acknowledged as the source and that the data not be shown at scales larger than 1:500,000.
+- **On-page attribution:** "Coastline: U.S. Census Bureau, 2025 cartographic boundary file, 1:500,000 (not endorsed by the Census Bureau)".
+- **Build:** `python scripts/build_wind_coast.py cb_2025_us_state_500k.shp` (needs shapely + pyshp, offline only) unions the states, clips to 29–41°N, 85–68°W, simplifies, and writes delta-encoded 1e-4° rings with a bbox per polygon:
+  - `wind-coast/lo.json` (tolerance 0.004°, zoom < 8; ~28 KB, ~12 KB gzipped)
+  - `wind-coast/hi.json` (tolerance 0.0005°, zoom ≥ 8; ~78 KB, ~30 KB gzipped)
+- **Served** only through the gated routes `/wind/coast.js`, `/wind/coast-lo.json`, `/wind/coast-hi.json` (404 without access; `private, max-age=86400`). The raw `/wind-coast/` folder is denied.
+- **Look:** the map background is the water colour; tiles fill land and stroke the shoreline from CSS vars `--map-bg`, `--coast-land`, `--coast-line` (day `#EAF1F4` / `#F6F1E7`; night `#0C2740` / `#1B4263`). Every legend colour is ≥ 3:1 against both (day worst 3.11 water / 3.15 land; night 4.72 / 3.24).
+- **maxZoom is 9.5** (≈1:630,000 at 35°N) to respect the Census 1:500,000 display limit.
+- **Not drawn:** inland lakes and rivers, creeks, marsh, small inlets narrower than the 1:500k generalisation, place labels. Land outside the clip box is absent (never visible; it is wider than the pan limits).
+- `/lab/wind` and `/dashboard` still use Esri tiles — separate decision (Esri's keyless endpoints are not licensed for commercial use).
 
 ## Known GFS limitations (harbors and sounds)
 
@@ -44,4 +57,4 @@ The page carries a short version of this in its About (i) note.
 
 ## Tests
 
-`tests/test_wind_viewer.py`: real GFS fixture decode, bounds and units, `ahead` URL selection and caching, knots and meteorological direction, bilinear interpolation against raw nodes, browser engine vs Python (Node), ET labels across EST/EDT, copy (MODEL FORECAST present; "observed"/"live" absent), controls and 44 px+ sizes, location prompt only after a tap, fps/reduced-motion/pausing hooks, route gating (public 404, cookie, flag), payload budget (no `styles.css`, no fonts, own assets < 45 KB).
+`tests/test_wind_viewer.py`: real GFS fixture decode, bounds and units, `ahead` URL selection and caching, knots and meteorological direction, bilinear interpolation against raw nodes, browser engine vs Python (Node), ET labels across EST/EDT, copy (MODEL FORECAST present; "observed"/"live" absent), controls and 44 px+ sizes, location prompt only after a tap, fps/reduced-motion/pausing hooks, route gating (public 404, cookie, flag), payload budget (no `styles.css`, no fonts, own assets < 50 KB). `tests/test_wind_coastline.py`: coastline data integrity (source, bounds, closed rings, bbox, no self-crossing on the Outer Banks, size budget), land/water at 17 known points in both LODs (Python and the browser module in Node), projection parity with Leaflet EPSG:3857, legend ≥ 3:1 on land and water in both themes, no Esri/third-party tiles on /wind, one-tile-per-frame drawing, maxZoom 9.5, gated coast routes.

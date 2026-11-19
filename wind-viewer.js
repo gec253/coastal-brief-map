@@ -3,7 +3,7 @@
 (function () {
   "use strict";
   const W = window.CBWind, M = window.CBWindMath;
-  if (!W || !M || !window.L) return;
+  if (!W || !M || !window.L || !window.CBCoast) return;
   const $ = (id) => document.getElementById(id);
   const q = location.search;
   const dark = document.documentElement.getAttribute("data-theme") === "dark";
@@ -36,30 +36,20 @@
   setPlay();
 
   async function boot() {
-    const map = L.map("wmap", { zoomControl: true, attributionControl: false, zoomSnap: 0.5, minZoom: 5, maxZoom: 11, maxBounds: [[30, -84], [40, -69]], tap: true });
+    // maxZoom 9.5 (about 1:630,000 at 35°N): the Census file asks not to be shown larger than 1:500,000.
+    const map = L.map("wmap", { zoomControl: true, attributionControl: false, zoomSnap: 0.5, minZoom: 5, maxZoom: 9.5, maxBounds: [[30, -84], [40, -69]], tap: true, fadeAnimation: false });
     map.zoomControl.setPosition("topright");
     map.fitBounds(HOME);
     // Attribution is static HTML (.w-attrib) so it paints with the chrome, before Leaflet runs.
     await yieldTask();
-    // Basemap tiles drawn into <canvas> (not <img>), tinted to the palette. They load after the chrome and
-    // can never become the Largest Contentful Paint element the page waits on.
-    const base = dark ? "Dark_Gray_Base" : "Light_Gray_Base";
-    const TintTiles = L.GridLayer.extend({
-      createTile: function (c, done) {
-        const t = document.createElement("canvas"); t.width = t.height = 256;
-        const img = new Image(); img.decoding = "async";
-        img.onload = function () {
-          const x = t.getContext("2d"); x.drawImage(img, 0, 0, 256, 256);
-          x.globalCompositeOperation = dark ? "color" : "multiply";
-          x.globalAlpha = dark ? 0.9 : 1; x.fillStyle = dark ? "#2C6A9C" : "#F4EFE6"; x.fillRect(0, 0, 256, 256);
-          done(null, t);
-        };
-        img.onerror = function () { done(new Error("tile"), t); };
-        img.src = "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_" + base + "/MapServer/tile/" + c.z + "/" + c.y + "/" + c.x;
-        return t;
-      },
-    });
-    new TintTiles({ maxNativeZoom: 12, maxZoom: 12, updateWhenIdle: true, keepBuffer: 1 }).addTo(map);
+    // Coastline: our own Census land polygons in the page palette (CSS --coast-*), drawn into <canvas>
+    // tiles one per frame. No third-party tiles; a canvas tile can never be the LCP element.
+    const cs = getComputedStyle(document.documentElement);
+    const coast = window.CBCoast.layer({
+      base: "/wind/coast-", land: cs.getPropertyValue("--coast-land").trim(),
+      line: cs.getPropertyValue("--coast-line").trim(), lineWidth: dark ? 1 : 0.9,
+    }).addTo(map);
+    window.__coast = coast;
     await yieldTask();
     const wind = W.layer(map, {
       dark: dark, motion: motion, frameMs: fps === 30 ? 33.3 : 0,

@@ -3,7 +3,7 @@
 :root {
   --bg: #FBF8F2; --surf: #FFFFFF; --surf-2: #F3EEE4; --edge: rgba(11, 42, 61, 0.14);
   --ink: #0B2A3D; --ink-2: #3E5868; --accent: #2B6F8F; --badge-bg: #0B2A3D; --badge-ink: #FFFFFF;
-  --map-bg: #E4E6E4; --glass: rgba(255, 255, 255, 0.9); --glass-ink: #0B2A3D; --shadow: 0 6px 18px -8px rgba(11, 42, 61, 0.35);
+  --map-bg: #EAF1F4; --coast-land: #F6F1E7; --coast-line: rgba(43, 111, 143, 0.75); --glass: rgba(255, 255, 255, 0.9); --glass-ink: #0B2A3D; --shadow: 0 6px 18px -8px rgba(11, 42, 61, 0.35);
   --f: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --top-h: 48px; --strip-h: 52px; --ctl-h: 76px;
   color-scheme: light;
@@ -12,7 +12,7 @@ html[data-theme="dark"] {
   /* Coastal Blue (night token set B, d000cfe) */
   --bg: #102D46; --surf: #15395A; --surf-2: #1F4C72; --edge: rgba(179, 221, 245, 0.26);
   --ink: #F7F3EA; --ink-2: #CCDDEA; --accent: #B3DDF5; --badge-bg: #B3DDF5; --badge-ink: #0C2231;
-  --map-bg: #1A3550; --glass: rgba(16, 45, 70, 0.9); --glass-ink: #F7F3EA; --shadow: 0 8px 22px -10px rgba(3, 14, 26, 0.8);
+  --map-bg: #0C2740; --coast-land: #1B4263; --coast-line: rgba(142, 195, 230, 0.85); --glass: rgba(16, 45, 70, 0.9); --glass-ink: #F7F3EA; --shadow: 0 8px 22px -10px rgba(3, 14, 26, 0.8);
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
