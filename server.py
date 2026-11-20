@@ -2656,7 +2656,14 @@ class Handler(SimpleHTTPRequestHandler):
             msg = fmt
         if isinstance(msg, str):
             msg = redact_request_text(msg)
-        sys.stderr.write("%s - %s\n" % (self.address_string(), msg))
+        # Behind Render the socket peer is 127.0.0.1 (the platform proxy).
+        # Log the same IP the rate limiter uses so access logs match the
+        # per-client budget (CF-Connecting-IP, else leftmost X-Forwarded-For).
+        try:
+            ip = self._client_ip() or self.address_string()
+        except Exception:
+            ip = self.address_string()
+        sys.stderr.write("%s - %s\n" % (ip, msg))
 
     def end_headers(self):
         # Default for static files. Proxy/API responses set their own cache header first.

@@ -36,3 +36,5 @@ Over the limit: HTTP 429, `Retry-After`, JSON `{ok: false, reason: "rate_limit"}
 ## Upstream 429 / failure
 
 Observed tiles may be reused while they are ≤ 60 minutes old (WeatherAPI current-conditions cap). Nowcast tiles only within 180 s. The viewer shows a clear “temporarily limited” message and never paints a half-drawn or invented frame. `/preview?key=` and similar query values are redacted in request logs.
+
+Access logs use the same client IP as the limiter (`CF-Connecting-IP`, else the leftmost `X-Forwarded-For`), not the Render proxy peer (`127.0.0.1`). To verify the limiter on production, send at least 31 `/api/wind-grid` requests from one stable client IP (a single HTTP keep-alive connection is enough). Opening a new connection per request from a rotating egress pool (Cloudflare privacy/proxy addresses, some CGNAT test beds) will not fill one bucket and can look like the limiter is off.

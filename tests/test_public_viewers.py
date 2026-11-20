@@ -151,6 +151,20 @@ class PublicRoutes(unittest.TestCase):
             hdr2 = {"CF-Connecting-IP": "198.51.100.2", "X-Forwarded-For": "203.0.113.77"}
             self.assertEqual(self.get("/api/wind-grid", headers=hdr2)[0], 429)
 
+    def test_rotating_client_ips_have_independent_buckets(self):
+        """A new TCP/egress IP per request must not share one budget.
+        That is how a rotating-proxy test can miss a 429 that a stable visitor hits."""
+        with mock.patch.object(windgrid, "latest_grid", return_value={"ok": True, "ahead": 0, "u": [], "v": []}):
+            for i in range(server.API_WIND_GRID_LIMIT + 5):
+                ip = "198.51.100.%s" % (i + 1)
+                st, _, _ = self.get("/api/wind-grid", headers={"CF-Connecting-IP": ip})
+                self.assertEqual(st, 200, ip)
+            # One of those IPs can still exhaust its own budget.
+            ip = "198.51.100.1"
+            for _ in range(server.API_WIND_GRID_LIMIT - 1):
+                self.assertEqual(self.get("/api/wind-grid", headers={"CF-Connecting-IP": ip})[0], 200)
+            self.assertEqual(self.get("/api/wind-grid", headers={"CF-Connecting-IP": ip})[0], 429)
+
     def test_tile_rate_limit_allows_a_full_viewer_load(self):
         # 37 frames × 9 tiles = 333, well under 2400 / 5 min.
         png = b"\x89PNG\r\n\x1a\n" + b"\x00" * 16
@@ -227,6 +241,45 @@ class Redaction(unittest.TestCase):
         text = buf.getvalue()
         self.assertNotIn("SUPERSECRET", text)
         self.assertIn("key=REDACTED", text)
+
+    def test_log_message_uses_cf_connecting_ip_not_peer(self):
+        from http.client import HTTPMessage
+        buf = io.StringIO()
+        class Dummy(server.Handler):
+            def __init__(self):
+                self.client_address = ("127.0.0.1", 9)
+                self.requestline = "GET /api/wind-grid HTTP/1.1"
+                self.headers = HTTPMessage()
+                self.headers["CF-Connecting-IP"] = "198.51.100.7"
+                self.headers["X-Forwarded-For"] = "203.0.113.1, 198.51.100.7"
+            def address_string(self):
+                return "127.0.0.1"
+        h = Dummy.__new__(Dummy)
+        Dummy.__init__(h)
+        with mock.patch.object(server.sys, "stderr", buf):
+            h.log_message('"%s" %s %s', h.requestline, "200", "-")
+        text = buf.getvalue()
+        self.assertIn("198.51.100.7", text)
+        self.assertNotIn("203.0.113.1", text)
+        self.assertTrue(text.startswith("198.51.100.7 -"), text)
+
+    def test_log_message_uses_leftmost_xff_without_cf_header(self):
+        from http.client import HTTPMessage
+        buf = io.StringIO()
+        class Dummy(server.Handler):
+            def __init__(self):
+                self.client_address = ("127.0.0.1", 9)
+                self.requestline = "GET /api/wind-grid HTTP/1.1"
+                self.headers = HTTPMessage()
+                self.headers["X-Forwarded-For"] = "203.0.113.44, 10.0.0.1"
+            def address_string(self):
+                return "127.0.0.1"
+        h = Dummy.__new__(Dummy)
+        Dummy.__init__(h)
+        with mock.patch.object(server.sys, "stderr", buf):
+            h.log_message('"%s" %s %s', h.requestline, "200", "-")
+        text = buf.getvalue()
+        self.assertTrue(text.startswith("203.0.113.44 -"), text)
 
 
 class StaleTerms(unittest.TestCase):
