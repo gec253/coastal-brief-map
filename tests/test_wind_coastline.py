@@ -125,6 +125,24 @@ class DataIntegrity(unittest.TestCase):
         lo, hi = (ROOT / "wind-coast" / "lo.json").stat().st_size, (ROOT / "wind-coast" / "hi.json").stat().st_size
         self.assertLess(lo, 40 * 1024, lo)
         self.assertLess(hi, 110 * 1024, hi)
+        enc = json.loads((ROOT / "wind-coast" / "enc.json").read_text())
+        raw = (ROOT / "wind-coast" / "enc.json").stat().st_size
+        import gzip
+        gz = len(gzip.compress((ROOT / "wind-coast" / "enc.json").read_bytes(), 9))
+        self.assertLess(raw, 950 * 1024, raw)
+        self.assertLess(gz, 280 * 1024, gz)
+        self.assertEqual(enc["kind"], "noaa-enc-lndare-harbour-coastal")
+        self.assertEqual(enc["zoom"], [11, 99])
+        self.assertIn("not certified for navigation", enc["source"])
+        self.assertIn("CC0", enc["source"])
+        self.assertTrue(enc.get("cover"))
+        polys = decode(enc)
+        # Cape Lookout hook tip is land in the ENC file; Ocracoke village too.
+        self.assertTrue(in_land(polys, -76.546, 34.606), "lookout hook")
+        self.assertTrue(in_land(polys, -75.981, 35.1146), "ocracoke village")
+        self.assertTrue(in_land(polys, -75.5288, 35.2507), "hatteras light")
+        # Open water just south of the hook should stay water.
+        self.assertFalse(in_land(polys, -76.529, 34.56), "water south of hook")
 
 
 class Alignment(unittest.TestCase):
@@ -239,7 +257,13 @@ class ThemeAndPage(unittest.TestCase):
         self.assertIn("!osReduce", self.js)
         self.assertIn("drawArrows", self.engine)
 
+    def test_wind_viewer_does_not_load_enc(self):
+        # /wind tops out below ENC_ZOOM, and the viewer never opts in.
+        self.assertNotIn("encLod", self.js)
+        self.assertNotIn("coast-enc", self.js)
+
     def test_lab_still_uses_esri_dashboard_does_not(self):
+
         self.assertIn("arcgisonline", self.engine)          # /lab/wind keeps its Esri layer (Ed's separate decision)
         self.assertNotIn("arcgisonline", (ROOT / "app.js").read_text())
 
@@ -257,6 +281,7 @@ class Routes(unittest.TestCase):
         def get(p):
             try:
                 with urllib.request.urlopen(base + p, timeout=20) as r:
+                    r.read()
                     return r.status, r.headers.get("Cache-Control")
             except urllib.error.HTTPError as e:
                 return e.code, None
@@ -265,7 +290,8 @@ class Routes(unittest.TestCase):
                 self.assertEqual(get("/wind/coast.js"), (200, "public, max-age=600"))
                 self.assertEqual(get("/wind/coast-lo.json"), (200, "public, max-age=86400"))
                 self.assertEqual(get("/wind/coast-hi.json"), (200, "public, max-age=86400"))
-                for p in ("/wind-coast.js", "/wind-coast/lo.json", "/wind-coast/hi.json"):
+                self.assertEqual(get("/wind/coast-enc.json"), (200, "public, max-age=86400"))
+                for p in ("/wind-coast.js", "/wind-coast/lo.json", "/wind-coast/hi.json", "/wind-coast/enc.json"):
                     self.assertEqual(get(p)[0], 404, p)
         finally:
             httpd.shutdown(); httpd.server_close()

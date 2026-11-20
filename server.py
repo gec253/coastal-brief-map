@@ -10,6 +10,7 @@ No third-party packages. Python 3.11+ standard library only.
 from __future__ import annotations
 
 import argparse
+import gzip
 import hashlib
 import hmac
 import html
@@ -3050,7 +3051,7 @@ class Handler(SimpleHTTPRequestHandler):
             if not g.get("ok"):
                 g = {"ok": False, "error": g.get("error") or "Model wind is unavailable right now."}
             return self._send_json(g, cache_s=600 if g.get("ok") else 60, status=200 if g.get("ok") else 502)
-        if parsed.path in ("/wind", "/wind.css", "/wind/viewer.js", "/wind/coast.js", "/wind/engine.js", "/wind/coast-lo.json", "/wind/coast-hi.json"):
+        if parsed.path in ("/wind", "/wind.css", "/wind/viewer.js", "/wind/coast.js", "/wind/engine.js", "/wind/coast-lo.json", "/wind/coast-hi.json", "/wind/coast-enc.json"):
             qs = parse_qs(parsed.query)
             if parsed.path == "/wind" and (qs.get("model") or [""])[0] == "hrrr":
                 if not (_flag("WIND_PARTICLES_ENABLED") or self._preview_ok()):
@@ -3066,7 +3067,7 @@ class Handler(SimpleHTTPRequestHandler):
                 return self._send_bytes((ROOT / "wind-coast.js").read_bytes(), "text/javascript; charset=utf-8", cache_s=600)
             if parsed.path == "/wind/engine.js":
                 return self._send_bytes((ROOT / "wind-lab.js").read_bytes(), "text/javascript; charset=utf-8", cache_s=600)
-            name = "lo.json" if parsed.path.endswith("lo.json") else "hi.json"
+            name = {"/wind/coast-lo.json": "lo.json", "/wind/coast-hi.json": "hi.json", "/wind/coast-enc.json": "enc.json"}[parsed.path]
             return self._send_bytes((ROOT / "wind-coast" / name).read_bytes(), "application/json; charset=utf-8", cache_s=86400)
 
         if parsed.path == "/showcase.js":
@@ -3420,6 +3421,11 @@ class Handler(SimpleHTTPRequestHandler):
     def _send_bytes(self, data: bytes, ctype: str, cache_s: int = 0):
         self.send_response(200)
         self.send_header("Content-Type", ctype)
+        accept = (self.headers.get("Accept-Encoding") or "").lower()
+        if "gzip" in accept and len(data) >= 2048:
+            data = gzip.compress(data, compresslevel=6)
+            self.send_header("Content-Encoding", "gzip")
+            self.send_header("Vary", "Accept-Encoding")
         self.send_header("Content-Length", str(len(data)))
         if cache_s:
             self.send_header("Cache-Control", "public, max-age=%s" % cache_s)

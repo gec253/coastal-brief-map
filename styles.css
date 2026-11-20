@@ -748,7 +748,7 @@ a.site-title:focus {
   position: absolute;
   left: 8px;
   right: 8px;
-  bottom: 44px;
+  bottom: calc(var(--map-credit-h, 2.4rem) + 28px);
   z-index: 1101;
   background: rgba(11, 42, 61, 0.92);
   color: #F3E6D0;
@@ -761,27 +761,57 @@ a.site-title:focus {
 }
 .chip-note[hidden] { display: none; }
 
+/* Reserved full-width credit strip at the bottom of the map. Required
+   attribution stays fully visible and sits clear of radar and map controls,
+   especially on iPhone. Credits are never hidden or clipped. */
+.map-shell {
+  --map-credit-h: 2.4rem;
+}
+@media (max-width: 700px) {
+  .map-shell { --map-credit-h: 3.6rem; }
+}
+.map-shell .leaflet-bottom.leaflet-right {
+  width: 100%;
+  left: 0;
+  right: 0;
+}
+.map-shell .leaflet-control-attribution {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  border-radius: 0 0 10px 10px;
+  font-size: 0.62rem;
+  line-height: 1.3;
+  padding: 4px 10px 5px;
+  white-space: normal;
+  background: rgba(255, 253, 248, 0.94);
+  color: #0B2A3D;
+}
+[data-theme="dark"] .map-shell .leaflet-control-attribution,
+.map-shell.is-fullscreen-layer .leaflet-control-attribution,
+.map-shell:has(#radar-controls:not([hidden])) .leaflet-control-attribution {
+  background: rgba(12, 39, 64, 0.94);
+  color: #F3E6D0;
+}
+.map-shell .leaflet-control-attribution a {
+  color: inherit;
+  text-decoration: underline;
+}
+.map-shell:has(#radar-controls:not([hidden])) .leaflet-control-attribution a {
+  color: #9ad4ce;
+}
 /* Radar controls sit on the map so the map stays the hero */
 .map-shell .radar-controls {
   position: absolute;
   left: 8px;
   right: 8px;
-  bottom: 26px;
+  bottom: calc(var(--map-credit-h) + 6px);
   z-index: 1100;
   margin: 0;
   background: rgba(11, 42, 61, 0.88);
   color: #F3E6D0;
   border-radius: 10px;
   padding: 6px 10px;
-}
-.map-shell:has(#radar-controls:not([hidden])) .leaflet-control-attribution {
-  margin: 0 6px 4px;
-  background: rgba(11, 42, 61, 0.8);
-  color: #F3E6D0;
-  max-width: calc(100% - 12px);
-}
-.map-shell:has(#radar-controls:not([hidden])) .leaflet-control-attribution a {
-  color: #9ad4ce;
 }
 .map-shell .radar-controls #radar-play {
   background: transparent;

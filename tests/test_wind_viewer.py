@@ -250,7 +250,8 @@ class PageCopyAndControls(unittest.TestCase):
         self.assertNotIn(".woff2", self.html + self.css)
         self.assertNotIn("fonts.googleapis", self.html)
         own = sum((ROOT / f).stat().st_size for f in ("wind.html", "wind.css", "wind-viewer.js", "wind-lab.js", "wind-coast.js"))
-        self.assertLess(own, 50 * 1024, own)
+        # Shared coastline module can opt in to ENC land (dashboard only); keep /wind lean.
+        self.assertLess(own, 53 * 1024, own)
         self.assertLess((ROOT / "wind.css").stat().st_size, 12 * 1024)
         scripts = re.findall(r'<script src="([^"]+)"', self.html)
         self.assertEqual(scripts, ["/vendor/leaflet/leaflet.js", "/wind/engine.js", "/wind/coast.js", "/wind/viewer.js"])

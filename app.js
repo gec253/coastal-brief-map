@@ -398,8 +398,10 @@
     map.createPane("labels");
     map.getPane("labels").style.zIndex = 360;
 
-    // Census 2025 cartographic boundary land (1:500,000), the same treatment as
-    // /wind and /radar. Drawn into canvas tiles; no third-party basemap tiles.
+    // Census 2025 cartographic boundary land (1:500,000) at regional zooms, with
+    // NOAA ENC Direct Harbor LNDARE composited at zoom 11+ so the fill follows
+    // the chart shoreline. Drawn into canvas tiles; no third-party basemap tiles.
+    // ENC land is public domain (CC0) and not certified for navigation.
     if (window.CBCoast) {
       const boot = coastStyle(isFullscreen() ? "dark" : currentTheme());
       layers.coast = window.CBCoast.layer({
@@ -407,11 +409,13 @@
         land: boot.land,
         line: boot.line,
         lineWidth: boot.lineWidth,
+        encLod: "enc",
+        encZoom: 11,
         leaflet: {
           pane: "basemap",
           maxZoom: 16,
-          maxNativeZoom: 12,
-          attribution: "Coastline: U.S. Census Bureau (2025, 1:500,000; not endorsed by the Census Bureau)",
+          maxNativeZoom: 16,
+          attribution: "Land: U.S. Census Bureau and NOAA ENC (not for navigation; not endorsed)",
         },
       });
       paintCoast(isFullscreen() ? "dark" : currentTheme());

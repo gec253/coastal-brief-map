@@ -1,7 +1,8 @@
 /* /wind coastline: U.S. Census Bureau 2025 cartographic boundary land (1:500,000), drawn by us in the
    page palette, one 256 px tile per task (no long tasks), crisp at the device pixel ratio. Replaces the
    Esri tiles on /wind. Data: /wind/coast-lo.json (zoom < 8), /wind/coast-hi.json (zoom >= 8), built by
-   scripts/build_wind_coast.py. The pure math (decode, project, pointInLand) also loads in Node for tests. */
+   scripts/build_wind_coast.py. Dashboard may also opt in to /wind/coast-enc.json (NOAA ENC LNDARE, CC0,
+   not for navigation) at zoom >= 11. The pure math (decode, project, pointInLand) also loads in Node. */
 (function (root) {
   "use strict";
   const D = Math.PI / 180, MAXLAT = 85.0511287798;
@@ -44,28 +45,35 @@
     }
     return false;
   }
-  const CoastMath = { project, unproject, decode, pointInLand, HI_ZOOM: 8 };
+  const CoastMath = { project, unproject, decode, pointInLand, HI_ZOOM: 8, ENC_ZOOM: 11 };
   if (typeof module === "object" && module.exports) { module.exports = CoastMath; return; }
   root.CBCoastMath = CoastMath;
   if (typeof document === "undefined" || !root.L) return;
 
-  /* Leaflet layer. opts: land, line (CSS colours), lineWidth, base (URL prefix). The map container
-     background is the water colour, so tiles only paint land and the shoreline. */
+  /* Leaflet layer. opts: land, line (CSS colours), lineWidth, base (URL prefix). Dashboard may set
+     encLod ("enc") and encZoom (11) to composite NOAA ENC land over Census at close zoom. The map
+     container background is the water colour, so tiles only paint land and the shoreline. */
   function layer(opts) {
     const cache = {};
     function data(lod) {
-      if (!cache[lod]) cache[lod] = fetch(opts.base + lod + ".json").then((r) => r.json()).then(decode);
+      if (!cache[lod]) cache[lod] = fetch(opts.base + lod + ".json").then((r) => r.json()).then(function (doc) {
+        return { polys: decode(doc), cover: doc.cover ? decode({ q: doc.q, polys: doc.cover }) : null };
+      });
       return cache[lod];
+    }
+    function loadFor(c) {
+      const census = data(c.z >= CoastMath.HI_ZOOM ? "hi" : "lo");
+      if (!(opts.encLod && c.z >= (opts.encZoom || CoastMath.ENC_ZOOM))) {
+        return census.then(function (d) { return { polys: d.polys }; });
+      }
+      return census.then(function (d) {
+        return data(opts.encLod).then(function (e) { return { polys: d.polys, enc: e }; },
+          function () { return { polys: d.polys }; });
+      });
     }
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const stats = { tiles: 0, maxMs: 0, totalMs: 0 };
-    function draw(t, c, polys) {
-      const t0 = performance.now();
-      const x = t.getContext("2d"), ox = c.x * 256, oy = c.y * 256;
-      x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, t.width, t.height);
-      x.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const nw = unproject(ox - 2, oy - 2, c.z), se = unproject(ox + 258, oy + 258, c.z);
-      x.beginPath();
+    function trace(x, polys, ox, oy, c, nw, se) {
       let any = false;
       for (const p of polys) {
         if (p.b[2] < nw[0] || p.b[0] > se[0] || p.b[3] < se[1] || p.b[1] > nw[1]) continue;
@@ -78,10 +86,31 @@
           x.closePath();
         }
       }
-      if (any) {
+      return any;
+    }
+    function paint(x, polys, ox, oy, c, nw, se) {
+      x.beginPath();
+      if (trace(x, polys, ox, oy, c, nw, se)) {
         x.fillStyle = opts.land; x.fill("evenodd");
         x.lineJoin = "round"; x.strokeStyle = opts.line; x.lineWidth = opts.lineWidth * (c.z >= CoastMath.HI_ZOOM ? 1.15 : 1); x.stroke();
       }
+    }
+    function draw(t, c, polys, enc) {
+      const t0 = performance.now();
+      const x = t.getContext("2d"), ox = c.x * 256, oy = c.y * 256;
+      x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, t.width, t.height);
+      x.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const nw = unproject(ox - 2, oy - 2, c.z), se = unproject(ox + 258, oy + 258, c.z);
+      paint(x, polys, ox, oy, c, nw, se);
+      if (enc && enc.cover) {
+        x.beginPath();
+        if (trace(x, enc.cover, ox, oy, c, nw, se)) {
+          x.globalCompositeOperation = "destination-out";
+          x.fill("evenodd");
+          x.globalCompositeOperation = "source-over";
+        }
+      }
+      if (enc && enc.polys) paint(x, enc.polys, ox, oy, c, nw, se);
       const ms = performance.now() - t0;
       stats.tiles++; stats.totalMs += ms; if (ms > stats.maxMs) stats.maxMs = ms;
     }
@@ -92,10 +121,10 @@
     function pump() {
       const t0 = performance.now();
       let job = queue.shift();
-      if (job) { draw(job.t, job.c, job.polys); if (job.done) job.done(null, job.t); }
+      if (job) { draw(job.t, job.c, job.polys, job.enc); if (job.done) job.done(null, job.t); }
       // Restyle jobs (theme switch) repaint tiles already on screen: a few per frame within ~6 ms.
       while (job && job.restyle && queue.length && queue[0].restyle && performance.now() - t0 < 6) {
-        job = queue.shift(); draw(job.t, job.c, job.polys);
+        job = queue.shift(); draw(job.t, job.c, job.polys, job.enc);
       }
       if (queue.length) schedule(); else pumping = false;
     }
@@ -108,8 +137,8 @@
       createTile: function (c, done) {
         const t = document.createElement("canvas");
         t.width = t.height = Math.round(256 * dpr);
-        data(c.z >= CoastMath.HI_ZOOM ? "hi" : "lo").then(function (polys) {
-          queue.push({ t: t, c: c, polys: polys, done: done });
+        loadFor(c).then(function (d) {
+          queue.push({ t: t, c: c, polys: d.polys, enc: d.enc, done: done });
           if (!pumping) schedule();
         }, function (e) { done(e, t); });
         return t;
@@ -126,8 +155,8 @@
         const tl = tiles[key];
         if (!tl.loaded || !tl.el) continue;
         const c = tl.coords;
-        data(c.z >= CoastMath.HI_ZOOM ? "hi" : "lo").then(function (polys) {
-          queue.push({ t: tl.el, c: c, polys: polys, restyle: true });
+        loadFor(c).then(function (d) {
+          queue.push({ t: tl.el, c: c, polys: d.polys, enc: d.enc, restyle: true });
           if (!pumping) schedule();
         });
       }

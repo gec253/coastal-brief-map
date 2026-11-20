@@ -50,7 +50,10 @@ class Sources(unittest.TestCase):
         )
         self.assertIn('pane: "basemap"', self.app)
         self.assertIn("maxZoom: 16", self.app)
-        self.assertIn("maxNativeZoom: 12", self.app)
+        self.assertIn("maxNativeZoom: 16", self.app)
+        self.assertIn('encLod: "enc"', self.app)
+        self.assertIn("encZoom: 11", self.app)
+        self.assertIn("ENC_ZOOM: 11", self.coast)
         self.assertIn("opts.leaflet", self.coast)
 
     def test_noaa_enc_chart_overlay_preserved(self):
@@ -82,15 +85,26 @@ class Sources(unittest.TestCase):
         self.assertIn("applyBasemapForTheme", self.app)
 
     def test_credits_include_census_and_noaa_not_esri(self):
-        self.assertIn("U.S. Census Bureau (2025, 1:500,000", self.app)
-        self.assertIn("not endorsed by the Census Bureau", self.app)
+        self.assertIn("U.S. Census Bureau and NOAA ENC", self.app)
+        self.assertIn("not for navigation", self.app)
+        self.assertIn("not endorsed", self.app)
         self.assertIn("U.S. Census Bureau 2025 cartographic boundary files", self.html)
-        self.assertIn("not endorsed by the Census Bureau", self.html)
+        self.assertIn("NOAA ENC land areas from ENC Direct", self.html)
+        self.assertIn("not certified for navigation", self.html)
+        self.assertIn("not endorsed by the Census Bureau or NOAA", self.html)
         self.assertIn("NOAA Office of Coast Survey ENC Chart Display Service", self.html)
         self.assertNotIn("official chart", self.app.lower())
         self.assertNotIn("official NOAA ENC", self.html)
         # Safety note still points people to official NOAA charts for navigation.
         self.assertIn("Use official NOAA charts aboard", self.app)
+
+    def test_mobile_attribution_clears_controls(self):
+        # Reserved credit strip; radar controls sit above it; credits are never clipped or hidden.
+        self.assertIn("--map-credit-h", self.css)
+        self.assertIn("bottom: calc(var(--map-credit-h) + 6px)", self.css)
+        self.assertNotIn("bottom: 26px", self.css.split(".map-shell .radar-controls")[1][:400])
+        self.assertIn("white-space: normal", self.css)
+        self.assertNotIn("overflow: hidden", self.css.split(".map-shell .leaflet-control-attribution")[1][:500])
 
     def test_lab_wind_still_uses_esri_and_is_unchanged_here(self):
         # Documented leftover: /lab/wind is private and still on Esri Canvas tiles.
@@ -132,7 +146,7 @@ class Routes(unittest.TestCase):
         self.assertIn("census bureau", text)
         self.assertIn("enc chart display service", text)
         # Assets the page will load
-        for path in ("/app.js", "/styles.css", "/wind/coast.js", "/wind/coast-lo.json", "/wind/coast-hi.json"):
+        for path in ("/app.js", "/styles.css", "/wind/coast.js", "/wind/coast-lo.json", "/wind/coast-hi.json", "/wind/coast-enc.json"):
             status, body, headers = self._get(path)
             self.assertEqual(status, 200, path)
             blob = body.decode("utf-8", "replace").lower()
@@ -140,7 +154,26 @@ class Routes(unittest.TestCase):
                 self.assertNotIn("arcgisonline", blob, path)
                 self.assertNotIn("esri.com", blob, path)
 
+    def test_enc_coast_is_public_json(self):
+        status, body, headers = self._get("/wind/coast-enc.json")
+        self.assertEqual(status, 200)
+        self.assertEqual(headers.get("Cache-Control"), "public, max-age=86400")
+        self.assertIn("application/json", headers.get("Content-Type", ""))
+        text = body.decode("utf-8")
+        self.assertIn("noaa-enc-lndare-harbour", text)
+        self.assertIn("not certified for navigation", text)
+        self.assertIn("CC0", text)
+        # Gzip when the client asks; tests without Accept-Encoding still get raw JSON.
+        import gzip as _gzip
+        req = urllib.request.Request(self.base + "/wind/coast-enc.json", headers={"Accept-Encoding": "gzip"})
+        with urllib.request.urlopen(req, timeout=20) as r:
+            self.assertEqual(r.status, 200)
+            self.assertEqual(r.headers.get("Content-Encoding"), "gzip")
+            raw = _gzip.decompress(r.read())
+        self.assertEqual(raw, body)
+
     def test_lab_wind_stays_private(self):
+
         with mock.patch.dict(os.environ, {"PREVIEW_KEY": "", "WIND_PARTICLES_ENABLED": ""}):
             status, _, _ = self._get("/lab/wind")
         self.assertEqual(status, 404)
