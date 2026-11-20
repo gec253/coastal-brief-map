@@ -1,0 +1,121 @@
+{
+ "forecastUpdated": "2026-11-20T09:14:32+00:00",
+ "freshness": [
+  {
+   "label": "Wind",
+   "stale": false,
+   "station": "CLKN7",
+   "time": "4:40 AM ET"
+  },
+  {
+   "label": "Seas",
+   "stale": false,
+   "station": "41159",
+   "time": "4:56 AM ET"
+  },
+  {
+   "label": "Swell",
+   "stale": false,
+   "station": "41159",
+   "time": "3:56 AM ET"
+  },
+  {
+   "label": "Barometer",
+   "stale": false,
+   "station": "8656483",
+   "time": "5:00 AM ET"
+  },
+  {
+   "label": "Water temp",
+   "stale": false,
+   "station": "8656483",
+   "time": "5:00 AM ET"
+  }
+ ],
+ "issueDate": "2026-11-20",
+ "issuedAt": "2026-11-20T10:15:00.288315+00:00",
+ "issuedEt": "Fri Nov 20, 5:15 AM ET",
+ "items": [
+  [
+   "Advisories",
+   "Small Craft Advisory until Mon 9:00 AM ET."
+  ],
+  [
+   "Wind",
+   "10 kt from the NNE, gusting 14, at Cape Lookout; about steady from 9 kt 10 h earlier."
+  ],
+  [
+   "Seas",
+   "5.2 ft every 7 s from the SE at Onslow Bay Outer (CDIP 217); little changed from 5.2 ft 10 h earlier."
+  ],
+  [
+   "Swell",
+   "1.0 ft at 10 s from the SSE (split from the buoy spectrum, observed 3:56 AM ET)."
+  ],
+  [
+   "Pressure",
+   "30.30 inHg, steady."
+  ],
+  [
+   "Marine forecast",
+   "Today: NE winds 15 to 20 kt. (NWS AMZ158)"
+  ],
+  [
+   "Rain",
+   "1% chance through tonight; mostly cloudy, high 51°F."
+  ],
+  [
+   "Water temp",
+   "59°F inshore (Beaufort, Duke Marine Lab), 68°F offshore (buoy 41159)."
+  ]
+ ],
+ "marineUpdated": "2026-11-20T04:10:00-05:00",
+ "marineZone": "AMZ158",
+ "missing": [
+  "tides"
+ ],
+ "ok": true,
+ "reason": "scheduled",
+ "region": {
+  "anchor": {
+   "label": "Beaufort Inlet",
+   "lat": 34.695,
+   "lon": -76.668
+  },
+  "area": "Crystal Coast, North Carolina",
+  "id": "crystal-coast",
+  "map": {
+   "center": [
+    34.7,
+    -76.7
+   ],
+   "zoom": 8
+  },
+  "name": "Morehead City · Beaufort"
+ },
+ "regionId": "crystal-coast",
+ "sources": "NOAA NDBC, NOAA CO-OPS, NWS (api.weather.gov)",
+ "take": [
+  "NWS rates conditions hazardous to small craft until Mon 9:00 AM ET.",
+  "The NWS marine forecast has wind or seas building later today.",
+  "Offshore water is 10°F warmer than inshore."
+ ],
+ "validation": {
+  "checkedAt": "2026-11-20T10:15:00.288315+00:00",
+  "checks": [
+   "region",
+   "location",
+   "issue date",
+   "timestamp",
+   "marine zone",
+   "forecast age",
+   "core readings"
+  ],
+  "missingCore": [
+   "tides"
+  ],
+  "status": "partial"
+ },
+ "waterType": "saltwater",
+ "words": 125
+}

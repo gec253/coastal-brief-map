@@ -13,9 +13,9 @@
    "time": "4:45 AM ET"
   }
  ],
- "issueDate": "2026-11-19",
- "issuedAt": "2026-11-19T10:15:02.837480+00:00",
- "issuedEt": "Thu Nov 19, 5:15 AM ET",
+ "issueDate": "2026-11-20",
+ "issuedAt": "2026-11-20T10:15:02.231867+00:00",
+ "issuedEt": "Fri Nov 20, 5:15 AM ET",
  "items": [
   [
    "Alerts",
@@ -23,7 +23,7 @@
   ],
   [
    "Lake level",
-   "244.80 ft (NGVD29), 6.70 ft below the 251.5 ft guide curve; -0.05 ft in 24 h."
+   "244.77 ft (NGVD29), 6.73 ft below the 251.5 ft guide curve; -0.03 ft in 24 h."
   ],
   [
    "Dam release",
@@ -43,7 +43,7 @@
   ],
   [
    "Weather",
-   "Clear, high 34°F, wind N 1 mph."
+   "Mostly Clear, high 37°F, wind N 1 mph."
   ]
  ],
  "missing": [],
@@ -68,7 +68,7 @@
   "Flow below the dam is very low for the date."
  ],
  "validation": {
-  "checkedAt": "2026-11-19T10:15:02.837480+00:00",
+  "checkedAt": "2026-11-20T10:15:02.231867+00:00",
   "checks": [
    "region",
    "location",
@@ -80,5 +80,5 @@
   "status": "ok"
  },
  "waterType": "freshwater",
- "words": 108
+ "words": 109
 }

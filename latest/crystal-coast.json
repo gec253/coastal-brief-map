@@ -1,11 +1,11 @@
 {
- "forecastUpdated": "2026-11-19T09:06:03+00:00",
+ "forecastUpdated": "2026-11-20T09:14:32+00:00",
  "freshness": [
   {
    "label": "Wind",
    "stale": false,
    "station": "CLKN7",
-   "time": "4:50 AM ET"
+   "time": "4:40 AM ET"
   },
   {
    "label": "Seas",
@@ -14,68 +14,66 @@
    "time": "4:56 AM ET"
   },
   {
+   "label": "Swell",
+   "stale": false,
+   "station": "41159",
+   "time": "3:56 AM ET"
+  },
+  {
    "label": "Barometer",
    "stale": false,
    "station": "8656483",
-   "time": "5:06 AM ET"
-  },
-  {
-   "label": "Water level",
-   "stale": false,
-   "station": "8656483",
-   "time": "5:06 AM ET"
+   "time": "5:00 AM ET"
   },
   {
    "label": "Water temp",
    "stale": false,
    "station": "8656483",
-   "time": "5:06 AM ET"
+   "time": "5:00 AM ET"
   }
  ],
- "issueDate": "2026-11-19",
- "issuedAt": "2026-11-19T10:15:00.001874+00:00",
- "issuedEt": "Thu Nov 19, 5:15 AM ET",
+ "issueDate": "2026-11-20",
+ "issuedAt": "2026-11-20T10:15:00.288315+00:00",
+ "issuedEt": "Fri Nov 20, 5:15 AM ET",
  "items": [
   [
    "Advisories",
-   "No NWS marine advisories for this area."
+   "Small Craft Advisory until Mon 9:00 AM ET."
   ],
   [
    "Wind",
-   "8 kt from the NNE, gusting 12, at Cape Lookout; about steady from 8 kt 10 h earlier."
+   "10 kt from the NNE, gusting 14, at Cape Lookout; about steady from 9 kt 10 h earlier."
   ],
   [
    "Seas",
-   "4.6 ft every 6 s from the E at Onslow Bay Outer (CDIP 217); little changed from 4.9 ft 10 h earlier."
+   "5.2 ft every 7 s from the SE at Onslow Bay Outer (CDIP 217); little changed from 5.2 ft 10 h earlier."
   ],
   [
    "Swell",
-   "0.3 ft at 11 s from the ESE (split from the buoy spectrum)."
+   "1.0 ft at 10 s from the SSE (split from the buoy spectrum, observed 3:56 AM ET)."
   ],
   [
    "Pressure",
-   "30.43 inHg, steady, down 1.8 hPa over 10 h at CLKN7."
+   "30.30 inHg, steady."
   ],
   [
    "Marine forecast",
-   "Today: NE winds 10 to 15 kt. (NWS AMZ158)"
+   "Today: NE winds 15 to 20 kt. (NWS AMZ158)"
   ],
   [
    "Rain",
-   "0% chance through tonight; mostly clear, high 43°F."
-  ],
-  [
-   "Tides",
-   "high 2:38 AM ET (3.0 ft), low 8:57 AM ET (0.7 ft), high 2:57 PM ET (3.0 ft), low 9:15 PM ET (0.4 ft) at Beaufort, Duke Marine Lab, MLLW."
+   "1% chance through tonight; mostly cloudy, high 51°F."
   ],
   [
    "Water temp",
-   "57°F inshore (Beaufort, Duke Marine Lab), 68°F offshore (buoy 41159)."
+   "59°F inshore (Beaufort, Duke Marine Lab), 68°F offshore (buoy 41159)."
   ]
  ],
- "marineUpdated": "2026-11-19T04:05:00-05:00",
+ "marineUpdated": "2026-11-20T04:10:00-05:00",
  "marineZone": "AMZ158",
- "missing": [],
+ "missing": [
+  "tides"
+ ],
  "ok": true,
  "reason": "scheduled",
  "region": {
@@ -98,11 +96,12 @@
  "regionId": "crystal-coast",
  "sources": "NOAA NDBC, NOAA CO-OPS, NWS (api.weather.gov)",
  "take": [
-  "Seas are short-period wind chop, so expect a steep, close-together ride.",
+  "NWS rates conditions hazardous to small craft until Mon 9:00 AM ET.",
+  "The NWS marine forecast has wind or seas building later today.",
   "Offshore water is 10°F warmer than inshore."
  ],
  "validation": {
-  "checkedAt": "2026-11-19T10:15:00.001874+00:00",
+  "checkedAt": "2026-11-20T10:15:00.288315+00:00",
   "checks": [
    "region",
    "location",
@@ -112,9 +111,11 @@
    "forecast age",
    "core readings"
   ],
-  "missingCore": [],
-  "status": "ok"
+  "missingCore": [
+   "tides"
+  ],
+  "status": "partial"
  },
  "waterType": "saltwater",
- "words": 146
+ "words": 125
 }

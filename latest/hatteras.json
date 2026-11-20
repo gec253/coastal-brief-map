@@ -1,14 +1,20 @@
 {
- "forecastUpdated": "2026-11-19T09:10:53+00:00",
+ "forecastUpdated": "2026-11-20T09:14:32+00:00",
  "freshness": [
   {
    "label": "Wind",
    "stale": false,
    "station": "41025",
-   "time": "4:40 AM ET"
+   "time": "4:30 AM ET"
   },
   {
    "label": "Seas",
+   "stale": false,
+   "station": "41120",
+   "time": "4:56 AM ET"
+  },
+  {
+   "label": "Swell",
    "stale": false,
    "station": "41120",
    "time": "4:56 AM ET"
@@ -32,29 +38,29 @@
    "time": "5:06 AM ET"
   }
  ],
- "issueDate": "2026-11-19",
- "issuedAt": "2026-11-19T10:15:01.125939+00:00",
- "issuedEt": "Thu Nov 19, 5:15 AM ET",
+ "issueDate": "2026-11-20",
+ "issuedAt": "2026-11-20T10:15:00.812946+00:00",
+ "issuedEt": "Fri Nov 20, 5:15 AM ET",
  "items": [
   [
    "Advisories",
-   "No NWS marine advisories for this area."
+   "Small Craft Advisory until Mon 5:00 PM ET."
   ],
   [
    "Wind",
-   "18 kt from the NNE, gusting 19, at Diamond Shoals; about steady from 17 kt 10 h earlier."
+   "14 kt from the NNE, gusting 16, at Diamond Shoals (offshore buoy 41025, observed 4:30 AM ET); down from 17 kt 10 h earlier."
   ],
   [
    "Seas",
-   "3.0 ft every 4 s from the NNE at Cape Hatteras East (CDIP 250); little changed from 2.6 ft 10 h earlier."
+   "3.3 ft every 7 s from the SSE at Cape Hatteras East (CDIP 250); little changed from 3.0 ft 10 h earlier."
   ],
   [
    "Swell",
-   "0.3 ft at 11 s from the E (split from the buoy spectrum)."
+   "0.7 ft at 11 s from the ESE (split from the buoy spectrum)."
   ],
   [
    "Pressure",
-   "30.45 inHg, steady, down 1.5 hPa over 10 h at 41025."
+   "30.33 inHg, steady."
   ],
   [
    "Marine forecast",
@@ -62,18 +68,18 @@
   ],
   [
    "Rain",
-   "0% chance through tonight; mostly clear, high 53°F."
+   "1% chance through tonight; mostly cloudy, high 57°F."
   ],
   [
    "Tides",
-   "high 4:02 AM ET (0.6 ft), low 11:02 AM ET (0.3 ft), high 4:12 PM ET (0.5 ft), low 10:48 PM ET (0.3 ft) at USCG Station Hatteras, MLLW."
+   "high 4:55 AM ET (0.6 ft), low 11:51 AM ET (0.3 ft), high 5:07 PM ET (0.5 ft), low 11:31 PM ET (0.3 ft) at USCG Station Hatteras, MLLW."
   ],
   [
    "Water temp",
-   "56°F inshore (USCG Station Hatteras), 64°F offshore (buoy 41120)."
+   "58°F inshore (USCG Station Hatteras), 63°F offshore (buoy 41120)."
   ]
  ],
- "marineUpdated": "2026-11-19T04:05:00-05:00",
+ "marineUpdated": "2026-11-20T04:10:00-05:00",
  "marineZone": "AMZ154",
  "missing": [],
  "ok": true,
@@ -98,11 +104,12 @@
  "regionId": "hatteras",
  "sources": "NOAA NDBC, NOAA CO-OPS, NWS (api.weather.gov)",
  "take": [
-  "Seas are short-period wind chop, so expect a steep, close-together ride.",
-  "Offshore water is 8°F warmer than inshore."
+  "NWS rates conditions hazardous to small craft until Mon 5:00 PM ET.",
+  "The NWS marine forecast has wind or seas building later today.",
+  "Offshore water is 5°F warmer than inshore."
  ],
  "validation": {
-  "checkedAt": "2026-11-19T10:15:01.125939+00:00",
+  "checkedAt": "2026-11-20T10:15:00.812946+00:00",
   "checks": [
    "region",
    "location",
@@ -116,5 +123,12 @@
   "status": "ok"
  },
  "waterType": "saltwater",
- "words": 144
+ "windSource": {
+  "name": "Diamond Shoals",
+  "observed": "2026-11-20T09:30:00Z",
+  "role": "primary",
+  "station": "41025",
+  "type": "offshore"
+ },
+ "words": 155
 }
