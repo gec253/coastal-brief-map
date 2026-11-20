@@ -187,7 +187,7 @@
   }
 
   let lastLegendKind = null;
-  const CHART_NOTE = '<p class="chart-note"><strong>Nautical chart</strong> — NOAA ENC Chart Display Service. Chart coverage follows NOAA’s charted waters, so detail ends at chart limits; land is shown on the street map. Not for navigation. Use official NOAA charts aboard.</p>';
+  const CHART_NOTE = '<p class="chart-note"><strong>Nautical chart</strong> — NOAA ENC Chart Display Service. Chart coverage follows NOAA’s charted waters, so detail ends at chart limits; land uses the Census land backdrop. Not for navigation. Use official NOAA charts aboard.</p>';
   function setLegend(kind) {
     lastLegendKind = kind;
     const chartOn = baseKind === "chart" && kind !== "radar" && kind !== "sst";
@@ -387,8 +387,8 @@
 
     map.createPane("basemap");
     map.getPane("basemap").style.zIndex = 200;
-    // Nautical chart sits above the street map, so areas the ENC service does
-    // not cover (inland) show the street map instead of an empty gap.
+    // Nautical chart sits above the Census land backdrop, so areas the ENC service
+    // does not cover (inland) show the same land treatment instead of an empty gap.
     map.createPane("chart");
     map.getPane("chart").style.zIndex = 210;
     map.createPane("wash");
@@ -398,20 +398,28 @@
     map.createPane("labels");
     map.getPane("labels").style.zIndex = 360;
 
-    layers.light = L.tileLayer("https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
-      attribution: 'Tiles © <a href="https://www.esri.com/">Esri</a>',
-      maxZoom: 16,
-      pane: "basemap",
-    });
-    layers.darkBasemap = L.tileLayer("https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
-      attribution: 'Tiles © <a href="https://www.esri.com/">Esri</a>',
-      maxZoom: 16,
-      pane: "basemap",
-    });
+    // Census 2025 cartographic boundary land (1:500,000), the same treatment as
+    // /wind and /radar. Drawn into canvas tiles; no third-party basemap tiles.
+    if (window.CBCoast) {
+      const boot = coastStyle(isFullscreen() ? "dark" : currentTheme());
+      layers.coast = window.CBCoast.layer({
+        base: "/wind/coast-",
+        land: boot.land,
+        line: boot.line,
+        lineWidth: boot.lineWidth,
+        leaflet: {
+          pane: "basemap",
+          maxZoom: 16,
+          maxNativeZoom: 12,
+          attribution: "Coastline: U.S. Census Bureau (2025, 1:500,000; not endorsed by the Census Bureau)",
+        },
+      });
+      paintCoast(isFullscreen() ? "dark" : currentTheme());
+    }
 
     // ENC WMTS default028mm, zoomOffset -2. Used as a base map, not an overlay.
     // The chart paints its land in one flat cream (244,232,193) and stops at the
-    // edge of its chart cells, which left a hard rectangle where the street map
+    // edge of its chart cells, which left a hard rectangle where the backdrop
     // takes over. Key out only that land fill so land looks the same inside and
     // outside chart coverage; water, depths, and every chart symbol stay as NOAA drew them.
     const ChartLayer = L.TileLayer.extend({
@@ -515,7 +523,7 @@
       if (layers[k]) withRetry(layers[k], 3);
     });
 
-    streetBasemap().addTo(map);
+    if (layers.coast) layers.coast.addTo(map);
     layers.wind.addTo(map);
     setLegend("wind");
 
@@ -711,29 +719,41 @@
     if (lastLegendKind) setLegend(lastLegendKind);
   }
 
-  function streetBasemap() {
-    return isDark() && layers.darkBasemap ? layers.darkBasemap : layers.light;
+  function coastStyle(theme) {
+    // Use the requested theme (radar/SST still force the dark palette) rather
+    // than CSS variables, which follow data-theme on the page.
+    const dark = (theme || currentTheme()) === "dark";
+    return {
+      land: dark ? "#1B4263" : "#F6F1E7",
+      line: dark ? "rgba(142, 195, 230, 0.85)" : "rgba(43, 111, 143, 0.75)",
+      water: dark ? "#0C2740" : "#EAF1F4",
+      lineWidth: dark ? 1 : 0.9,
+    };
+  }
+
+  function paintCoast(theme) {
+    const s = coastStyle(theme);
+    const el = $("map");
+    if (el) el.style.background = s.water;
+    const shell = $("map-shell");
+    if (shell) shell.style.background = s.water;
+    if (layers.coast && layers.coast.restyle) {
+      layers.coast.restyle({ land: s.land, line: s.line, lineWidth: s.lineWidth });
+    }
   }
 
   function applyBaseVisibility() {
     if (!map) return;
     const fullscreen = isFullscreen();
     const showChart = !fullscreen && baseKind === "chart";
-    const showStreet = !fullscreen; // also under the chart, to fill areas outside ENC coverage
-    const showDarkUnderlay = fullscreen;
     if (layers.chart) {
       if (showChart && !map.hasLayer(layers.chart)) layers.chart.addTo(map);
       if (!showChart && map.hasLayer(layers.chart)) map.removeLayer(layers.chart);
     }
-    if (layers.light) {
-      if (showStreet && streetBasemap() === layers.light && !map.hasLayer(layers.light)) layers.light.addTo(map);
-      if ((!showStreet || streetBasemap() !== layers.light) && map.hasLayer(layers.light)) map.removeLayer(layers.light);
-    }
-    if (layers.darkBasemap) {
-      const wantDark = showDarkUnderlay || (showStreet && streetBasemap() === layers.darkBasemap);
-      if (wantDark && !map.hasLayer(layers.darkBasemap)) layers.darkBasemap.addTo(map);
-      if (!wantDark && map.hasLayer(layers.darkBasemap)) map.removeLayer(layers.darkBasemap);
-    }
+    if (layers.coast && !map.hasLayer(layers.coast)) layers.coast.addTo(map);
+    // Radar and water-temp still use the dark land palette in this
+    // fullscreen mode, matching the previous underlay treatment.
+    paintCoast(fullscreen ? "dark" : currentTheme());
   }
 
   function applyBasemapForTheme() {
@@ -985,6 +1005,7 @@
       $("map-status").textContent = "Loading the map…";
       loadCss("vendor/leaflet/leaflet.css")
         .then(() => loadScript("vendor/leaflet/leaflet.js"))
+        .then(() => loadScript("/wind/coast.js"))
         .then(() => {
           initMap();
           setBase(baseKind);

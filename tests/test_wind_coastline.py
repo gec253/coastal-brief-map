@@ -239,9 +239,9 @@ class ThemeAndPage(unittest.TestCase):
         self.assertIn("!osReduce", self.js)
         self.assertIn("drawArrows", self.engine)
 
-    def test_lab_and_dashboard_untouched(self):
+    def test_lab_still_uses_esri_dashboard_does_not(self):
         self.assertIn("arcgisonline", self.engine)          # /lab/wind keeps its Esri layer (Ed's separate decision)
-        self.assertIn("arcgisonline", (ROOT / "app.js").read_text())
+        self.assertNotIn("arcgisonline", (ROOT / "app.js").read_text())
 
 
 class Routes(unittest.TestCase):

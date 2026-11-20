@@ -115,7 +115,7 @@
         return t;
       },
     });
-    const l = new Coast({ updateWhenIdle: true, keepBuffer: 1, maxNativeZoom: 12 });
+    const l = new Coast(Object.assign({ updateWhenIdle: true, keepBuffer: 1, maxNativeZoom: 12 }, opts.leaflet));
     l.stats = stats; l.data = data;
     // Theme switch: new land/line colours, repaint the tiles already shown (no reload, no blank tiles).
     l.restyle = function (o) {
