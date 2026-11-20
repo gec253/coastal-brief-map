@@ -1,0 +1,46 @@
+/* /radar private viewer: layered on /wind.css (same tokens, top bar, strip, stage and control bar).
+   Only radar-specific pieces live here. Absolute overlays only, so nothing shifts (CLS 0). */
+:root { --fc: #B45F00; --fc-bg: #FFE3B8; --fc-ink: #3A2200; --obs-track: var(--accent); }
+html[data-theme="dark"] { --fc: #FFB454; --fc-bg: #4A2E06; --fc-ink: #FFE3B8; }
+#rmap { position: absolute; inset: 0; background: var(--map-bg); }
+.leaflet-radar-pane .r-frame { transition: opacity 160ms linear; }
+.r-legend { width: 190px; }
+.r-ramp { display: block; width: 168px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #9be1ff, #1e88e5, #2e7d32, #fdd835, #fb8c00, #e53935, #ad1457); }
+/* current frame tag: OBSERVED is the solid badge style; FORECAST is amber, dashed, italic, and the
+   whole map gets a dashed amber frame, so a forecast frame can't pass for an observation. */
+.r-tag { position: absolute; z-index: 610; top: 58px; left: 10px; margin: 0; padding: 6px 10px; border-radius: 8px; font-size: 13px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; font-variant-numeric: tabular-nums; background: var(--badge-bg); color: var(--badge-ink); box-shadow: var(--shadow); pointer-events: none; }
+.r-tag:empty { display: none; }
+.r-tag.is-fc { background: var(--fc-bg); color: var(--fc-ink); border: 2px dashed var(--fc); font-style: italic; }
+.r-stage.is-fc::after { content: ""; position: absolute; inset: 0; z-index: 605; border: 4px dashed var(--fc); pointer-events: none; }
+.w-badge.is-fc { background: var(--fc-bg); color: var(--fc-ink); outline: 2px dashed var(--fc); outline-offset: -2px; }
+.w-badge.is-test { background: #FFE14D; color: #1A1A1A; }
+/* forecast opt-in */
+.r-fc { position: absolute; z-index: 620; top: 10px; right: 10px; min-height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-radius: 22px; background: var(--glass); color: var(--glass-ink); border: 1px solid var(--edge); box-shadow: var(--shadow); font-size: 13px; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.r-fc small { font-weight: 600; color: var(--ink-2); }
+.r-fc input { width: 22px; height: 22px; margin: 0; accent-color: var(--fc); }
+.r-fc:has(input:disabled) { opacity: 0.55; cursor: default; }
+.r-fc:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
+/* test data banner: bottom of the map, always visible in fixture mode */
+.r-test { position: absolute; z-index: 630; left: 10px; right: 10px; bottom: 36px; margin: 0; padding: 7px 10px; border-radius: 8px; text-align: center; font-size: 13px; font-weight: 800; letter-spacing: 0.06em; color: #1A1A1A; background: repeating-linear-gradient(-45deg, #FFE14D 0 14px, #FFD21F 14px 28px); border: 2px solid #1A1A1A; pointer-events: none; }
+.r-test[hidden], .r-unavail[hidden], .r-fc[hidden], .r-legend[hidden] { display: none; }
+.r-unavail { position: absolute; z-index: 640; left: 50%; top: 42%; transform: translate(-50%, -50%); width: min(330px, calc(100% - 28px)); padding: 16px 18px; border-radius: 14px; background: var(--surf); color: var(--ink); border: 1px solid var(--edge); box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.4; }
+.r-unavail strong { font-size: 16.5px; }
+/* timeline: OBSERVED track (solid) and FORECAST track (amber hatched), with a gap between them */
+.r-ctl { gap: 6px; }
+.r-tl { position: relative; flex: 1; min-width: 0; height: 52px; display: flex; flex-direction: column; justify-content: center; }
+.r-track { position: absolute; left: 12px; right: 12px; top: 18px; height: 8px; display: flex; gap: 6px; pointer-events: none; }
+.r-obs { flex: 25 1 0; border-radius: 4px; background: var(--obs-track); opacity: 0.55; }
+.r-fcs { flex: 0 1 0; border-radius: 4px; background: repeating-linear-gradient(-45deg, var(--fc) 0 4px, transparent 4px 8px); border: 1px dashed var(--fc); display: none; }
+.r-tl.has-fc .r-fcs { display: block; }
+.r-tl input[type=range] { position: relative; width: 100%; height: 44px; margin: 0; background: transparent; -webkit-appearance: none; appearance: none; cursor: pointer; touch-action: none; }
+.r-tl input[type=range]::-webkit-slider-runnable-track { height: 44px; background: transparent; }
+.r-tl input[type=range]::-moz-range-track { height: 44px; background: transparent; }
+.r-tl input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; margin-top: 9px; border-radius: 13px; background: var(--badge-bg); border: 3px solid var(--surf); box-shadow: var(--shadow); }
+.r-tl input[type=range]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 13px; background: var(--badge-bg); border: 3px solid var(--surf); }
+.r-tl.on-fc input[type=range]::-webkit-slider-thumb { background: var(--fc); }
+.r-tl input[type=range]:focus-visible { outline: 3px solid var(--accent); outline-offset: -2px; border-radius: 8px; }
+.r-ends { position: absolute; left: 6px; right: 6px; bottom: 0; display: flex; justify-content: space-between; font-size: 10.5px; font-weight: 600; color: var(--ink-2); pointer-events: none; }
+.r-stage.is-fc .w-legend { border-style: dashed; }
+@media (min-width: 700px) { .r-tl { flex: 0 1 420px; } }
+@media (prefers-reduced-motion: reduce) { .leaflet-radar-pane .r-frame { transition: none; } }
+#r-badge { min-width: 90px; text-align: center; }

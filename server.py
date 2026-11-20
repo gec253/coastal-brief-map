@@ -233,7 +233,7 @@ def cache_get_any(url: str) -> tuple[int, str, bytes] | None:
 # docs, and test fixtures are not.
 _STATIC_EXT = {".html", ".css", ".js", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".avif", ".ico",
                ".woff2", ".json", ".txt", ".xml", ".webmanifest", ".map"}
-_STATIC_DENY_PREFIX = ("/.", "/admin", "/preview/", "/branding/og-masthead.html", "/branding/render-og-masthead.", "/wind-lab.", "/wind.", "/wind-viewer.", "/wind-coast", "/lake.", "/tiles-lab.", "/docs/", "/tests/", "/scripts/", "/__pycache__/", "/requirements")
+_STATIC_DENY_PREFIX = ("/.", "/admin", "/preview/", "/branding/og-masthead.html", "/branding/render-og-masthead.", "/wind-lab.", "/wind.", "/wind-viewer.", "/wind-coast", "/radar.", "/radar-", "/lake.", "/tiles-lab.", "/docs/", "/tests/", "/scripts/", "/__pycache__/", "/requirements")
 
 
 def _static_allowed(path: str) -> bool:
@@ -1081,6 +1081,7 @@ import catch_wall_public  # noqa: E402
 import catch_wall_preview  # noqa: E402
 import windgrid  # noqa: E402
 import hrrrgrid  # noqa: E402
+import radarview  # noqa: E402
 import freshwater  # noqa: E402
 import brief  # noqa: E402
 import wave_intro  # noqa: E402
@@ -2639,6 +2640,37 @@ class Handler(SimpleHTTPRequestHandler):
             if parsed.path == "/lab/tiles":
                 return self._send_private(ROOT / "tiles-lab.html", "text/html; charset=utf-8")
             return self._send_private(ROOT / "tiles-lab.js", "text/javascript; charset=utf-8")
+        if parsed.path in ("/radar", "/radar.css", "/radar/viewer.js", "/radar/player.js", "/api/radar-view") or parsed.path.startswith("/radar/fixture-tile/"):
+            # Private radar viewer: gated exactly like /wind (WIND_PARTICLES_ENABLED=1 or the preview cookie), never linked.
+            pv = self._preview_ok()
+            if not (_flag("WIND_PARTICLES_ENABLED") or pv):
+                return self.send_error(404, "not found")
+            if parsed.path == "/radar":
+                _st, _rp = radarview.view_payload(handle_radar_meta)
+                page = radarview.page_html((ROOT / "radar.html").read_text(encoding="utf-8"), _rp)
+                return self._send_private(None, "text/html; charset=utf-8", page.encode("utf-8"))
+            if parsed.path == "/radar.css":
+                return self._send_private(ROOT / "radar.css", "text/css; charset=utf-8")
+            if parsed.path == "/radar/viewer.js":
+                return self._send_private(ROOT / "radar-viewer.js", "text/javascript; charset=utf-8")
+            if parsed.path == "/radar/player.js":
+                return self._send_private(ROOT / "radar-player.js", "text/javascript; charset=utf-8")
+            if parsed.path == "/api/radar-view":
+                st, payload = radarview.view_payload(handle_radar_meta)
+                return self._json_private(payload, st)
+            m = re.fullmatch(r"/radar/fixture-tile/(\d+)/(\d+)/(\d+)\.png", parsed.path)
+            body = radarview.fixture_tile(m.group(1), m.group(2), m.group(3), (parse_qs(parsed.query).get("t") or [""])[0]) if m else None
+            if body is None:
+                return self.send_error(404, "not found")
+            self.send_response(200)
+            self.send_header("Content-Type", "image/png")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "private, max-age=86400")
+            self.send_header("X-Robots-Tag", "noindex, nofollow")
+            self._cache_header_sent = True
+            self.end_headers()
+            self.wfile.write(body)
+            return
         if parsed.path in ("/lab/wind", "/lab/wind.js", "/api/wind-grid", "/wind", "/wind.css", "/wind/viewer.js", "/wind/coast.js", "/wind/coast-lo.json", "/wind/coast-hi.json"):
             # Private: off unless WIND_PARTICLES_ENABLED=1 or the preview cookie. Not linked from the site.
             # /wind is the dedicated viewer; /lab/wind stays as the prototype; both share wind-lab.js.

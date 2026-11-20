@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Observed weather radar for coastal North Carolina, last two hours. Times in Eastern Time.">
+  <title>Radar · observed — The Coastal Brief</title>
+  <script>
+    (function () { var d = document.documentElement, t = null;
+      try { var q = /[?&]theme=(light|dark)\b/.exec(location.search); t = q ? q[1] : localStorage.getItem("coastalBrief.theme"); } catch (e) {}
+      if (t !== "light" && t !== "dark") t = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      d.setAttribute("data-theme", t); if (t === "dark") d.setAttribute("data-night", "b"); })();
+  </script>
+  <link rel="preload" href="/vendor/leaflet/leaflet.js" as="script">
+  <link rel="preload" href="/api/radar-view" as="fetch" crossorigin="anonymous">
+  <link rel="preload" href="/wind/coast-lo.json" as="fetch" crossorigin="anonymous">
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="/wind.css">
+  <link rel="stylesheet" href="/radar.css">
+</head>
+<body data-radar-view="viewer">
+<div class="helm">
+  <header class="w-top">
+    <a class="w-brand" href="/"><span class="w-brand-a">The Coastal Brief</span><span class="w-brand-b">Radar</span></a>
+    <span class="w-badge" id="r-badge">Observed</span>
+    <span class="w-clock"><span class="w-k">Now</span> <time id="r-clock">--:-- ET</time></span>
+    <button type="button" class="w-theme" id="w-theme" aria-label="Night mode" aria-pressed="false" title="Switch to night mode">
+      <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.6A8.2 8.2 0 019.4 4a8.2 8.2 0 1010.6 10.6z"/></svg>
+      <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.6M12 18.8v2.6M2.6 12h2.6M18.8 12h2.6M5.4 5.4l1.8 1.8M16.8 16.8l1.8 1.8M5.4 18.6l1.8-1.8M16.8 7.2l1.8-1.8"/></svg>
+    </button>
+  </header>
+  <section class="w-strip" aria-label="Radar frame time and latest observed scan, Eastern Time">
+    <div class="w-cell"><span class="w-k" id="r-seg">Radar time</span><span class="w-v" id="r-time">—</span></div>
+    <div class="w-cell"><span class="w-k">Latest observed</span><span class="w-v" id="r-age">—</span></div>
+    <div class="w-cell w-cell-fh"><span class="w-k">Frame</span><span class="w-v" id="r-count">—</span></div>
+  </section>
+  <main class="w-stage r-stage" id="r-stage">
+    <div id="rmap" role="region" aria-label="Map of coastal North Carolina with weather radar"></div>
+    <p class="r-test" id="r-test" hidden>TEST DATA — not current radar</p>
+    <p class="r-tag" id="r-tag" aria-hidden="true"></p>
+    <label class="r-fc"><input type="checkbox" id="r-fc" disabled> <span>Forecast <small>next hour</small></span></label>
+    <div class="w-legend r-legend" id="r-legend" role="img" aria-label="Precipitation rate colour scale, light to heavy"><span class="r-ramp" id="r-ramp"></span><span class="w-ticks" aria-hidden="true"><span>Light</span><span>Moderate</span><span>Heavy</span></span></div>
+    <p class="w-attrib" id="r-attrib">Radar: NOAA/NSSL MRMS via WeatherAPI.com · Coastline: U.S. Census Bureau, 2025 cartographic boundary file, 1:500,000 (not endorsed by the Census Bureau)</p>
+    <div class="r-unavail" id="r-unavail" role="status" hidden><strong id="r-unavail-h">Radar unavailable on current data plan</strong><span id="r-unavail-b">The radar feed isn't included in our current weather-data plan, so no radar frames are shown. Nothing here is old or simulated radar.</span></div>
+    <p class="w-status" id="r-status" role="status">Loading radar…</p>
+    <script>/* Paint the honest "unavailable" state as soon as the (preloaded) frame list says so, before the map scripts run. */
+      fetch("/api/radar-view").then(function (r) { return r.json(); }).then(function (m) {
+        if (m && m.ok && m.frames && m.frames.length) return;
+        var plan = m && (m.reason === "plan" || m.reason === "coming_soon");
+        if (!plan) { document.getElementById("r-unavail-h").textContent = "Radar is unavailable right now"; document.getElementById("r-unavail-b").textContent = "We couldn't load radar frames. Try again in a few minutes. No old frames are shown in their place."; }
+        document.getElementById("r-unavail").hidden = false; document.getElementById("r-status").hidden = true;
+        document.getElementById("r-legend").hidden = true; document.querySelector(".r-fc").hidden = true; document.getElementById("r-badge").textContent = "Radar off";
+      }).catch(function () {});</script>
+  </main>
+  <nav class="w-ctl r-ctl" aria-label="Radar timeline controls">
+    <button type="button" class="w-btn w-arrow" id="r-prev" aria-label="Previous frame" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <button type="button" class="w-btn w-play" id="r-play" aria-label="Play radar loop" aria-pressed="false" disabled>
+      <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+      <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
+    </button>
+    <button type="button" class="w-btn w-arrow" id="r-next" aria-label="Next frame" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+    <div class="r-tl" id="r-tl">
+      <div class="r-track" aria-hidden="true"><span class="r-obs" id="r-obs"></span><span class="r-fcs" id="r-fcs"></span></div>
+      <input type="range" id="r-scrub" min="0" max="0" value="0" step="1" aria-label="Radar frame time" disabled>
+      <div class="r-ends" aria-hidden="true"><span id="r-t0">−2 h</span><span id="r-t1">Latest</span></div>
+    </div>
+  </nav>
+</div>
+<script src="/vendor/leaflet/leaflet.js" defer></script>
+<script src="/wind/coast.js" defer></script>
+<script src="/radar/player.js" defer></script>
+<script src="/radar/viewer.js" defer></script>
+</body>
+</html>
