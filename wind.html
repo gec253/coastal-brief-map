@@ -41,8 +41,10 @@
       <canvas id="w-ramp" width="168" height="8" aria-hidden="true"></canvas>
       <span class="w-ticks" aria-hidden="true"><span>0</span><span>10</span><span>20</span><span>30</span><span>35+ kt</span></span>
     </div>
-    <p class="w-read" id="w-read" aria-live="polite" hidden></p>
-    <p class="w-attrib">Wind: <a id="w-src" href="https://www.nco.ncep.noaa.gov/pmb/products/gfs/" rel="noopener">NOAA NCEP GFS</a> <span id="w-src-res">0.25° model forecast</span> · Coastline: U.S. Census Bureau, 2025 cartographic boundary file, 1:500,000 (not endorsed by the Census Bureau). <span id="w-disc">General information only: this is a model forecast and can be late or inaccurate for your location. Don’t rely on it alone for safety, marine or aviation decisions; check the National Weather Service.</span></p>
+    <div class="w-stack">
+      <p class="w-read" id="w-read" aria-live="polite" hidden></p>
+      <p class="w-attrib">Wind: <a id="w-src" href="https://www.nco.ncep.noaa.gov/pmb/products/gfs/" rel="noopener">NOAA NCEP GFS</a> <span id="w-src-res">0.25° model forecast</span> · Coastline: U.S. Census Bureau, 2025 cartographic boundary file, 1:500,000 (not endorsed by the Census Bureau). <span id="w-disc">General information only: this is a model forecast and can be late or inaccurate for your location. Don’t rely on it alone for safety, marine or aviation decisions; check the National Weather Service.</span></p>
+    </div>
     <script>/* ?model=hrrr (private): name HRRR before first paint so the text doesn't reflow later; a GFS fallback relabels it */if(/[?&]model=hrrr\b/.test(location.search)){var s=document.getElementById("w-src");s.textContent="NOAA NCEP HRRR";s.href="https://rapidrefresh.noaa.gov/hrrr/";document.getElementById("w-src-res").textContent="3 km model forecast";}</script>
     <p class="w-status" id="w-status" role="status">Loading NOAA GFS model wind…</p>
     <details class="w-about">

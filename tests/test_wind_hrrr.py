@@ -212,8 +212,10 @@ class Labels(unittest.TestCase):
         # Attribution is only rewritten when the page asked for HRRR; the payload decides which model is named.
         self.assertIn("if (!wantHrrr) return;", self.js)
         self.assertIn('const hrrr = g.model === "hrrr";', self.js)
-        # HRRR name is set during parse (no post-paint reflow), only for ?model=hrrr
-        self.assertRegex(self.html, r'</p>\n    <script>[^<]*if\(/\[\?&\]model=hrrr\\b/\.test\(location\.search\)\)\{[^<]*"3 km model forecast"')
+        # HRRR name is set during parse (no post-paint reflow), only for ?model=hrrr.
+        # The location readout is stacked above the attribution in .w-stack; the early script follows that wrapper.
+        self.assertIn('class="w-stack"', self.html)
+        self.assertRegex(self.html, r'</p>\n    </div>\n    <script>[^<]*if\(/\[\?&\]model=hrrr\\b/\.test\(location\.search\)\)\{[^<]*"3 km model forecast"')
 
 
 class Routes(unittest.TestCase):
