@@ -25,10 +25,14 @@
   function create(frames, opts) {
     opts = opts || {};
     const all = norm(frames);
-    let observed = all.filter(function (f) { return f.type === "observed"; });
-    const latest = observed.length ? observed[observed.length - 1].epoch : 0;
-    observed = observed.filter(function (f) { return f.epoch >= latest - WINDOW_S; });   // two-hour observed window
-    const forecast = all.filter(function (f) { return f.type === "forecast" && f.epoch > latest; });
+    let observed, forecast;
+    function split(all) {
+      observed = all.filter(function (f) { return f.type === "observed"; });
+      const latest = observed.length ? observed[observed.length - 1].epoch : 0;
+      observed = observed.filter(function (f) { return f.epoch >= latest - WINDOW_S; });   // two-hour observed window
+      forecast = all.filter(function (f) { return f.type === "forecast" && f.epoch > latest; });
+    }
+    split(all);
     const s = { status: observed.length ? "paused" : "empty", index: Math.max(0, observed.length - 1), forecastOn: false, wasPlaying: false };
     const listeners = [];
     function list() { return s.forecastOn ? observed.concat(forecast) : observed; }
@@ -67,6 +71,18 @@
         if (on === s.forecastOn) return snapshot();
         s.forecastOn = on;
         if (!on && s.index >= observed.length) s.index = observed.length - 1;
+        return emit();
+      },
+      /* Swap in a refreshed frame list (new radar.json). Keeps play state and the forecast switch; stays on
+         the same frame if it still exists, follows the newest observed frame if that was showing. */
+      update: function (frames) {
+        const cur = list()[s.index] || null, atLatest = s.index === observed.length - 1;
+        split(norm(frames));
+        if (!observed.length) { s.status = "empty"; s.index = 0; return emit(); }
+        if (s.status === "empty") s.status = "paused";
+        if (!forecast.length) s.forecastOn = false;
+        const l = list(), j = cur ? l.findIndex(function (f) { return f.time === cur.time; }) : -1;
+        s.index = atLatest || j < 0 ? (cur && cur.type === "forecast" && s.forecastOn ? observed.length : observed.length - 1) : j;
         return emit();
       },
       segmentOf: function (i) { return i < observed.length ? "observed" : "forecast"; },

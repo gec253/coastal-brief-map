@@ -247,5 +247,92 @@ class ServerRendered(unittest.TestCase):
         self.assertEqual(radarview.page_html(html, {"ok": True, "frames": [{"time": "202603080700"}]}), html)
 
 
+def _real_radar_json(latest_epoch=1795179900):
+    """Shape of a real Pro+ /v1/radar.json response (Nov 20, 2026), with a fake signature. No key."""
+    import datetime as dt
+    code = lambda e: dt.datetime.fromtimestamp(e, dt.timezone.utc).strftime("%Y%m%d%H%M")
+    frames = [{"time": code(latest_epoch - (24 - i) * 300), "time_epoch": latest_epoch - (24 - i) * 300, "type": "observed"} for i in range(25)]
+    frames += [{"time": code(latest_epoch + i * 300), "time_epoch": latest_epoch + i * 300, "type": "nowcast"} for i in range(1, 13)]
+    return {"location": {"lat": 34.724, "lon": -76.648, "tz_id": "America/New_York"}, "radar": {
+        "available": True, "covered": True, "tile_size": 256, "min_zoom": 0, "max_zoom": 11,
+        "tile_url": "https://api.weatherapi.com/v1/radar/tile/{z}/{x}/{y}.png?t={time}&e=1795187400&k=1&p=5&s=FAKESIG",
+        "tile_url_expires_epoch": latest_epoch + 7200,
+        "sources": [{"id": "mrms", "name": "NOAA MRMS (United States)", "latest_epoch": latest_epoch, "nowcast_minutes": 60, "bounds": [20.01, -129.99, 54.99, -60.01]}],
+        "frames": frames, "legend": [{"from_mm_h": 0.1, "color": "#9be7a1"}, {"from_mm_h": 64.0, "color": "#7e22ce"}],
+        "attribution": "Radar: NOAA/NSSL MRMS. Nowcast: WeatherAPI.com."}}
+
+
+class RealMode(unittest.TestCase):
+    """Pro+ real data (Ed t365u), with mocked upstream responses: no key, no network."""
+    def _refresh(self, server, body, now):
+        calls = []
+        def fake_fetch(url, tries=3):
+            calls.append(url); return 200, "application/json", json.dumps(body).encode()
+        with mock.patch.object(server, "weatherapi_key", return_value="TESTKEY"), \
+             mock.patch.object(server, "fetch_url_quiet", side_effect=fake_fetch), \
+             mock.patch.object(server, "record_radar_upstream"), mock.patch.object(server, "record_radar_cache_hit"), \
+             mock.patch.object(server.time, "time", return_value=now):
+            return server._refresh_radar_mem(), calls
+
+    def test_real_payload_cache_ttl_and_no_secret_to_client(self):
+        import server
+        server._RADAR_MEM.clear()
+        body = _real_radar_json(); t = 1795180200
+        p, calls = self._refresh(server, body, t)
+        self.assertTrue(p["ok"]); self.assertEqual(len(calls), 1)
+        self.assertEqual(p["tile_url"], "/api/radar/tile/{z}/{x}/{y}.png?t={time}")
+        self.assertNotIn("FAKESIG", json.dumps(p)); self.assertNotIn("TESTKEY", json.dumps(p))
+        self.assertEqual([f["type"] for f in p["frames"]].count("observed"), 25)
+        _, calls = self._refresh(server, body, t + 179)          # inside the 180 s TTL: cached, no call
+        self.assertEqual(calls, [])
+        _, calls = self._refresh(server, _real_radar_json(1795180200), t + 181)   # expired: one new call
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(server._RADAR_MEM["client"]["frames"][24]["time_epoch"], 1795180200)
+        server._RADAR_MEM.clear()
+
+    def test_view_payload_real_mode_never_fixture(self):
+        import server
+        server._RADAR_MEM.clear()
+        p, _ = self._refresh(server, _real_radar_json(), 1795180200)
+        for env in ({"RENDER": "true", "RADAR_FIXTURE": "1"}, {"RADAR_FIXTURE": ""}):
+            with mock.patch.dict(os.environ, env):
+                if "RENDER" not in env: os.environ.pop("RENDER", None); os.environ.pop("RENDER_SERVICE_ID", None)
+                st, v = radarview.view_payload(lambda: (200, p))
+            self.assertEqual((st, v["ok"], v["fixture"], v["max_native_zoom"]), (200, True, False, 7))
+            self.assertNotIn("fixture", v["tile_url"]); self.assertNotIn("fixture_label", v)
+            self.assertEqual(v["attribution"], "Radar: NOAA/NSSL MRMS via WeatherAPI.com")
+        europe = dict(p, sources=p["sources"] + [{"id": "other", "bounds": [25.0, -80.0, 45.0, -60.0]}], attribution="Radar: NOAA/NSSL MRMS; EUMETNET OPERA (CC BY 4.0).")
+        with mock.patch.dict(os.environ, {"RENDER": "true"}):
+            self.assertEqual(radarview.view_payload(lambda: (200, europe))[1]["attribution"], "Radar: NOAA/NSSL MRMS; EUMETNET OPERA (CC BY 4.0).")
+        server._RADAR_MEM.clear()
+
+    def test_2009_still_maps_to_plan_message(self):
+        import server
+        server._RADAR_MEM.clear()
+        with mock.patch.object(server, "weatherapi_key", return_value="TESTKEY"), \
+             mock.patch.object(server, "fetch_url_quiet", return_value=(400, "application/json", b'{"error":{"code":2009,"message":"x"}}')), \
+             mock.patch.object(server, "record_radar_upstream"):
+            st, v = radarview.view_payload(server.handle_radar_meta)
+        self.assertEqual((st, v["reason"], v["message"]), (200, "plan", "Radar unavailable on current data plan"))
+
+    @unittest.skipUnless(NODE, "node not installed")
+    def test_player_update_keeps_state_and_follows_latest(self):
+        r = node(FRAMES_JS + """const p = P.create(fr); p.play(); const out = [];
+        const later = fr.map(f => ({time: f.time, time_epoch: f.time_epoch, type: f.type}));
+        const obs = later.filter(f => f.type === 'observed').sort((a, b) => a.time_epoch - b.time_epoch);
+        const ne = obs[obs.length-1].time_epoch + 300; later.push({time: code(ne), time_epoch: ne, type: 'observed'});
+        let s = p.update(later); out.push(s.status, s.index, s.frame.time === code(ne), s.observedCount);
+        p.pause(); p.seek(3); const keep = p.snapshot().frame.time; s = p.update(later); out.push(s.frame.time === keep, s.status);
+        p.setForecast(true); s = p.update(later.filter(f => f.type === 'observed')); out.push(s.forecastOn, s.forecastCount);
+        s = p.update([]); out.push(s.status); console.log(JSON.stringify(out));""")
+        self.assertEqual(r, ["playing", 24, True, 25, True, "paused", False, 0, "empty"])
+
+    def test_viewer_refreshes_on_cache_ttl_and_shows_age(self):
+        js = (ROOT / "radar-viewer.js").read_text()
+        self.assertIn("setInterval(refresh, 180000)", js)
+        self.assertIn("player.update(m.frames)", js)
+        self.assertIn("if (fixture || document.hidden) return;", js)
+
+
 if __name__ == "__main__":
     unittest.main()

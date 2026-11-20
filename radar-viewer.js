@@ -149,7 +149,7 @@
     }
     function ageText() {
       const lo = player.snapshot().latestObserved; if (!lo) return;
-      $("r-age").textContent = fixture ? P.etTime(lo.epoch) + " · test" : P.etTime(lo.epoch).replace(" ET", "") + " · " + P.age(Date.now() / 1000, lo.epoch);
+      $("r-age").textContent = fixture ? P.etTime(lo.epoch) + " · test" : P.age(Date.now() / 1000, lo.epoch);
       $("r-age").title = fixture ? "Test data from " + P.etLong(lo.epoch) + ", not current" : P.etLong(lo.epoch);
     }
     player.on(render);
@@ -183,6 +183,27 @@
       if (e.key === " ") { e.preventDefault(); player.toggle(); schedule(); }
     });
     document.addEventListener("visibilitychange", function () { if (document.hidden) { clearTimeout(timer); timer = null; } else schedule(); });
+    /* Real data: re-read the frame list every 3 min (the server's radar.json cache TTL) while the page is
+       visible, so the newest observed frame keeps arriving. Old frames' layers are dropped. */
+    let lastLatest = snap0.latestObserved.time;
+    function refresh() {
+      if (fixture || document.hidden) return;
+      fetch("/api/radar-view").then((r) => r.json()).then(function (m) {
+        if (!m.ok || !m.frames || !m.frames.length || m.fixture) return;
+        player.update(m.frames);
+        const s = player.snapshot(); if (!s.latestObserved || s.latestObserved.time === lastLatest) return;
+        lastLatest = s.latestObserved.time;
+        const keep = new Set(player.observed().concat(player.forecast()).map((f) => f.time));
+        layers.forEach(function (l, t) { if (!keep.has(t)) { if (shown === l) shown = null; map.removeLayer(l); layers.delete(t); loaded.delete(t); } });
+        fc.disabled = !s.forecastCount;
+        $("r-obs").style.flexGrow = String(s.observedCount); $("r-fcs").style.flexGrow = String(Math.max(1, s.forecastCount));
+        window.__radarRefreshes = (window.__radarRefreshes || 0) + 1;
+        render(player.snapshot()); ageText(); prefetch(s.observedCount - 1);
+      }).catch(function () {});
+    }
+    setInterval(refresh, 180000);
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) refresh(); });
+    window.__radarRefresh = refresh;
     window.__radarView = { map: map, player: player, loaded: loaded, layers: layers, fixture: fixture, reduce: reduce };
     // Start on the latest observed frame; autoplay (from the oldest frame) unless reduced motion.
     prefetch(snap0.index);
