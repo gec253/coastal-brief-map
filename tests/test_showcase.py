@@ -95,5 +95,25 @@ class Client(unittest.TestCase):
         self.assertIn("aspect-ratio:4/3", self.css)  # reserved space: no layout shift
 
 
+    def test_a_layout_and_legible_credits(self):
+        self.assertIn("@media (min-width:700px){.sc-a .sc-grid{grid-template-columns:1fr 1fr}}", self.css)
+        self.assertIn("aspect-ratio:4/3", self.css)
+        self.assertIn("font-size:.7rem", self.css)
+        self.assertNotIn("display:none", self.css.replace(".sc-pv{position:absolute;left:-9999px}", "").replace(".sc-b .sc-read small{display:none}", "").replace(".sc-b .sc-age i{display:none}", ""))
+        html = showcase.section("A", "Radar: credit.", "Radar is for general information only.")
+        self.assertNotIn("<details", html)
+        credit = html[html.find("sc-credit"):]
+        self.assertNotIn(" hidden", credit)
+        self.assertIn("Crystal Coast", html)
+        self.assertIn(showcase.GFS_CREDIT, html)
+        self.assertIn("Radar: credit.", html)
+        self.assertIn("Radar is for general information only.", html)
+        self.assertIn("Cape Lookout", self.js)
+        self.assertIn("34.605", self.js)
+        self.assertIn("-76.536", self.js)
+        self.assertIn("No precipitation in view", self.js)
+        self.assertIn('nm + " nm"', self.js)
+
+
 if __name__ == "__main__":
     unittest.main()

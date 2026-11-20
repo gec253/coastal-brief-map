@@ -13,6 +13,10 @@
   const SPAN_DEG = 2.9; // longitude across the instrument face
   const STOPS_DARK = [[0, [120, 160, 190]], [8, [110, 200, 215]], [15, [140, 220, 170]], [22, [235, 215, 120]], [30, [245, 150, 90]], [38, [240, 95, 95]]];
   const STOPS_LIGHT = [[0, [70, 110, 140]], [8, [25, 120, 150]], [15, [30, 125, 95]], [22, [170, 130, 30]], [30, [190, 85, 40]], [38, [150, 35, 35]]];
+  // Radar-only labels at true WGS84 positions. Water names (w=1) sit in the sound; never used as weather.
+  // ax: 0 right of the point, 1 centered (water), 2 left, 3 above. Positions are true WGS84.
+  const PLACES = [["Cape Lookout",34.605,-76.536,0,0],["Morehead City",34.722,-76.695,0,3],["Pamlico Sound",35.22,-76.32,1,1],["Ocracoke",35.115,-75.981,0,2],["Emerald Isle",34.668,-77.063,0,2],["Core Sound",34.80,-76.28,1,1],["Cape Hatteras",35.222,-75.530,0,2],["New Bern",35.108,-77.044,0,2]];
+  const SANS = "\"Barlow Condensed\",\"Arial Narrow\",sans-serif";
   const dark = () => matchMedia("(prefers-color-scheme: dark)").matches;
   const $ = (k) => sec.querySelector('[data-k="' + k + '"]');
   const et = (d, o) => new Intl.DateTimeFormat("en-US", Object.assign({ timeZone: "America/New_York" }, o)).format(d);
@@ -47,30 +51,94 @@
   function coastline(v, coast) {
     const x = v.ctx; x.beginPath();
     for (const p of coast) for (const r of p.r) { for (let i = 0; i < r.length; i += 2) { const q = v.px(r[i], r[i + 1]); i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1]); } x.closePath(); }
-    x.strokeStyle = css("--sc-coast"); x.lineWidth = 0.9; x.stroke();
+    x.strokeStyle = css("--sc-coast"); x.lineWidth = 1; x.stroke();
   }
-  // Chart neatline: a thin frame with alternating 10' bars of latitude/longitude, like a nautical chart border.
+  // Chart neatline: hairline outer and inner frames with a 10′ graduated bar between them.
   function neatline(v) {
-    const x = v.ctx, b = 3, ink = css("--sc-neat");
-    x.fillStyle = css("--sc-face"); x.fillRect(0, 0, v.w, b); x.fillRect(0, v.h - b, v.w, b); x.fillRect(0, 0, b, v.h); x.fillRect(v.w - b, 0, b, v.h);
-    x.fillStyle = ink; x.globalAlpha = 0.55;
+    const x = v.ctx, ink = css("--sc-neat"), face = css("--sc-face"), o = 1, b = 2, t = o + b;
+    x.fillStyle = face; x.fillRect(0, 0, v.w, t); x.fillRect(0, v.h - t, v.w, t); x.fillRect(0, 0, t, v.h); x.fillRect(v.w - t, 0, t, v.h);
+    x.fillStyle = ink; x.globalAlpha = 0.58;
     const tl = unproj(v.ox, v.oy, v.z), br = unproj(v.ox + v.w, v.oy + v.h, v.z), step = 1 / 6;
     for (let lon = Math.floor(tl[0] / step) * step; lon < br[0]; lon += step) {
       if (Math.round(lon / step) % 2) continue;
       const a = Math.max(0, v.px(lon, 0)[0]), c = Math.min(v.w, v.px(lon + step, 0)[0]);
-      if (c > a) { x.fillRect(a, 0, c - a, b); x.fillRect(a, v.h - b, c - a, b); }
+      if (c > a) { x.fillRect(a, o, c - a, b); x.fillRect(a, v.h - t, c - a, b); }
     }
     for (let lat = Math.floor(br[1] / step) * step; lat < tl[1]; lat += step) {
       if (Math.round(lat / step) % 2) continue;
       const a = Math.max(0, v.px(0, lat + step)[1]), c = Math.min(v.h, v.px(0, lat)[1]);
-      if (c > a) { x.fillRect(0, a, b, c - a); x.fillRect(v.w - b, a, b, c - a); }
+      if (c > a) { x.fillRect(o, a, b, c - a); x.fillRect(v.w - t, a, b, c - a); }
     }
-    x.globalAlpha = 1; x.strokeStyle = ink; x.lineWidth = 1; x.strokeRect(b + 0.5, b + 0.5, v.w - 2 * b - 1, v.h - 2 * b - 1);
+    x.globalAlpha = 1; x.strokeStyle = ink; x.lineWidth = 1;
+    x.strokeRect(0.5, 0.5, v.w - 1, v.h - 1);
+    x.strokeRect(t + 0.5, t + 0.5, v.w - 2 * t - 1, v.h - 2 * t - 1);
+  }
+  function haloText(x, s, tx, ty) {
+    x.strokeStyle = css("--sc-face"); x.lineWidth = 3; x.lineJoin = "round"; x.miterLimit = 2;
+    x.strokeText(s, tx, ty); x.fillStyle = css("--sc-neat"); x.fillText(s, tx, ty);
+  }
+  function graticule(v) {
+    const x = v.ctx, tl = unproj(v.ox, v.oy, v.z), br = unproj(v.ox + v.w, v.oy + v.h, v.z), step = 0.5, pad = 4;
+    x.save(); x.beginPath(); x.strokeStyle = css("--sc-neat"); x.globalAlpha = 0.2; x.lineWidth = 0.6;
+    for (let lon = Math.ceil(tl[0] / step) * step; lon < br[0]; lon += step) {
+      const p = v.px(lon, 0); x.moveTo(p[0], pad); x.lineTo(p[0], v.h - pad);
+    }
+    for (let lat = Math.ceil(br[1] / step) * step; lat < tl[1]; lat += step) {
+      const p = v.px(0, lat); x.moveTo(pad, p[1]); x.lineTo(v.w - pad, p[1]);
+    }
+    x.stroke();
+    x.globalAlpha = 0.78; x.font = "600 8.5px " + SANS;
+    x.textAlign = "left"; x.textBaseline = "top";
+    for (let lon = Math.ceil(tl[0]); lon < br[0]; lon++) {
+      const p = v.px(lon, 0); if (p[0] < 28 || p[0] > v.w - 44) continue;
+      haloText(x, Math.abs(lon) + "°W", p[0] + 3, 5);
+    }
+    x.textBaseline = "middle";
+    for (let lat = Math.ceil(br[1]); lat < tl[1]; lat++) {
+      const p = v.px(0, lat); if (p[1] < 20 || p[1] > v.h - 20) continue;
+      haloText(x, lat + "°N", 5, p[1]);
+    }
+    x.restore();
+  }
+  function scaleBar(v) {
+    const x = v.ctx, nm = 20, lat = CENTER.lat;
+    const px = Math.abs(v.px(CENTER.lon + 1, lat)[0] - v.px(CENTER.lon, lat)[0]) * nm / (60 * Math.cos(lat * D));
+    if (!(px > 24 && px < v.w * 0.4)) return;
+    const x1 = v.w - 10, y = v.h - 11, x0 = x1 - px;
+    x.save(); x.strokeStyle = css("--sc-neat"); x.lineWidth = 1; x.globalAlpha = 0.9;
+    x.beginPath(); x.moveTo(x0, y - 3); x.lineTo(x0, y); x.lineTo(x1, y); x.lineTo(x1, y - 3);
+    x.moveTo((x0 + x1) / 2, y); x.lineTo((x0 + x1) / 2, y - 2); x.stroke();
+    x.font = "600 8.5px " + SANS; x.textAlign = "center"; x.textBaseline = "bottom";
+    haloText(x, nm + " nm", (x0 + x1) / 2, y - 4);
+    x.restore();
+  }
+  function placeLabels(v) {
+    const x = v.ctx, fs = v.w < 260 ? 8 : 9.5;
+    const taken = [[0, v.h - 52, Math.min(220, v.w * 0.62), v.h], [v.w - 42, 0, v.w, 40], [v.w - 90, v.h - 28, v.w, v.h]];
+    x.save(); x.lineWidth = 3; x.lineJoin = "round"; x.textBaseline = "middle"; x.textAlign = "left";
+    for (const [name, lat, lon, water, ax] of PLACES) {
+      const q = v.px(lon, lat);
+      x.font = (water ? "italic 500 " : "600 ") + fs + "px " + (water ? "Fraunces,Georgia,serif" : SANS);
+      const tw = x.measureText(name).width;
+      let tx, ty;
+      if (ax === 3) { tx = q[0] - tw / 2; ty = q[1] - fs - 3; }
+      else if (ax === 2) { tx = q[0] - tw - 5; ty = q[1]; }
+      else if (ax === 1) { tx = q[0] - tw / 2; ty = q[1]; }
+      else { tx = q[0] + 5; ty = q[1]; }
+      if (tx < 6) tx = 6;
+      if (tx + tw > v.w - 6) tx = v.w - 6 - tw;
+      if (ty < 16 || ty > v.h - 16) continue;
+      const box = [tx - 2, ty - fs, tx + tw + 2, ty + fs];
+      if (taken.some((r) => box[0] < r[2] && box[2] > r[0] && box[1] < r[3] && box[3] > r[1])) continue;
+      taken.push(box);
+      haloText(x, name, tx, ty);
+    }
+    x.restore();
   }
   function homeDot(v) {
     const x = v.ctx, q = v.px(HOME.lon, HOME.lat);
-    x.beginPath(); x.arc(q[0], q[1], 3.2, 0, 7); x.fillStyle = css("--sc-neat"); x.fill();
-    x.lineWidth = 1.5; x.strokeStyle = css("--sc-face"); x.stroke();
+    x.beginPath(); x.arc(q[0], q[1], 2.8, 0, 7); x.fillStyle = css("--sc-neat"); x.fill();
+    x.lineWidth = 1.4; x.strokeStyle = css("--sc-face"); x.stroke();
   }
   function sampler(g) {
     const north = (g.scan & 0x40) === 0, U = g.u, V = g.v, nx = g.nx, ny = g.ny;
@@ -104,7 +172,7 @@
         x.beginPath(); x.moveTo(pts[i - 1][0], pts[i - 1][1]); x.lineTo(pts[i][0], pts[i][1]); x.stroke();
       }
     }
-    coastline(v, coast); homeDot(v); neatline(v); cv.classList.add("is-on");
+    coastline(v, coast); graticule(v); homeDot(v); scaleBar(v); neatline(v); cv.classList.add("is-on");
     const h = uv(HOME.lat, HOME.lon);
     if (h) {
       const k = Math.round(Math.hypot(h[0], h[1]) * KT), dir = DIRS[Math.round(((Math.atan2(-h[0], -h[1]) / D + 360) % 360) / 22.5) % 16];
@@ -133,7 +201,7 @@
         for (const [t, im] of got) if (im) ox.drawImage(im, t[0] * 256 * k - v2.ox, t[1] * 256 * k - v2.oy, 256 * k, 256 * k);
         let echoes = 0; try { const d = ox.getImageData(8, 8, v2.w - 16, v2.h - 16).data; for (let i = 3; i < d.length; i += 16) if (d[i] > 40) echoes++; } catch (e) { echoes = -1; }
         x.globalAlpha = 0.9; x.drawImage(off, 0, 0, v2.w, v2.h); x.globalAlpha = 1;
-        coastline(v2, coast); homeDot(v2); neatline(v2); cv.classList.add("is-on");
+        coastline(v2, coast); graticule(v2); homeDot(v2); placeLabels(v2); scaleBar(v2); neatline(v2); cv.classList.add("is-on");
         const compact = sec.classList.contains("sc-b");
         $("r-read").textContent = echoes > 30 ? (compact ? "Echoes" : "Precipitation in view") : echoes >= 0 ? (compact ? "Dry" : "No precipitation in view") : "";
       };

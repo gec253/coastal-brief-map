@@ -60,7 +60,7 @@ def section(v: str, attribution: str = "", disclaimer: str = "") -> str:
         '<p class="sc-sub">Crystal Coast · tap an instrument for the full-screen viewer</p></header>'
         '<p class="sc-pv">Design preview %s · not public</p>'
         '<div class="sc-grid">%s%s</div>'
-        '<p class="sc-credit"><span>%s</span> <span data-k="r-attr">%s</span> <span class="sc-disc" data-k="r-disc">%s</span></p>'
+        '<p class="sc-credit"><span>%s</span><span class="sc-sep" aria-hidden="true"> · </span><span data-k="r-attr">%s</span><span class="sc-sep" aria-hidden="true"> · </span><span class="sc-disc" data-k="r-disc">%s</span></p>'
         '</section>' % (v.lower(), v, v, _inst("wind", v), _inst("radar", v), GFS_CREDIT, attr, disc))
 
 
