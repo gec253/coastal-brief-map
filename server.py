@@ -1165,7 +1165,7 @@ import catch_wall_preview  # noqa: E402
 import windgrid  # noqa: E402
 import hrrrgrid  # noqa: E402
 import radarview  # noqa: E402
-import showcase  # noqa: E402  (private design preview; local-only gate)
+import showcase  # noqa: E402  (homepage Wind & Radar section; HOME_SHOWCASE flag, default off)
 import freshwater  # noqa: E402
 import brief  # noqa: E402
 import wave_intro  # noqa: E402
@@ -2793,7 +2793,25 @@ class Handler(SimpleHTTPRequestHandler):
         if parsed.path == "/showcase.js":
             if not showcase.enabled():
                 return self.send_error(404, "not found")
-            return self._send_private(ROOT / "showcase.js", "text/javascript; charset=utf-8")
+            self._static_cache = "public, max-age=600"
+            return self._send_bytes((ROOT / "showcase.js").read_bytes(), "text/javascript; charset=utf-8", cache_s=600)
+        if parsed.path == "/api/home-wind":
+            # Public GFS-only snapshot for the homepage instruments. Ignores query strings
+            # (no ahead, no ?model=hrrr). windgrid caches the file 30 minutes, so repeats
+            # cannot drive unbounded NOMADS calls. Browser cache 10 minutes.
+            g = windgrid.latest_grid(ahead=0)
+            if g.get("ok"):
+                g = {k: g[k] for k in (
+                    "ok", "kind", "source", "run", "valid", "forecastHour", "units",
+                    "nx", "ny", "la1", "lo1", "dx", "dy", "scan", "ahead", "u", "v") if k in g}
+            else:
+                g = {"ok": False, "error": g.get("error") or "Model wind is unavailable right now."}
+            return self._send_json(g, cache_s=600 if g.get("ok") else 60, status=200 if g.get("ok") else 502)
+        if parsed.path == "/api/home-coast":
+            # Public-domain Census 1:500k coastline (low-res), the file the homepage draws.
+            # Static; no upstream fetch. High-res /wind/coast-hi.json stays private.
+            data = (ROOT / "wind-coast" / "lo.json").read_bytes()
+            return self._send_bytes(data, "application/json; charset=utf-8", cache_s=86400)
         if parsed.path == "/api/sst-time":
             return self._send_json(sst_latest_times(), cache_s=600)
         if parsed.path == "/api/radar/usage":
@@ -2920,7 +2938,7 @@ class Handler(SimpleHTTPRequestHandler):
         except Exception as e:
             sys.stderr.write("hybrid home failed, serving dashboard: %s\n" % e)
             return self._send_html(ROOT / "index.html", region_id=rid)
-        if sc:  # private design preview, local only (showcase.variant is None on Render)
+        if sc:  # Concept A Wind & Radar section; only when HOME_SHOWCASE is on
             data = showcase.inject(data, sc, radar_meta=handle_radar_meta)
             self.send_response(200)
             self.send_header("Cache-Control", "no-store")

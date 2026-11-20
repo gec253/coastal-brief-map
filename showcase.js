@@ -1,6 +1,6 @@
 /* PRIVATE design preview (showcase.py): static Wind & Radar instrument snapshots on the homepage.
    Loads nothing until the section is near the viewport. Wind: one static streak snapshot of the real
-   NOAA GFS grid (/api/wind-grid), no animation. Radar: only the LATEST OBSERVED frame, a few z7 tiles
+   NOAA GFS grid (/api/home-wind), no animation. Radar: only the LATEST OBSERVED frame, a few z7 tiles
    through the existing proxy (/api/radar/tile/...), never forecast frames, never the animation. */
 (function () {
   "use strict";
@@ -212,10 +212,10 @@
   function start() {
     if (started) return; started = true;
     const j = (u) => fetch(u, { credentials: "same-origin" }).then((r) => r.json());
-    const coastP = j("/wind/coast-lo.json").then(decode);
+    const coastP = j("/api/home-coast").then(decode);
     const cvW = sec.querySelector(".sc-wind .sc-cv"), cvR = sec.querySelector(".sc-radar .sc-cv");
     let redrawW = null, redrawR = null;
-    Promise.all([j("/api/wind-grid"), coastP]).then(([g, coast]) => { if (g.ok) { drawWind(cvW, g, coast); redrawW = () => drawWind(cvW, g, coast); } else $("w-read").textContent = "Wind model unavailable"; }).catch(() => { $("w-read").textContent = "Wind model unavailable"; });
+    Promise.all([j("/api/home-wind"), coastP]).then(([g, coast]) => { if (g.ok) { drawWind(cvW, g, coast); redrawW = () => drawWind(cvW, g, coast); } else $("w-read").textContent = "Wind model unavailable"; }).catch(() => { $("w-read").textContent = "Wind model unavailable"; });
     Promise.all([j("/api/radar"), coastP]).then(([m, coast]) => drawRadar(cvR, m, coast)).then((d) => { redrawR = d || null; }).catch(() => { $("r-read").textContent = "Radar unavailable"; });
     matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { redrawW && redrawW(); redrawR && redrawR(); });
   }

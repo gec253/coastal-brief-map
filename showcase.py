@@ -1,12 +1,22 @@
-"""PRIVATE design preview: Wind & Radar homepage showcase (concepts A and B). Not for production.
+"""Wind & Radar homepage section (approved Concept A). Off until HOME_SHOWCASE is enabled.
 
-The homepage shows a variant only when ALL of these hold:
-  * the process is not on Render (Render sets RENDER / RENDER_SERVICE_ID in every service),
-  * HOME_SHOWCASE=1 is set locally, and
-  * the URL asks for it with ?showcase=A or ?showcase=B (Crystal Coast only).
-Otherwise the default homepage is served byte-for-byte unchanged and /showcase.js 404s, so production
-can never show it (same gate pattern as the radar fixture). Data comes from the existing systems:
-/api/wind-grid (NOAA GFS) and /api/radar + /api/radar/tile/... (WeatherAPI via the server proxy).
+The Crystal Coast homepage shows the section only when HOME_SHOWCASE is 1/true/on/yes
+(the flag defaults OFF). Other regions are unchanged. With the flag off, the homepage is
+served unchanged and /showcase.js 404s, so merging this branch does not change the live
+page until the flag is turned on.
+
+Activation (requires Ed's approval; do not flip in this change):
+  * Set HOME_SHOWCASE=1 on the Render web service as an environment variable.
+    No DNS, domain, plan, or key changes. No new WeatherAPI keys.
+  * Render restarts the service when the env var is saved; no code deploy is required
+    if this branch is already the running build. Do not activate between 5:00 and 5:45 AM ET.
+  * Deactivation: set HOME_SHOWCASE=0 (or unset it) and save; the homepage returns to the
+    previous layout. /api/home-wind and /api/home-coast stay available (read-only, cached).
+
+Data: /api/home-wind is a public, GFS-only, cached snapshot (HRRR and /api/wind-grid stay
+private). /api/home-coast is the public-domain Census coastline. Radar uses the existing
+public /api/radar proxy; the WeatherAPI key and signed tile URLs stay on the server.
+/wind, /radar and /lab/wind stay preview-gated.
 """
 from __future__ import annotations
 
@@ -16,21 +26,19 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-VARIANTS = ("A", "B")
 GFS_CREDIT = "Wind: NOAA NCEP GFS 0.25° model forecast (10 m), via NOMADS."
 
 
 def enabled() -> bool:
-    if os.environ.get("RENDER") or os.environ.get("RENDER_SERVICE_ID"):
-        return False
-    return os.environ.get("HOME_SHOWCASE", "").strip() == "1"
+    """True only when HOME_SHOWCASE is explicitly on. Defaults off, including on Render."""
+    return (os.environ.get("HOME_SHOWCASE") or "").strip().lower() in ("1", "true", "on", "yes")
 
 
 def variant(query: dict, region: str | None) -> str | None:
+    """Return "A" for the Crystal Coast homepage when the flag is on; otherwise None."""
     if not enabled() or region not in (None, "", "crystal-coast"):
         return None
-    v = ((query.get("showcase") or [""])[0] or "").strip().upper()
-    return v if v in VARIANTS else None
+    return "A"
 
 
 def _inst(kind: str, v: str) -> str:
@@ -58,10 +66,10 @@ def section(v: str, attribution: str = "", disclaimer: str = "") -> str:
         '<section class="sc sc-%s" id="showcase" aria-labelledby="sc-h" data-showcase="%s">'
         '<header class="sc-head"><h2 id="sc-h">Wind &amp; Radar</h2>'
         '<p class="sc-sub">Crystal Coast · tap an instrument for the full-screen viewer</p></header>'
-        '<p class="sc-pv">Design preview %s · not public</p>'
+        '<p class="sc-pv">Wind and radar for the Crystal Coast.</p>'
         '<div class="sc-grid">%s%s</div>'
         '<p class="sc-credit"><span>%s</span><span class="sc-sep" aria-hidden="true"> · </span><span data-k="r-attr">%s</span><span class="sc-sep" aria-hidden="true"> · </span><span class="sc-disc" data-k="r-disc">%s</span></p>'
-        '</section>' % (v.lower(), v, v, _inst("wind", v), _inst("radar", v), GFS_CREDIT, attr, disc))
+        '</section>' % (v.lower(), v, _inst("wind", v), _inst("radar", v), GFS_CREDIT, attr, disc))
 
 
 def _close_of_section(doc: str, start: int) -> int:
@@ -89,8 +97,7 @@ def inject(page: bytes, v: str, radar_meta=None) -> bytes:
     end = _close_of_section(doc, i)
     doc = doc[:end] + section(v, attribution, disclaimer) + doc[end:]
     css = (ROOT / "showcase.css").read_text(encoding="utf-8")
-    doc = re.sub(r'<meta name="robots"[^>]*>\s*', "", doc)
-    head = '<meta name="robots" content="noindex, nofollow">\n<style id="sc-css">%s</style>\n' % css
-    doc = doc.replace("</head>", head + "</head>", 1)
+    # Keep the page's existing robots rules (this is a public homepage section when the flag is on).
+    doc = doc.replace("</head>", '<style id="sc-css">%s</style>\n</head>' % css, 1)
     doc = doc.replace("</body>", '<script src="/showcase.js" defer></script>\n</body>', 1)
     return doc.encode("utf-8")
