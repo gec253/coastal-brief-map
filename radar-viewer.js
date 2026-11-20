@@ -96,10 +96,11 @@
        frame whose tiles have loaded, so the map never flashes empty. */
     const layers = new Map(), loaded = new Set(), t0 = performance.now(), loadMs = {};
     const tmpl = meta.tile_url;
+    let issue = snap0.latestObserved.time;   // forecast tiles are re-issued with each frame list
     function layerFor(f) {
       let l = layers.get(f.time);
       if (l) return l;
-      l = new CanvasTiles({ url: tmpl.replace("{time}", f.time),
+      l = new CanvasTiles({ url: tmpl.replace("{time}", f.time) + (f.type === "forecast" ? "&v=" + issue : ""),
         pane: "radar", opacity: 0, className: "r-frame" + (f.type === "forecast" ? " r-frame-fc" : ""),
         tileSize: meta.tile_size || 256, maxNativeZoom: meta.max_native_zoom || meta.max_zoom || 7, minZoom: 5, maxZoom: 9.5,
         updateWhenIdle: true, keepBuffer: 0,
@@ -192,8 +193,8 @@
         if (!m.ok || !m.frames || !m.frames.length || m.fixture) return;
         player.update(m.frames);
         const s = player.snapshot(); if (!s.latestObserved || s.latestObserved.time === lastLatest) return;
-        lastLatest = s.latestObserved.time;
-        const keep = new Set(player.observed().concat(player.forecast()).map((f) => f.time));
+        lastLatest = s.latestObserved.time; issue = lastLatest;
+        const keep = new Set(player.observed().map((f) => f.time));   // forecast layers are rebuilt
         layers.forEach(function (l, t) { if (!keep.has(t)) { if (shown === l) shown = null; map.removeLayer(l); layers.delete(t); loaded.delete(t); } });
         fc.disabled = !s.forecastCount;
         $("r-obs").style.flexGrow = String(s.observedCount); $("r-fcs").style.flexGrow = String(Math.max(1, s.forecastCount));

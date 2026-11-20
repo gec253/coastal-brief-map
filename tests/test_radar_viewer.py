@@ -136,16 +136,19 @@ class Cache(unittest.TestCase):
         self.assertEqual(server.TTL["radar_json"], 180)
         self.assertEqual(server.TTL["radar_tile"], 7200)
         puts = []
+        client = {"frames": [{"time": "202611200900", "type": "observed"}, {"time": "202611201000", "type": "nowcast"}]}
         with mock.patch.object(server, "weatherapi_key", return_value="k"), \
              mock.patch.object(server, "cache_get", return_value=None), \
-             mock.patch.object(server, "cache_put", side_effect=lambda *a: puts.append(a)), \
+             mock.patch.object(server, "cache_put_ttl", side_effect=lambda *a, **k: puts.append(a)), \
              mock.patch.object(server, "_refresh_radar_mem", return_value={"ok": True}), \
-             mock.patch.dict(server._RADAR_MEM, {"tile_url": "https://api.weatherapi.com/v1/radar/tile/{z}/{x}/{y}/{time}.png?sig=SECRET"}), \
+             mock.patch.dict(server._RADAR_MEM, {"tile_url": "https://api.weatherapi.com/v1/radar/tile/{z}/{x}/{y}/{time}.png?sig=SECRET", "client": client}), \
              mock.patch.object(server, "fetch_url_quiet", return_value=(200, "image/png", b"\x89PNG")):
             st, ct, body = server.fetch_radar_tile("7", "36", "50", "202611200900")
+            server.fetch_radar_tile("7", "36", "50", "202611201000")
         self.assertEqual(st, 200)
         self.assertEqual(puts[0][0], "radar-cache://tile/7/36/50/202611200900")   # z/x/y/time, never the signed URL
-        self.assertEqual(puts[0][1], "radar_tile")
+        self.assertEqual(puts[0][1], 7200)                                         # observed: 2 h
+        self.assertEqual(puts[1][1], 180)                                          # nowcast: re-issued, 180 s
         self.assertNotIn("SECRET", puts[0][0])
 
 
@@ -332,6 +335,7 @@ class RealMode(unittest.TestCase):
         self.assertIn("setInterval(refresh, 180000)", js)
         self.assertIn("player.update(m.frames)", js)
         self.assertIn("if (fixture || document.hidden) return;", js)
+        self.assertIn('(f.type === "forecast" ? "&v=" + issue : "")', js)
 
 
 if __name__ == "__main__":

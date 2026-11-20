@@ -1069,9 +1069,19 @@ def fetch_radar_tile(z: str, x: str, y: str, t: str) -> tuple[int, str, bytes]:
     url = template.replace("{z}", z).replace("{x}", x).replace("{y}", y).replace("{time}", t)
     status, ctype, body = fetch_url_quiet(url, tries=3)
     if status == 200 and body:
-        with CACHE_LOCK:
-            cache_put(cache_key_url, "radar_tile", status, ctype or "image/png", body)
+        cache_put_ttl(cache_key_url, radar_tile_ttl(t), body, ctype or "image/png")
     return status, ctype or "image/png", body
+
+
+def radar_tile_ttl(t: str) -> int:
+    """Observed tiles never change (2 h cache). Nowcast tiles for the same time are re-issued with each
+    radar.json update (verified Nov 20, 2026), so they only live as long as the frame list (180 s)."""
+    with RADAR_LOCK:
+        frames = (_RADAR_MEM.get("client") or {}).get("frames") or []
+    for f in frames:
+        if f.get("time") == t and f.get("type") == "nowcast":
+            return RADAR_JSON_TTL
+    return TTL["radar_tile"]
 
 
 import conditions  # noqa: E402
@@ -3062,7 +3072,7 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
-        ttl = TTL.get("radar_tile", 600) if status == 200 else 0
+        ttl = radar_tile_ttl(t) if status == 200 else 0
         if ttl:
             self.send_header("Cache-Control", "public, max-age=%s" % ttl)
             self._cache_header_sent = True
