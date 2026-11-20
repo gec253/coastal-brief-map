@@ -233,7 +233,7 @@ def cache_get_any(url: str) -> tuple[int, str, bytes] | None:
 # docs, and test fixtures are not.
 _STATIC_EXT = {".html", ".css", ".js", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".avif", ".ico",
                ".woff2", ".json", ".txt", ".xml", ".webmanifest", ".map"}
-_STATIC_DENY_PREFIX = ("/.", "/admin", "/preview/", "/branding/og-masthead.html", "/branding/render-og-masthead.", "/wind-lab.", "/wind.", "/wind-viewer.", "/wind-coast", "/radar.", "/radar-", "/lake.", "/tiles-lab.", "/docs/", "/tests/", "/scripts/", "/__pycache__/", "/requirements")
+_STATIC_DENY_PREFIX = ("/.", "/admin", "/preview/", "/branding/og-masthead.html", "/branding/render-og-masthead.", "/wind-lab.", "/wind.", "/wind-viewer.", "/wind-coast", "/radar.", "/radar-", "/showcase.", "/lake.", "/tiles-lab.", "/docs/", "/tests/", "/scripts/", "/__pycache__/", "/requirements")
 
 
 def _static_allowed(path: str) -> bool:
@@ -1165,6 +1165,7 @@ import catch_wall_preview  # noqa: E402
 import windgrid  # noqa: E402
 import hrrrgrid  # noqa: E402
 import radarview  # noqa: E402
+import showcase  # noqa: E402  (private design preview; local-only gate)
 import freshwater  # noqa: E402
 import brief  # noqa: E402
 import wave_intro  # noqa: E402
@@ -2586,7 +2587,7 @@ class Handler(SimpleHTTPRequestHandler):
                 # under another name (launch audit item 7). The id itself is not echoed.
                 return self._send_private(None, "text/html; charset=utf-8", site_chrome.region_not_found_page(), 404)
             if parsed.path in ("/", "/index.html"):
-                return self._send_public_home(rid or None)
+                return self._send_public_home(rid or None, sc=showcase.variant(parse_qs(parsed.query), rid))
             return self._send_html(ROOT / "index.html", region_id=rid or None)
         if parsed.path == "/api/brief/wake":
             # Daily wake-up ping (GitHub Actions, 5:16 AM ET). Builds today's briefs if missing; returns no
@@ -2789,6 +2790,10 @@ class Handler(SimpleHTTPRequestHandler):
             if pv and not _flag("WIND_PARTICLES_ENABLED"):
                 return self._json_private(g, 200 if g.get("ok") else 502)
             return self._send_json(g, cache_s=600 if g.get("ok") else 60, status=200 if g.get("ok") else 502)
+        if parsed.path == "/showcase.js":
+            if not showcase.enabled():
+                return self.send_error(404, "not found")
+            return self._send_private(ROOT / "showcase.js", "text/javascript; charset=utf-8")
         if parsed.path == "/api/sst-time":
             return self._send_json(sst_latest_times(), cache_s=600)
         if parsed.path == "/api/radar/usage":
@@ -2908,13 +2913,22 @@ class Handler(SimpleHTTPRequestHandler):
         return self._send_private(None, "text/html; charset=utf-8", data)
 
 
-    def _send_public_home(self, rid):
+    def _send_public_home(self, rid, sc=None):
         """Public Hybrid homepage. If it cannot render, serve the dashboard so / never goes down."""
         try:
             data = sprint_home.page("hybrid", rid, public=True)
         except Exception as e:
             sys.stderr.write("hybrid home failed, serving dashboard: %s\n" % e)
             return self._send_html(ROOT / "index.html", region_id=rid)
+        if sc:  # private design preview, local only (showcase.variant is None on Render)
+            data = showcase.inject(data, sc, radar_meta=handle_radar_meta)
+            self.send_response(200)
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+            return
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))

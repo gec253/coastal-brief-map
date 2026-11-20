@@ -1,0 +1,46 @@
+/* PRIVATE design preview (showcase.py). Coastal Blue tokens from the homepage; instrument bezel in brass. */
+.sc{--sc-b1:#E2CB98;--sc-b2:#9C7C45;--sc-b3:#CDB078;--sc-b4:#7A6036;--sc-face:#EAF0EE;--sc-land:#E9DFCB;--sc-coast:#5B6F6A;--sc-water:#DCE7E8;--sc-neat:#0B2A3D;--sc-plate:rgba(255,253,248,.88);
+  padding:14px 14px 16px;border-top:1px solid var(--line)}
+@media (prefers-color-scheme:dark){.sc{--sc-b1:#B89A62;--sc-b2:#5E4A28;--sc-b3:#9C8152;--sc-b4:#46371D;--sc-face:#0A1C27;--sc-land:#1B2C33;--sc-coast:#8FA6A4;--sc-water:#0B1E2A;--sc-neat:#C9BCA5;--sc-plate:rgba(8,22,31,.86)}}
+@media (min-width:1000px){.sc{padding:16px 0 18px}}
+.sc-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:2px 10px;margin-bottom:10px}
+.sc-head h2{font:600 .82rem/1.2 var(--f-num);letter-spacing:.18em;text-transform:uppercase;color:var(--accent,var(--atlantic))}
+.sc-sub{font-size:.82rem;color:var(--ink-2)}
+.sc-pv{position:absolute;left:-9999px}
+.sc-grid{display:grid;gap:14px}
+.sc-b .sc-grid{grid-template-columns:1fr 1fr;gap:10px}
+@media (min-width:700px){.sc-a .sc-grid{grid-template-columns:1fr 1fr}}
+.sc-inst{display:flex;flex-direction:column;gap:7px;min-height:44px;padding:9px 10px 8px;border-radius:16px;color:var(--ink);text-decoration:none;-webkit-tap-highlight-color:transparent;
+  border:2px solid transparent;background:linear-gradient(var(--paper),var(--paper)) padding-box,linear-gradient(155deg,var(--sc-b1),var(--sc-b2) 38%,var(--sc-b3) 62%,var(--sc-b4)) border-box;
+  box-shadow:0 1px 2px rgba(11,42,61,.12),0 6px 18px -10px rgba(11,42,61,.35)}
+.sc-inst:focus-visible{outline:3px solid var(--brass);outline-offset:3px}
+.sc-top{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:26px}
+.sc-name{font:600 1.18rem/1 var(--f-display);letter-spacing:.01em}
+.sc-tag{font:600 .74rem/1 var(--f-num);letter-spacing:.1em;text-transform:uppercase;padding:5px 7px 4px;border-radius:5px;white-space:nowrap}
+.sc-tag-model{color:var(--pred);background:var(--pred-bg);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--pred) 35%,transparent)}
+.sc-tag-obs{color:var(--obs);background:var(--obs-bg);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--obs) 35%,transparent)}
+.sc-face{position:relative;display:block;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:var(--sc-face);
+  box-shadow:inset 0 0 0 1px rgba(11,42,61,.28),inset 0 2px 8px rgba(0,0,0,.22)}
+.sc-cv{position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity .25s linear}
+.sc-cv.is-on{opacity:1}
+.sc-read{position:absolute;left:10px;bottom:10px;padding:4px 8px 3px;border-radius:6px;background:var(--sc-plate);font:600 1.3rem/1.1 var(--f-num);letter-spacing:.02em;font-variant-numeric:tabular-nums;
+  box-shadow:inset 0 0 0 1px var(--line-2)}
+.sc-read small{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);margin-left:5px}
+.sc-n{position:absolute;right:10px;top:9px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font:600 .78rem/1 var(--f-num);background:var(--sc-plate);box-shadow:inset 0 0 0 1px var(--line-2)}
+.sc-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:20px;font:500 .86rem/1.2 var(--f-num);letter-spacing:.04em;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.sc-open{color:var(--link);font-weight:600;white-space:nowrap}
+.sc-credit{margin-top:10px;font-size:.7rem;line-height:1.4;color:var(--ink-2)}
+.sc-credit .sc-disc{display:block;margin-top:3px}
+/* B: compact pair */
+.sc-b .sc-inst{padding:7px 7px 6px;gap:6px;border-radius:14px}
+.sc-b .sc-top{flex-direction:column;align-items:flex-start;gap:5px;min-height:0}
+.sc-b .sc-name{font-size:1.02rem}
+.sc-b .sc-tag{font-size:.68rem;padding:4px 6px 3px;letter-spacing:.08em}
+.sc-b .sc-face{aspect-ratio:1/1;border-radius:9px}
+.sc-b .sc-read{left:6px;bottom:6px;font-size:1.02rem;padding:3px 6px 2px}
+.sc-b .sc-read small{display:none}
+.sc-b .sc-n{right:6px;top:6px;width:20px;height:20px;font-size:.7rem}
+.sc-b .sc-meta{flex-direction:column;align-items:flex-start;gap:2px;font-size:.8rem;min-height:38px}
+.sc-age i{font-style:normal}
+.sc-b .sc-age{display:block}.sc-b .sc-age i{display:none}
+@media (prefers-reduced-motion:reduce){.sc-cv{transition:none}}
