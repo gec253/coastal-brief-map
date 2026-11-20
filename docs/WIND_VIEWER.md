@@ -53,6 +53,15 @@ Private, gated exactly like `/lab/wind`: 404 unless `WIND_PARTICLES_ENABLED=1` (
 - **Live, no reload:** the sun/moon button (top bar, 44 px, `aria-label="Night mode"` + `aria-pressed`) writes the same key. `/wind` also follows a change made in another tab (`storage` event), the phone switching appearance when nothing is stored, and Safari's back/forward cache (`pageshow`). A switch repaints the coastline tiles in place (`CBCoast.layer().restyle`) and swaps the particle palette (`CBWind.layer().setDark`); view, data, forecast hour and animation are untouched.
 - **Known gap (not /wind):** the public homepage (`/`, hybrid) has no toggle and does not read the stored key; it follows only the phone's appearance. The Morning Brief and dashboard read the key on load but don't listen for changes made in other open tabs.
 
+## HRRR prototype (private, Nov 19 2026, Ed t358u)
+
+- `?model=hrrr` on `/wind` and `/api/wind-grid` only, behind the same preview gate (404 otherwise). GFS stays the default; the default payload is unchanged (no new fields).
+- `hrrrgrid.py` (stdlib): NOMADS `filter_hrrr_2d.pl` 10 m UGRD/VGRD for 32-38N 80.5-72.5W (~175 KB), GRIB2 template 3.30 Lambert decode with a chunked unpack, bilinear regrid to 0.025° over the GFS box (281 x 201), rotation from grid-relative to true north (alpha = sin(38.5°) x (lon + 97.5°)), values to 0.1 m/s.
+- Run choice: valid hour nearest now + step (0/3/6/9/12 h), newest run at least 50 min old, up to 3 runs back; f18 limit (f48 for 00/06/12/18Z). Cache: 10 min per step, decoded file per (run, fh); failures 5 min.
+- Fallback: stale (>3 h), missing or failing sanity checks (|u|,|v| < 80 m/s, ≤0.1% missing) serves the GFS frame labelled `fallback: "HRRR unavailable"`; the page shows "GFS run" and "NOAA NCEP GFS 0.25° (HRRR unavailable)". One model per frame, never blended.
+- Labels: text only in existing cells ("HRRR run"/"GFS run", attribution, tap readout); badge and layout unchanged.
+- Not done: AWS byte-range fallback (full CONUS decode is ~4.5 MB/1.5 s on the box, too heavy for the 0.1 CPU plan).
+
 ## Known GFS limitations (harbors and sounds)
 
 - **Grid ≈ 25 km** (0.25°). One cell can span an inlet, a barrier island and open ocean. Values between nodes are bilinearly interpolated, so coastline and sound detail is coarser than the smooth flow suggests.

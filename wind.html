@@ -30,7 +30,7 @@
     </button>
   </header>
   <section class="w-strip" aria-label="Model run and valid time, Eastern Time">
-    <div class="w-cell"><span class="w-k">Model run</span><span class="w-v" id="w-run">—</span></div>
+    <div class="w-cell"><span class="w-k" id="w-run-k">Model run</span><span class="w-v" id="w-run">—</span></div>
     <div class="w-cell"><span class="w-k">Valid</span><span class="w-v" id="w-valid">—</span></div>
     <div class="w-cell w-cell-fh"><span class="w-k">Fcst hour</span><span class="w-v" id="w-fh">—</span></div>
   </section>
@@ -41,7 +41,8 @@
       <span class="w-ticks" aria-hidden="true"><span>0</span><span>10</span><span>20</span><span>30</span><span>35+ kt</span></span>
     </div>
     <p class="w-read" id="w-read" aria-live="polite" hidden></p>
-    <p class="w-attrib">Wind: <a href="https://www.nco.ncep.noaa.gov/pmb/products/gfs/" rel="noopener">NOAA NCEP GFS</a> 0.25° model forecast · Coastline: U.S. Census Bureau, 2025 cartographic boundary file, 1:500,000 (not endorsed by the Census Bureau)</p>
+    <p class="w-attrib">Wind: <a id="w-src" href="https://www.nco.ncep.noaa.gov/pmb/products/gfs/" rel="noopener">NOAA NCEP GFS</a> <span id="w-src-res">0.25° model forecast</span> · Coastline: U.S. Census Bureau, 2025 cartographic boundary file, 1:500,000 (not endorsed by the Census Bureau)</p>
+    <script>/* ?model=hrrr (private): name HRRR before first paint so the text doesn't reflow later; a GFS fallback relabels it */if(/[?&]model=hrrr\b/.test(location.search)){var s=document.getElementById("w-src");s.textContent="NOAA NCEP HRRR";s.href="https://rapidrefresh.noaa.gov/hrrr/";document.getElementById("w-src-res").textContent="3 km model forecast";}</script>
     <p class="w-status" id="w-status" role="status">Loading NOAA GFS model wind…</p>
     <details class="w-about">
       <summary aria-label="About this model wind"><span aria-hidden="true">i</span></summary>

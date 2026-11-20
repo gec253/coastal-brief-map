@@ -1080,6 +1080,7 @@ import photos  # noqa: E402
 import catch_wall_public  # noqa: E402
 import catch_wall_preview  # noqa: E402
 import windgrid  # noqa: E402
+import hrrrgrid  # noqa: E402
 import freshwater  # noqa: E402
 import brief  # noqa: E402
 import wave_intro  # noqa: E402
@@ -2664,7 +2665,12 @@ class Handler(SimpleHTTPRequestHandler):
                 ahead = int((parse_qs(parsed.query).get("ahead") or ["0"])[0])
             except ValueError:
                 ahead = 0
-            g = windgrid.latest_grid(ahead=ahead if ahead in windgrid.AHEAD_HOURS else 0)
+            ahead = ahead if ahead in windgrid.AHEAD_HOURS else 0
+            if (parse_qs(parsed.query).get("model") or [""])[0] == "hrrr":
+                # Private HRRR prototype (?model=hrrr only); labelled GFS fallback when HRRR isn't usable.
+                g = hrrrgrid.latest_grid(ahead=ahead)
+            else:
+                g = windgrid.latest_grid(ahead=ahead)
             if pv and not _flag("WIND_PARTICLES_ENABLED"):
                 return self._json_private(g, 200 if g.get("ok") else 502)
             return self._send_json(g, cache_s=600 if g.get("ok") else 60, status=200 if g.get("ok") else 502)

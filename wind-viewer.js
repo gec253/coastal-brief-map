@@ -1,5 +1,5 @@
 /* /wind private viewer UI. The particle engine and wind math live in wind-lab.js (CBWind, CBWindMath).
-   NOAA GFS MODEL FORECAST only: never labelled as a station reading. Times in America/New_York (ET). */
+   NOAA MODEL FORECAST only (GFS default; private ?model=hrrr HRRR): never labelled as a station reading. Times in America/New_York (ET). */
 (function () {
   "use strict";
   const W = window.CBWind, M = window.CBWindMath;
@@ -17,6 +17,10 @@
   let pref = null; try { pref = localStorage.getItem("coastalBrief.windMotion"); } catch (e) {}
   let motion = pref === "on" ? true : pref === "off" ? false : !osReduce;
   const AHEAD = [0, 3, 6, 9, 12];
+  // Private HRRR prototype: only with ?model=hrrr. GFS stays the default. One model per frame, never
+  // blended; the frame's own payload says which model it is (a GFS fallback is labelled as one).
+  const wantHrrr = /[?&]model=hrrr\b/.test(q);
+  let modelName = wantHrrr ? "HRRR" : "GFS";
   let ai = 0, grid = null, req = 0;
   const HOME = L.latLngBounds([33.75, -78.3], [36.55, -75.25]);
   const yieldTask = () => new Promise((r) => (window.scheduler && scheduler.yield ? scheduler.yield().then(r) : setTimeout(r, 0)));
@@ -113,8 +117,8 @@
       const s = wind.sample(latlng.lat, latlng.lng);
       if (!dot) dot = L.circleMarker(latlng, { radius: 7, className: "w-dot", interactive: false }).addTo(map); else dot.setLatLng(latlng);
       if (!s) { read.innerHTML = "<strong>Outside the model area</strong><span class=\"w-sub\">This viewer loads GFS wind for 32.5–37.5°N, 73–80°W.</span>"; read.hidden = false; return; }
-      read.innerHTML = "<strong>" + Math.round(s.kt) + " kt</strong> from " + M.compass(s.from) + " (" + Math.round(s.from) + "°) · model forecast" +
-        "<span class=\"w-sub\">" + (label ? label + " · " : "") + latlng.lat.toFixed(2) + "°N " + Math.abs(latlng.lng).toFixed(2) + "°W · GFS 10 m, interpolated · valid " + M.etShort(grid.valid) + "</span>";
+      read.innerHTML = "<strong>" + Math.round(s.kt) + " kt</strong> from " + M.compass(s.from) + " (" + Math.round(s.from) + "°) · " + modelName + " model forecast" +
+        "<span class=\"w-sub\">" + (label ? label + " · " : "") + latlng.lat.toFixed(2) + "°N " + Math.abs(latlng.lng).toFixed(2) + "°W · " + modelName + " 10 m, interpolated · valid " + M.etShort(grid.valid) + "</span>";
       read.hidden = false;
     }
     map.on("click", function (e) { if (grid) readAt(e.latlng); });
@@ -137,8 +141,20 @@
       $("w-hour").querySelector(".w-hour-a").textContent = a === 0 ? "Nearest hour" : "Later";
       $("w-hour").querySelector(".w-hour-b").textContent = "+" + a + " h";
     }
+    // Model name in the existing labels only (text, no layout change).
+    function labelModel(g) {
+      const hrrr = g.model === "hrrr";
+      modelName = hrrr ? "HRRR" : "GFS";
+      $("w-run-k").textContent = hrrr ? "HRRR run" : "GFS run";
+      if (!wantHrrr) return;                          // GFS default: attribution text stays as served
+      const src = $("w-src");
+      src.textContent = hrrr ? "NOAA NCEP HRRR" : "NOAA NCEP GFS";
+      src.href = hrrr ? "https://rapidrefresh.noaa.gov/hrrr/" : "https://www.nco.ncep.noaa.gov/pmb/products/gfs/";
+      $("w-src-res").textContent = hrrr ? "3 km model forecast" : "0.25° (HRRR unavailable)";
+    }
     function show(g) {
       grid = g;
+      labelModel(g);
       $("w-run").textContent = M.etShort(g.run);
       $("w-valid").textContent = M.etShort(g.valid);
       $("w-fh").textContent = "F" + String(g.forecastHour).padStart(3, "0");
@@ -150,9 +166,10 @@
     const memo = {};
     async function load(i) {
       const my = ++req, a = AHEAD[i];
-      status.textContent = a ? "Loading model wind +" + a + " h…" : "Loading NOAA GFS model wind…"; status.hidden = false;
+      status.textContent = a ? "Loading model wind +" + a + " h…" : "Loading NOAA " + modelName + " model wind…"; status.hidden = false;
       try {
-        const g = memo[a] || await fetch("/api/wind-grid" + (a ? "?ahead=" + a : "")).then((r) => r.json());
+        const qs = [a ? "ahead=" + a : "", wantHrrr ? "model=hrrr" : ""].filter(Boolean).join("&");
+        const g = memo[a] || await fetch("/api/wind-grid" + (qs ? "?" + qs : "")).then((r) => r.json());
         if (my !== req) return;
         if (!g.ok) { status.textContent = g.error || "Model wind is unavailable right now."; return; }
         memo[a] = g; ai = i; setHour();
