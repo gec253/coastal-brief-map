@@ -16,6 +16,8 @@ ALWAYS = {
     SITE + "/catch-wall",
     SITE + "/coastal-life",
     SITE + "/photos",
+    SITE + "/wind",
+    SITE + "/radar",
 }
 SALT_BRIEFS = {
     SITE + "/brief?region=crystal-coast",

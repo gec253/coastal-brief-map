@@ -15,11 +15,9 @@ Implemented on `feature/public-viewers-1120`. **Not merged or deployed.** `HOME_
 - `/api/radar/usage` (preview cookie only).
 - `WEATHERAPI_KEY`, `PREVIEW_KEY`, and signed WeatherAPI tile URLs.
 
-## Indexing (until the showcase launches)
+## Indexing
 
-`/wind` and `/radar` stay `noindex, nofollow` (HTML meta and `X-Robots-Tag`) and are **not** listed in `sitemap.xml`. `robots.txt` remains `Allow: /` so a crawler can see the noindex tag; they are not Disallowed.
-
-They are left out of the sitemap on purpose: the pages are publicly reachable so the homepage showcase “Open” links work, but they should not appear in search until the showcase is approved and launched and can introduce them.
+`/wind` and `/radar` are public and indexable (`index, follow` in the HTML meta and `X-Robots-Tag`) and are listed in `sitemap.xml`. `robots.txt` remains `Allow: /`. `/lab/wind` and other private pages stay `noindex` or 404.
 
 ## Rate limits (per client IP)
 

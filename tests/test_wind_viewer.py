@@ -304,7 +304,9 @@ class Routes(unittest.TestCase):
             # Public GFS viewer and grid (latest_grid is mocked, so no NOMADS call).
             st, h, body = self._get("/wind")
             self.assertEqual(st, 200)
-            self.assertIn("noindex", h.get("X-Robots-Tag", ""))
+            tag = (h.get("X-Robots-Tag") or h.get("x-robots-tag") or "").lower()
+            self.assertIn("index", tag)
+            self.assertNotIn("noindex", tag)
             self.assertIn(b'data-wind-view="viewer"', body)
             self.assertIn(b"/wind/engine.js", body)
             self.assertNotIn(b"/lab/wind.js", body)
@@ -330,7 +332,9 @@ class Routes(unittest.TestCase):
              mock.patch.object(windgrid, "latest_grid", side_effect=fake):
             st, h, body = self._get("/wind", ck)
             self.assertEqual(st, 200)
-            self.assertIn("noindex", h.get("X-Robots-Tag", ""))
+            tag = (h.get("X-Robots-Tag") or h.get("x-robots-tag") or "").lower()
+            self.assertIn("index", tag)
+            self.assertNotIn("noindex", tag)
             self.assertIn("no-store", h.get("Cache-Control", ""))
             self.assertIn(b'data-wind-view="viewer"', body)
             self.assertEqual(self._get("/wind.css", ck)[1]["Content-Type"], "text/css; charset=utf-8")

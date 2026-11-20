@@ -2550,6 +2550,8 @@ def public_sitemap_urls() -> list[str]:
         SITE_ORIGIN + "/catch-wall",
         SITE_ORIGIN + "/coastal-life",
         SITE_ORIGIN + "/photos",
+        SITE_ORIGIN + "/wind",
+        SITE_ORIGIN + "/radar",
     ]
     if brief.flag_on():
         urls += [
@@ -3481,10 +3483,10 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(data)
 
     def _send_public_view(self, path, ctype: str, data: bytes | None = None):
-        """Public viewer HTML: reachable without a cookie, but noindex until the showcase launch."""
+        """Public viewer HTML: reachable without a cookie and indexable after the showcase launch."""
         if data is None:
             data = path.read_bytes()
-        return self._send_private(None, ctype, data, robots="noindex, nofollow")
+        return self._send_private(None, ctype, data, robots="index, follow")
 
     def _radar_tile(self, parsed):
         # /api/radar/tile/{z}/{x}/{y}.png?t=yyyyMMddHHmm

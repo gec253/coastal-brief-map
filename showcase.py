@@ -16,7 +16,7 @@ Activation (requires Ed's approval; do not flip in this change):
 Data: /api/home-wind is a public, GFS-only, cached snapshot (HRRR and /api/wind-grid stay
 private). /api/home-coast is the public-domain Census coastline. Radar uses the existing
 public /api/radar proxy; the WeatherAPI key and signed tile URLs stay on the server.
-/wind and /radar are public (noindex until the showcase is launched) so the Open links work; /lab/wind stays preview-gated.
+/wind and /radar are public and indexable so the Open links work; /lab/wind stays preview-gated.
 """
 from __future__ import annotations
 

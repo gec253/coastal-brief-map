@@ -257,7 +257,9 @@ class Routes(unittest.TestCase):
             # Public viewer is reachable, but never serves fixture frames on the public path.
             st, h, body = self._get("/radar")
             self.assertEqual(st, 200)
-            self.assertIn("noindex", h.get("X-Robots-Tag", ""))
+            tag = (h.get("X-Robots-Tag") or h.get("x-robots-tag") or "").lower()
+            self.assertIn("index", tag)
+            self.assertNotIn("noindex", tag)
             self.assertIn(b'id="r-test" hidden', body)
             self.assertNotIn(b"is-test", body)
             self.assertEqual(self._get("/radar.css")[0], 200)
@@ -277,7 +279,11 @@ class Routes(unittest.TestCase):
         with mock.patch.dict(os.environ, {"WIND_PARTICLES_ENABLED": "", "PREVIEW_KEY": key, "RADAR_FIXTURE": "", "RENDER": "true"}), \
              mock.patch.object(self.server, "handle_radar_meta", return_value=(200, {"ok": False, "reason": "coming_soon", "message": "Radar coming soon"})):
             st, h, body = self._get("/radar", ck)
-            self.assertEqual(st, 200); self.assertIn("noindex", h.get("X-Robots-Tag", "")); self.assertIn(b'data-radar-view="viewer"', body)
+            self.assertEqual(st, 200)
+            tag = (h.get("X-Robots-Tag") or h.get("x-robots-tag") or "").lower()
+            self.assertIn("index", tag)
+            self.assertNotIn("noindex", tag)
+            self.assertIn(b'data-radar-view="viewer"', body)
             j = json.loads(self._get("/api/radar-view", ck)[2])
             self.assertEqual((j["ok"], j["reason"], j["fixture"]), (False, "plan", False))
             self.assertEqual(self._get("/radar/fixture-tile/7/36/50.png?t=202603080655", ck)[0], 404)   # no fixture in production

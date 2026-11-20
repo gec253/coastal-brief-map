@@ -112,21 +112,28 @@ class PublicRoutes(unittest.TestCase):
         self.assertIn("key_configured", data)
         self.assertIn("noindex", h.get("X-Robots-Tag") or h.get("x-robots-tag") or "")
 
-    def test_robots_and_sitemap_omit_viewers_while_noindex(self):
-        # Public but unindexed until the showcase launch, so they stay out of the sitemap.
+    def test_robots_and_sitemap_include_public_viewers(self):
+        # After the showcase launch, /wind and /radar are indexable and listed in the sitemap.
         robots = self.get("/robots.txt")[2].decode()
         self.assertIn("Allow: /", robots)
         self.assertNotIn("Disallow: /wind", robots)
+        self.assertNotIn("Disallow: /radar", robots)
         sm = self.get("/sitemap.xml")[2].decode()
-        self.assertNotIn("/wind", sm)
-        self.assertNotIn("/radar", sm)
-        st, h, _ = self.get("/wind")
+        self.assertIn("https://thecoastalbrief.com/wind", sm)
+        self.assertIn("https://thecoastalbrief.com/radar", sm)
+        st, h, body = self.get("/wind")
         self.assertEqual(st, 200)
-        self.assertIn("noindex", h.get("X-Robots-Tag") or h.get("x-robots-tag") or "")
+        tag = (h.get("X-Robots-Tag") or h.get("x-robots-tag") or "").lower()
+        self.assertIn("index", tag)
+        self.assertNotIn("noindex", tag)
+        self.assertIn(b'name="robots" content="index, follow"', body)
         with mock.patch.object(server, "handle_radar_meta", return_value=(200, {"ok": True, "frames": [{"time": "202611201200", "type": "observed", "time_epoch": 1}]})):
-            st, h, _ = self.get("/radar")
+            st, h, body = self.get("/radar")
         self.assertEqual(st, 200)
-        self.assertIn("noindex", h.get("X-Robots-Tag") or h.get("x-robots-tag") or "")
+        tag = (h.get("X-Robots-Tag") or h.get("x-robots-tag") or "").lower()
+        self.assertIn("index", tag)
+        self.assertNotIn("noindex", tag)
+        self.assertIn(b'name="robots" content="index, follow"', body)
 
     def test_wind_grid_rate_limit_has_retry_after_and_respects_xff(self):
         with mock.patch.object(windgrid, "latest_grid", return_value={"ok": True, "ahead": 0, "u": [], "v": []}):

@@ -8,7 +8,7 @@ A full-viewport "helm" page that animates the **NOAA NCEP GFS 0.25° 10 m wind m
 
 ## Access
 
-Public GFS viewer (`feature/public-viewers-1120`). The page is reachable without a preview cookie, stays `noindex, nofollow` (and off the sitemap) until the homepage showcase is launched, and is linked from the showcase Open control when `HOME_SHOWCASE=1`. `?model=hrrr` and `/lab/wind` stay preview-gated. The shared particle engine is served at `/wind/engine.js` (not `/lab/wind.js`).
+Public GFS viewer. The page is reachable without a preview cookie, is indexable and listed in the sitemap, and is linked from the showcase Open control when `HOME_SHOWCASE=1`. `?model=hrrr` and `/lab/wind` stay preview-gated. The shared particle engine is served at `/wind/engine.js` (not `/lab/wind.js`).
 
 | Route | File |
 |---|---|
