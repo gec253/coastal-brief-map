@@ -59,6 +59,8 @@
     },
   });
 
+  const MIN_WINDOW = 6;   // frames (30 min) ready before the loop starts moving
+
   async function boot() {
     // Ask for the frame list first (preloaded by the page); show "unavailable" before any map work.
     const metaP = fetch("/api/radar-view").then((r) => r.json()).catch(() => ({ ok: false, reason: "network" }));
@@ -113,21 +115,52 @@
       const obs = player.observed();
       if (!window.__radarPreload && obs.every((f) => loaded.has(f.time))) window.__radarPreload = { allObservedMs: Math.max.apply(null, obs.map((f) => loadMs[f.time])), firstMs: loadMs[obs[obs.length - 1].time], frames: obs.length };
     }
-    // Background prefetch: the current frame first, then neighbours, two at a time (never all at once).
-    let pf = 0;
-    function prefetch(center) {
-      const list = player.frames(), order = [];
-      for (let d = 0; d < list.length; d++) { [center + d, center - d].forEach((i) => { const j = (i + list.length) % list.length; if (order.indexOf(j) < 0) order.push(j); }); }
-      const pending = order.map((i) => list[i]).filter((f) => !layers.has(f.time));
-      const go = () => { while (pf < 2 && pending.length) { const f = pending.shift(); pf++; const l = layerFor(f); const done = () => { pf--; go(); }; if (loaded.has(f.time)) done(); else l.once("load", done); } };
-      go();
+    /* A frame is ready only when every tile it needs for the current view has loaded and been drawn. */
+    function frameReady(f) {
+      const l = f && layers.get(f.time);
+      if (!l || !loaded.has(f.time)) return false;
+      let cur = 0;
+      for (const k in l._tiles) { const tl = l._tiles[k]; if (tl.current) { cur++; if (!tl.loaded) return false; } }
+      return cur > 0;
+    }
+    /* Preload: newest observed frame alone first (fast first picture), then back in time, 3 frames at a time,
+       then forecast frames if shown. A frame the user jumps to goes to the front of the queue. */
+    const inflight = new Set();
+    let front = null;
+    function pump() {
+      const list = player.frames(), lim = loaded.size ? 3 : 1;
+      const order = (front !== null ? [front] : []).concat(player.loadOrder());
+      for (let k = 0; k < order.length && inflight.size < lim; k++) {
+        const f = list[order[k]];
+        if (!f || layers.has(f.time)) continue;
+        inflight.add(f.time); const l = layerFor(f);
+        l.once("load", function () { inflight.delete(f.time); pump(); loadingUI(); });
+      }
+      const ff = front !== null && list[front];
+      if (!ff || layers.has(ff.time)) front = null;
+    }
+    function prefetch(i) { const f = player.frames()[i]; if (f && !layers.has(f.time)) front = i; pump(); }
+    /* "Loading radar… n/25": shown while frames are still arriving or the frame on screen isn't complete. */
+    const loadEl = $("r-load");
+    let loadTxt = "";
+    function reveal() {
+      const f = player.snapshot().frame, l = f && layers.get(f.time);
+      if (l && l !== shown && frameReady(f)) { if (shown) shown.setOpacity(0); l.setOpacity(f.type === "forecast" ? 0.6 : 0.78); shown = l; }
+    }
+    function loadingUI() {
+      reveal();
+      const list = player.frames(), s = player.snapshot();
+      const n = list.filter(frameReady).length, total = list.length, cur = frameReady(s.frame);
+      window.__radarLoading = { ready: n, total: total, current: cur };
+      const txt = n < total || !cur ? "Loading radar… " + n + "/" + total : "";
+      if (txt !== loadTxt) { loadTxt = txt; loadEl.textContent = txt; loadEl.hidden = !txt; }
     }
     let shown = null;
     function render(s) {
       const f = s.frame; if (!f) return;
       const l = layerFor(f);
-      if (shown && shown !== l) shown.setOpacity(0);
-      l.setOpacity(f.type === "forecast" ? 0.6 : 0.78); shown = l;
+      if (shown && shown !== l) { shown.setOpacity(0); shown = null; }
+      reveal();   // a frame's imagery appears only once all its tiles are in (until then: "Loading radar…")
       const fcNow = f.type === "forecast";
       const when = P.etTime(f.epoch);
       $("r-seg").textContent = fcNow ? "Forecast" : "Observed";
@@ -146,7 +179,8 @@
       play.setAttribute("aria-pressed", String(s.status === "playing"));
       play.setAttribute("aria-label", s.status === "playing" ? "Pause radar loop" : "Play radar loop");
       prev.disabled = s.index <= 0; next.disabled = s.index >= s.count - 1;
-      if (!playing) prefetch(s.index);
+      if (!frameReady(f)) prefetch(s.index);
+      loadingUI();
     }
     function ageText() {
       const lo = player.snapshot().latestObserved; if (!lo) return;
@@ -164,9 +198,8 @@
       if (player.snapshot().status !== "playing" || document.hidden) return;
       timer = setTimeout(function () {
         const list = player.frames();
-        const before = player.snapshot().index;
-        player.tick((i) => loaded.has(list[i].time));
-        if (player.snapshot().index === before) prefetch(before + 1);   // buffering: wait for the next frame
+        player.tick((i) => frameReady(list[i]), MIN_WINDOW);   // holds or skips; never shows a part-loaded frame
+        loadingUI();
         schedule();
       }, player.holdMs());
     }
@@ -178,7 +211,7 @@
     scrub.addEventListener("input", function () { if (player.snapshot().status !== "scrubbing") player.beginScrub(); player.seek(+scrub.value); });
     const endScrub = function () { player.endScrub(); schedule(); };
     scrub.addEventListener("change", endScrub); scrub.addEventListener("pointerup", endScrub); scrub.addEventListener("blur", endScrub);
-    fc.addEventListener("change", function () { player.setForecast(fc.checked); });
+    fc.addEventListener("change", function () { player.setForecast(fc.checked); pump(); loadingUI(); });
     document.addEventListener("keydown", function (e) {
       if (e.target && /input|button|textarea/i.test(e.target.tagName) && e.target !== scrub) return;
       if (e.key === " ") { e.preventDefault(); player.toggle(); schedule(); }
@@ -195,20 +228,21 @@
         const s = player.snapshot(); if (!s.latestObserved || s.latestObserved.time === lastLatest) return;
         lastLatest = s.latestObserved.time; issue = lastLatest;
         const keep = new Set(player.observed().map((f) => f.time));   // forecast layers are rebuilt
-        layers.forEach(function (l, t) { if (!keep.has(t)) { if (shown === l) shown = null; map.removeLayer(l); layers.delete(t); loaded.delete(t); } });
+        layers.forEach(function (l, t) { if (!keep.has(t)) { if (shown === l) shown = null; map.removeLayer(l); layers.delete(t); loaded.delete(t); inflight.delete(t); } });
         fc.disabled = !s.forecastCount;
         $("r-obs").style.flexGrow = String(s.observedCount); $("r-fcs").style.flexGrow = String(Math.max(1, s.forecastCount));
         window.__radarRefreshes = (window.__radarRefreshes || 0) + 1;
-        render(player.snapshot()); ageText(); prefetch(s.observedCount - 1);
+        render(player.snapshot()); ageText(); pump();
       }).catch(function () {});
     }
     setInterval(refresh, 180000);
     document.addEventListener("visibilitychange", function () { if (!document.hidden) refresh(); });
     window.__radarRefresh = refresh;
     window.__radarView = { map: map, player: player, loaded: loaded, layers: layers, fixture: fixture, reduce: reduce };
-    // Start on the latest observed frame; autoplay (from the oldest frame) unless reduced motion.
-    prefetch(snap0.index);
-    if (!reduce) { player.seek(0); player.play(); schedule(); }
+    // Start on the latest observed frame (loaded first); autoplay once a recent window is ready, unless reduced motion.
+    pump(); setInterval(function () { if (loadTxt) loadingUI(); }, 500);
+    map.on("moveend zoomend", function () { setTimeout(loadingUI, 50); });
+    if (!reduce) { player.play(); schedule(); }
   }
 
   function unavailable(meta) {

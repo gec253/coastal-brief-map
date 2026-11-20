@@ -64,7 +64,7 @@ TTL = {
     "tides_pred": 6 * 60 * 60,
     "geocode": 7 * 24 * 60 * 60,
     "radar_json": 3 * 60,
-    "radar_tile": 2 * 60 * 60,
+    "radar_tile": 50 * 60,   # WeatherAPI terms: current conditions max 60 min (50 min here + 10 min browser)
     "default": 10 * 60,
 }
 
@@ -319,8 +319,18 @@ def cache_put_ttl(url: str, ttl: int, body: bytes, ctype: str = "application/oct
         _prune_cache()
 
 
-def _prune_cache() -> None:
-    """Drop oldest cached files if the folder grows past the cap."""
+PRUNE_INTERVAL_S = 300
+_PRUNE_STATE = {"last": 0.0}
+
+
+def _prune_cache(force: bool = False) -> None:
+    """Drop oldest cached files if the folder grows past the cap. Scans the whole cache folder, so it runs
+    at most every PRUNE_INTERVAL_S (it used to run on every write: ~60 ms CPU per cold radar tile with a
+    few thousand cached files, which on a 0.1-CPU instance capped cold tiles at ~2-3 a second)."""
+    now = time.time()
+    if not force and now - _PRUNE_STATE["last"] < PRUNE_INTERVAL_S:
+        return
+    _PRUNE_STATE["last"] = now
     try:
         files = [p for p in CACHE_DIR.rglob("*") if p.is_file() and not p.name.endswith(".tmp")]
         total = sum(p.stat().st_size for p in files)
@@ -1020,6 +1030,7 @@ def _refresh_radar_mem(force: bool = False) -> dict:
             mem["client"] = client
             mem["error"] = None
             upstream_error = False
+            _start_radar_prewarm(client)
             return client
         finally:
             record_radar_upstream(error=upstream_error)
@@ -1058,6 +1069,31 @@ def fetch_radar_tile(z: str, x: str, y: str, t: str) -> tuple[int, str, bytes]:
     cached = cache_get(cache_key_url)
     if cached:
         return cached
+    # Single flight: a tile already being fetched (by another viewer or the prewarm) is waited for, not refetched.
+    with _TILE_INFLIGHT_LOCK:
+        ev = _TILE_INFLIGHT.get(cache_key_url)
+        owner = ev is None
+        if owner:
+            ev = _TILE_INFLIGHT[cache_key_url] = threading.Event()
+    if not owner:
+        ev.wait(30)
+        cached = cache_get(cache_key_url)
+        if cached:
+            return cached
+    try:
+        return _fetch_radar_tile_upstream(z, x, y, t, cache_key_url)
+    finally:
+        if owner:
+            with _TILE_INFLIGHT_LOCK:
+                _TILE_INFLIGHT.pop(cache_key_url, None)
+            ev.set()
+
+
+_TILE_INFLIGHT: dict = {}
+_TILE_INFLIGHT_LOCK = threading.Lock()
+
+
+def _fetch_radar_tile_upstream(z: str, x: str, y: str, t: str, cache_key_url: str) -> tuple[int, str, bytes]:
     meta = _refresh_radar_mem(force=False)
     if not meta.get("ok"):
         status = 503 if meta.get("reason") == "coming_soon" else 502
@@ -1071,6 +1107,43 @@ def fetch_radar_tile(z: str, x: str, y: str, t: str) -> tuple[int, str, bytes]:
     if status == 200 and body:
         cache_put_ttl(cache_key_url, radar_tile_ttl(t), body, ctype or "image/png")
     return status, ctype or "image/png", body
+
+
+# Prewarm: after each radar.json refresh, fetch the observed frames' tiles for the viewer's default phone
+# view (z7, 3x3 tiles over the NC coast), newest first, 2 at a time. Bounded: at most 25 frames x 9 tiles,
+# and only tiles not already cached (normally just the newest frame's 9). Tiles are not API calls.
+RADAR_PREWARM_TILES = [(7, x, y) for x in (35, 36, 37) for y in (49, 50, 51)]
+RADAR_PREWARM_MAX = 25 * 9
+_PREWARM = {"running": False}
+
+
+def _radar_prewarm_enabled() -> bool:
+    flag = (os.environ.get("RADAR_PREWARM") or "").strip()
+    if flag:
+        return flag == "1"
+    return bool(os.environ.get("RENDER") or os.environ.get("RENDER_SERVICE_ID"))
+
+
+def _start_radar_prewarm(client: dict) -> None:
+    if not _radar_prewarm_enabled() or _PREWARM["running"]:
+        return
+    times = [f.get("time") for f in (client.get("frames") or []) if f.get("type") == "observed"][::-1]
+    jobs = [(t, z, x, y) for t in times for (z, x, y) in RADAR_PREWARM_TILES]
+    jobs = [j for j in jobs if not cache_get("radar-cache://tile/%s/%s/%s/%s" % (j[1], j[2], j[3], j[0]))][:RADAR_PREWARM_MAX]
+    if not jobs:
+        return
+    _PREWARM["running"] = True
+
+    def run():
+        try:
+            from concurrent.futures import ThreadPoolExecutor
+            with ThreadPoolExecutor(2) as ex:
+                list(ex.map(lambda j: fetch_radar_tile(str(j[1]), str(j[2]), str(j[3]), j[0]), jobs))
+        except Exception:   # never let a warm-up problem reach the request path
+            pass
+        finally:
+            _PREWARM["running"] = False
+    threading.Thread(target=run, name="radar-prewarm", daemon=True).start()
 
 
 def radar_tile_ttl(t: str) -> int:
@@ -3074,7 +3147,9 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         ttl = radar_tile_ttl(t) if status == 200 else 0
         if ttl:
-            self.send_header("Cache-Control", "public, max-age=%s" % ttl)
+            # Observed tiles never change for a time code: 10 min in the browser (server copy <= 50 min, so
+            # any copy is <= 60 min old, per WeatherAPI's current-conditions cap). Nowcast: 180 s.
+            self.send_header("Cache-Control", "public, max-age=600, immutable" if ttl == TTL["radar_tile"] else "public, max-age=%s" % ttl)
             self._cache_header_sent = True
         else:
             self.send_header("Cache-Control", "no-store")

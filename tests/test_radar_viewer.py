@@ -54,16 +54,40 @@ class Player(unittest.TestCase):
     def test_play_pause_step_seek_scrub_tick(self):
         r = node(FRAMES_JS + """const p = P.create(fr); const out = [];
         out.push(p.play().status); p.seek(0);
-        out.push(p.tick().index);                                    // 1
-        out.push(p.tick(i => i !== 2).index);                        // next not loaded -> stays 1
+        out.push(p.tick().index);                                    // 1 (no readiness check)
+        out.push(p.tick(i => i !== 2).index);                        // 2 not ready -> skip to the ready window 3..24
         out.push(p.step(1).status, p.snapshot().index);             // step pauses
-        out.push(p.step(-1).index, p.step(-1).index, p.step(-1).index);   // clamps at 0
+        out.push(p.step(-1).index, p.step(-1).index, p.step(-1).index, p.step(-1).index, p.step(-1).index);   // clamps at 0
         p.play(); out.push(p.beginScrub().status); p.seek(10); out.push(p.tick().index);   // no tick while scrubbing
         out.push(p.endScrub().status);                               // resumes playing
         p.seek(24); out.push(p.holdMs()); out.push(p.tick().index); // wraps to oldest
         p.pause(); p.beginScrub(); out.push(p.endScrub().status);
         console.log(JSON.stringify(out));""")
-        self.assertEqual(r, ["playing", 1, 1, "paused", 2, 1, 0, 0, "scrubbing", 10, "playing", 1600, 0, "paused"])
+        self.assertEqual(r, ["playing", 1, 3, "paused", 4, 3, 2, 1, 0, 0, "scrubbing", 10, "playing", 1600, 0, "paused"])
+
+    def test_readiness_gate_window_and_never_unready(self):
+        r = node(FRAMES_JS + """const out = {};
+        let p = P.create(fr); p.play();
+        out.noneReady = p.tick(i => false, 6).index;                         // latest not ready: hold
+        out.small = p.tick(i => i >= 21, 6).index;                           // 4-frame window < 6: hold on latest
+        const ready = new Set([19,20,21,22,23,24]);
+        const seq = []; for (let k = 0; k < 8; k++) seq.push(p.tick(i => ready.has(i), 6).index);
+        out.seq = seq;                                                       // loops 19..24 only
+        // random readiness: the index after every tick is always a ready frame
+        let bad = 0; p = P.create(fr); p.play();
+        for (let k = 0; k < 2000; k++) { const rs = new Set(); for (let i = 0; i < 25; i++) if (Math.random() < 0.7 || i === 24) rs.add(i);
+          const before = p.snapshot().index; const s = p.tick(i => rs.has(i), 6); if (s.index !== before && !rs.has(s.index)) bad++; }
+        out.bad = bad;
+        p = P.create(fr); out.order = p.loadOrder().slice(0, 4); out.orderLen = p.loadOrder().length;
+        p.setForecast(true); const o = p.loadOrder(); out.fcOrder = o.slice(24, 28); out.fcLen = o.length;
+        out.win = p.readyWindow(i => i >= 10 && i <= 30);
+        console.log(JSON.stringify(out));""")
+        self.assertEqual((r["noneReady"], r["small"]), (24, 24))
+        self.assertEqual(r["seq"], [19, 20, 21, 22, 23, 24, 19, 20])
+        self.assertEqual(r["bad"], 0)
+        self.assertEqual((r["order"], r["orderLen"]), ([24, 23, 22, 21], 25))   # newest observed first
+        self.assertEqual((r["fcOrder"], r["fcLen"]), ([0, 25, 26, 27], 37))      # then forecast, in time order
+        self.assertEqual(r["win"], {"start": 10, "end": 30, "size": 21})
 
     def test_forecast_opt_in_labelled_and_never_mixed(self):
         r = node(FRAMES_JS + """const p = P.create(fr); const out = {};
@@ -134,7 +158,7 @@ class Cache(unittest.TestCase):
     def test_ttls_and_tile_cache_key(self):
         import server
         self.assertEqual(server.TTL["radar_json"], 180)
-        self.assertEqual(server.TTL["radar_tile"], 7200)
+        self.assertEqual(server.TTL["radar_tile"], 3000)   # 50 min server + 10 min browser <= 60 min (WeatherAPI terms)
         puts = []
         client = {"frames": [{"time": "202611200900", "type": "observed"}, {"time": "202611201000", "type": "nowcast"}]}
         with mock.patch.object(server, "weatherapi_key", return_value="k"), \
@@ -147,9 +171,59 @@ class Cache(unittest.TestCase):
             server.fetch_radar_tile("7", "36", "50", "202611201000")
         self.assertEqual(st, 200)
         self.assertEqual(puts[0][0], "radar-cache://tile/7/36/50/202611200900")   # z/x/y/time, never the signed URL
-        self.assertEqual(puts[0][1], 7200)                                         # observed: 2 h
+        self.assertEqual(puts[0][1], 3000)                                         # observed: 50 min
         self.assertEqual(puts[1][1], 180)                                          # nowcast: re-issued, 180 s
         self.assertNotIn("SECRET", puts[0][0])
+
+
+class TileHeadersAndServer(unittest.TestCase):
+    def test_tile_cache_headers_and_single_flight_and_prune_rate(self):
+        import server, time as _t
+        httpd = ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
+        threading.Thread(target=httpd.serve_forever, daemon=True).start()
+        base = "http://127.0.0.1:%d" % httpd.server_address[1]
+        try:
+            client = {"frames": [{"time": "202611200900", "type": "observed"}, {"time": "202611201000", "type": "nowcast"}]}
+            with mock.patch.object(server, "fetch_radar_tile", return_value=(200, "image/png", b"\x89PNG")), \
+                 mock.patch.dict(server._RADAR_MEM, {"client": client}):
+                h1 = urllib.request.urlopen(base + "/api/radar/tile/7/36/50.png?t=202611200900").headers
+                h2 = urllib.request.urlopen(base + "/api/radar/tile/7/36/50.png?t=202611201000").headers
+            self.assertEqual(h1["Cache-Control"], "public, max-age=600, immutable")
+            self.assertEqual(h2["Cache-Control"], "public, max-age=180")
+        finally:
+            httpd.shutdown(); httpd.server_close()
+        calls = []
+        def slow_fetch(url, tries=3):
+            calls.append(1); _t.sleep(0.2); return 200, "image/png", b"\x89PNG"
+        store = {}
+        with mock.patch.object(server, "weatherapi_key", return_value="k"), \
+             mock.patch.object(server, "_refresh_radar_mem", return_value={"ok": True}), \
+             mock.patch.dict(server._RADAR_MEM, {"tile_url": "https://api.weatherapi.com/v1/radar/tile/{z}/{x}/{y}.png?t={time}&s=SIG", "client": client}), \
+             mock.patch.object(server, "cache_get", side_effect=lambda u: store.get(u)), \
+             mock.patch.object(server, "cache_put_ttl", side_effect=lambda u, ttl, b, ct="": store.__setitem__(u, (200, ct, b))), \
+             mock.patch.object(server, "fetch_url_quiet", side_effect=slow_fetch):
+            ths = [threading.Thread(target=server.fetch_radar_tile, args=("7", "36", "50", "202611200900")) for _ in range(5)]
+            [t.start() for t in ths]; [t.join() for t in ths]
+        self.assertEqual(len(calls), 1)                                   # 5 concurrent requests, 1 upstream fetch
+        with mock.patch.object(server.CACHE_DIR.__class__, "rglob", side_effect=AssertionError("scanned")):
+            server._PRUNE_STATE["last"] = _t.time()
+            server._prune_cache()                                         # within the interval: no folder scan
+
+    def test_prewarm_bounded_and_off_by_default_locally(self):
+        import server
+        with mock.patch.dict(os.environ, {"RADAR_PREWARM": "", "RENDER": "", "RENDER_SERVICE_ID": ""}):
+            self.assertFalse(server._radar_prewarm_enabled())
+        with mock.patch.dict(os.environ, {"RADAR_PREWARM": "", "RENDER": "true"}):
+            self.assertTrue(server._radar_prewarm_enabled())
+        self.assertEqual(len(server.RADAR_PREWARM_TILES), 9); self.assertEqual(server.RADAR_PREWARM_MAX, 225)
+        frames = [{"time": "2026112012%02d" % m, "type": "observed"} for m in range(0, 60, 5)] + [{"time": "202611201400", "type": "nowcast"}]
+        jobs = []
+        with mock.patch.dict(os.environ, {"RADAR_PREWARM": "1"}), mock.patch.object(server, "cache_get", return_value=None), \
+             mock.patch.object(server.threading, "Thread") as T:
+            server._PREWARM["running"] = False
+            server._start_radar_prewarm({"frames": frames})
+            self.assertTrue(T.called)
+        server._PREWARM["running"] = False
 
 
 class Routes(unittest.TestCase):
@@ -338,6 +412,18 @@ class RealMode(unittest.TestCase):
         p.setForecast(true); s = p.update(later.filter(f => f.type === 'observed')); out.push(s.forecastOn, s.forecastCount);
         s = p.update([]); out.push(s.status); console.log(JSON.stringify(out));""")
         self.assertEqual(r, ["playing", 24, True, 25, True, "paused", False, 0, "empty"])
+
+    def test_viewer_gates_frames_and_shows_loading(self):
+        js = (ROOT / "radar-viewer.js").read_text(); html = (ROOT / "radar.html").read_text(); css = (ROOT / "radar.css").read_text()
+        self.assertIn("if (tl.current) { cur++; if (!tl.loaded) return false; }", js)   # every visible tile loaded+drawn
+        self.assertIn("player.tick((i) => frameReady(list[i]), MIN_WINDOW)", js)
+        self.assertIn("const MIN_WINDOW = 6;", js)
+        self.assertNotIn("player.seek(0); player.play()", js)                          # starts on the latest frame
+        self.assertIn('"Loading radar… " + n + "/" + total', js)
+        self.assertIn('<p class="r-load" id="r-load" role="status" aria-live="polite" hidden></p>', html)
+        self.assertRegex(css, r"\.r-load \{ position: absolute;")                       # overlay: no layout shift
+        self.assertNotIn("animation", css[css.index(".r-load"):css.index(".r-load[hidden]")])
+        self.assertIn("const list = player.frames(), lim = loaded.size ? 3 : 1;", js)  # first frame alone, then 3
 
     def test_viewer_refreshes_on_cache_ttl_and_shows_age(self):
         js = (ROOT / "radar-viewer.js").read_text()

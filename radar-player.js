@@ -59,11 +59,33 @@
       endScrub: function () { if (s.status !== "scrubbing") return snapshot(); s.status = s.wasPlaying ? "playing" : "paused"; return emit(); },
       /* Advance one frame while playing; wraps to the oldest observed frame after the end. `ready(i)`
          says whether frame i has finished loading: playback waits rather than show a blank map. */
-      tick: function (ready) {
+      tick: function (ready, minWindow) {
         if (s.status !== "playing") return snapshot();
-        const n = list().length, nx = s.index + 1 >= n ? 0 : s.index + 1;
-        if (ready && !ready(nx)) return snapshot();
+        const n = list().length;
+        if (!ready) { s.index = s.index + 1 >= n ? 0 : s.index + 1; return emit(); }
+        const w = api.readyWindow(ready);
+        // Never step onto a frame that isn't fully loaded: loop the contiguous ready window around the
+        // newest observed frame, and stay put until it holds `minWindow` frames (or every frame is ready).
+        if (!w || (w.size < Math.min(minWindow || 1, n) && w.size < n)) return snapshot();
+        const nx = s.index >= w.start && s.index < w.end ? s.index + 1 : w.start;
+        if (nx === s.index) return snapshot();
         s.index = nx; return emit();
+      },
+      /* Contiguous run of ready frames that contains the newest observed frame: {start, end, size}. */
+      readyWindow: function (ready) {
+        const l = list(), a = observed.length - 1;
+        if (a < 0 || !ready(a)) return null;
+        let st = a, en = a;
+        while (st > 0 && ready(st - 1)) st--;
+        while (en < l.length - 1 && ready(en + 1)) en++;
+        return { start: st, end: en, size: en - st + 1 };
+      },
+      /* Preload order: newest observed first, back to the oldest, then forecast frames (when shown) in time order. */
+      loadOrder: function () {
+        const o = [];
+        for (let i = observed.length - 1; i >= 0; i--) o.push(i);
+        if (s.forecastOn) for (let i = observed.length; i < observed.length + forecast.length; i++) o.push(i);
+        return o;
       },
       holdMs: function () { return s.index >= list().length - 1 ? LAST_HOLD_MS : HOLD_MS; },
       setForecast: function (on) {
