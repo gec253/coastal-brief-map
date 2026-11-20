@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import os
+import html as _html
 import re
 from pathlib import Path
 
@@ -54,32 +55,10 @@ def view_payload(handle_radar_meta) -> tuple[int, dict]:
     # MRMS is a ~1 km grid; z7 tiles are ~1 km/px at 35°N, so higher zooms add tiles, not detail.
     # Capping the native zoom keeps a 25-frame loop to ~9 tiles a frame on a phone (z8 needs ~15).
     p["max_native_zoom"] = min(int(p.get("max_zoom", 11) or 11), REAL_MAX_NATIVE_ZOOM)
-    p["attribution_full"] = p.get("attribution") or ""
-    p["attribution"] = view_attribution(p)
     return 200, p
 
 
 REAL_MAX_NATIVE_ZOOM = 7
-VIEW_BOUNDS = (30.0, -84.0, 40.0, -69.0)   # south, west, north, east: the viewer's maxBounds
-MRMS_CREDIT = "Radar: NOAA/NSSL MRMS via WeatherAPI.com"
-
-
-def view_attribution(p: dict) -> str:
-    """Credit for the radar networks that can appear in our map area. WeatherAPI's attribution string
-    lists every network worldwide; inside our bounds only NOAA MRMS (US) supplies tiles, so the credit is
-    MRMS + WeatherAPI.com. Falls back to the full string if any other network overlaps the view."""
-    full = p.get("attribution") or ""
-    s0, w0, n0, e0 = VIEW_BOUNDS
-    ids = []
-    for src in p.get("sources") or []:
-        b = src.get("bounds") or []
-        if len(b) == 4 and not (b[2] < s0 or b[0] > n0 or b[3] < w0 or b[1] > e0):
-            ids.append(str(src.get("id") or ""))
-    if ids and all(i.startswith("mrms") for i in ids) and "NOAA/NSSL MRMS" in full:
-        return MRMS_CREDIT
-    return full or MRMS_CREDIT
-
-
 def fixture_tile(z: str, x: str, y: str, t: str) -> bytes | None:
     """PNG bytes for a fixture tile, or None (outside the fixture, bad input, or not in fixture mode)."""
     if not fixture_mode():
@@ -93,6 +72,12 @@ def fixture_tile(z: str, x: str, y: str, t: str) -> bytes | None:
 def page_html(html: str, payload: dict) -> str:
     """Server-render the honest unavailable state into radar.html, so it paints with the chrome (LCP/CLS)."""
     if payload.get("ok") and payload.get("frames"):
+        # WeatherAPI's radar.json `attribution` is "Credit to show on your map (required by the radar data
+        # providers)": render it verbatim, server-side, so the footer never changes size after load.
+        credit = (payload.get("attribution") or "").strip().rstrip(".")
+        if credit and not payload.get("fixture"):
+            html = html.replace('<span id="r-credit">Radar: NOAA/NSSL MRMS via WeatherAPI.com</span>',
+                                '<span id="r-credit">%s</span>' % _html.escape(credit))
         return html
     plan = payload.get("reason") in ("plan", "coming_soon")
     out = html.replace('<div class="r-unavail" id="r-unavail" role="status" hidden>', '<div class="r-unavail" id="r-unavail" role="status">')

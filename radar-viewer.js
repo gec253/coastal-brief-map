@@ -80,9 +80,9 @@
     const fixture = !!meta.fixture;
     if (fixture) {
       $("r-test").hidden = false; $("r-test").textContent = meta.fixture_label + " · " + P.etDate(meta.frames[0].time_epoch) + ", " + new Date(meta.frames[0].time_epoch * 1000).getUTCFullYear(); $("r-badge").textContent = "Test data"; $("r-badge").classList.add("is-test");
-      $("r-attrib").textContent = "TEST DATA: synthetic pattern, not radar · Coastline: U.S. Census Bureau, 2025 cartographic boundary file, 1:500,000 (not endorsed by the Census Bureau)";
+      $("r-credit").textContent = "TEST DATA: synthetic pattern, not radar";
     } else if (meta.attribution) {
-      $("r-attrib").firstChild.textContent = meta.attribution.replace(/\.$/, "") + " · Coastline: U.S. Census Bureau, 2025 cartographic boundary file, 1:500,000 (not endorsed by the Census Bureau)";
+      $("r-credit").textContent = meta.attribution.replace(/\.$/, "");   // WeatherAPI's required credit, verbatim
     }
     if (meta.legend && meta.legend.length > 1) $("r-ramp").style.background = "linear-gradient(90deg," + meta.legend.map((r) => r.color).join(",") + ")";
 

@@ -248,6 +248,18 @@ class ServerRendered(unittest.TestCase):
         self.assertIn("Radar unavailable on current data plan", out)
         self.assertIn("Radar is unavailable right now</strong>", radarview.page_html(html, {"ok": False, "reason": "upstream"}))
         self.assertEqual(radarview.page_html(html, {"ok": True, "frames": [{"time": "202603080700"}]}), html)
+        full = "Radar: NOAA/NSSL MRMS; KNMI (CC BY 4.0) <b>. Nowcast: WeatherAPI.com."
+        out = radarview.page_html(html, {"ok": True, "frames": [{"time": "202603080700"}], "attribution": full})
+        self.assertIn('<span id="r-credit">Radar: NOAA/NSSL MRMS; KNMI (CC BY 4.0) &lt;b&gt;. Nowcast: WeatherAPI.com</span>', out)
+        fx = radarview.page_html(html, {"ok": True, "fixture": True, "frames": [{"time": "202603080700"}], "attribution": full})
+        self.assertNotIn("KNMI", fx)
+
+    def test_terms_disclaimer_always_on_page(self):
+        html = (ROOT / "radar.html").read_text()
+        self.assertIn('id="r-disc">General information only', html)
+        for k in ("late or inaccurate", "safety, marine or aviation", "National Weather Service"):
+            self.assertIn(k, html)
+        self.assertIn('$("r-credit").textContent = meta.attribution', (ROOT / "radar-viewer.js").read_text())
 
 
 def _real_radar_json(latest_epoch=1795179900):
@@ -303,10 +315,7 @@ class RealMode(unittest.TestCase):
                 st, v = radarview.view_payload(lambda: (200, p))
             self.assertEqual((st, v["ok"], v["fixture"], v["max_native_zoom"]), (200, True, False, 7))
             self.assertNotIn("fixture", v["tile_url"]); self.assertNotIn("fixture_label", v)
-            self.assertEqual(v["attribution"], "Radar: NOAA/NSSL MRMS via WeatherAPI.com")
-        europe = dict(p, sources=p["sources"] + [{"id": "other", "bounds": [25.0, -80.0, 45.0, -60.0]}], attribution="Radar: NOAA/NSSL MRMS; EUMETNET OPERA (CC BY 4.0).")
-        with mock.patch.dict(os.environ, {"RENDER": "true"}):
-            self.assertEqual(radarview.view_payload(lambda: (200, europe))[1]["attribution"], "Radar: NOAA/NSSL MRMS; EUMETNET OPERA (CC BY 4.0).")
+            self.assertEqual(v["attribution"], "Radar: NOAA/NSSL MRMS. Nowcast: WeatherAPI.com.")   # verbatim
         server._RADAR_MEM.clear()
 
     def test_2009_still_maps_to_plan_message(self):
