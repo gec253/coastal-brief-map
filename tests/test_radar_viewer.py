@@ -184,7 +184,7 @@ class TileHeadersAndServer(unittest.TestCase):
         base = "http://127.0.0.1:%d" % httpd.server_address[1]
         try:
             client = {"frames": [{"time": "202611200900", "type": "observed"}, {"time": "202611201000", "type": "nowcast"}]}
-            with mock.patch.object(server, "fetch_radar_tile", return_value=(200, "image/png", b"\x89PNG")), \
+            with mock.patch.object(server, "fetch_radar_tile_ex", return_value=(200, "image/png", b"\x89PNG", {"cache": "fresh"})), \
                  mock.patch.dict(server._RADAR_MEM, {"client": client}):
                 h1 = urllib.request.urlopen(base + "/api/radar/tile/7/36/50.png?t=202611200900").headers
                 h2 = urllib.request.urlopen(base + "/api/radar/tile/7/36/50.png?t=202611201000").headers
@@ -249,13 +249,25 @@ class Routes(unittest.TestCase):
         except urllib.error.HTTPError as e:
             return e.code, dict(e.headers), e.read()
 
-    def test_404_without_cookie_even_in_fixture_mode(self):
+    def test_fixture_tiles_and_raw_files_404_without_cookie(self):
         key = secrets.token_hex(16)
-        with mock.patch.dict(os.environ, {"WIND_PARTICLES_ENABLED": "", "PREVIEW_KEY": key, "RADAR_FIXTURE": "1"}), \
-             mock.patch.object(self.server, "handle_radar_meta", side_effect=AssertionError("must not fetch")):
-            for p in self.PATHS:
-                self.assertEqual(self._get(p)[0], 404, p)
-                self.assertEqual(self._get(p, "cb_preview=nope")[0], 404, p)
+        frames = {"ok": True, "available": True, "frames": [{"time": "202611201200", "type": "observed", "time_epoch": 1}]}
+        with mock.patch.dict(os.environ, {"WIND_PARTICLES_ENABLED": "", "PREVIEW_KEY": key, "RADAR_FIXTURE": "1", "HOME_SHOWCASE": ""}), \
+             mock.patch.object(self.server, "handle_radar_meta", return_value=(200, frames)):
+            # Public viewer is reachable, but never serves fixture frames on the public path.
+            st, h, body = self._get("/radar")
+            self.assertEqual(st, 200)
+            self.assertIn("noindex", h.get("X-Robots-Tag", ""))
+            self.assertIn(b'id="r-test" hidden', body)
+            self.assertNotIn(b"is-test", body)
+            self.assertEqual(self._get("/radar.css")[0], 200)
+            self.assertEqual(self._get("/radar/viewer.js")[0], 200)
+            self.assertEqual(self._get("/radar/player.js")[0], 200)
+            j = json.loads(self._get("/api/radar-view")[2])
+            self.assertTrue(j.get("ok"))
+            self.assertFalse(j.get("fixture"))
+            self.assertEqual(self._get("/radar/fixture-tile/7/36/50.png?t=202603080655")[0], 404)
+            self.assertEqual(self._get("/radar/fixture-tile/7/36/50.png?t=202603080655", "cb_preview=nope")[0], 404)
             for p in ("/radar.html", "/radar-viewer.js", "/radar-player.js", "/radar.css.map", "/radarview.py", "/tests/fixtures/radar/fixture.json"):
                 self.assertEqual(self._get(p)[0], 404, p)
 

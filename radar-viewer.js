@@ -1,4 +1,4 @@
-/* /radar private viewer UI. OBSERVED radar, last two hours; FORECAST (nowcast) frames only when the user
+/* /radar viewer UI. OBSERVED radar, last two hours; FORECAST (nowcast) frames only when the user
    turns them on, labelled and drawn differently. Playback logic lives in radar-player.js (CBRadarPlayer).
    Times are America/New_York (ET). Test fixtures are only ever served by a local test server and are
    labelled "TEST DATA — not current radar" with their real (past) date. */
@@ -50,12 +50,29 @@
   /* Radar tiles are drawn into <canvas> (like the wind coastline), so a radar image is never the LCP element. */
   const CanvasTiles = L.GridLayer.extend({
     createTile: function (c, done) {
-      const t = document.createElement("canvas"), sz = this.getTileSize(); t.width = sz.x; t.height = sz.y;
-      const img = new Image(); img.decoding = "async";
-      img.onload = function () { t.getContext("2d").drawImage(img, 0, 0, sz.x, sz.y); done(null, t); };
-      img.onerror = function () { done(null, t); };            // missing tile = transparent, not an error state
-      img.src = L.Util.template(this.options.url, { z: c.z, x: c.x, y: c.y });
-      return t;
+      const canvas = document.createElement("canvas"), sz = this.getTileSize(); canvas.width = sz.x; canvas.height = sz.y;
+      const url = L.Util.template(this.options.url, { z: c.z, x: c.x, y: c.y });
+      const onFeed = this.options.onFeed;
+      fetch(url, { cache: "default" }).then(function (res) {
+        if (onFeed && (res.status === 429 || (res.headers && res.headers.get("X-Radar-Cache") === "stale"))) {
+          onFeed(res.status === 429 ? "rate_limit" : "stale", res);
+        }
+        if (!res.ok) {
+          const err = new Error("tile " + res.status);
+          err.status = res.status;
+          done(err, canvas);   // empty canvas, not loaded — never a half-drawn or fake frame
+          return null;
+        }
+        return res.blob();
+      }).then(function (blob) {
+        if (!blob) return;
+        const img = new Image();
+        const src = URL.createObjectURL(blob);
+        img.onload = function () { URL.revokeObjectURL(src); canvas.getContext("2d").drawImage(img, 0, 0, sz.x, sz.y); done(null, canvas); };
+        img.onerror = function () { URL.revokeObjectURL(src); done(new Error("tile decode"), canvas); };
+        img.src = src;
+      }).catch(function () { done(new Error("tile network"), canvas); });
+      return canvas;
     },
   });
 
@@ -76,8 +93,21 @@
     onTheme = function () { coast.restyle(coastStyle()); };
 
     const meta = await metaP;
-    window.__radarMeta = { ok: !!meta.ok, fixture: !!meta.fixture, reason: meta.reason || null };
+    window.__radarMeta = { ok: !!meta.ok, fixture: !!meta.fixture, reason: meta.reason || null, limited: !!meta.limited };
     if (!meta.ok || !meta.frames || !meta.frames.length) return unavailable(meta);
+    function showLimit(kind, message) {
+      const el = $("r-limit");
+      if (!el) return;
+      const text = message || (
+        kind === "rate_limit"
+          ? "Too many radar requests. Showing cached observed frames where available. Incomplete or forecast frames are not shown."
+          : "Radar is temporarily limited. Showing cached observed frames where available. Incomplete or forecast frames are not shown."
+      );
+      el.textContent = text;
+      el.hidden = false;
+      window.__radarLimited = kind || true;
+    }
+    if (meta.limited) showLimit(meta.limit_reason, meta.limit_message);
 
     const fixture = !!meta.fixture;
     if (fixture) {
@@ -105,7 +135,7 @@
       l = new CanvasTiles({ url: tmpl.replace("{time}", f.time) + (f.type === "forecast" ? "&v=" + issue : ""),
         pane: "radar", opacity: 0, className: "r-frame" + (f.type === "forecast" ? " r-frame-fc" : ""),
         tileSize: meta.tile_size || 256, maxNativeZoom: meta.max_native_zoom || meta.max_zoom || 7, minZoom: 5, maxZoom: 9.5,
-        updateWhenIdle: true, keepBuffer: 0,
+        updateWhenIdle: true, keepBuffer: 0, onFeed: function (kind) { showLimit(kind); },
       });
       l.once("load", function () { loaded.add(f.time); loadMs[f.time] = Math.round(performance.now() - t0); maybeAllLoaded(); });
       l.addTo(map); layers.set(f.time, l);
@@ -224,6 +254,7 @@
       if (fixture || document.hidden) return;
       fetch("/api/radar-view").then((r) => r.json()).then(function (m) {
         if (!m.ok || !m.frames || !m.frames.length || m.fixture) return;
+        if (m.limited) showLimit(m.limit_reason, m.limit_message);
         player.update(m.frames);
         const s = player.snapshot(); if (!s.latestObserved || s.latestObserved.time === lastLatest) return;
         lastLatest = s.latestObserved.time; issue = lastLatest;
@@ -249,10 +280,13 @@
     window.__radarView = { unavailable: true, reason: meta.reason || null };
     status.hidden = true;
     const plan = meta.reason === "plan" || meta.reason === "coming_soon";
-    $("r-unavail-h").textContent = plan ? "Radar unavailable on current data plan" : "Radar is unavailable right now";
+    const quota = meta.reason === "quota" || meta.reason === "rate_limit";
+    $("r-unavail-h").textContent = plan ? "Radar unavailable on current data plan" : (quota ? "Radar is temporarily limited" : "Radar is unavailable right now");
     $("r-unavail-b").textContent = plan
       ? "The radar feed isn't included in our current weather-data plan, so no radar frames are shown. Nothing here is old or simulated radar."
-      : "We couldn't load radar frames. Try again in a few minutes. No old frames are shown in their place.";
+      : (quota
+        ? (meta.limit_message || meta.message || "Radar is temporarily limited. Try again in a few minutes. No old frames are shown in their place.")
+        : "We couldn't load radar frames. Try again in a few minutes. No old frames are shown in their place.");
     $("r-unavail").hidden = false; $("r-badge").textContent = "Radar off";
     $("r-legend").hidden = true; document.querySelector(".r-fc").hidden = true;
     $("r-time").textContent = "—"; $("r-age").textContent = "—"; $("r-count").textContent = "—";

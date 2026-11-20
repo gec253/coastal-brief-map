@@ -6,6 +6,7 @@
   <meta name="robots" content="noindex, nofollow">
   <meta name="description" content="Observed weather radar for coastal North Carolina, last two hours. Times in Eastern Time.">
   <title>Radar · observed — The Coastal Brief</title>
+  <link rel="icon" href="/branding/favicon.svg" type="image/svg+xml">
   <script>
     (function () { var d = document.documentElement, t = null;
       try { var q = /[?&]theme=(light|dark)\b/.exec(location.search); t = q ? q[1] : localStorage.getItem("coastalBrief.theme"); } catch (e) {}
@@ -40,6 +41,7 @@
     <p class="r-test" id="r-test" hidden>TEST DATA — not current radar</p>
     <p class="r-tag" id="r-tag" aria-hidden="true"></p>
     <p class="r-load" id="r-load" role="status" aria-live="polite" hidden></p>
+    <p class="r-limit" id="r-limit" role="status" hidden>Radar is temporarily limited. Showing cached observed frames where available. Incomplete or forecast frames are not shown.</p>
     <label class="r-fc"><input type="checkbox" id="r-fc" disabled> <span>Forecast <small>next hour</small></span></label>
     <div class="w-legend r-legend" id="r-legend" role="img" aria-label="Precipitation rate colour scale, light to heavy"><span class="r-ramp" id="r-ramp"></span><span class="w-ticks" aria-hidden="true"><span>Light</span><span>Moderate</span><span>Heavy</span></span></div>
     <p class="w-attrib" id="r-attrib"><span id="r-credit">Radar: NOAA/NSSL MRMS via WeatherAPI.com</span> · Coastline: U.S. Census Bureau (2025, 1:500k). <span id="r-disc">General information only: radar and nowcasts can be late or inaccurate for your location. Don’t rely on them alone for safety, marine or aviation decisions; check the National Weather Service.</span></p>
@@ -47,9 +49,14 @@
     <p class="w-status" id="r-status" role="status">Loading radar…</p>
     <script>/* Paint the honest "unavailable" state as soon as the (preloaded) frame list says so, before the map scripts run. */
       fetch("/api/radar-view").then(function (r) { return r.json(); }).then(function (m) {
-        if (m && m.ok && m.frames && m.frames.length) return;
+        if (m && m.ok && m.frames && m.frames.length) {
+          if (m.limited) { var lim = document.getElementById("r-limit"); if (lim) { if (m.limit_message) lim.textContent = m.limit_message; lim.hidden = false; } }
+          return;
+        }
         var plan = m && (m.reason === "plan" || m.reason === "coming_soon");
-        if (!plan) { document.getElementById("r-unavail-h").textContent = "Radar is unavailable right now"; document.getElementById("r-unavail-b").textContent = "We couldn't load radar frames. Try again in a few minutes. No old frames are shown in their place."; }
+        var quota = m && m.reason === "quota";
+        if (quota) { document.getElementById("r-unavail-h").textContent = "Radar is temporarily limited"; document.getElementById("r-unavail-b").textContent = (m.limit_message || m.message || "Radar is temporarily limited. Try again in a few minutes. No old frames are shown in their place."); }
+        else if (!plan) { document.getElementById("r-unavail-h").textContent = "Radar is unavailable right now"; document.getElementById("r-unavail-b").textContent = "We couldn't load radar frames. Try again in a few minutes. No old frames are shown in their place."; }
         document.getElementById("r-unavail").hidden = false; document.getElementById("r-status").hidden = true;
         document.getElementById("r-legend").hidden = true; document.querySelector(".r-fc").hidden = true; document.getElementById("r-badge").textContent = "Radar off";
       }).catch(function () {});</script>

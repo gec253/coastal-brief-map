@@ -214,10 +214,10 @@ class Routes(unittest.TestCase):
             self.assertNotIn("detail", data)
             self.assertIn("u", data)
             self.assertNotIn("hrrr", json.dumps(data).lower())
-            # /api/wind-grid stays private, including HRRR.
-            self.assertEqual(self._get("/api/wind-grid")[0], 404)
+            # /api/wind-grid is the public GFS viewer API; HRRR stays 404.
+            self.assertEqual(self._get("/api/wind-grid")[0], 200)
             self.assertEqual(self._get("/api/wind-grid?model=hrrr")[0], 404)
-        self.assertEqual(calls, [0])  # only the default GFS snapshot
+        self.assertEqual(calls, [0, 0])  # home-wind snapshot + public GFS grid
 
     def test_public_home_coast_is_static_cached(self):
         with env(WIND_PARTICLES_ENABLED="", PREVIEW_KEY=""):
@@ -228,14 +228,19 @@ class Routes(unittest.TestCase):
             self.assertNotIn("access-control-allow-origin", h)
             data = json.loads(body)
             self.assertIn("polys", data)
-            self.assertEqual(self._get("/wind/coast-lo.json")[0], 404)
-            self.assertEqual(self._get("/wind/coast-hi.json")[0], 404)
+            self.assertEqual(self._get("/wind/coast-lo.json")[0], 200)
+            self.assertEqual(self._get("/wind/coast-hi.json")[0], 200)
 
-    def test_viewers_stay_gated(self):
+    def test_open_viewers_public_lab_and_hrrr_stay_gated(self):
         key = secrets.token_hex(16)
-        with env(HOME_SHOWCASE="1", WIND_PARTICLES_ENABLED="", PREVIEW_KEY=key):
-            for p in ("/wind", "/radar", "/lab/wind", "/api/wind-grid", "/wind/coast-lo.json"):
-                self.assertEqual(self._get(p)[0], 404, p)
+        frames = {"ok": True, "available": True, "frames": [{"time": "202611201200", "type": "observed", "time_epoch": 1}]}
+        with env(HOME_SHOWCASE="1", WIND_PARTICLES_ENABLED="", PREVIEW_KEY=key), \
+             mock.patch.object(windgrid, "latest_grid", return_value={"ok": True, "ahead": 0}), \
+             mock.patch.object(self.server, "handle_radar_meta", return_value=(200, frames)):
+            for p in ("/wind", "/radar", "/api/wind-grid", "/wind/coast-lo.json"):
+                self.assertEqual(self._get(p)[0], 200, p)
+            self.assertEqual(self._get("/lab/wind")[0], 404)
+            self.assertEqual(self._get("/api/wind-grid?model=hrrr")[0], 404)
 
 
 if __name__ == "__main__":

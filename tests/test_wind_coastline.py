@@ -245,7 +245,7 @@ class ThemeAndPage(unittest.TestCase):
 
 
 class Routes(unittest.TestCase):
-    def test_coast_routes_gated_and_raw_files_denied(self):
+    def test_coast_routes_public_and_raw_files_denied(self):
         import os, threading, urllib.request, urllib.error
         from http.server import ThreadingHTTPServer
         from unittest import mock
@@ -262,12 +262,11 @@ class Routes(unittest.TestCase):
                 return e.code, None
         try:
             with mock.patch.dict(os.environ, {"WIND_PARTICLES_ENABLED": "", "PREVIEW_KEY": ""}):
-                for p in ("/wind/coast.js", "/wind/coast-lo.json", "/wind/coast-hi.json", "/wind-coast.js", "/wind-coast/lo.json"):
+                self.assertEqual(get("/wind/coast.js"), (200, "public, max-age=600"))
+                self.assertEqual(get("/wind/coast-lo.json"), (200, "public, max-age=86400"))
+                self.assertEqual(get("/wind/coast-hi.json"), (200, "public, max-age=86400"))
+                for p in ("/wind-coast.js", "/wind-coast/lo.json", "/wind-coast/hi.json"):
                     self.assertEqual(get(p)[0], 404, p)
-            with mock.patch.dict(os.environ, {"WIND_PARTICLES_ENABLED": "1"}):
-                self.assertEqual(get("/wind/coast.js")[0], 200)
-                self.assertEqual(get("/wind/coast-hi.json"), (200, "private, max-age=86400"))
-                self.assertEqual(get("/wind-coast/hi.json")[0], 404)
         finally:
             httpd.shutdown(); httpd.server_close()
 

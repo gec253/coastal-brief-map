@@ -169,7 +169,15 @@
       status.textContent = a ? "Loading model wind +" + a + " h…" : "Loading NOAA " + modelName + " model wind…"; status.hidden = false;
       try {
         const qs = [a ? "ahead=" + a : "", wantHrrr ? "model=hrrr" : ""].filter(Boolean).join("&");
-        const g = memo[a] || await fetch("/api/wind-grid" + (qs ? "?" + qs : "")).then((r) => r.json());
+        let g = memo[a];
+        if (!g) {
+          const res = await fetch("/api/wind-grid" + (qs ? "?" + qs : ""));
+          try { g = await res.json(); } catch (err) { g = {}; }
+          if (res.status === 429) {
+            status.textContent = (g && g.error) || "Too many requests. Please try again in a moment.";
+            return;
+          }
+        }
         if (my !== req) return;
         if (!g.ok) { status.textContent = g.error || "Model wind is unavailable right now."; return; }
         memo[a] = g; ai = i; setHour();

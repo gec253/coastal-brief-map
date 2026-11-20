@@ -40,9 +40,13 @@ def fixture_payload() -> dict:
     }
 
 
-def view_payload(handle_radar_meta) -> tuple[int, dict]:
-    """(status, payload) for /api/radar-view."""
-    if fixture_mode():
+def view_payload(handle_radar_meta, allow_fixture: bool = False) -> tuple[int, dict]:
+    """(status, payload) for /api/radar-view.
+
+    Fixture frames are never returned on the public path (allow_fixture=False),
+    even if RADAR_FIXTURE=1, so a local test flag cannot leak synthetic radar.
+    """
+    if allow_fixture and fixture_mode():
         return 200, fixture_payload()
     status, p = handle_radar_meta()
     p = dict(p)

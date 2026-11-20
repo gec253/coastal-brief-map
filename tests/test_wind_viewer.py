@@ -237,6 +237,9 @@ class PageCopyAndControls(unittest.TestCase):
         self.assertIn("25&nbsp;km", self.html)
         self.assertIn("CLKN7", self.html)
         self.assertIn("BFTN7", self.html)
+        self.assertIn("id=\"w-disc\"", self.html)
+        self.assertIn("National Weather Service", self.html)
+        self.assertIn("rely on it alone for safety", self.html)
         doc = (ROOT / "docs" / "WIND_VIEWER.md").read_text()
         for s in ("25 km", "CLKN7", "BFTN7", "41025", "HRRR", "model forecast"):
             self.assertIn(s, doc)
@@ -250,7 +253,7 @@ class PageCopyAndControls(unittest.TestCase):
         self.assertLess(own, 50 * 1024, own)
         self.assertLess((ROOT / "wind.css").stat().st_size, 12 * 1024)
         scripts = re.findall(r'<script src="([^"]+)"', self.html)
-        self.assertEqual(scripts, ["/vendor/leaflet/leaflet.js", "/lab/wind.js", "/wind/coast.js", "/wind/viewer.js"])
+        self.assertEqual(scripts, ["/vendor/leaflet/leaflet.js", "/wind/engine.js", "/wind/coast.js", "/wind/viewer.js"])
         self.assertTrue(all("defer" in s for s in re.findall(r"<script src=[^>]+>", self.html)))
         # The basemap is our own coastline drawn into <canvas> tiles, never <img>, so it can't be the LCP element.
         self.assertIn("CBCoast.layer", self.js)
@@ -288,14 +291,26 @@ class Routes(unittest.TestCase):
 
     PATHS = ("/wind", "/wind.css", "/wind/viewer.js", "/lab/wind", "/lab/wind.js", "/api/wind-grid", "/api/wind-grid?ahead=3")
 
-    def test_404_for_public(self):
+    def test_lab_and_hrrr_404_for_public(self):
         key = secrets.token_hex(16)
-        with mock.patch.dict(os.environ, {"WIND_PARTICLES_ENABLED": "", "PREVIEW_KEY": key}), \
-             mock.patch.object(windgrid, "latest_grid", side_effect=AssertionError("must not fetch")):
-            for p in self.PATHS:
+        with mock.patch.dict(os.environ, {"WIND_PARTICLES_ENABLED": "", "PREVIEW_KEY": key, "HOME_SHOWCASE": ""}), \
+             mock.patch.object(windgrid, "latest_grid", return_value={"ok": True, "ahead": 0}):
+            for p in ("/lab/wind", "/lab/wind.js"):
                 self.assertEqual(self._get(p)[0], 404, p)
-            # a wrong cookie is still public
-            self.assertEqual(self._get("/wind", "cb_preview=nope")[0], 404)
+            self.assertEqual(self._get("/lab/wind", "cb_preview=nope")[0], 404)
+            self.assertEqual(self._get("/wind?model=hrrr")[0], 404)
+            self.assertEqual(self._get("/api/wind-grid?model=hrrr")[0], 404)
+            # Public GFS viewer and grid (latest_grid is mocked, so no NOMADS call).
+            st, h, body = self._get("/wind")
+            self.assertEqual(st, 200)
+            self.assertIn("noindex", h.get("X-Robots-Tag", ""))
+            self.assertIn(b'data-wind-view="viewer"', body)
+            self.assertIn(b"/wind/engine.js", body)
+            self.assertNotIn(b"/lab/wind.js", body)
+            self.assertEqual(self._get("/wind.css")[0], 200)
+            self.assertEqual(self._get("/wind/engine.js")[0], 200)
+            self.assertEqual(self._get("/api/wind-grid")[0], 200)
+            self.assertEqual(self._get("/wind", "cb_preview=nope")[0], 200)
 
     def test_raw_files_never_served_statically(self):
         with mock.patch.dict(os.environ, {"WIND_PARTICLES_ENABLED": "1"}):

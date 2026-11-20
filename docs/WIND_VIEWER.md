@@ -8,14 +8,14 @@ A full-viewport "helm" page that animates the **NOAA NCEP GFS 0.25° 10 m wind m
 
 ## Access
 
-Private, gated exactly like `/lab/wind`: 404 unless `WIND_PARTICLES_ENABLED=1` (off in production) or the browser holds Ed's preview cookie (`/preview?key=…`). It is `noindex`, `no-store`, and not linked from the homepage, `/dashboard`, public navigation or freshwater pages. The private preview hub lists it as "Wind viewer". `/lab/wind` still works.
+Public GFS viewer (`feature/public-viewers-1120`). The page is reachable without a preview cookie, stays `noindex, nofollow` (and off the sitemap) until the homepage showcase is launched, and is linked from the showcase Open control when `HOME_SHOWCASE=1`. `?model=hrrr` and `/lab/wind` stay preview-gated. The shared particle engine is served at `/wind/engine.js` (not `/lab/wind.js`).
 
 | Route | File |
 |---|---|
 | `/wind` | `wind.html` |
 | `/wind.css` | `wind.css` (slim, ~9 KB; no homepage `styles.css`, no web fonts) |
 | `/wind/viewer.js` | `wind-viewer.js` (UI: controls, readout, clock, forecast-hour step, tinted canvas basemap) |
-| `/lab/wind.js` | `wind-lab.js` (shared particle engine + `WindMath`; also used by `/lab/wind`) |
+| `/wind/engine.js` | `wind-lab.js` (shared particle engine + `WindMath`). `/lab/wind.js` stays private and is only used by `/lab/wind`. |
 | `/api/wind-grid[?ahead=0/3/6/9/12]` | `windgrid.py` (GFS via NOMADS filter, cached 30 min per step) |
 
 ## Reused, not rebuilt

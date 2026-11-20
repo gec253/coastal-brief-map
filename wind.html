@@ -6,6 +6,7 @@
   <meta name="robots" content="noindex, nofollow">
   <meta name="description" content="Animated NOAA GFS model wind forecast for coastal North Carolina. Model forecast, not station readings.">
   <title>Wind · model forecast — The Coastal Brief</title>
+  <link rel="icon" href="/branding/favicon.svg" type="image/svg+xml">
   <script>
     (function () { var d = document.documentElement, t = null;
       try { var q = /[?&]theme=(light|dark)\b/.exec(location.search); t = q ? q[1] : localStorage.getItem("coastalBrief.theme"); } catch (e) {}
@@ -41,7 +42,7 @@
       <span class="w-ticks" aria-hidden="true"><span>0</span><span>10</span><span>20</span><span>30</span><span>35+ kt</span></span>
     </div>
     <p class="w-read" id="w-read" aria-live="polite" hidden></p>
-    <p class="w-attrib">Wind: <a id="w-src" href="https://www.nco.ncep.noaa.gov/pmb/products/gfs/" rel="noopener">NOAA NCEP GFS</a> <span id="w-src-res">0.25° model forecast</span> · Coastline: U.S. Census Bureau, 2025 cartographic boundary file, 1:500,000 (not endorsed by the Census Bureau)</p>
+    <p class="w-attrib">Wind: <a id="w-src" href="https://www.nco.ncep.noaa.gov/pmb/products/gfs/" rel="noopener">NOAA NCEP GFS</a> <span id="w-src-res">0.25° model forecast</span> · Coastline: U.S. Census Bureau, 2025 cartographic boundary file, 1:500,000 (not endorsed by the Census Bureau). <span id="w-disc">General information only: this is a model forecast and can be late or inaccurate for your location. Don’t rely on it alone for safety, marine or aviation decisions; check the National Weather Service.</span></p>
     <script>/* ?model=hrrr (private): name HRRR before first paint so the text doesn't reflow later; a GFS fallback relabels it */if(/[?&]model=hrrr\b/.test(location.search)){var s=document.getElementById("w-src");s.textContent="NOAA NCEP HRRR";s.href="https://rapidrefresh.noaa.gov/hrrr/";document.getElementById("w-src-res").textContent="3 km model forecast";}</script>
     <p class="w-status" id="w-status" role="status">Loading NOAA GFS model wind…</p>
     <details class="w-about">
@@ -50,6 +51,7 @@
         <p><strong>Model forecast, not measurements.</strong> Flow lines show the NOAA GFS computer forecast of 10&nbsp;m wind on a 0.25° grid (cells about 25&nbsp;km across), updated four times a day. Brighter, thicker and faster lines mean stronger wind.</p>
         <p>Values between grid points are interpolated, so harbors, inlets and the sounds are coarser than they look. Near the shore the model often reads lighter than stations such as Cape Lookout (CLKN7) and Beaufort (BFTN7). Check station and buoy readings before you go.</p>
         <p>Times are Eastern (ET). Wind data: NOAA NCEP. Coastline: U.S. Census Bureau (shown at small scale; small creeks, marsh and inland lakes are not drawn).</p>
+        <p>General information only: this is a model forecast and can be late or inaccurate for your location. Don’t rely on it alone for safety, marine or aviation decisions; check the National Weather Service.</p>
       </div>
     </details>
   </main>
@@ -75,7 +77,7 @@
   </nav>
 </div>
 <script src="/vendor/leaflet/leaflet.js" defer></script>
-<script src="/lab/wind.js" defer></script>
+<script src="/wind/engine.js" defer></script>
 <script src="/wind/coast.js" defer></script>
 <script src="/wind/viewer.js" defer></script>
 </body>

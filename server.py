@@ -229,6 +229,29 @@ def cache_get_any(url: str) -> tuple[int, str, bytes] | None:
         return None
 
 
+def cache_entry(url: str) -> dict | None:
+    """Cached body plus stored/expires times, even if the TTL has passed. None if missing."""
+    body_path, meta_path = cache_paths(url)
+    try:
+        meta = json.loads(meta_path.read_text())
+        body = body_path.read_bytes()
+        stored = float(meta.get("stored") or 0)
+        expires = float(meta.get("expires") or 0)
+        status = int(meta.get("status", 200))
+    except (OSError, json.JSONDecodeError, TypeError, ValueError):
+        return None
+    if not body:
+        return None
+    return {
+        "status": status,
+        "ctype": str(meta.get("ctype", "application/octet-stream")),
+        "body": body,
+        "stored": stored,
+        "expires": expires,
+        "age": (time.time() - stored) if stored else None,
+    }
+
+
 # Only public site assets are served from the repo folder; source, config,
 # docs, and test fixtures are not.
 _STATIC_EXT = {".html", ".css", ".js", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".avif", ".ico",
@@ -994,15 +1017,31 @@ def _refresh_radar_mem(force: bool = False) -> dict:
         try:
             if status != 200:
                 sys.stderr.write("radar.json upstream HTTP %s\n" % status)
+                quota = status == 429
+                if quota:
+                    note_radar_feed(
+                        "quota",
+                        "Radar is temporarily limited. Showing cached observed frames where available.",
+                    )
+                else:
+                    note_radar_feed(
+                        "upstream",
+                        "Radar is unavailable right now. Showing cached observed frames where available.",
+                    )
                 if mem.get("client") and signed_ok:
                     return mem["client"]
+                if quota:
+                    return {
+                        "ok": False, "available": False, "reason": "quota",
+                        "message": "Radar is temporarily limited. Try again in a few minutes. No old frames are shown in their place.",
+                    }
                 msg = "Radar is unavailable right now."
                 try:
                     err = json.loads(body.decode("utf-8")).get("error") or {}
                     code = err.get("code")
                     if code == 2009:
-                        msg = "Radar coming soon"
-                        return {"ok": False, "available": False, "reason": "coming_soon", "message": msg}
+                        note_radar_feed(None)
+                        return {"ok": False, "available": False, "reason": "coming_soon", "message": "Radar coming soon"}
                 except (UnicodeDecodeError, json.JSONDecodeError, AttributeError):
                     pass
                 return {"ok": False, "available": False, "reason": "upstream", "message": msg}
@@ -1030,6 +1069,7 @@ def _refresh_radar_mem(force: bool = False) -> dict:
             mem["client"] = client
             mem["error"] = None
             upstream_error = False
+            note_radar_feed(None)
             _start_radar_prewarm(client)
             return client
         finally:
@@ -1058,18 +1098,26 @@ def _valid_radar_tile(z: str, x: str, y: str, t: str) -> bool:
 
 
 def fetch_radar_tile(z: str, x: str, y: str, t: str) -> tuple[int, str, bytes]:
+    status, ctype, body, _info = fetch_radar_tile_ex(z, x, y, t)
+    return status, ctype, body
+
+
+def fetch_radar_tile_ex(z: str, x: str, y: str, t: str) -> tuple[int, str, bytes, dict]:
+    """Fetch a radar tile, reusing a terms-allowed stale copy when upstream fails.
+
+    info["cache"] is "fresh", "stale", or None. A stale tile is a real observed
+    (or still-valid nowcast) image, never a placeholder.
+    """
     if not weatherapi_key():
         return 503, "application/json; charset=utf-8", json.dumps({
             "ok": False, "reason": "coming_soon", "message": "Radar coming soon"
-        }).encode("utf-8")
+        }).encode("utf-8"), {"cache": None, "reason": "coming_soon"}
     if not _valid_radar_tile(z, x, y, t):
-        return 400, "text/plain; charset=utf-8", b"invalid tile"
-    # Cache by z/x/y/time only — never by the signed upstream URL.
+        return 400, "text/plain; charset=utf-8", b"invalid tile", {"cache": None}
     cache_key_url = "radar-cache://tile/%s/%s/%s/%s" % (z, x, y, t)
     cached = cache_get(cache_key_url)
     if cached:
-        return cached
-    # Single flight: a tile already being fetched (by another viewer or the prewarm) is waited for, not refetched.
+        return cached[0], cached[1], cached[2], {"cache": "fresh"}
     with _TILE_INFLIGHT_LOCK:
         ev = _TILE_INFLIGHT.get(cache_key_url)
         owner = ev is None
@@ -1079,7 +1127,10 @@ def fetch_radar_tile(z: str, x: str, y: str, t: str) -> tuple[int, str, bytes]:
         ev.wait(30)
         cached = cache_get(cache_key_url)
         if cached:
-            return cached
+            return cached[0], cached[1], cached[2], {"cache": "fresh"}
+        stale = stale_radar_tile(z, x, y, t)
+        if stale:
+            return stale[0], stale[1], stale[2], {"cache": "stale"}
     try:
         return _fetch_radar_tile_upstream(z, x, y, t, cache_key_url)
     finally:
@@ -1093,20 +1144,45 @@ _TILE_INFLIGHT: dict = {}
 _TILE_INFLIGHT_LOCK = threading.Lock()
 
 
-def _fetch_radar_tile_upstream(z: str, x: str, y: str, t: str, cache_key_url: str) -> tuple[int, str, bytes]:
+def _tile_error(status: int, reason: str, message: str) -> tuple[int, str, bytes, dict]:
+    payload = {"ok": False, "reason": reason, "message": message}
+    return status, "application/json; charset=utf-8", json.dumps(payload).encode("utf-8"), {"cache": None, "reason": reason}
+
+
+def _fetch_radar_tile_upstream(z: str, x: str, y: str, t: str, cache_key_url: str) -> tuple[int, str, bytes, dict]:
     meta = _refresh_radar_mem(force=False)
     if not meta.get("ok"):
-        status = 503 if meta.get("reason") == "coming_soon" else 502
-        return status, "application/json; charset=utf-8", json.dumps(meta).encode("utf-8")
+        stale = stale_radar_tile(z, x, y, t)
+        if stale and meta.get("reason") != "coming_soon":
+            reason = "quota" if meta.get("reason") == "quota" else "upstream"
+            note_radar_feed(reason, "Radar is temporarily limited. Showing cached observed frames where available.")
+            return stale[0], stale[1], stale[2], {"cache": "stale", "reason": reason}
+        status = 503 if meta.get("reason") == "coming_soon" else (429 if meta.get("reason") == "quota" else 502)
+        return _tile_error(status, meta.get("reason") or "upstream", meta.get("message") or "Radar is unavailable right now.")
     with RADAR_LOCK:
         template = _RADAR_MEM.get("tile_url") or ""
     if not template or "{z}" not in template or "{time}" not in template:
-        return 502, "text/plain; charset=utf-8", b"radar tile template missing"
+        stale = stale_radar_tile(z, x, y, t)
+        if stale:
+            return stale[0], stale[1], stale[2], {"cache": "stale", "reason": "upstream"}
+        return 502, "text/plain; charset=utf-8", b"radar tile template missing", {"cache": None, "reason": "upstream"}
     url = template.replace("{z}", z).replace("{x}", x).replace("{y}", y).replace("{time}", t)
     status, ctype, body = fetch_url_quiet(url, tries=3)
     if status == 200 and body:
         cache_put_ttl(cache_key_url, radar_tile_ttl(t), body, ctype or "image/png")
-    return status, ctype or "image/png", body
+        return status, ctype or "image/png", body, {"cache": "fresh"}
+    if status == 429:
+        note_radar_feed("quota", "Radar is temporarily limited. Showing cached observed frames where available.")
+        reason, message = "quota", "Radar is temporarily limited. Try again in a few minutes."
+        fail_status = 429
+    else:
+        note_radar_feed("upstream", "Radar is unavailable right now. Showing cached observed frames where available.")
+        reason, message = "upstream", "Radar is unavailable right now."
+        fail_status = 502 if status >= 500 or status == 0 else status
+    stale = stale_radar_tile(z, x, y, t)
+    if stale:
+        return stale[0], stale[1], stale[2], {"cache": "stale", "reason": reason}
+    return _tile_error(fail_status, reason, message)
 
 
 # Prewarm: after each radar.json refresh, fetch the observed frames' tiles for the viewer's default phone
@@ -1155,6 +1231,172 @@ def radar_tile_ttl(t: str) -> int:
         if f.get("time") == t and f.get("type") == "nowcast":
             return RADAR_JSON_TTL
     return TTL["radar_tile"]
+
+
+# WeatherAPI terms cap current (observed) imagery at 60 minutes. Nowcast tiles
+# are re-issued with each radar.json (180 s), so a stale nowcast may only be
+# reused within that window.
+OBSERVED_TILE_MAX_AGE = 60 * 60
+NOWCAST_TILE_MAX_AGE = RADAR_JSON_TTL
+
+# Public API rate limits, sized from real /radar loading:
+# 25 observed + 12 nowcast frames × ~9 tiles at native z7 ≈ 333 requests for a
+# full load. A pan/zoom can refetch tiles for every loaded layer (another ~333).
+# A typical session with several pans, a zoom, and a 3-minute refresh stays
+# under 2,000. 2,400 / 5 minutes leaves headroom without letting one IP crawl
+# the tile space. Meta and wind-grid limits cover dashboard + viewer refresh
+# and the five GFS ahead steps, with retries.
+API_TILE_LIMIT, API_TILE_WINDOW = 2400, 300
+API_RADAR_META_LIMIT, API_RADAR_META_WINDOW = 60, 60
+API_WIND_GRID_LIMIT, API_WIND_GRID_WINDOW = 30, 60
+
+
+class SlidingWindowLimiter:
+    """Per-key sliding window. Returns (allowed, retry_after_seconds)."""
+
+    def __init__(self):
+        self._hits: dict[str, list[float]] = {}
+        self._lock = threading.Lock()
+
+    def check(self, key: str, limit: int, window_s: int, now: float | None = None) -> tuple[bool, int]:
+        now = time.time() if now is None else now
+        with self._lock:
+            hits = [t for t in self._hits.get(key, []) if now - t < window_s]
+            if len(hits) >= limit:
+                self._hits[key] = hits
+                retry = int(max(1, window_s - (now - hits[0]) + 0.999))
+                return False, retry
+            hits.append(now)
+            self._hits[key] = hits
+            if len(self._hits) > 8000:
+                for k in list(self._hits)[:2000]:
+                    self._hits.pop(k, None)
+            return True, 0
+
+    def reset(self) -> None:
+        with self._lock:
+            self._hits.clear()
+
+
+API_LIMITS = SlidingWindowLimiter()
+
+_VALID_IP = re.compile(
+    r"^(?:(?:\d{1,3}\.){3}\d{1,3}|[0-9a-fA-F:]+)$"
+)
+
+# Query keys whose values must never appear in request logs.
+_SENSITIVE_QS = re.compile(
+    r"(?i)([?&])(key|token|preview|preview_key|password|passwd|secret|auth|"
+    r"access_token|api_key|apikey|authorization)=([^&\s]*)"
+)
+
+
+def redact_request_text(s: str) -> str:
+    """Replace sensitive query values (key, token, preview, …) with REDACTED."""
+    if not s or ("?" not in s and "&" not in s and "=" not in s):
+        # still run the regex — cheap, and request lines always have a path
+        pass
+    return _SENSITIVE_QS.sub(r"\1\2=REDACTED", s)
+
+
+def valid_ip(value: str) -> bool:
+    v = (value or "").strip()
+    if not v or not _VALID_IP.match(v):
+        return False
+    if ":" in v:
+        return True
+    parts = v.split(".")
+    return len(parts) == 4 and all(p.isdigit() and 0 <= int(p) <= 255 for p in parts)
+
+
+def client_ip_from_headers(headers, fallback: str = "") -> str:
+    """Client IP behind Render / Cloudflare.
+
+    Prefer CF-Connecting-IP when present. Otherwise use the leftmost valid
+    X-Forwarded-For hop (the original client when each proxy appends). Render
+    sets X-Forwarded-For to the connecting IP; a spoofed leftmost value is
+    rejected if it isn't a well-formed address. Fall back to the socket peer.
+    """
+    cf = (headers.get("CF-Connecting-IP") or headers.get("Cf-Connecting-Ip") or "").strip()
+    if valid_ip(cf):
+        return cf
+    xff = headers.get("X-Forwarded-For") or headers.get("X-Forwarded-for") or ""
+    for part in xff.split(","):
+        ip = part.strip()
+        if valid_ip(ip):
+            return ip
+    return (fallback or "").strip()[:64]
+
+
+# Last WeatherAPI/upstream restriction, for a clear in-viewer message.
+_RADAR_FEED = {"limited": False, "reason": None, "message": "", "at": 0.0}
+_RADAR_FEED_LOCK = threading.Lock()
+_FEED_HOLD = 5 * 60
+
+
+def note_radar_feed(reason: str | None, message: str = "") -> None:
+    with _RADAR_FEED_LOCK:
+        if reason:
+            _RADAR_FEED.update({"limited": True, "reason": reason, "message": message, "at": time.time()})
+        else:
+            _RADAR_FEED.update({"limited": False, "reason": None, "message": "", "at": time.time()})
+
+
+def radar_feed_status() -> dict:
+    with _RADAR_FEED_LOCK:
+        if not _RADAR_FEED["limited"] or (time.time() - float(_RADAR_FEED["at"] or 0)) > _FEED_HOLD:
+            return {"limited": False}
+        return {
+            "limited": True,
+            "limit_reason": _RADAR_FEED["reason"],
+            "limit_message": _RADAR_FEED["message"],
+        }
+
+
+def _apply_feed_status(payload: dict) -> dict:
+    """Attach a limited-feed flag without inventing frames or overriding a plan state."""
+    if not isinstance(payload, dict):
+        return payload
+    out = dict(payload)
+    st = radar_feed_status()
+    if not st.get("limited"):
+        return out
+    out["limited"] = True
+    out["limit_reason"] = st.get("limit_reason")
+    out["limit_message"] = st.get("limit_message") or (
+        "Radar is temporarily limited. Showing cached observed frames where available. "
+        "Incomplete or forecast frames are not shown."
+    )
+    return out
+
+
+def radar_tile_is_nowcast(t: str) -> bool:
+    with RADAR_LOCK:
+        frames = (_RADAR_MEM.get("client") or {}).get("frames") or []
+    for f in frames:
+        if f.get("time") == t and f.get("type") == "nowcast":
+            return True
+    return False
+
+
+def stale_radar_tile(z: str, x: str, y: str, t: str) -> tuple[int, str, bytes] | None:
+    """Reuse a cached tile only while WeatherAPI terms still allow it.
+
+    Observed: age ≤ 60 minutes. Nowcast: age ≤ 180 s. Never invent a tile.
+    """
+    cache_key_url = "radar-cache://tile/%s/%s/%s/%s" % (z, x, y, t)
+    ent = cache_entry(cache_key_url)
+    if not ent or ent["status"] != 200 or not ent["body"]:
+        return None
+    age = ent["age"]
+    if age is None or age < 0:
+        return None
+    limit = NOWCAST_TILE_MAX_AGE if radar_tile_is_nowcast(t) else OBSERVED_TILE_MAX_AGE
+    if age > limit:
+        return None
+    if not _is_image(ent["ctype"], ent["body"]):
+        return None
+    return ent["status"], ent["ctype"], ent["body"]
 
 
 import conditions  # noqa: E402
@@ -2405,7 +2647,16 @@ class Handler(SimpleHTTPRequestHandler):
         super().__init__(*args, directory=str(ROOT), **kwargs)
 
     def log_message(self, fmt, *args):
-        sys.stderr.write("%s - %s\n" % (self.address_string(), fmt % args))
+        out = []
+        for a in args:
+            out.append(redact_request_text(a) if isinstance(a, str) else a)
+        try:
+            msg = (fmt % tuple(out)) if args else fmt
+        except (TypeError, ValueError):
+            msg = fmt
+        if isinstance(msg, str):
+            msg = redact_request_text(msg)
+        sys.stderr.write("%s - %s\n" % (self.address_string(), msg))
 
     def end_headers(self):
         # Default for static files. Proxy/API responses set their own cache header first.
@@ -2724,24 +2975,11 @@ class Handler(SimpleHTTPRequestHandler):
             if parsed.path == "/lab/tiles":
                 return self._send_private(ROOT / "tiles-lab.html", "text/html; charset=utf-8")
             return self._send_private(ROOT / "tiles-lab.js", "text/javascript; charset=utf-8")
-        if parsed.path in ("/radar", "/radar.css", "/radar/viewer.js", "/radar/player.js", "/api/radar-view") or parsed.path.startswith("/radar/fixture-tile/"):
-            # Private radar viewer: gated exactly like /wind (WIND_PARTICLES_ENABLED=1 or the preview cookie), never linked.
+        if parsed.path.startswith("/radar/fixture-tile/"):
+            # Test-only fixture tiles: never on Render; 404 without the preview cookie or lab flag.
             pv = self._preview_ok()
-            if not (_flag("WIND_PARTICLES_ENABLED") or pv):
+            if not ((_flag("WIND_PARTICLES_ENABLED") or pv) and radarview.fixture_mode()):
                 return self.send_error(404, "not found")
-            if parsed.path == "/radar":
-                _st, _rp = radarview.view_payload(handle_radar_meta)
-                page = radarview.page_html((ROOT / "radar.html").read_text(encoding="utf-8"), _rp)
-                return self._send_private(None, "text/html; charset=utf-8", page.encode("utf-8"))
-            if parsed.path == "/radar.css":
-                return self._send_private(ROOT / "radar.css", "text/css; charset=utf-8")
-            if parsed.path == "/radar/viewer.js":
-                return self._send_private(ROOT / "radar-viewer.js", "text/javascript; charset=utf-8")
-            if parsed.path == "/radar/player.js":
-                return self._send_private(ROOT / "radar-player.js", "text/javascript; charset=utf-8")
-            if parsed.path == "/api/radar-view":
-                st, payload = radarview.view_payload(handle_radar_meta)
-                return self._json_private(payload, st)
             m = re.fullmatch(r"/radar/fixture-tile/(\d+)/(\d+)/(\d+)\.png", parsed.path)
             body = radarview.fixture_tile(m.group(1), m.group(2), m.group(3), (parse_qs(parsed.query).get("t") or [""])[0]) if m else None
             if body is None:
@@ -2755,41 +2993,75 @@ class Handler(SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
             return
-        if parsed.path in ("/lab/wind", "/lab/wind.js", "/api/wind-grid", "/wind", "/wind.css", "/wind/viewer.js", "/wind/coast.js", "/wind/coast-lo.json", "/wind/coast-hi.json"):
-            # Private: off unless WIND_PARTICLES_ENABLED=1 or the preview cookie. Not linked from the site.
-            # /wind is the dedicated viewer; /lab/wind stays as the prototype; both share wind-lab.js.
+        if parsed.path in ("/radar", "/radar.css", "/radar/viewer.js", "/radar/player.js", "/api/radar-view"):
+            # Public viewer (noindex until the homepage showcase is launched). Fixtures stay private.
+            if parsed.path == "/radar":
+                _st, _rp = radarview.view_payload(handle_radar_meta, allow_fixture=False)
+                _rp = _apply_feed_status(_rp)
+                page = radarview.page_html((ROOT / "radar.html").read_text(encoding="utf-8"), _rp)
+                return self._send_public_view(None, "text/html; charset=utf-8", page.encode("utf-8"))
+            if parsed.path == "/radar.css":
+                return self._send_bytes((ROOT / "radar.css").read_bytes(), "text/css; charset=utf-8", cache_s=600)
+            if parsed.path == "/radar/viewer.js":
+                return self._send_bytes((ROOT / "radar-viewer.js").read_bytes(), "text/javascript; charset=utf-8", cache_s=600)
+            if parsed.path == "/radar/player.js":
+                return self._send_bytes((ROOT / "radar-player.js").read_bytes(), "text/javascript; charset=utf-8", cache_s=600)
+            retry = self._rate_limit("radar-meta", API_RADAR_META_LIMIT, API_RADAR_META_WINDOW)
+            if retry is not None:
+                return self._send_rate_limited(retry)
+            st, payload = radarview.view_payload(handle_radar_meta, allow_fixture=False)
+            payload = _apply_feed_status(payload)
+            return self._send_json(payload, cache_s=60 if payload.get("ok") else 0, status=st)
+        if parsed.path in ("/lab/wind", "/lab/wind.js"):
+            # Private laboratory. The public viewer loads the shared engine at /wind/engine.js.
             pv = self._preview_ok()
             if not (_flag("WIND_PARTICLES_ENABLED") or pv):
                 return self.send_error(404, "not found")
-            if parsed.path == "/wind":
-                return self._send_private(ROOT / "wind.html", "text/html; charset=utf-8")
-            if parsed.path == "/wind.css":
-                return self._send_private(ROOT / "wind.css", "text/css; charset=utf-8")
-            if parsed.path == "/wind/viewer.js":
-                return self._send_private(ROOT / "wind-viewer.js", "text/javascript; charset=utf-8")
-            if parsed.path == "/wind/coast.js":
-                return self._send_private(ROOT / "wind-coast.js", "text/javascript; charset=utf-8")
-            if parsed.path in ("/wind/coast-lo.json", "/wind/coast-hi.json"):
-                # Static Census coastline (public domain); private like the page, but cacheable for a day.
-                self._static_cache = "private, max-age=86400"
-                return self._send_private(ROOT / "wind-coast" / (parsed.path[-7:]), "application/json; charset=utf-8")
             if parsed.path == "/lab/wind":
                 return self._send_private(ROOT / "wind-lab.html", "text/html; charset=utf-8")
-            if parsed.path == "/lab/wind.js":
-                return self._send_private(ROOT / "wind-lab.js", "text/javascript; charset=utf-8")
+            return self._send_private(ROOT / "wind-lab.js", "text/javascript; charset=utf-8")
+        if parsed.path == "/api/wind-grid":
+            qs = parse_qs(parsed.query)
             try:
-                ahead = int((parse_qs(parsed.query).get("ahead") or ["0"])[0])
+                ahead = int((qs.get("ahead") or ["0"])[0])
             except ValueError:
                 ahead = 0
             ahead = ahead if ahead in windgrid.AHEAD_HOURS else 0
-            if (parse_qs(parsed.query).get("model") or [""])[0] == "hrrr":
-                # Private HRRR prototype (?model=hrrr only); labelled GFS fallback when HRRR isn't usable.
+            want_hrrr = (qs.get("model") or [""])[0] == "hrrr"
+            pv = self._preview_ok()
+            if want_hrrr:
+                if not (_flag("WIND_PARTICLES_ENABLED") or pv):
+                    return self.send_error(404, "not found")
                 g = hrrrgrid.latest_grid(ahead=ahead)
-            else:
-                g = windgrid.latest_grid(ahead=ahead)
-            if pv and not _flag("WIND_PARTICLES_ENABLED"):
-                return self._json_private(g, 200 if g.get("ok") else 502)
+                if pv and not _flag("WIND_PARTICLES_ENABLED"):
+                    return self._json_private(g, 200 if g.get("ok") else 502)
+                return self._send_json(g, cache_s=600 if g.get("ok") else 60, status=200 if g.get("ok") else 502)
+            retry = self._rate_limit("wind-grid", API_WIND_GRID_LIMIT, API_WIND_GRID_WINDOW)
+            if retry is not None:
+                return self._send_rate_limited(retry)
+            g = windgrid.latest_grid(ahead=ahead)
+            if not g.get("ok"):
+                g = {"ok": False, "error": g.get("error") or "Model wind is unavailable right now."}
             return self._send_json(g, cache_s=600 if g.get("ok") else 60, status=200 if g.get("ok") else 502)
+        if parsed.path in ("/wind", "/wind.css", "/wind/viewer.js", "/wind/coast.js", "/wind/engine.js", "/wind/coast-lo.json", "/wind/coast-hi.json"):
+            qs = parse_qs(parsed.query)
+            if parsed.path == "/wind" and (qs.get("model") or [""])[0] == "hrrr":
+                if not (_flag("WIND_PARTICLES_ENABLED") or self._preview_ok()):
+                    return self.send_error(404, "not found")
+                return self._send_private(ROOT / "wind.html", "text/html; charset=utf-8")
+            if parsed.path == "/wind":
+                return self._send_public_view(ROOT / "wind.html", "text/html; charset=utf-8")
+            if parsed.path == "/wind.css":
+                return self._send_bytes((ROOT / "wind.css").read_bytes(), "text/css; charset=utf-8", cache_s=600)
+            if parsed.path == "/wind/viewer.js":
+                return self._send_bytes((ROOT / "wind-viewer.js").read_bytes(), "text/javascript; charset=utf-8", cache_s=600)
+            if parsed.path == "/wind/coast.js":
+                return self._send_bytes((ROOT / "wind-coast.js").read_bytes(), "text/javascript; charset=utf-8", cache_s=600)
+            if parsed.path == "/wind/engine.js":
+                return self._send_bytes((ROOT / "wind-lab.js").read_bytes(), "text/javascript; charset=utf-8", cache_s=600)
+            name = "lo.json" if parsed.path.endswith("lo.json") else "hi.json"
+            return self._send_bytes((ROOT / "wind-coast" / name).read_bytes(), "application/json; charset=utf-8", cache_s=86400)
+
         if parsed.path == "/showcase.js":
             if not showcase.enabled():
                 return self.send_error(404, "not found")
@@ -2815,9 +3087,15 @@ class Handler(SimpleHTTPRequestHandler):
         if parsed.path == "/api/sst-time":
             return self._send_json(sst_latest_times(), cache_s=600)
         if parsed.path == "/api/radar/usage":
-            return self._send_json(radar_usage_payload(), cache_s=0)
+            if not self._preview_ok():
+                return self.send_error(404, "not found")
+            return self._json_private(radar_usage_payload(), 200)
         if parsed.path == "/api/radar":
+            retry = self._rate_limit("radar-meta", API_RADAR_META_LIMIT, API_RADAR_META_WINDOW)
+            if retry is not None:
+                return self._send_rate_limited(retry)
             status, payload = handle_radar_meta()
+            payload = _apply_feed_status(payload)
             return self._send_json(payload, cache_s=60, status=status)
         if parsed.path.startswith("/api/radar/tile/"):
             return self._radar_tile(parsed)
@@ -2833,8 +3111,8 @@ class Handler(SimpleHTTPRequestHandler):
 
     # ------------------------------------------------------------ photos
     def _client_ip(self) -> str:
-        ip = self.headers.get("CF-Connecting-IP") or (self.headers.get("X-Forwarded-For") or "").split(",")[0]
-        return (ip or self.client_address[0] or "").strip()[:64]
+        peer = self.client_address[0] if self.client_address else ""
+        return client_ip_from_headers(self.headers, peer)
 
     def _same_origin(self) -> bool:
         origin = self.headers.get("Origin")
@@ -3165,6 +3443,36 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(data)
 
 
+    def _rate_limit(self, bucket: str, limit: int, window_s: int):
+        """Return Retry-After seconds if this client is over the limit, else None."""
+        ip = self._client_ip() or "unknown"
+        ok, retry = API_LIMITS.check("%s:%s" % (bucket, ip), limit, window_s)
+        return None if ok else retry
+
+    def _send_rate_limited(self, retry_after: int):
+        retry_after = max(1, int(retry_after))
+        payload = {
+            "ok": False,
+            "reason": "rate_limit",
+            "error": "Too many requests. Please try again in a moment.",
+            "retry_after": retry_after,
+        }
+        data = json.dumps(payload).encode("utf-8")
+        self.send_response(429)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Retry-After", str(retry_after))
+        self.send_header("Cache-Control", "no-store")
+        self._cache_header_sent = True
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _send_public_view(self, path, ctype: str, data: bytes | None = None):
+        """Public viewer HTML: reachable without a cookie, but noindex until the showcase launch."""
+        if data is None:
+            data = path.read_bytes()
+        return self._send_private(None, ctype, data, robots="noindex, nofollow")
+
     def _radar_tile(self, parsed):
         # /api/radar/tile/{z}/{x}/{y}.png?t=yyyyMMddHHmm
         m = re.fullmatch(r"/api/radar/tile/(\d+)/(\d+)/(\d+)(?:\.png)?", parsed.path)
@@ -3173,18 +3481,30 @@ class Handler(SimpleHTTPRequestHandler):
             return
         qs = parse_qs(parsed.query or "")
         t = (qs.get("t") or [""])[0].strip()
-        status, ctype, body = fetch_radar_tile(m.group(1), m.group(2), m.group(3), t)
+        retry = self._rate_limit("radar-tile", API_TILE_LIMIT, API_TILE_WINDOW)
+        if retry is not None:
+            return self._send_rate_limited(retry)
+        status, ctype, body, info = fetch_radar_tile_ex(m.group(1), m.group(2), m.group(3), t)
         self.send_response(status)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
-        ttl = radar_tile_ttl(t) if status == 200 else 0
-        if ttl:
-            # Observed tiles never change for a time code: 10 min in the browser (server copy <= 50 min, so
-            # any copy is <= 60 min old, per WeatherAPI's current-conditions cap). Nowcast: 180 s.
-            self.send_header("Cache-Control", "public, max-age=600, immutable" if ttl == TTL["radar_tile"] else "public, max-age=%s" % ttl)
+        if status == 429:
+            self.send_header("Retry-After", "60")
+        if info.get("cache") == "stale":
+            self.send_header("X-Radar-Cache", "stale")
+            # Short browser cache: this is a terms-allowed fallback, not a fresh immutable copy.
+            self.send_header("Cache-Control", "public, max-age=60")
             self._cache_header_sent = True
         else:
-            self.send_header("Cache-Control", "no-store")
+            ttl = radar_tile_ttl(t) if status == 200 else 0
+            if ttl:
+                # Observed tiles never change for a time code: 10 min in the browser (server copy <= 50 min, so
+                # any copy is <= 60 min old, per WeatherAPI's current-conditions cap). Nowcast: 180 s.
+                self.send_header("Cache-Control", "public, max-age=600, immutable" if ttl == TTL["radar_tile"] else "public, max-age=%s" % ttl)
+                self._cache_header_sent = True
+            else:
+                self.send_header("Cache-Control", "no-store")
+                self._cache_header_sent = True
         self.end_headers()
         if body:
             self.wfile.write(body)

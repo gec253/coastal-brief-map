@@ -12,6 +12,8 @@ html[data-theme="dark"] { --fc: #FFB454; --fc-bg: #4A2E06; --fc-ink: #FFE3B8; }
 .r-tag:empty { display: none; }
 .r-load { position: absolute; z-index: 610; top: 96px; left: 10px; margin: 0; padding: 4px 9px; border-radius: 8px; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; background: var(--glass); color: var(--glass-ink); border: 1px solid var(--edge); box-shadow: var(--shadow); pointer-events: none; }
 .r-load[hidden] { display: none; }
+.r-limit { position: absolute; z-index: 620; top: 10px; left: 50%; transform: translateX(-50%); width: min(420px, calc(100% - 24px)); margin: 0; padding: 8px 12px; border-radius: 8px; font-size: 12.5px; line-height: 1.35; font-weight: 600; text-align: center; background: var(--surf); color: var(--ink); border: 1px solid var(--edge); box-shadow: var(--shadow); }
+.r-limit[hidden] { display: none; }
 .r-tag.is-fc { background: var(--fc-bg); color: var(--fc-ink); border: 2px dashed var(--fc); font-style: italic; }
 .r-stage.is-fc::after { content: ""; position: absolute; inset: 0; z-index: 605; border: 4px dashed var(--fc); pointer-events: none; }
 .w-badge.is-fc { background: var(--fc-bg); color: var(--fc-ink); outline: 2px dashed var(--fc); outline-offset: -2px; }
