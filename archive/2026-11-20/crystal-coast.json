@@ -23,18 +23,18 @@
    "label": "Barometer",
    "stale": false,
    "station": "8656483",
-   "time": "5:00 AM ET"
+   "time": "5:12 AM ET"
   },
   {
    "label": "Water temp",
    "stale": false,
    "station": "8656483",
-   "time": "5:00 AM ET"
+   "time": "5:12 AM ET"
   }
  ],
  "issueDate": "2026-11-20",
- "issuedAt": "2026-11-20T10:15:00.288315+00:00",
- "issuedEt": "Fri Nov 20, 5:15 AM ET",
+ "issuedAt": "2026-11-20T10:21:02.813827+00:00",
+ "issuedEt": "Fri Nov 20, 5:21 AM ET",
  "items": [
   [
    "Advisories",
@@ -101,7 +101,7 @@
   "Offshore water is 10°F warmer than inshore."
  ],
  "validation": {
-  "checkedAt": "2026-11-20T10:15:00.288315+00:00",
+  "checkedAt": "2026-11-20T10:21:02.813827+00:00",
   "checks": [
    "region",
    "location",
