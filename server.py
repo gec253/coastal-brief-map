@@ -2723,6 +2723,31 @@ def sitemap_body() -> bytes:
     return "".join(parts).encode("utf-8")
 
 
+# ---------------------------------------------------------------- Concept B preview (Ed t391u)
+# /preview/home-b renders the real public homepage, then swaps the inlined Hybrid stylesheet for
+# preview/sprint-home/hybrid-b.css (commit 734af77). Only the route handler, behind the preview
+# cookie, calls this, so public responses keep hybrid.css byte for byte.
+REFINE_B_ROUTE = "/preview/home-b"
+
+
+def refine_b_page(data: bytes) -> bytes:
+    strip = sprint_home._CSS_COMMENT.sub
+    old = strip("", sprint_home.style_tag("hybrid")).encode("utf-8")
+    if old not in data:
+        raise RuntimeError("concept B: hybrid style tag not found")
+    css = sprint_home._read("base.css") + "\n" + sprint_home._read("hybrid-b.css")
+    new = strip("", '<style id="sprint-css">\n%s\n</style>\n' % css.replace("</", "<\\/")).encode("utf-8")
+    data = data.replace(old, new, 1)
+    if b'name="robots" content="index, follow"' in data:
+        data = data.replace(b'name="robots" content="index, follow"', b'name="robots" content="noindex, nofollow"')
+    else:
+        data = data.replace(b"<head>", b'<head>\n  <meta name="robots" content="noindex, nofollow">', 1)
+    data = data.replace(b'href="/?region=', b'href="/preview/home-b?region=')
+    flag = b'<p class="pv-flag">Private preview \xc2\xb7 Concept B, Balanced Nautical \xc2\xb7 not public</p>'
+    i = data.find(b'<header class="mh')
+    return data[:i] + flag + data[i:] if i >= 0 else data
+
+
 # ---------------------------------------------------------------- private preview access
 # /preview?key=<PREVIEW_KEY> sets an HttpOnly cookie that unlocks the flagged previews (/lab/wind,
 # /lab/tiles, /preview/masthead, and any not-yet-public saltwater dashboard) in that browser only. The key lives only in
@@ -2783,6 +2808,7 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 <a class="card" href="/preview/home-heritage"><b>Homepage concept A · Heritage</b><span>Private sprint concept: Carolina maritime heritage, live instruments first.</span></a>
 <a class="card" href="/preview/home-editorial"><b>Homepage concept B · Editorial</b><span>Private sprint concept: magazine grid, photo-led, live instruments first.</span></a>
 <a class="card" href="/preview/catch-wall"><b>Catch Wall redesign</b><span>Private preview: the Catch Wall as editorial photo pages, saltwater and freshwater side by side.</span></a>
+<a class="card" href="/preview/home-b"><b>Homepage · Concept B, Balanced Nautical</b><span>The real homepage with the approved Concept B styling: warm marine forecast, four Also Observed tiles, Wind and Seas highlights, updated controls. Private; the public homepage is unchanged.</span></a>
 <a class="card" href="/preview/home-hybrid"><b>Homepage concept C · Hybrid</b><span>Private sprint concept: heritage instruments with an editorial grid.</span></a>
 <a class="card" href="/catch-wall"><b>Catch Wall photo submissions</b><span>Private test: the Share form and the review page work in this browser, even while public uploads stay off. Photos you send wait in the pending queue until you approve them.</span></a>
 <a class="card" href="/preview/photos-check"><b>Photo setup check</b><span>A private status report: storage, image tools, and the pending queue. It never shows keys.</span></a>
@@ -2955,6 +2981,8 @@ class Handler(SimpleHTTPRequestHandler):
                 sys.stderr.write("catch wall preview failed: %s\n" % e)
                 return self.send_error(500, "preview failed")
             return self._send_private(None, "text/html; charset=utf-8", data)
+        if parsed.path == REFINE_B_ROUTE:
+            return self._refine_b_route(parsed)
         if parsed.path in sprint_home.ROUTES:
             return self._sprint_home_route(parsed)
         if parsed.path.startswith(sprint_home.PHOTO_ROUTE):
@@ -3417,6 +3445,26 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
         self.wfile.write(data)
+
+    def _refine_b_route(self, parsed):
+        """Concept B (Ed t390u/t391u): the real public homepage with hybrid-b.css, preview cookie only.
+        Public "/" is untouched; this route is 404 without the cookie, no-store, noindex, Vary: Cookie."""
+        if not self._preview_ok():
+            return self.send_error(404, "not found")
+        q = parse_qs(parsed.query or "")
+        rid = (q.get("region") or [""])[0].strip()[:40] or None
+        fresh = ("falls-lake", "jordan-lake", "neuse-river")
+        if rid and not (rid in sprint_home.public_salt_ids() or (rid in fresh and freshwater.flag_on())):
+            rid = None
+        try:
+            data = refine_b_page(sprint_home.page("hybrid", rid, public=True))
+            sc = showcase.variant(q, rid)
+            if sc:
+                data = showcase.inject(data, sc, radar_meta=handle_radar_meta)
+        except Exception as e:
+            sys.stderr.write("concept B preview failed: %s\n" % e)
+            return self.send_error(500, "preview failed")
+        return self._send_private(None, "text/html; charset=utf-8", data, extra=[("Vary", "Cookie")])
 
     def _sprint_home_route(self, parsed):
         if not self._preview_ok():

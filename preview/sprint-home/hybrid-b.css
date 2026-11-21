@@ -1,0 +1,602 @@
+/* C · Hybrid, v7final. One identity: midnight navy / Atlantic blue / maritime green / ivory on the coast,
+   deep river green / moss / earth / ivory inland. Dark instrument cards on a light chart-table band,
+   brass only as hairlines. */
+html[data-sprint="hybrid"]{
+  --band:#E3E9EA;--band-edge:#C9D4D6;--card-1:#0F2C40;--card-2:#0A2132;--card-edge:#29506B;
+  --label:#C9D6DE;--num:#FFFDF8;--band-ink:#F3EEE3;--band-ink-2:#C5CFD6;--band-ink-3:#A9B7C1;
+  --accent:#0E3A57;--accent-2:#1D5C4F;--band-1:#0F2C40;--band-2:#0A2132;
+}
+html[data-sprint="hybrid"][data-water="fresh"]{
+  --band:#E4E6DA;--band-edge:#CDD1BE;--card-1:#203F31;--card-2:#172F24;--card-edge:#46664F;
+  --label:#D4DDCF;--num:#FFFDF8;--band-ink:#F2EFE4;--band-ink-2:#CBD3C4;--band-ink-3:#AEB9A8;
+  --accent:#2C4A35;--accent-2:#5D6B3A;--band-1:#203F31;--band-2:#172F24;--pamlico:#4E6B3F;
+}
+@media (prefers-color-scheme:dark){
+  html[data-sprint="hybrid"]{--band:#0C1B26;--band-edge:#1E3444;--card-1:#14354C;--card-2:#0F2A3D;--card-edge:#3A6585;--accent:#9ECBEA;--accent-2:#9CD4C2}
+  html[data-sprint="hybrid"][data-water="fresh"]{--band:#0F1C16;--band-edge:#22352A;--card-1:#24493A;--card-2:#1B3A2D;--card-edge:#4F7A5E;--accent:#BFD8B4;--accent-2:#C9CF9A}
+}
+/* ===== Balanced Nautical (Concept B, Ed t390u) design tokens. Shared --rf-* names, reusable site-wide. =====
+   Brass is decoration only (never text, never the only cue); --rf-brass-ink is the brass-family text colour (AA). */
+html[data-sprint="hybrid"]{--rf-radius-card:8px;--rf-radius-ctl:8px;
+  --rf-edge:rgba(7,28,41,.16);--rf-edge-strong:rgba(7,28,41,.34);--rf-edge-warm:#D6C6A6;
+  --rf-face-edge:rgba(243,230,208,.14);--rf-face-hi:inset 0 1px 0 rgba(255,255,255,.08);
+  --rf-shadow-1:0 1px 2px rgba(6,20,30,.14);--rf-shadow-2:0 1px 2px rgba(6,20,30,.16),0 6px 14px -10px rgba(6,20,30,.45);
+  --rf-brass:#C4A36A;--rf-brass-hair:rgba(196,163,106,.88);--rf-brass-ink:#6B5121;
+  --rf-surface-warm:#FAF3E4;--rf-surface-tile:#FFFDF8;--rf-tile-edge:#CFD9DC;--rf-rule:var(--accent);
+  --rf-active-fill:#071C29;--rf-active-ink:#FFFDF8;--rf-focus-ring:0 0 0 2px #FFFDF8,0 0 0 4px #0E3A57;--rf-grid:rgba(7,28,41,.035)}
+html[data-sprint="hybrid"][data-water="fresh"]{--rf-tile-edge:#D3D8C6;--rf-active-fill:#203F31;--rf-focus-ring:0 0 0 2px #FFFDF8,0 0 0 4px #2C4A35}
+@media (prefers-color-scheme:dark){
+  html[data-sprint="hybrid"]{--rf-edge:rgba(214,232,245,.18);--rf-edge-strong:rgba(214,232,245,.40);--rf-edge-warm:rgba(243,230,208,.22);
+    --rf-face-edge:rgba(214,232,245,.20);--rf-face-hi:inset 0 1px 0 rgba(255,255,255,.10);
+    --rf-shadow-1:0 1px 2px rgba(3,14,26,.35);--rf-shadow-2:0 1px 2px rgba(3,14,26,.35),0 8px 18px -12px rgba(3,14,26,.75);
+    --rf-brass-hair:rgba(210,180,126,.70);--rf-brass-ink:#E2C88F;
+    --rf-surface-warm:#1C4364;--rf-surface-tile:#183D5C;--rf-tile-edge:rgba(214,232,245,.24);
+    --rf-active-fill:#F3E6D0;--rf-active-ink:#071C29;--rf-focus-ring:0 0 0 2px #0F2B44,0 0 0 4px #F3E6D0;--rf-grid:rgba(214,232,245,.03)}
+  html[data-sprint="hybrid"][data-water="fresh"]{--rf-surface-warm:#1B3127;--rf-surface-tile:#172B21;--rf-tile-edge:rgba(214,226,205,.22);--rf-focus-ring:0 0 0 2px #0F1C16,0 0 0 4px #F3E6D0}
+}
+.pv-flag{background:#0A1C2A;color:#E9EEF2;border-bottom:1px solid rgba(196,163,106,.45)}
+
+/* ---------- masthead: nameplate, rule, sections folded under it ---------- */
+.mh-hybrid .mh-plate{padding:8px 14px 0;text-align:center}
+.mh-hybrid .mh-date{justify-content:center;gap:2px 12px;flex-wrap:wrap;font-size:.68rem;letter-spacing:.12em}
+.mh-hybrid .mh-motto{display:inline;font-size:.84rem;letter-spacing:0;color:var(--ink-2)}
+.mh-hybrid .mh-name{font-size:2.2rem;font-weight:560;letter-spacing:-.018em;margin-top:2px}
+.mh-hybrid .mh-rule{height:5px;margin:6px 0 0}
+.mh-hybrid .mh-rule .wave-settle{stroke-width:1.6px}
+.mh-sec{display:flex;justify-content:center;flex-wrap:wrap;gap:0 2px;border-bottom:1px solid var(--line)}
+.mh-sec a{display:inline-flex;align-items:center;min-height:44px;padding:0 10px;color:var(--ink);text-decoration:none;font:600 .86rem/1 var(--f-ui);letter-spacing:.02em}
+.mh-sec a:hover{text-decoration:underline}
+.mh-sec a+a{border-left:1px solid var(--line)}
+.mh-sec a:nth-child(-n+2){color:var(--accent)}
+
+/* ---------- instrument band: light chart table, dark instrument faces ---------- */
+.cg-hybrid{position:relative;padding:10px 10px 8px;color:var(--ink);background:var(--band);
+  border-bottom:1px solid var(--band-edge);
+  --obs:#9EDCC6;--pred:#B6D5F4;--fc:#EBCB97;--stale:#F6B59B;--stale-bg:rgba(246,181,155,.16)}
+.cg-hybrid .cg-head{grid-template-columns:1fr auto;margin-bottom:6px}
+.cg-hybrid .cg-head h2{color:var(--accent);font-family:var(--f-num);font-weight:600;font-size:.82rem;letter-spacing:.18em}
+.cg-hybrid .cg-where{font-size:1.28rem;font-weight:560;letter-spacing:-.005em;color:var(--ink)}
+.cg-hybrid .cg-upd{color:var(--ink-2);font-family:var(--f-num);font-size:.84rem;letter-spacing:.04em}
+.cg-hybrid .cg-grid{border:0;gap:6px;background:none}
+.cg-hybrid .t{position:relative;border-radius:6px;padding:8px 10px 7px;color:var(--band-ink);
+  background:linear-gradient(180deg,var(--card-1),var(--card-2));border:1px solid var(--card-edge);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 1px 2px rgba(6,20,30,.25),0 8px 18px -12px rgba(6,20,30,.55)}
+.cg-hybrid .t::before{content:"";position:absolute;left:10px;right:10px;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(196,163,106,.7),transparent)}
+.cg-hybrid .t-name{font-family:var(--f-num);font-weight:600;letter-spacing:.14em;font-size:.84rem;color:var(--label)}
+.cg-hybrid .t-kind{background:none;padding:0;font-size:.6rem;letter-spacing:.12em;display:inline-flex;align-items:center;gap:4px}
+.cg-hybrid .t-kind::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.cg-hybrid .k-obs{color:var(--obs)}.cg-hybrid .k-pred{color:var(--pred)}.cg-hybrid .k-fc{color:var(--fc)}
+.cg-hybrid .k-pred::before{border-radius:0;transform:rotate(45deg)}
+.cg-hybrid .k-fc::before{border-radius:0;width:7px;height:2px}
+.cg-hybrid .t-read{margin-top:3px;gap:4px}
+.cg-hybrid .t-num{font:600 2.6rem/.95 var(--f-display);font-variant-numeric:tabular-nums lining-nums;letter-spacing:-.03em;color:var(--num);font-variation-settings:"opsz" 72}
+.cg-hybrid .t-unit{font:600 1rem/1 var(--f-num);letter-spacing:.04em;color:var(--band-ink-2)}
+.cg-hybrid .t-dir{font:600 1.3rem/1 var(--f-num);color:var(--band-ink)}
+.cg-hybrid .t-sub{color:var(--band-ink);font-size:.84rem}
+.cg-hybrid .t-note{color:var(--band-ink-2);font-size:.74rem}
+.cg-hybrid .t-obs{color:var(--obs)}
+.cg-hybrid .t-then{color:var(--band-ink-2);font-size:.78rem}
+.cg-hybrid .t-src{color:var(--band-ink-3);border-top:1px solid rgba(243,238,227,.1);margin-top:5px;padding-top:4px;font-size:.68rem}
+.cg-hybrid .t-src time{white-space:normal}
+.cg-hybrid .d-rim,.cg-hybrid .d-tick{stroke:rgba(201,214,222,.45)}.cg-hybrid .d-mark{fill:#E8D6AE}
+.cg-hybrid .t-chip.k-fc{background:rgba(235,203,151,.16);color:var(--fc)}
+.cg-hybrid .c-stale{color:#3B1E14;background:#F6B59B}
+.cg-hybrid .is-off .t-num{color:var(--band-ink-3)}
+/* tide curve */
+.t-tide{margin:4px 0 0}
+.cg-hybrid .t-spark{display:block;width:100%;height:auto;margin:0}
+.s-base{stroke:rgba(243,238,227,.14);stroke-width:1}
+.cg-hybrid .s-line{fill:none;stroke:var(--pred);stroke-width:1.8;stroke-linejoin:round}
+.cg-hybrid .s-now{stroke:rgba(255,253,248,.55);stroke-width:1;stroke-dasharray:2 2}
+.s-nowdot{fill:#FFFDF8}
+.s-ev{fill:var(--pred)}
+.s-obs{fill:var(--obs);stroke:#0A2132;stroke-width:1}
+.s-lab{font:600 8px var(--f-num);fill:var(--band-ink-2)}
+.s-legend{display:flex;flex-wrap:wrap;gap:2px 9px;font:600 .6rem/1.3 var(--f-ui);letter-spacing:.06em;text-transform:uppercase;color:var(--band-ink-2)}
+.s-k{display:inline-flex;align-items:center;gap:4px}
+.s-k::before{content:"";display:inline-block}
+.s-k-pred::before{width:10px;height:2px;background:var(--pred)}
+.s-k-obs::before{width:6px;height:6px;border-radius:50%;background:var(--obs)}
+.s-k-now::before{width:0;height:9px;border-left:1px dashed #FFFDF8}
+/* offshore: unmistakably not inshore */
+.cg-hybrid .t.is-offshore{background:repeating-linear-gradient(180deg,transparent 0 9px,rgba(182,213,244,.06) 9px 10px),linear-gradient(180deg,#123A57,#0B2638);border:1px dashed rgba(182,213,244,.6)}
+.t-offtag{display:flex;align-items:center;gap:6px;margin-top:3px;font:700 .64rem/1.2 var(--f-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--pred)}
+.t-buoy{width:20px;height:14px;flex:none}
+.cg-hybrid .is-offshore .t-src{color:var(--pred)}
+/* alerts: banner, severity at a glance; colour only where it means something */
+.cg-hybrid .al{margin-bottom:6px;border-radius:4px;border:1px solid var(--band-edge);border-left:4px solid var(--accent-2);background:var(--paper);color:var(--ink);min-height:44px;padding:0 10px}
+.cg-hybrid .al-unknown{border-left-color:#B7791F}
+.cg-hybrid .al-active{padding:6px 10px}
+.al-sev{font:700 .62rem/1 var(--f-ui);letter-spacing:.14em;text-transform:uppercase;padding:4px 6px;border-radius:2px;margin-right:2px}
+.cg-hybrid .al-row b{font-weight:700}
+.cg-hybrid .al-warn{background:#8E1B12;border-color:#8E1B12;border-left-color:#5E0F09;color:#FFF7F2}
+.cg-hybrid .al-warn .al-row b,.cg-hybrid .al-warn .al-meta,.cg-hybrid .al-warn .al-link{color:#FFF7F2}
+.cg-hybrid .al-warn .al-sev{background:#FFF7F2;color:#8E1B12}
+.cg-hybrid .al-adv{background:#F4C24E;border-color:#C9961F;border-left-color:#8A6410;color:#241A04}
+.cg-hybrid .al-adv .al-row b,.cg-hybrid .al-adv .al-meta,.cg-hybrid .al-adv .al-link{color:#241A04}
+.cg-hybrid .al-adv .al-sev{background:#241A04;color:#F4C24E}
+.cg-hybrid .al-watch{background:#FFF1C7;border-left-color:#B7791F}
+.cg-hybrid .al-watch .al-sev{background:#7A4E0A;color:#FFF1C7}
+.cg-hybrid .al-stmt .al-sev{background:var(--accent);color:#FFFDF8}
+.al-row.sev-warn b,.al-row.sev-adv b{text-transform:uppercase;letter-spacing:.04em}
+.al-rows{flex:1 1 auto}
+.al-flag{display:inline-flex;flex:none;margin:2px 4px 2px 0;padding:5px 6px 3px 4px;border-radius:3px;background:#F3E6D0;color:#3B3328;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+.al-flag svg{width:30px;height:46px}
+.al.has-flag{align-items:center}
+/* TEST DATA: impossible to miss in any screenshot */
+.test-banner{margin:0 0 6px;padding:7px 10px;border-radius:4px;background:repeating-linear-gradient(135deg,#FFE066 0 12px,#FFD23F 12px 24px);color:#1A1400;font:600 .8rem/1.3 var(--f-ui);border:2px solid #1A1400}
+.test-banner b{font-weight:800;letter-spacing:.14em;margin-right:6px}
+/* marine forecast: light card, always fully shown, never folded */
+.cg-hybrid .fc{border:1px solid var(--rf-edge-warm);margin-top:6px;border-radius:var(--rf-radius-card);background:var(--rf-surface-warm);border-left:4px solid var(--accent);padding:8px 12px}
+.cg-hybrid .fc-h{color:var(--ink-2);font-size:.78rem;padding-bottom:5px;margin-bottom:4px;background:linear-gradient(90deg,var(--rf-brass),rgba(196,163,106,0) 70%) left bottom/100% 1px no-repeat}
+.cg-hybrid .fc-h b{color:var(--ink)}
+.cg-hybrid .fc .t-kind{color:var(--accent)}
+.cg-hybrid .fc-t{font-size:.92rem;line-height:1.38;color:var(--ink)}
+.cg-hybrid .fc .t-src{color:var(--ink-2);border-top:1px solid var(--rf-edge)}
+/* secondary observations: four separately defined instrument tiles (Concept B) */
+.cg-strip{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+.cg-strip .cg-more-k{grid-column:1/-1;display:flex;align-items:center;gap:8px;margin:0;padding:4px 2px 0;font:600 .72rem/1.2 var(--f-num);letter-spacing:.16em;text-transform:uppercase;color:var(--rf-brass-ink);background:none}
+.cg-strip .cg-more-k::after{content:"";flex:none;width:28px;height:1px;background:var(--rf-brass)}
+.sx{display:flex;flex-direction:column;padding:7px 10px;min-width:0;border:1px solid var(--rf-tile-edge);border-top:2px solid var(--rf-rule);border-radius:6px;background:var(--rf-surface-tile);box-shadow:var(--rf-shadow-1)}
+.sx-h{display:flex;justify-content:space-between;align-items:baseline;gap:6px}
+.sx-k{font:600 .78rem/1.2 var(--f-num);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
+.sx-kind{font:700 .56rem/1 var(--f-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
+.sx-v{display:block;font:600 1.6rem/1.05 var(--f-display);font-variant-numeric:tabular-nums lining-nums;color:var(--ink);margin-top:1px}
+.sx-u,.sx-dir{font:600 .8rem/1 var(--f-num);letter-spacing:.04em;color:var(--ink-2)}
+.sx-dir{font-size:.95rem;color:var(--ink)}
+.sx-sub{font-size:.76rem;line-height:1.3;color:var(--ink)}
+.sx-fc{display:block;font-size:.74rem;color:var(--ink-2);margin-top:1px}
+.sx-src{font-size:.66rem;line-height:1.3;color:var(--ink-2);margin-top:auto;padding-top:4px;border-top:1px solid var(--line);overflow-wrap:anywhere}
+.cg-strip .t-chip.k-fc{background:var(--fc-bg);color:var(--fc)}
+.sx.is-off .sx-v{color:var(--ink-2)}
+/* choose your water: salt and fresh side by side, same weight */
+.rr{flex-basis:100%;display:grid;gap:6px;margin:6px 0 0}
+.rr-k{font:600 .72rem/1 var(--f-num);letter-spacing:.16em;text-transform:uppercase;color:var(--rf-brass-ink);margin-bottom:4px}
+.rr-l{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.rr-l a{flex:none;display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:0 13px;border-radius:22px;border:1px solid var(--rf-edge-strong);background:var(--paper);color:var(--ink);text-decoration:none;font-size:.86rem;font-weight:600;white-space:nowrap;box-shadow:var(--rf-shadow-1)}
+.rr-l a:hover{border-color:var(--accent);text-decoration:underline}
+.rr-l a[aria-current]{background:var(--rf-active-fill);border-color:var(--rf-active-fill);color:var(--rf-active-ink);font-weight:700;box-shadow:inset 0 0 0 1px var(--rf-brass-hair),var(--rf-shadow-1)}
+.rr-l a[aria-current]::before{content:"";flex:none;width:5px;height:10px;margin:-3px 1px 0 0;border:solid currentColor;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.rr-l a:focus-visible{outline:none;box-shadow:var(--rf-focus-ring)}
+.cg-hybrid .cg-foot{gap:0 18px;margin-top:2px}
+.cg-hybrid .cg-link{color:var(--link)}
+.rr,.rr-g{min-width:0;max-width:100%}
+.rr{grid-template-columns:minmax(0,1fr)}
+/* brand line: the turn from the water to the coast */
+.bl{padding:22px 16px 0;text-align:center}
+.bl-p{display:inline-flex;flex-direction:column;align-items:center;gap:2px}
+.bl-k{font:600 .72rem/1.2 var(--f-num);letter-spacing:.2em;text-transform:uppercase;color:var(--ink-2)}
+.bl-t{font:italic 500 1.35rem/1.2 var(--f-display);color:var(--ink)}
+.bl::after{content:"";display:block;width:56px;height:1px;margin:12px auto 0;background:var(--brass)}
+
+/* ---------- horizon: the band dissolves into the photograph ---------- */
+.hz{position:relative;margin:0;background:var(--band-2)}
+.hz-img{position:relative;aspect-ratio:1/1;overflow:hidden}
+.hz-img img{width:100%;height:100%;object-fit:cover;object-position:36% 50%}
+html[data-water="fresh"] .hz-img img{object-position:50% 28%}
+.hz-img::after{content:"";position:absolute;inset:auto 0 0 0;height:46%;background:linear-gradient(0deg,rgba(5,16,24,.86) 0,rgba(5,16,24,0) 100%)}
+.hz::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;z-index:2;background:var(--brass);opacity:.8}
+.hz-cap{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:0 16px 14px;color:#FBF3E4}
+.hz-t{font:500 1.7rem/1.08 var(--f-display);letter-spacing:-.015em}
+.hz-m{font:600 .76rem/1.3 var(--f-num);letter-spacing:.12em;text-transform:uppercase;margin-top:5px;color:#E9DCC4}
+.hz-c{font-size:.74rem;color:#E2D6C0;margin-top:3px}
+.hz-empty{padding:16px}
+
+/* ---------- editorial mosaic ---------- */
+.mzs{padding:18px 12px 0}
+.mzs-h{font:500 1.75rem/1.1 var(--f-display);letter-spacing:-.015em;margin:2px 0 6px}
+.mzs-dek{font:italic 400 1rem/1.4 var(--f-display);color:var(--ink-2);margin-bottom:14px}
+.mzs-dek a{display:inline-block;min-height:44px;line-height:44px;font-style:normal;font-family:var(--f-ui);font-weight:600}
+.mzs .kicker{display:flex;align-items:center;gap:8px}
+.mz-grid{display:grid;grid-template-columns:repeat(6,1fr);grid-auto-rows:52px;gap:8px}
+.mz{position:relative;margin:0;overflow:hidden;border-radius:2px;background:var(--sand)}
+.mz-img{position:absolute;inset:0}
+.mz-img img,.mz-img picture{width:100%;height:100%;object-fit:cover;display:block}
+.mz figcaption{position:absolute;left:0;right:0;bottom:0;padding:28px 10px 8px;background:linear-gradient(0deg,rgba(5,16,24,.92),rgba(5,16,24,.7) 55%,rgba(5,16,24,0));color:#FFFDF8;display:flex;flex-direction:column;gap:2px;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+.mz-cap{font:600 .86rem/1.25 var(--f-ui)}
+.mz-tag{align-self:flex-start;font:700 .56rem/1 var(--f-ui);letter-spacing:.14em;text-transform:uppercase;padding:3px 5px;border-radius:2px;background:rgba(255,253,248,.92);color:#0B2A3D;text-shadow:none;margin-bottom:2px}
+.mz-credit{font-size:.7rem;color:#EFE7D6}
+.mz-a img{object-position:50% 30%}
+.mz-d img{object-position:50% 40%}
+
+
+@media (min-width:1000px){
+  .mh-hybrid .mh-plate{max-width:1264px;padding:12px 32px 0}
+  .mh-hybrid .mh-name{font-size:3.3rem}
+  .mh-sec a{padding:0 16px}
+  .cg-hybrid{margin:0 -32px;padding:14px 32px 10px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:12px;align-items:start}
+  .cg-hybrid>.cg-head,.cg-hybrid>.al,.cg-hybrid>.test-banner,.cg-hybrid>.cg-grid,.cg-hybrid>.cg-foot,.cg-hybrid>.cg-off{grid-column:1/-1}
+  .cg-hybrid>.fc{grid-column:1;margin-top:10px}
+  .cg-hybrid>.cg-strip{grid-column:2;margin-top:10px}
+  .cg-hybrid .cg-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+  .cg-hybrid .t{padding:11px 14px 9px}
+  .cg-hybrid .t-num{font-size:3.4rem}
+  .cg-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .rr{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;margin-top:8px}
+  .rr-l{flex-wrap:wrap;overflow:visible}
+  .hz{margin:0 -32px}
+  .hz-img{aspect-ratio:21/9}
+  .hz-img img{object-position:50% 8%}
+  .hz-cap{padding:0 48px 26px;max-width:1264px;margin:0 auto}
+  .hz-t{font-size:2.6rem}
+  .bl{padding:30px 0 0}
+  .bl-p{flex-direction:row;gap:12px;align-items:baseline}
+  .bl-t{font-size:1.7rem}
+  .mzs{padding:26px 0 0}
+  .mzs-h{font-size:2.4rem}
+  .mz-grid{grid-template-columns:repeat(12,1fr);grid-auto-rows:62px;gap:14px}
+  .sys-twin .sys-sw{grid-template-columns:1fr 1fr}
+}
+.sys-twin{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sys-twin h3{font:600 .8rem/1.2 var(--f-ui);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
+.sys-twin .sys-sw{grid-template-columns:1fr}
+/* Mosaic, refine2: five photos plus a share card, no placeholders */
+.mz-a{grid-column:1/4;grid-row:span 6}
+.mz-b{grid-column:4/7;grid-row:span 3}
+.mz-c{grid-column:4/7;grid-row:span 3}
+.mz-d{grid-column:1/7;grid-row:span 4}
+.mz-e{grid-column:1/4;grid-row:span 6}
+.mz-e img{object-position:50% 35%}
+.mz-cta{grid-column:4/7;grid-row:span 6;display:flex;flex-direction:column;justify-content:flex-end;gap:8px;padding:14px 12px;border-radius:2px;
+  background:linear-gradient(160deg,var(--card-1),var(--card-2));color:#FFFDF8;border-top:2px solid var(--brass)}
+.mz-cta-k{font:700 .66rem/1.2 var(--f-ui);letter-spacing:.14em;text-transform:uppercase;color:#E8D6AE}
+.mz-cta-t{font:italic 500 1.12rem/1.25 var(--f-display)}
+.mz-cta-a{display:inline-flex;align-items:center;min-height:44px;font:600 .9rem/1.2 var(--f-ui);color:#FBF3E4;text-decoration:underline;text-underline-offset:3px}
+.mz-loose{grid-template-columns:repeat(2,1fr);grid-auto-rows:190px}
+.mz-loose .mz{grid-column:auto;grid-row:auto}
+.mz-loose .mz:first-child{grid-column:1/-1}
+.mz-loose.mz-n1 .mz-cta,.mz-loose.mz-n3 .mz-cta{grid-column:1/-1}
+.hz-none{height:0;border-top:2px solid var(--brass)}
+@media (min-width:1000px){.hz-none{margin:0 -32px}}
+@media (min-width:1000px){
+  .mz-a{grid-column:1/5;grid-row:1/8}
+  .mz-b{grid-column:5/9;grid-row:1/5}
+  .mz-c{grid-column:5/9;grid-row:5/8}
+  .mz-e{grid-column:9/13;grid-row:1/8}
+  .mz-d{grid-column:1/9;grid-row:8/12}
+  .mz-cta{grid-column:9/13;grid-row:8/12;padding:22px 20px}
+  .mz-cta-t{font-size:1.4rem}
+  .mz-loose{grid-template-columns:repeat(3,1fr);grid-auto-rows:260px}
+  .mz-loose .mz:first-child{grid-column:span 2}
+  .mz-loose.mz-n1 .mz-cta,.mz-loose.mz-n3 .mz-cta{grid-column:auto}
+  .mz-loose.mz-n2 .mz-cta{grid-column:1/-1}
+  .mz-loose.mz-n3 .mz-cta{grid-column:span 2}
+  .mz-loose.mz-n0 .mz-cta{grid-column:1/-1}
+}
+/* Falls Lake lake-view horizon (4:3 crop centred on the pier) and linked credits */
+.hz-lake .hz-img{aspect-ratio:4/3}
+html[data-water="fresh"] .hz-lake .hz-img img{object-position:60% 50%}
+.hz-lake .hz-img::before{height:30%}
+.cr-a{display:inline-flex;align-items:center;min-height:44px;min-width:44px;color:inherit;text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:1px}
+.hz-c{line-height:1.2}
+@media (min-width:1000px){
+  .hz-lake .hz-img{aspect-ratio:21/9}
+  html[data-water="fresh"] .hz-lake .hz-img img{object-position:50% 64%}
+}
+@media (max-width:999px){
+  /* phones: keep the pier and people clear; the caption sits under the frame on the band colour */
+  .hz-lake .hz-img::after{height:18%}
+  .hz-lake .hz-cap{position:relative;padding:12px 16px 10px;background:var(--band-2)}
+}
+/* v7final fixes */
+.mh-sec{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+.mh-sec a{padding:0 8px;font-size:.8rem;white-space:nowrap;flex:none}
+.s-legend{gap:2px 7px;letter-spacing:.03em}
+.cg-strip .sx:only-of-type{grid-column:1/-1}
+.cg-strip .t-chip.k-fc{background:#F6EAD6;color:#6E400C}
+@media (prefers-color-scheme:dark){.cg-strip .t-chip.k-fc{background:#3A2A12;color:#F0C487}}
+@media (min-width:1000px){.mh-sec a{padding:0 16px;font-size:.86rem}}
+/* Daily featured photo: per-photo focal point from the manifest; same frame, gradient and caption as before. */
+.hz-rot .hz-img img{object-position:var(--fp-m,36% 50%)}
+@media (min-width:1000px){.hz-rot .hz-img img{object-position:var(--fp-d,50% 8%)}}
+
+/* ===================== Nov 16 visual pass: one Carolina maritime identity =====================
+   Deep navy, crisp ivory, aged brass only as hairlines and small marks. Freshwater swaps the
+   instrument faces to river green / moss / earth; the masthead stays navy on every page. */
+html[data-sprint="hybrid"]{--page:#F7F3EA;--paper:#FFFDF8;--brass-aged:#A7864F;--navy-2:#0B2436}
+html[data-sprint="hybrid"][data-water="fresh"]{--page:#F5F2E8}
+@media (prefers-color-scheme:dark){html[data-sprint="hybrid"],html[data-sprint="hybrid"][data-water="fresh"]{--page:#06141E;--paper:#0D2230}}
+
+/* masthead: navy dateline ear, nameplate, heavy navy + brass double rule, sections */
+.mh-hybrid .pv-flag{padding:4px 8px;font-size:.66rem}
+.mh-ear{background:linear-gradient(180deg,#0A2133,#071C29);color:#EDE5D3;border-bottom:1px solid rgba(196,163,106,.55)}
+.mh-ear-in{max-width:1264px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:34px;padding:0 max(12px,env(safe-area-inset-left))}
+.mh-ear .mh-date{display:block;margin:0;color:#EDE5D3;font:600 .7rem/1.2 var(--f-ui);letter-spacing:.16em;text-transform:uppercase;font-variant-numeric:lining-nums}
+.mh-ear-in .mh-date:only-child{margin:0 auto}
+.mh-hybrid .mh-plate{padding:10px 14px 0;text-align:center;max-width:1264px;margin:0 auto}
+.mh-hybrid .mh-name{font:600 2.35rem/1 var(--f-display);letter-spacing:-.022em;color:#071C29;margin:0;font-variation-settings:"opsz" 144,"SOFT" 0,"WONK" 0}
+@media (prefers-color-scheme:dark){.mh-hybrid .mh-name{color:#F6F1E7}}
+.mh-rules{display:grid;gap:2px;margin:8px 0 0}
+.mh-rule-heavy{display:block;height:3px;background:#071C29}
+@media (prefers-color-scheme:dark){.mh-rule-heavy{background:#C9BCA5}}
+.mh-hybrid .mh-rules .mh-rule{height:4px;margin:0}
+.mh-hybrid .mh-motto{display:block;margin:6px 0 2px;font:italic 500 .9rem/1.25 var(--f-display);letter-spacing:0;text-transform:none;color:var(--ink-2)}
+.mh-hybrid .mh-sec{border-top:1px solid var(--line);border-bottom:1px solid var(--line-2);margin-top:6px;justify-content:flex-start}
+.mh-hybrid .mh-sec a{font:600 .8rem/1 var(--f-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
+.mh-hybrid .mh-sec a[aria-current]{color:var(--ink);box-shadow:inset 0 -3px 0 var(--brass-aged)}
+.mh-hybrid .mh-sec a:nth-child(-n+2){color:var(--ink)}
+@media (min-width:640px){.mh-hybrid .mh-sec{justify-content:center}}
+
+/* instruments: crisper chart-table band, deeper faces, brighter numerals, distinct kind marks */
+.cg-hybrid{background:linear-gradient(180deg,#E6ECEC,#DCE4E5);border-top:1px solid #C9D4D6;--label:#DCE6EC}
+html[data-water="fresh"] .cg-hybrid{background:linear-gradient(180deg,#E8EADF,#DDE1D2);border-top-color:#CDD1BE;--label:#E0E7D9}
+@media (prefers-color-scheme:dark){.cg-hybrid,html[data-water="fresh"] .cg-hybrid{background:var(--band);border-top-color:var(--band-edge)}}
+.cg-hybrid .cg-head h2{color:var(--accent)}
+.cg-hybrid .cg-where{font-size:1.4rem;font-weight:600}
+.cg-hybrid .t{border-radius:8px;border-color:var(--card-edge);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 0 0 1px rgba(0,0,0,.12),0 1px 1px rgba(6,20,30,.18),0 10px 22px -14px rgba(6,20,30,.6)}
+.cg-hybrid .t::before{left:12px;right:12px;background:linear-gradient(90deg,transparent,rgba(217,190,134,.85),transparent)}
+.cg-hybrid .t-name{font-size:.88rem;letter-spacing:.16em}
+.cg-hybrid .t{border-radius:var(--rf-radius-card);border-color:var(--rf-face-edge)}
+.cg-hybrid .t::before{display:none}
+.cg-hybrid .t-wind,.cg-hybrid .t-seas{border-color:var(--rf-brass-hair);box-shadow:var(--rf-face-hi),inset 0 0 0 1px rgba(7,28,41,.55),var(--rf-shadow-2)}
+.cg-hybrid .t-wind::before,.cg-hybrid .t-seas::before{display:block;left:14px;right:14px;height:2px;background:linear-gradient(90deg,transparent,var(--rf-brass) 22%,var(--rf-brass) 78%,transparent)}
+.cg-hybrid .t-num{text-shadow:0 1px 0 rgba(0,0,0,.25)}
+.cg-hybrid .t-sub{font-weight:600}
+/* kind marks: shape + word, never colour alone. Observed = dot, Predicted = diamond, Forecast = bar, Editorial = square */
+.cg-hybrid .t-kind{font-size:.62rem;padding:3px 6px;border-radius:3px;border:1px solid currentColor;background:rgba(0,0,0,.18)}
+.k-ed{color:#6B5121;background:#F3EAD6;border:1px solid #A7864F}
+.k-ed::before{content:"";display:inline-block;width:6px;height:6px;margin-right:4px;background:currentColor;vertical-align:.05em}
+/* alerts: an advisory reads as a calm ivory notice with a strong amber edge, not a slab of orange */
+.cg-hybrid .al-adv{background:#FFF8E6;border-color:#E2C477;border-left:6px solid #B7791F;color:#2A1F07}
+.cg-hybrid .al-adv .al-row b,.cg-hybrid .al-adv .al-meta,.cg-hybrid .al-adv .al-link{color:#2A1F07}
+.cg-hybrid .al-adv .al-sev{background:#5A3D06;color:#FFF3D1}
+@media (prefers-color-scheme:dark){
+  .cg-hybrid .al-adv{background:#2A2210;border-color:#6E5A2A;border-left-color:#E0A43C;color:#FBEFD2}
+  .cg-hybrid .al-adv .al-row b,.cg-hybrid .al-adv .al-meta,.cg-hybrid .al-adv .al-link{color:#FBEFD2}
+  .cg-hybrid .al-adv .al-sev{background:#F4C24E;color:#241A04}
+}
+.cg-hybrid .fc{box-shadow:var(--rf-shadow-2)}
+.cg-hybrid .fc-t{font-size:.95rem}
+/* region selector + map/chart/radar navigation, right under the readings */
+.cg-hybrid .cg-foot{display:grid;gap:8px;margin-top:8px}
+.cg-tools{display:grid;gap:4px;padding-top:8px;border-top:1px solid var(--band-edge)}
+.cg-tools-k{font:600 .72rem/1 var(--f-num);letter-spacing:.16em;text-transform:uppercase;color:var(--rf-brass-ink)}
+.cg-tools-l{display:flex;flex-wrap:wrap;gap:6px}
+.cg-tool{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:var(--rf-radius-ctl);border:1.5px solid var(--rf-edge-strong);
+  background:var(--paper);color:var(--ink);font:700 .88rem/1 var(--f-ui);text-decoration:none;box-shadow:var(--rf-shadow-1)}
+.cg-tool:hover{border-color:var(--accent);text-decoration:underline}
+.cg-tool:focus-visible{outline:none;box-shadow:var(--rf-focus-ring)}
+.cg-tool-main{background:var(--rf-active-fill);border-color:var(--rf-active-fill);color:var(--rf-active-ink)}
+.cg-tool-brief{border-style:dashed;border-color:var(--card-edge)}
+
+/* daily photograph: placeholder colour, then the decoded frame fades in once */
+.hz-rot .hz-img img{transition:opacity .45s ease}
+.hz-rot .hz-img.fp-wait img{opacity:0}
+@media (prefers-reduced-motion:reduce){.hz-rot .hz-img img{transition:none}}
+.hz-k{display:inline-block;margin-bottom:6px;padding:3px 7px;border:1px solid rgba(233,220,196,.7);border-radius:2px;
+  font:600 .68rem/1 var(--f-num);letter-spacing:.18em;text-transform:uppercase;color:#F3EADA;background:rgba(5,16,24,.35)}
+.hz-img::after{height:58%;background:linear-gradient(0deg,rgba(5,16,24,.88) 0,rgba(5,16,24,.55) 45%,rgba(5,16,24,0) 100%)}
+.hz-t{text-shadow:0 1px 2px rgba(0,0,0,.35)}
+
+/* mosaic: a touch more gutter, calmer captions */
+.mz-grid{gap:10px}
+.mz figcaption{padding:32px 12px 10px}
+.mz-cap{font-size:.9rem}
+.mz-credit{font-size:.74rem;font-style:italic}
+.mz-cta{border-radius:4px;border-top:3px solid var(--brass)}
+
+/* footer: navy, one brass hairline */
+.ft{border-top:3px solid #071C29;box-shadow:inset 0 1px 0 rgba(196,163,106,.6)}
+
+@media (min-width:1000px){
+  .mh-ear-in{padding:0 32px;min-height:36px}
+  .mh-hybrid .mh-plate{padding:16px 32px 0}
+  .mh-hybrid .mh-name{font-size:4.1rem}
+  .mh-rules{margin-top:12px}
+  .mh-hybrid .mh-motto{font-size:1rem;margin:8px 0 2px}
+  .cg-hybrid .t-num{font-size:3.6rem}
+  .cg-hybrid .cg-foot{grid-template-columns:minmax(0,3fr) minmax(0,2fr);align-items:start;column-gap:28px}
+  .cg-tools{border-top:0;padding-top:0}
+  .cg-tools-k{margin-bottom:4px}
+  .mz-grid{gap:16px}
+}
+@media (max-width:380px){.mh-hybrid .mh-name{font-size:2.1rem}}
+.cg-hybrid .fc .t-kind{background:transparent}
+/* Nov 16 fit-and-finish */
+.mh-hybrid .mh-name{letter-spacing:-.012em;font-variation-settings:normal}
+.cg-hybrid .t-src{margin-top:auto}
+.cg-hybrid .al.has-flag .al-rows{flex:1 1 0;min-width:0}
+.cg-hybrid .al-flag svg{width:24px;height:37px}
+@media (max-width:639px){
+  .mh-hybrid .mh-sec a{text-transform:none;letter-spacing:.01em;font-size:.84rem;padding:0 9px}
+  .cg-hybrid .t-kind{padding:2px 4px;letter-spacing:.08em;font-size:.58rem}
+  .cg-hybrid .t-head{align-items:flex-start}
+}
+.cg-hybrid .al-row{flex-wrap:wrap}
+.cg-hybrid .al.has-flag .al-rows{flex:1 1 220px}
+@media (max-width:639px){
+  .mh-hybrid .mh-sec{-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent);padding-right:24px}
+}
+
+/* ===== Nov 16 (m1b): slim alert strip. One line, colour does the work; 44px link target via padding. ===== */
+.cg-hybrid .al{display:flex;flex-wrap:nowrap;align-items:center;gap:0 8px;min-height:36px;padding:0 0 0 10px;margin-bottom:6px;
+  border:1px solid var(--band-edge);border-left:4px solid var(--accent-2);border-radius:4px;background:var(--paper);color:var(--ink);font-size:.86rem;line-height:1.25}
+.cg-hybrid .al.has-flag{align-items:center}
+.cg-hybrid .al-rows,.cg-hybrid .al.has-flag .al-rows{flex:1 1 auto;min-width:0;display:grid;gap:2px;padding:7px 0}
+.cg-hybrid .al-row{display:block;padding:0;flex-wrap:nowrap}
+.cg-hybrid .al-ev{font-weight:700;text-transform:none;letter-spacing:0}
+.al-row.sev-warn b,.al-row.sev-adv b{text-transform:none;letter-spacing:0}
+.cg-hybrid .al-meta{white-space:nowrap}
+.cg-hybrid .al-link{flex:none;position:relative;align-self:stretch;display:inline-flex;align-items:center;min-height:44px;margin:-4px 0;padding:0 10px;
+  font:600 .8rem/1 var(--f-ui);white-space:nowrap}
+.cg-hybrid .al-flag{display:inline-flex;vertical-align:-3px;margin:0 6px 0 0;padding:1px 2px;border-radius:2px;background:#F3E6D0;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+.cg-hybrid .al-flag svg{width:11px;height:17px}
+.cg-hybrid .al-active{padding:0 0 0 10px}
+/* advisory / watch: ivory with an amber edge */
+.cg-hybrid .al-adv,.cg-hybrid .al-watch{background:#FFF8E6;border-color:#E2C477;border-left:6px solid #B7791F;color:#2A1F07}
+.cg-hybrid .al-adv .al-ev,.cg-hybrid .al-adv .al-meta,.cg-hybrid .al-adv .al-link,
+.cg-hybrid .al-watch .al-ev,.cg-hybrid .al-watch .al-meta,.cg-hybrid .al-watch .al-link{color:#2A1F07}
+/* warning: solid red, same slim form */
+.cg-hybrid .al-warn{background:#8E1B12;border-color:#8E1B12;border-left:6px solid #5E0F09;color:#FFF7F2}
+.cg-hybrid .al-warn .al-ev,.cg-hybrid .al-warn .al-meta,.cg-hybrid .al-warn .al-link{color:#FFF7F2}
+@media (prefers-color-scheme:dark){
+  .cg-hybrid .al-adv,.cg-hybrid .al-watch{background:#2A2210;border-color:#6E5A2A;border-left-color:#E0A43C;color:#FBEFD2}
+  .cg-hybrid .al-adv .al-ev,.cg-hybrid .al-adv .al-meta,.cg-hybrid .al-adv .al-link,
+  .cg-hybrid .al-watch .al-ev,.cg-hybrid .al-watch .al-meta,.cg-hybrid .al-watch .al-link{color:#FBEFD2}
+}
+/* phones: all five sections stay in the nav; "Map & tides" reads "Map" to fit (launch audit item 8) */
+@media (max-width:639px){
+  .mh-hybrid .mh-sec a.mh-maps .mh-maps-x{display:none}
+  .mh-hybrid .mh-sec{-webkit-mask-image:none;mask-image:none;padding-right:0;justify-content:center}
+  .mh-hybrid .mh-sec a{padding:0 8px;font-size:.82rem}
+}
+
+/* ===== Nov 16b: refine the mobile homepage, do not add height for decoration ===== */
+@media (max-width:639px){
+  .mh-ear-in{min-height:28px}
+  .mh-ear .mh-date{font-size:.64rem;letter-spacing:.14em}
+  .mh-hybrid .mh-plate{padding:6px 12px 0}
+  .mh-hybrid .mh-name{font-size:2.18rem}
+  .mh-rules{margin-top:4px;gap:1px}
+  .mh-rule-heavy{height:2px}
+  .mh-hybrid .mh-rules .mh-rule{height:3px}
+  .mh-hybrid .mh-motto{margin:3px 0 0;font-size:.84rem}
+  .mh-hybrid .mh-sec{margin-top:4px;justify-content:center}
+  .mh-hybrid .mh-sec a{padding:0 7px}
+  .cg-hybrid{padding:8px 10px 8px}
+  .cg-hybrid .cg-head{margin-bottom:4px}
+  .cg-hybrid .cg-where{font-size:1.22rem}
+  .cg-hybrid .t{padding:7px 9px 6px}
+  .cg-hybrid .t-num{font-size:2.35rem}
+  .cg-hybrid .t-name{font-size:.78rem;letter-spacing:.12em}
+  .cg-hybrid .al{margin-bottom:5px}
+}
+/* cards: flex so metadata sits at the bottom and dead space shrinks */
+.cg-hybrid .t{display:flex;flex-direction:column}
+.cg-hybrid .t-src{margin-top:auto;font-size:.64rem;letter-spacing:.01em;font-weight:500;color:var(--band-ink-3)}
+/* type: primary reading, then secondary, then station metadata */
+.cg-hybrid .t-read{align-items:baseline}
+.cg-hybrid .t-dir{font-size:1.15rem;letter-spacing:.04em}
+.cg-hybrid .t-sub,.cg-hybrid .t-note,.cg-hybrid .t-obs,.cg-hybrid .t-then{font-size:.8rem;font-weight:550;color:var(--band-ink)}
+.cg-hybrid .t-note{color:var(--band-ink-2);font-size:.72rem;font-weight:500}
+/* wind: compass + gust as a clear secondary value */
+.cg-hybrid .t-dial{width:42px;height:42px;flex:none;margin-left:0}
+.cg-hybrid .t-read-wind{display:flex;align-items:center;gap:8px;margin-top:2px}
+.cg-hybrid .t-wind-vals{display:flex;align-items:baseline;gap:4px;min-width:0}
+.d-rim,.d-tick,.d-shaft{fill:none;stroke:rgba(201,214,222,.7);stroke-width:1.2;stroke-linecap:round}
+.d-shaft{stroke:#E8D6AE;stroke-width:1.8}
+.d-mark{fill:#E8D6AE;stroke:#0A2132;stroke-width:.6}
+.d-n{font:700 6.5px var(--f-ui);fill:rgba(232,214,174,.95)}
+.t-gust{display:flex;align-items:baseline;gap:5px;margin:2px 0 0;color:var(--band-ink)}
+.t-gust-k{font:700 .62rem/1 var(--f-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--band-ink-2)}
+.t-gust-n{font:600 1.35rem/.95 var(--f-display);font-variant-numeric:tabular-nums lining-nums;color:var(--num);letter-spacing:-.02em}
+.t-gust-u{font:600 .8rem/1 var(--f-num);color:var(--band-ink-2)}
+/* inshore vs offshore water: a distinct, scannable offshore block. Never relabelled. */
+.t-offread{margin-top:6px;padding:6px 8px 5px;border:1px dashed rgba(182,213,244,.55);border-radius:4px;background:rgba(182,213,244,.08)}
+.t-offread-k{font:700 .62rem/1 var(--f-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--pred);margin:0 0 2px}
+.t-read-off{margin:0}
+.cg-hybrid .t-off-num{font:600 1.7rem/.95 var(--f-display);font-variant-numeric:tabular-nums lining-nums;color:var(--num);letter-spacing:-.02em}
+.t-offread-src{margin:3px 0 0;font:500 .64rem/1.3 var(--f-ui);color:var(--pred)}
+.t-offread-src time{margin-left:.3em;color:var(--band-ink-3)}
+/* tide Now marker: a solid ivory line and a brass-ringed dot */
+.cg-hybrid .s-now{stroke:#F3E6D0;stroke-width:1.6;stroke-dasharray:none}
+.s-nowring{fill:none;stroke:#C4A36A;stroke-width:1.7}
+.s-nowdot{fill:#FFFDF8}
+.s-k-now::before{width:0;height:10px;border-left:2px solid #F3E6D0}
+/* subtle depth on the band, not extra space */
+.cg-hybrid .t{box-shadow:inset 0 1px 0 rgba(255,255,255,.1),inset 0 0 0 1px rgba(0,0,0,.14),0 1px 1px rgba(6,20,30,.2),0 8px 18px -12px rgba(6,20,30,.55)}
+
+/* Carolina character: one compact band below conditions, forecast and advisories */
+.cb-life{display:grid;gap:8px;padding:10px 14px 12px;background:linear-gradient(180deg,#0A2133,#071C29);color:#F3E6D0;
+  border-top:1px solid rgba(196,163,106,.55);border-bottom:3px solid #A7864F}
+.cb-life-t{margin:0;font:italic 500 1.15rem/1.25 var(--f-display);color:#F6F1E7;text-wrap:pretty}
+.cb-life-fig{margin:0;display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:center}
+.cb-life-fig picture,.cb-life-fig img{display:block;width:96px;height:72px;object-fit:cover;border-radius:2px}
+.cb-life-fig figcaption{min-width:0;font-size:.74rem;line-height:1.35;color:#E8D6AE}
+.cb-life-cap{display:block;color:#F3E6D0;font-weight:600}
+.cb-life-cr,.cb-life-cr a{color:#D3B47C}
+.cb-life-cr a{display:inline;min-height:0}
+@media (min-width:1000px){
+  .cb-life{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);align-items:center;gap:24px;padding:14px 32px;
+    margin:0 -32px}
+  .cb-life-t{font-size:1.55rem}
+  .cb-life-fig{grid-template-columns:140px 1fr}
+  .cb-life-fig picture,.cb-life-fig img{width:140px;height:96px}
+}
+@media (prefers-color-scheme:dark){
+  .cb-life{background:linear-gradient(180deg,#0C2436,#081821)}
+}
+
+/* ===== Nov 16b: Data audit labels — wrap long strings, stale, swell, unknown alerts ===== */
+.cg-hybrid .t-label,.cg-hybrid .t-obs,.cg-hybrid .t-src,.cg-hybrid .t-st,
+.cg-hybrid .t-offread-src,.cg-hybrid .t-sub,.cg-hybrid .t-then,.s-legend{
+  overflow-wrap:anywhere;word-break:break-word;white-space:normal}
+.cg-hybrid .t-label{margin:3px 0 0;font:600 .78rem/1.35 var(--f-ui);color:var(--band-ink);letter-spacing:.01em}
+.t-offread-src,.t-src .t-st{overflow-wrap:anywhere}
+.t-stale{margin:3px 0 0;font:600 .72rem/1.35 var(--f-ui);color:#F6B59B;letter-spacing:.01em}
+.t-offread.is-stale{border-color:rgba(246,181,155,.55);background:rgba(246,181,155,.1)}
+/* Swell with no real swell data: muted, not an error */
+.cg-hybrid .t-swell.is-off{border-color:var(--card-edge);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.cg-hybrid .t-swell.is-off .t-offline,.cg-hybrid .t-swell.is-off .t-note,.cg-hybrid .t-swell.is-off .t-src{
+  color:var(--band-ink-3);font-weight:500}
+.cg-hybrid .t-swell.is-off .t-num,.sx-swell.is-off .sx-v{color:var(--band-ink-3)}
+.sx-swell.is-off .sx-sub{color:var(--ink-2)}
+/* Could-not-check alerts: ivory/grey, never the all-clear look */
+.cg-hybrid .al-unknown{background:#F3F1EA;border-color:#C5C0B3;border-left:6px solid #6F6A60;color:#2A2822}
+.cg-hybrid .al-unknown .al-ev,.cg-hybrid .al-unknown .al-meta,.cg-hybrid .al-unknown .al-link{color:#2A2822}
+@media (prefers-color-scheme:dark){
+  .t-stale{color:#F6B59B}
+  .cg-hybrid .al-unknown{background:#1C1B18;border-color:#5A564C;border-left-color:#8D877C;color:#E8E4D8}
+  .cg-hybrid .al-unknown .al-ev,.cg-hybrid .al-unknown .al-meta,.cg-hybrid .al-unknown .al-link{color:#E8E4D8}
+}
+
+/* ===== Nov 19 launch audit item 9: phone region rows scroll sideways; fade the right edge so the
+   cut-off chip reads as "more this way". The extra end padding lets the last chip clear the fade. ===== */
+@media (max-width:639px){
+  .rr-l{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 36px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 36px),transparent);padding-right:36px}
+  .rr-l::after{content:"";flex:none;width:1px}
+}
+
+/* ===================== Night-strip (design/night-strip-1119, approved default) =====================
+   html[data-night="b"] (dark mode only, existing prefers-color-scheme trigger), html[data-strip]
+   (saltwater photo strip), and html[data-mastchart] (day and night, phones included).
+   Defaults on; ?night=0 / ?strip=0 are harmless off overrides.
+   Saltwater only; freshwater faces are untouched. Token-level: the rules below re-point existing tokens. */
+@media (prefers-color-scheme:dark){
+  /* B · Coastal blue: deeper Atlantic blue with a Carolina-blue accent */
+  html[data-sprint="hybrid"][data-water="salt"][data-night="b"]{
+    --page:#0F2B44;--paper:#163A58;--band:#133550;--band-edge:#2E5D82;
+    --card-1:#20507A;--card-2:#1A4669;--card-edge:#5189B4;
+    --line:rgba(214,232,245,.18);--line-2:rgba(214,232,245,.34);
+    --ink:#F6F1E7;--ink-2:#CCDCE8;--accent:#B3DDF5;--accent-2:#A4DECF;--link:#B3DDF5;--band-ink-3:#BCC9D3;
+    --obs-bg:#17423D;--pred-bg:#193E5E;--fc-bg:#47391F;
+    --night-lift:inset 0 1px 0 rgba(255,255,255,.12),0 0 0 1px rgba(3,14,26,.24),0 2px 4px rgba(3,14,26,.28),0 12px 24px -16px rgba(3,14,26,.72)}
+  html[data-water="salt"][data-night] .cg-hybrid{background:linear-gradient(180deg,var(--band),var(--page));border-top-color:var(--band-edge)}
+  html[data-water="salt"][data-night] .cg-hybrid .t{box-shadow:var(--night-lift)}
+  html[data-water="salt"][data-night] .cg-hybrid .fc{border-color:var(--rf-edge-warm);box-shadow:var(--night-lift)}
+  html[data-water="salt"][data-night] .cg-strip .sx{border-color:var(--rf-tile-edge);border-top-color:var(--rf-rule);box-shadow:var(--night-lift)}
+}
+
+/* faint NOAA chart 11545 linework behind the nameplate (same public-domain crop as the dashboard masthead) */
+html[data-mastchart] .mh-hybrid .mh-plate{position:relative;isolation:isolate}
+html[data-mastchart] .mh-hybrid .mh-plate::before{content:"";position:absolute;left:0;right:0;top:0;bottom:46px;z-index:-1;pointer-events:none;
+  background:#0E3A57;-webkit-mask:url("/static/night-strip/chart-560.webp") 62% 46%/cover no-repeat;mask:url("/static/night-strip/chart-560.webp") 62% 46%/cover no-repeat;opacity:.08}
+@media (min-width:761px){html[data-mastchart] .mh-hybrid .mh-plate::before{-webkit-mask-image:url("/branding/masthead-chart.webp");mask-image:url("/branding/masthead-chart.webp")}}
+@media (prefers-color-scheme:dark){html[data-mastchart] .mh-hybrid .mh-plate::before{background:#E6DCC8;opacity:.10}}
+
+/* slim panoramic coastal strip directly under the masthead; fixed height so CLS stays 0 */
+.nstrip{position:relative;margin:0;height:88px;overflow:hidden;background:#A9B9C6;border-bottom:1px solid rgba(196,163,106,.55)}
+/* two halves of one photo, edge to edge (on the mobile viewport each is smaller than forecast text, so text stays LCP);
+   the left half overlaps by 1px so no seam shows, and each crops only at its outer edge on narrow screens */
+.nstrip picture{position:absolute;top:0;bottom:0;display:block}
+.nstrip .nstrip-l{left:0;width:calc(50% + 1px)}.nstrip .nstrip-r{right:0;width:50%;z-index:1}
+.nstrip img{display:block;width:100%;height:100%;object-fit:cover}
+.nstrip-l img{object-position:100% 75%}.nstrip-r img{object-position:0 75%}
+@media (min-width:640px){.nstrip{height:112px}}
+@media (min-width:1024px){.nstrip{height:132px}}
+
+/* Night only: one continuous wash above both photo halves.
+   Same natural-color assets, box dimensions and daytime presentation. */
+@media (prefers-color-scheme:dark){
+  html[data-water="salt"][data-night="b"] .nstrip::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:#0F2B44;opacity:.38}
+}
+
+/* ===== Concept B chart graticule (Ed t390u): extremely subtle, CSS only (no image), on the instrument band
+   below the heading. Instrument faces, the forecast card and the four observed tiles are opaque, so no texture
+   sits behind any reading. */
+.cg-hybrid{isolation:isolate}
+.cg-hybrid::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:repeating-linear-gradient(0deg,var(--rf-grid) 0 1px,transparent 1px 28px),repeating-linear-gradient(90deg,var(--rf-grid) 0 1px,transparent 1px 28px);
+  -webkit-mask-image:linear-gradient(180deg,transparent 0,transparent 64px,#000 120px);mask-image:linear-gradient(180deg,transparent 0,transparent 64px,#000 120px)}
+.cg-hybrid .al-link:focus-visible{outline:none;box-shadow:var(--rf-focus-ring)}
