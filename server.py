@@ -1422,7 +1422,7 @@ import windgrid  # noqa: E402
 import hrrrgrid  # noqa: E402
 import radarview  # noqa: E402
 import showcase  # noqa: E402  (homepage Wind & Radar section; HOME_SHOWCASE flag, default off)
-import theme_toggle  # noqa: E402  (homepage day/night toggle and Catch Wall theme, Ed t392u/t393u)
+import theme_toggle  # noqa: E402  (homepage day/night toggle; /preview/home-b only for now)
 import freshwater  # noqa: E402
 import brief  # noqa: E402
 import wave_intro  # noqa: E402
@@ -2641,8 +2641,7 @@ def _public_catch_wall_redesign(water: str = "all") -> bytes | None:
         data = catch_wall_preview.public_page(water)
         if b'name="robots" content="index, follow"' not in data or b'class="pv-flag"' in data:
             raise RuntimeError("public catch wall render failed its own checks")
-        # Ed t393u: the saved site theme (html[data-theme]) drives the whole wall, not just the masthead.
-        return theme_toggle.rewrite_styles(_paint_folio_header_on_public_catch_wall(data))
+        return _paint_folio_header_on_public_catch_wall(data)
     except catch_wall_preview.NotReady:
         return None
     except Exception as e:  # never take the page down for a presentation change
@@ -3435,11 +3434,6 @@ class Handler(SimpleHTTPRequestHandler):
             return self._send_html(ROOT / "index.html", region_id=rid)
         if sc:  # Concept A Wind & Radar section; only when HOME_SHOWCASE is on
             data = showcase.inject(data, sc, radar_meta=handle_radar_meta)
-        try:  # Ed t392u/t393u: masthead day/night toggle on the site theme; skip it rather than fail /
-            data = theme_toggle.apply(data)
-        except Exception as e:
-            sys.stderr.write("home theme toggle skipped: %s\n" % e)
-        if sc:
             self.send_response(200)
             self.send_header("Cache-Control", "no-store")
             self.send_header("Content-Type", "text/html; charset=utf-8")
