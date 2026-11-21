@@ -408,21 +408,29 @@
     document.documentElement.classList.add("intro-play");
     overlay.removeAttribute("hidden");
     overlay.setAttribute("aria-hidden", "false");
-    mapRule();
     stopLoop();
-    playT0 = window.performance && performance.now ? performance.now() : 0;
-    if (seek !== null && seek !== "") {
-      var ms = Math.max(0, parseInt(seek, 10) || 0);
-      document.documentElement.setAttribute("data-intro-seek", "");
-      draw(Math.min(1, ms / DURATION));
-      return;
-    }
-    draw(0);
-    if (skip) skip.focus();
-    // Start at once: frame 0 is already in motion, so holding it for the
-    // page's deferred scripts would read as a stutter. The virtual clock
-    // below caps any stall to ~2 frames instead.
-    startLoop();
+    // Measure and draw frame 0 in the first animation frame, not while the
+    // page is still parsing: reading the rule's box here forced a full-page
+    // layout inside the parser's task (the startup long task). Until then
+    // the overlay shows its markup state, the full navy sheet, so nothing
+    // of the page flashes through. Timing starts at the first drawn frame.
+    raf = window.requestAnimationFrame(function () {
+      raf = 0;
+      mapRule();
+      playT0 = window.performance && performance.now ? performance.now() : 0;
+      if (seek !== null && seek !== "") {
+        var ms = Math.max(0, parseInt(seek, 10) || 0);
+        document.documentElement.setAttribute("data-intro-seek", "");
+        draw(Math.min(1, ms / DURATION));
+        return;
+      }
+      draw(0);
+      if (skip) skip.focus();
+      // Start at once: frame 0 is already in motion, so holding it for the
+      // page's deferred scripts would read as a stutter. The virtual clock
+      // below caps any stall to ~2 frames instead.
+      startLoop();
+    });
   }
 
   // Skip works in the same event: the overlay is gone before the handler
