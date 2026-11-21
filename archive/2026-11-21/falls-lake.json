@@ -1,0 +1,84 @@
+{
+ "freshness": [
+  {
+   "label": "Lake level",
+   "stale": false,
+   "station": "02087182",
+   "time": "4:45 AM ET"
+  },
+  {
+   "label": "Water temp",
+   "stale": false,
+   "station": "02087182",
+   "time": "4:45 AM ET"
+  }
+ ],
+ "issueDate": "2026-11-21",
+ "issuedAt": "2026-11-21T10:15:01.557467+00:00",
+ "issuedEt": "Sat Nov 21, 5:15 AM ET",
+ "items": [
+  [
+   "Alerts",
+   "No NWS alerts at the dam."
+  ],
+  [
+   "Lake level",
+   "244.73 ft (NGVD29), 6.77 ft below the 251.5 ft guide curve; -0.04 ft in 24 h."
+  ],
+  [
+   "Dam release",
+   "59 cfs below Falls Dam (regulated), much below normal."
+  ],
+  [
+   "Inflows",
+   "Eno River near Durham 8.5 cfs, below normal; Flat River at Bahama 3.1 cfs, much below normal."
+  ],
+  [
+   "Water temp",
+   "58°F at the dam sensor."
+  ],
+  [
+   "Rain",
+   "0.00 in last 24 h at the dam; NWS forecast 0.18 in in next 24 h."
+  ],
+  [
+   "Weather",
+   "Mostly Cloudy, high 42°F, wind NE 5 mph."
+  ]
+ ],
+ "missing": [],
+ "ok": true,
+ "reason": "scheduled",
+ "region": {
+  "anchor": {
+   "label": "Falls Lake Dam (USGS 02087182)",
+   "lat": 35.9411,
+   "lon": -78.5833
+  },
+  "area": "Neuse River basin · Wake, Durham & Granville counties",
+  "id": "falls-lake",
+  "instrumentSet": "freshwater-lake",
+  "name": "Falls Lake",
+  "waterType": "freshwater"
+ },
+ "regionId": "falls-lake",
+ "sources": "USGS, USACE Wilmington District, NWS",
+ "take": [
+  "The lake is 6.8 ft below its guide curve, so more shoreline is exposed than usual; check NCWRC ramp notices before launching.",
+  "Flow below the dam is very low for the date."
+ ],
+ "validation": {
+  "checkedAt": "2026-11-21T10:15:01.557467+00:00",
+  "checks": [
+   "region",
+   "location",
+   "issue date",
+   "timestamp",
+   "core readings"
+  ],
+  "missingCore": [],
+  "status": "ok"
+ },
+ "waterType": "freshwater",
+ "words": 109
+}

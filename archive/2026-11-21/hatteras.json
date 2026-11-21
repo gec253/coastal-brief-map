@@ -1,0 +1,134 @@
+{
+ "forecastUpdated": "2026-11-21T08:38:45+00:00",
+ "freshness": [
+  {
+   "label": "Wind",
+   "stale": false,
+   "station": "41025",
+   "time": "4:40 AM ET"
+  },
+  {
+   "label": "Seas",
+   "stale": false,
+   "station": "41120",
+   "time": "4:56 AM ET"
+  },
+  {
+   "label": "Swell",
+   "stale": false,
+   "station": "41120",
+   "time": "4:26 AM ET"
+  },
+  {
+   "label": "Barometer",
+   "stale": false,
+   "station": "8654467",
+   "time": "5:06 AM ET"
+  },
+  {
+   "label": "Water level",
+   "stale": false,
+   "station": "8654467",
+   "time": "5:06 AM ET"
+  },
+  {
+   "label": "Water temp",
+   "stale": false,
+   "station": "8654467",
+   "time": "5:06 AM ET"
+  }
+ ],
+ "issueDate": "2026-11-21",
+ "issuedAt": "2026-11-21T10:15:00.456992+00:00",
+ "issuedEt": "Sat Nov 21, 5:15 AM ET",
+ "items": [
+  [
+   "Advisories",
+   "Small Craft Advisory until Mon 1:00 PM ET; High Surf Advisory until Mon 1:00 AM ET."
+  ],
+  [
+   "Wind",
+   "17 kt from the E, gusting 21, at Diamond Shoals (offshore buoy 41025, observed 4:40 AM ET); about steady from 17 kt 10 h earlier."
+  ],
+  [
+   "Seas",
+   "5.6 ft every 8 s from the SE at Cape Hatteras East (CDIP 250); building from 4.9 ft 10 h earlier."
+  ],
+  [
+   "Swell",
+   "1.3 ft at 10 s from the SE (split from the buoy spectrum, observed 4:26 AM ET)."
+  ],
+  [
+   "Pressure",
+   "30.21 inHg, steady."
+  ],
+  [
+   "Marine forecast",
+   "Today: E winds 15 to 20 kt. (NWS AMZ154)"
+  ],
+  [
+   "Rain",
+   "12% chance through tonight; mostly cloudy, high 60°F."
+  ],
+  [
+   "Tides",
+   "high 5:41 AM ET (0.6 ft), low 12:39 PM ET (0.3 ft), high 5:52 PM ET (0.5 ft) at USCG Station Hatteras, MLLW."
+  ],
+  [
+   "Water temp",
+   "58°F inshore (USCG Station Hatteras), 63°F offshore (buoy 41120)."
+  ]
+ ],
+ "marineUpdated": "2026-11-21T03:35:00-05:00",
+ "marineZone": "AMZ154",
+ "missing": [],
+ "ok": true,
+ "reason": "scheduled",
+ "region": {
+  "anchor": {
+   "label": "Cape Hatteras",
+   "lat": 35.2515,
+   "lon": -75.5288
+  },
+  "area": "Cape Hatteras, Outer Banks",
+  "id": "hatteras",
+  "map": {
+   "center": [
+    35.2,
+    -75.6
+   ],
+   "zoom": 8
+  },
+  "name": "Hatteras Island"
+ },
+ "regionId": "hatteras",
+ "sources": "NOAA NDBC, NOAA CO-OPS, NWS (api.weather.gov)",
+ "take": [
+  "NWS rates conditions hazardous to small craft until Mon 1:00 PM ET.",
+  "The NWS marine forecast has wind or seas building later today.",
+  "Offshore water is 5°F warmer than inshore."
+ ],
+ "validation": {
+  "checkedAt": "2026-11-21T10:15:00.456992+00:00",
+  "checks": [
+   "region",
+   "location",
+   "issue date",
+   "timestamp",
+   "marine zone",
+   "forecast age",
+   "core readings"
+  ],
+  "missingCore": [],
+  "status": "ok"
+ },
+ "waterType": "saltwater",
+ "windSource": {
+  "name": "Diamond Shoals",
+  "observed": "2026-11-21T09:40:00Z",
+  "role": "primary",
+  "station": "41025",
+  "type": "offshore"
+ },
+ "words": 161
+}
