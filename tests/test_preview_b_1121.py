@@ -23,15 +23,14 @@ class PreviewB(_Base):
         locals()[_n] = None
     del _n
 
-    def test_public_home_has_no_concept_b(self):
+    def test_public_home_carries_concept_b_release(self):
+        # Release candidate (Ed t393u): the public hybrid.css is Concept B; "/" never shows the preview flag.
         for path in ("/", "/?region=hatteras", "/index.html"):
             s, h, b = self._get(path)
             self.assertEqual(s, 200, path)
-            self.assertNotIn(B_MARK, b, path)
+            self.assertIn(B_MARK, b, path)
             self.assertNotIn(b"Concept B", b, path)
-            self.assertIn(sprint_home._CSS_COMMENT.sub("", sprint_home.style_tag("hybrid")).encode(), b, path)
-        s, h, b = self._get("/", cookie=True)          # the cookie alone never changes "/"
-        self.assertNotIn(B_MARK, b)
+            self.assertNotIn(b'class="pv-flag"', b, path)
 
     def test_route_is_404_without_cookie(self):
         s, h, b = self._get("/preview/home-b")
@@ -45,7 +44,6 @@ class PreviewB(_Base):
         s, h, b = self._get("/preview/home-b", cookie=True)
         self.assertEqual(s, 200)
         self.assertIn(B_MARK, b)
-        self.assertNotIn(sprint_home._CSS_COMMENT.sub("", sprint_home.style_tag("hybrid")).encode(), b)
         self.assertIn(b'data-sprint="hybrid"', b)
         self.assertIn(b'id="conditions"', b)
         self.assertIn(b"Private preview", b)
