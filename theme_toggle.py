@@ -10,9 +10,7 @@ the Morning Brief, Catch Wall, Coastal Life, /wind and /radar use) override the 
   matchMedia("(prefers-color-scheme: dark)") follow the choice, so the Wind & Radar canvases agree;
 * a compact masthead button (aria-pressed, aria-label, 44 px hit area) flips and saves the choice.
 
-apply() runs on the public homepage and /preview/home-b. rewrite_styles() runs on the public Catch Wall,
-whose own head boot already sets html[data-theme] from the saved choice or the phone (Ed t393u), so
-its gallery, cards, categories and share form now follow the same choice as its masthead.
+Only /preview/home-b calls apply() today; the public homepage is unchanged until the Concept B merge.
 """
 from __future__ import annotations
 
@@ -136,29 +134,12 @@ SCRIPT = ("<script>(function(){var d=document.documentElement,b=document.getElem
 _STYLE = re.compile(rb"(<style\b[^>]*>)(.*?)(</style>)", re.S)
 
 
-def rewrite_styles(data: bytes) -> bytes:
-    """Rewrite every inline <style> that has a dark block; other style tags are left byte-identical."""
-    def one(m):
-        css = m.group(2).decode("utf-8")
-        if not re.search(r"@media\s*\(prefers-color-scheme:\s*dark\)", css):
-            return m.group(0)
-        return m.group(1) + rewrite_css(css).encode("utf-8") + m.group(3)
-    return _STYLE.sub(one, data)
-
-
 def apply(data: bytes) -> bytes:
-    """Homepage: rewrite dark CSS, add the boot script, the masthead button and its wiring."""
-    if b"window.__cbTheme" in data:
-        return data
-    data = rewrite_styles(data)
+    """Gated: rewrite dark CSS, add the boot script, the masthead button and its wiring."""
+    data = _STYLE.sub(lambda m: m.group(1) + rewrite_css(m.group(2).decode("utf-8")).encode("utf-8") + m.group(3), data)
     if b"<head>" not in data or b'<div class="mh-ear-in">' not in data:
         raise RuntimeError("theme toggle: anchors not found")
-    cs = b'<meta charset="utf-8">'
-    head = data.index(b"<head>")
-    if cs in data[head:head + 200]:   # keep the charset first in <head>, boot right after it
-        data = data.replace(cs, cs + b"\n" + BOOT.encode("utf-8"), 1)
-    else:
-        data = data.replace(b"<head>", b"<head>\n" + BOOT.encode("utf-8"), 1)
+    data = data.replace(b"<head>", b"<head>\n" + BOOT.encode("utf-8"), 1)
     i = data.index(b'<div class="mh-ear-in">')
     j = data.index(b"</div>", i) + len(b"</div>")
     data = data[:j] + BUTTON.encode("utf-8") + data[j:]
