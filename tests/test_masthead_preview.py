@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 import threading
@@ -130,9 +131,16 @@ class MastheadPreview(unittest.TestCase):
             self.assertIn(b'src="/brief-link.js"', body, path)
 
     def test_public_files_match_origin_main(self):
+        # Favicon / theme-color <head> tags (Ed t386u) may differ; everything else stays locked.
+        icon_head = re.compile(
+            rb'(?:[ \t]*<meta name="theme-color" content="#[0-9A-Fa-f]+">\s*)'
+            rb'|(?:[ \t]*<link rel="(?:icon|apple-touch-icon|manifest)"[^>]*>\s*)'
+        )
+        def strip(data: bytes) -> bytes:
+            return icon_head.sub(b"", data)
         for rel in self.PUBLIC_FILES_LOCKED:
             committed = subprocess.check_output(["git", "show", "origin/main:" + rel], cwd=ROOT)
-            self.assertEqual(committed, (ROOT / rel).read_bytes(), rel)
+            self.assertEqual(strip(committed), strip((ROOT / rel).read_bytes()), rel)
 
     def test_public_homepage_is_the_final_design(self):
         status, body, hdrs = self._req("/dashboard")

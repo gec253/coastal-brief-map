@@ -1338,7 +1338,10 @@ def _shell(variant: str, main: str, shot: bool, water: str = "salt", public: boo
 <link rel="preload" href="/fonts/fraunces-italic-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/barlow-condensed-600.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/source-sans-3-var.woff2" as="font" type="font/woff2" crossorigin>
-%(img_preload)s<link rel="icon" href="/branding/favicon.svg" type="image/svg+xml">
+%(img_preload)s<link rel="icon" href="/favicon.ico?v=20261121" sizes="48x48">
+<link rel="icon" href="/branding/favicon.svg?v=20261121" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261121" sizes="180x180">
+<link rel="manifest" href="/site.webmanifest?v=20261121">
 <link rel="preconnect" href="https://wgjoenkugzfrrfejmtvh.supabase.co" crossorigin>
 %(css)s<style id="wave-intro-css">
 %(icss)s

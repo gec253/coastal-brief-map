@@ -982,7 +982,7 @@ def page(b: dict, include_fresh: bool = False, public: bool = False, ads_on: boo
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="%(robots)s">
-<meta name="theme-color" content="#0B2A3D">
+<meta name="theme-color" content="#071C29">
 <title>Morning Brief · %(name)s — The Coastal Brief</title>
 <meta name="description" content="%(desc)s">
 <meta property="og:title" content="%(og_title)s">
@@ -998,7 +998,10 @@ def page(b: dict, include_fresh: bool = False, public: bool = False, ads_on: boo
 <meta name="twitter:description" content="%(desc)s">
 <meta name="twitter:image" content="https://thecoastalbrief.com/branding/og-masthead.jpg">
 <meta name="twitter:image:alt" content="The Coastal Brief nameplate in ivory serif on deep navy, with a faint North Carolina nautical-chart texture and the line From the rivers to the sounds to the sea.">
-<link rel="icon" href="/branding/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico?v=20261121" sizes="48x48">
+<link rel="icon" href="/branding/favicon.svg?v=20261121" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261121" sizes="180x180">
+<link rel="manifest" href="/site.webmanifest?v=20261121">
 <link rel="preload" href="/fonts/source-sans-3-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/barlow-condensed-600.woff2" as="font" type="font/woff2" crossorigin>
 <script>(function(){try{var q=new URLSearchParams(location.search).get("theme");var t=q||localStorage.getItem("coastalBrief.theme");if(t!=="light"&&t!=="dark")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.setAttribute("data-theme",t)}catch(e){}})();</script>

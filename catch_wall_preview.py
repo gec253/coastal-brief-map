@@ -415,7 +415,7 @@ def _head_meta(public: bool) -> str:
     return (
         '<meta name="robots" content="index, follow">\n<meta name="color-scheme" content="light dark">\n'
         '<title>%s</title>\n<meta name="description" content="%s">\n<link rel="canonical" href="%s">\n'
-        '<meta name="theme-color" content="#0B2A3D">\n'
+        '<meta name="theme-color" content="#071C29">\n'
         '<meta property="og:title" content="%s">\n<meta property="og:description" content="%s">\n'
         '<meta property="og:url" content="%s">\n<meta property="og:type" content="website">\n'
         '<meta name="twitter:title" content="%s">\n<meta name="twitter:description" content="%s">\n%s'
@@ -492,7 +492,10 @@ def page(live: list[dict] | None = None, public: bool = False, show_empty: bool 
 <link rel="preload" href="/fonts/source-sans-3-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/barlow-condensed-600.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/fraunces-italic-var.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="icon" href="/branding/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico?v=20261121" sizes="48x48">
+<link rel="icon" href="/branding/favicon.svg?v=20261121" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261121" sizes="180x180">
+<link rel="manifest" href="/site.webmanifest?v=20261121">
 <link rel="preconnect" href="https://wgjoenkugzfrrfejmtvh.supabase.co" crossorigin>
 %(preload)s%(css)s</head>
 <body>

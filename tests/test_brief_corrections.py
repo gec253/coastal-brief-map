@@ -4,6 +4,7 @@ Live brief.py, brief.validate, automation, archive and .github stay untouched.
 """
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 import unittest
@@ -31,9 +32,21 @@ def _git_show(path: str) -> bytes:
     return subprocess.check_output(["git", "show", "%s:%s" % (ORIGIN, path)], cwd=ROOT)
 
 
+# Favicon / theme-color <head> tags (Ed t386u) may differ from origin/main; everything else stays locked.
+_ICON_HEAD = re.compile(
+    rb'(?:[ \t]*<meta name="theme-color" content="#[0-9A-Fa-f]+">\s*)'
+    rb'|(?:[ \t]*<link rel="(?:icon|apple-touch-icon|manifest)"[^>]*>\s*)'
+)
+
+
+def _strip_icon_head(data: bytes) -> bytes:
+    return _ICON_HEAD.sub(b"", data)
+
+
 class LiveBriefUntouched(unittest.TestCase):
     def test_brief_py_matches_origin_main(self):
-        self.assertEqual((ROOT / "brief.py").read_bytes(), _git_show("brief.py"))
+        self.assertEqual(_strip_icon_head((ROOT / "brief.py").read_bytes()),
+                         _strip_icon_head(_git_show("brief.py")))
 
     def test_validate_still_the_origin_function(self):
         # The file is byte-identical, so validate is unchanged. Also call it.

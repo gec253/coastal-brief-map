@@ -482,7 +482,11 @@ def page_html(sent: bool = False, error: str = "", values: dict | None = None) -
 <title>Send feedback \u2014 The Coastal Brief</title>
 <meta name="description" content="Send feedback on The Coastal Brief.">
 <meta name="color-scheme" content="light dark">
-<link rel="icon" href="/branding/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#071C29">
+<link rel="icon" href="/favicon.ico?v=20261121" sizes="48x48">
+<link rel="icon" href="/branding/favicon.svg?v=20261121" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261121" sizes="180x180">
+<link rel="manifest" href="/site.webmanifest?v=20261121">
 <style>
 :root{--paper:#FFFDF8;--page:#F7F3EA;--ink:#102030;--ink-2:#40596A;--brass:#A7864F;--line-2:#C9D4D6;--f-ui:"Source Sans 3",source-sans-3,system-ui,sans-serif;--f-display:Fraunces,Georgia,serif}
 html,body{margin:0;background:var(--page);color:var(--ink);font:16px/1.4 var(--f-ui)}

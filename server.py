@@ -271,6 +271,19 @@ def _static_allowed(path: str) -> bool:
     return posixpath.splitext(p)[1].lower() in _STATIC_EXT
 
 
+
+# Brand icons live under branding/ (manifest at the repo root). Root aliases exist
+# because browsers request /favicon.ico and /apple-touch-icon.png on their own.
+# Seven-day cache; HTML references use ?v=20261121 to bust.
+_ICON_CACHE = "public, max-age=604800"
+_ICON_ROUTES = {
+    "/favicon.ico": (ROOT / "branding" / "favicon.ico", "image/x-icon"),
+    "/apple-touch-icon.png": (ROOT / "branding" / "apple-touch-icon.png", "image/png"),
+    "/apple-touch-icon-precomposed.png": (ROOT / "branding" / "apple-touch-icon.png", "image/png"),
+    "/site.webmanifest": (ROOT / "site.webmanifest", "application/manifest+json"),
+}
+
+
 def hmac_compare(a: str, b: str) -> bool:
     import hmac
     return bool(a) and hmac.compare_digest(a.encode(), b.encode())
@@ -2734,7 +2747,7 @@ def _flag(name: str) -> bool:
 
 
 PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow"><title>Private previews · The Coastal Brief</title><link rel="stylesheet" href="/styles.css">
+<meta name="robots" content="noindex, nofollow"><title>Private previews · The Coastal Brief</title><meta name="theme-color" content="#071C29"><link rel="icon" href="/favicon.ico?v=20261121" sizes="48x48"><link rel="icon" href="/branding/favicon.svg?v=20261121" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261121" sizes="180x180"><link rel="manifest" href="/site.webmanifest?v=20261121"><link rel="stylesheet" href="/styles.css">
 <style>body{background:var(--d-panel);color:var(--d-ink)}.pv{max-width:560px;margin:0 auto;padding:18px 16px 40px}
 .pv h1{font:600 1.6rem/1.1 var(--f-display);margin:10px 0 4px}.pv p{color:var(--d-ink-2)}
 .pv a.card{display:block;padding:14px 16px;margin:10px 0;border:1px solid var(--d-edge);border-radius:12px;background:var(--d-inst);color:var(--d-ink);text-decoration:none}
@@ -2812,10 +2825,35 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_HEAD(self):
         parsed = urlparse(self.path)
+        if self._send_brand_icon(parsed):
+            return
         if not (parsed.path.startswith("/api/") or parsed.path in ("/catch-wall", "/catch-wall/")) and not _static_allowed(parsed.path):
             self.send_error(404, "not found")
             return
+        if (parsed.path.startswith("/branding/favicon")
+                or parsed.path.startswith("/branding/apple-touch-icon")
+                or parsed.path.startswith("/branding/icon-")):
+            self._static_cache = _ICON_CACHE
         return super().do_HEAD()
+
+    def _send_brand_icon(self, parsed) -> bool:
+        """Serve a root icon alias (/favicon.ico, /apple-touch-icon.png, manifest)."""
+        spec = _ICON_ROUTES.get(parsed.path)
+        if not spec:
+            return False
+        path, ctype = spec
+        if not path.is_file():
+            self.send_error(404, "file not found")
+            return True
+        data = path.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(data)))
+        self._static_cache = _ICON_CACHE
+        self.end_headers()
+        if self.command != "HEAD":
+            self.wfile.write(data)
+        return True
 
     def _preview_ok(self) -> bool:
         k = _preview_secret()
@@ -2858,6 +2896,8 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
+        if self._send_brand_icon(parsed):
+            return
         if parsed.path == "/robots.txt":
             return self._send_bytes(robots_body(), "text/plain; charset=utf-8", cache_s=300)
         if parsed.path == "/sitemap.xml":
@@ -3250,6 +3290,10 @@ class Handler(SimpleHTTPRequestHandler):
         if parsed.path.startswith("/fonts/") and parsed.path.endswith(".woff2"):
             self._cache_header_sent = True
             self._static_cache = "public, max-age=31536000, immutable"
+        elif (parsed.path.startswith("/branding/favicon")
+              or parsed.path.startswith("/branding/apple-touch-icon")
+              or parsed.path.startswith("/branding/icon-")):
+            self._static_cache = _ICON_CACHE
         return super().do_GET()
 
     # ------------------------------------------------------------ photos

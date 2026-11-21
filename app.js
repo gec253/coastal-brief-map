@@ -75,7 +75,7 @@
     btn.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode");
     btn.textContent = dark ? "Light mode" : "Dark mode";
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute("content", "#0B2A3D");
+    if (meta) meta.setAttribute("content", "#071C29");
   }
   function setTheme(theme, persist) {
     const t = theme === "dark" ? "dark" : "light";

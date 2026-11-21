@@ -228,9 +228,11 @@ class WaveIntroPreview(unittest.TestCase):
         for banned in (b"<filter", b"feGaussianBlur", b"<mask", b"blur("):
             self.assertNotIn(banned, overlay)
         self.assertNotRegex(css, rb"filter\s*:")
-        # No video files in the product.
-        self.assertNotIn(b".mp4", body)
-        self.assertNotIn(b".webm", body)
+        # No video files in the product. site.webmanifest contains the letters
+        # ".webm", so strip the manifest name before the check.
+        no_manifest = body.replace(b"webmanifest", b"")
+        self.assertNotIn(b".mp4", no_manifest)
+        self.assertNotIn(b".webm", no_manifest)
 
     def test_v6_aged_brass_on_edge_and_rule(self):
         import wave_intro

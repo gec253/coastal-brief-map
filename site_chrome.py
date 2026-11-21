@@ -139,7 +139,11 @@ def page(title: str, heading: str, body_html: str, current: str = "", brief_rid:
 <meta name="robots" content="noindex, nofollow">
 <title>%s \u2014 The Coastal Brief</title>
 <meta name="color-scheme" content="light dark">
-<link rel="icon" href="/branding/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#071C29">
+<link rel="icon" href="/favicon.ico?v=20261121" sizes="48x48">
+<link rel="icon" href="/branding/favicon.svg?v=20261121" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261121" sizes="180x180">
+<link rel="manifest" href="/site.webmanifest?v=20261121">
 <style>%s%s</style>
 </head>
 <body>
