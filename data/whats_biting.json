@@ -1,0 +1,244 @@
+{
+  "version": 1,
+  "last_checked": "2026-11-21",
+  "last_checked_note": "Official pages and first-party report dates were verified Saturday, November 21, 2026, America/New_York. Catch descriptions are not republished.",
+  "flagged_for_review": [
+    {
+      "name": "outerbankssurffishing.com report roundup",
+      "url": "https://outerbankssurffishing.com/outer-banks-fishing-report/",
+      "reason": "Competing or adjacent fishing publication / aggregator. Prefer first-party shop pages. Not included on preview pages."
+    },
+    {
+      "name": "Carolina Sportsman",
+      "url": "https://www.carolinasportsman.com/fishing-hotspots/jordan-lakes-november-crapppie/",
+      "reason": "Fishing magazine feature (Jordan Lake seasonal how-to, published Oct 30, 2026). Flagged for review, not included."
+    },
+    {
+      "name": "Coastal Angler, Pamlico edition",
+      "url": "https://coastalanglermag.com/pamlico/",
+      "reason": "Fishing magazine. Wrong geography for the upper Neuse (Falls Dam to Goldsboro) and stale (August 2026) on the Nov 21 check. Not included."
+    },
+    {
+      "name": "Island Free Press fishing-report section",
+      "url": "https://islandfreepress.org/fishing-report/",
+      "reason": "Hatteras local news with a fishing-report section (tournaments and records on the Nov 21 check, not a dated bite report). Flagged as a publication in the same space. Not included."
+    }
+  ],
+  "regions": [
+    {
+      "id": "crystal-coast",
+      "name": "Crystal Coast",
+      "short_name": "Morehead City · Beaufort",
+      "water_type": "saltwater",
+      "scope": "Morehead City, Beaufort, and the Emerald Isle / Bogue Inlet shore when a source is local to those waters.",
+      "reports": [
+        {
+          "source_name": "Bogue Inlet Pier",
+          "source_url": "https://www.bogueinletpier.com/fishing-reports/",
+          "as_of": "2026-11-15",
+          "scope": "Bogue Inlet Pier, Emerald Isle",
+          "title": "Bogue Inlet Pier fishing report"
+        }
+      ],
+      "confirmed": [],
+      "outlooks": [],
+      "seasonal": [],
+      "notices": ["dmf-proclamations", "dmf-rec-guide", "dph-advisories"]
+    },
+    {
+      "id": "hatteras",
+      "name": "Hatteras",
+      "short_name": "Hatteras Island",
+      "water_type": "saltwater",
+      "scope": "Hatteras Island. Nearby Outer Banks sources appear only when their true geographic scope is labeled, and none are shown on this page today.",
+      "reports": [
+        {
+          "source_name": "Capt. Marty, Outer Banks This Week / OneBoat",
+          "source_url": "https://obxguides.com/ocracoke/capt-marty/activity-reports",
+          "as_of": "2026-11-20",
+          "scope": "Outer Banks, including Hatteras",
+          "title": "Fishing Report 11-20"
+        },
+        {
+          "source_name": "Frank & Fran's, Avon",
+          "source_url": "https://hatteras-island.com/fishing-report/",
+          "as_of": "2026-11-20",
+          "scope": "Hatteras Island",
+          "title": "Hatteras Island fishing report"
+        },
+        {
+          "source_name": "Frisco Rod & Gun",
+          "source_url": "https://fishingreport.friscorodandgun.com/2026/11/20/hatteras-island-fishing-report-3311/",
+          "as_of": "2026-11-20",
+          "scope": "Hatteras Island",
+          "title": "Hatteras Island fishing report"
+        },
+        {
+          "source_name": "Hatteras Harbor Marina",
+          "source_url": "https://hatterasharbor.com/fishing-reports/",
+          "as_of": "2026-11-20",
+          "scope": "Hatteras Harbor, Hatteras Island",
+          "title": "Hatteras Harbor fishing report"
+        }
+      ],
+      "confirmed": [],
+      "outlooks": [],
+      "seasonal": [],
+      "notices": ["dmf-proclamations", "dmf-rec-guide", "dph-advisories"]
+    },
+    {
+      "id": "falls-lake",
+      "name": "Falls Lake",
+      "short_name": "Falls Lake",
+      "water_type": "freshwater",
+      "scope": "Falls Lake, Neuse River basin, Wake, Durham, and Granville counties. This is not Jordan Lake.",
+      "reports": [],
+      "confirmed": [],
+      "outlooks": [],
+      "seasonal": [
+        {
+          "title": "Late fall on a Piedmont reservoir",
+          "body": "Late fall is typically a transition period on Piedmont reservoirs as the water cools. This is a general seasonal pattern, not a report of recent or confirmed catches, and it is not a forecast of what is biting.",
+          "as_of": "2026-11-21",
+          "scope": "Falls Lake only"
+        }
+      ],
+      "notices": ["ncwrc-baa", "ncwrc-inland-regs", "dph-advisories", "falls-sra", "falls-stocking-note"]
+    },
+    {
+      "id": "jordan-lake",
+      "name": "Jordan Lake",
+      "short_name": "Jordan Lake",
+      "water_type": "freshwater",
+      "scope": "Jordan Lake, Cape Fear basin, Chatham and Durham counties. This is not Falls Lake.",
+      "reports": [],
+      "confirmed": [],
+      "outlooks": [],
+      "seasonal": [
+        {
+          "title": "Late fall on a Piedmont reservoir",
+          "body": "Late fall is typically a transition period on Piedmont reservoirs as the water cools. This is a general seasonal pattern, not a report of recent or confirmed catches, and it is not a forecast of what is biting.",
+          "as_of": "2026-11-21",
+          "scope": "Jordan Lake only"
+        }
+      ],
+      "notices": ["ncwrc-baa", "ncwrc-inland-regs", "dph-advisories", "jordan-sra", "jordan-stocking"]
+    },
+    {
+      "id": "neuse-river",
+      "name": "Neuse River",
+      "short_name": "Falls Dam to Goldsboro",
+      "water_type": "freshwater",
+      "scope": "The Neuse River from Falls Dam to Goldsboro (Wake, Johnston, and Wayne counties). This is not the lower tidal Neuse or the New Bern estuary. Kinston is not in this region.",
+      "reports": [],
+      "confirmed": [],
+      "outlooks": [],
+      "seasonal": [
+        {
+          "title": "Geography of this region",
+          "body": "This page covers the upper and middle Neuse from Falls Dam to Goldsboro only. Official stocking or magazine notes that refer to the lower tidal river, including Pamlico County, belong on a different region and are not shown here. This is a geography note, not a catch report.",
+          "as_of": "2026-11-21",
+          "scope": "Falls Dam to Goldsboro"
+        }
+      ],
+      "notices": ["ncwrc-baa", "ncwrc-inland-regs", "dph-advisories", "ncwrc-striped-bass"]
+    }
+  ],
+  "notices": {
+    "dmf-proclamations": {
+      "title": "NC DMF Fisheries Management Proclamations",
+      "source_name": "N.C. Division of Marine Fisheries",
+      "source_url": "https://www.deq.nc.gov/about/divisions/marine-fisheries/rules-proclamations-and-size-and-bag-limits/fisheries-management-proclamations",
+      "as_of": "2026-11-10",
+      "as_of_label": "Latest issuance found: November 10, 2026 (SF-3-2026)",
+      "scope": "Statewide coastal and joint fishing waters",
+      "body": "Official proclamations in effect. This is a rules list, not a catch report. Limits are linked, not restated here."
+    },
+    "dmf-rec-guide": {
+      "title": "2026 Recreational Coastal and Joint Fishing Waters Guide",
+      "source_name": "N.C. Division of Marine Fisheries",
+      "source_url": "https://www.deq.nc.gov/printable-recreational-guide/open",
+      "as_of": "2026-11-01",
+      "as_of_label": "PDF marked UPDATED 11/1/2026",
+      "scope": "Statewide coastal and joint fishing waters",
+      "body": "Official printable size and bag guide. The PDF’s own updated date is shown. Limits are linked, not restated here.",
+      "kind": "seasonal-official"
+    },
+    "dph-advisories": {
+      "title": "North Carolina fish consumption advisories",
+      "source_name": "N.C. Division of Public Health",
+      "source_url": "https://epi.dph.ncdhhs.gov/oee/fish/advisories.html",
+      "as_of": null,
+      "as_of_label": "Date not shown on the hub page",
+      "scope": "Statewide, with waterbody-specific advisories",
+      "body": "Official health advisories. Linked only; this page does not paraphrase an advisory as fishing advice.",
+      "kind": "advisory"
+    },
+    "ncwrc-baa": {
+      "title": "NCWRC boating access area closures",
+      "source_name": "N.C. Wildlife Resources Commission",
+      "source_url": "https://www.ncwildlife.gov/connect/ncwrc-operations-closings-and-alerts/boating-access-area-full-and-partial-closings",
+      "as_of": "2026-11-19",
+      "as_of_label": "Page last modified November 19, 2026",
+      "scope": "Statewide boating access areas",
+      "body": "Official full and partial ramp closures. Check the agency page before launching. This is an access notice, not a catch report."
+    },
+    "ncwrc-inland-regs": {
+      "title": "2026–27 Inland Fishing, Hunting & Trapping Regulations Digest",
+      "source_name": "N.C. Wildlife Resources Commission",
+      "source_url": "https://www.ncwildlife.gov/hunt/fishing-hunting-trapping-regulations",
+      "as_of": "2026-08-01",
+      "as_of_label": "Effective August 1, 2026",
+      "scope": "Statewide inland waters",
+      "body": "Official inland regulations digest. Linked, not restated. This is a seasonal official document, not a daily report.",
+      "kind": "seasonal-official"
+    },
+    "falls-sra": {
+      "title": "Falls Lake State Recreation Area",
+      "source_name": "N.C. State Parks",
+      "source_url": "https://www.ncparks.gov/state-parks/falls-lake-state-recreation-area",
+      "as_of": null,
+      "as_of_label": "Date not shown",
+      "scope": "Falls Lake State Recreation Area",
+      "body": "Official park hours, access, and alerts. The park page has no fishing report."
+    },
+    "falls-stocking-note": {
+      "title": "NCWRC 2026 warmwater stocking list",
+      "source_name": "N.C. Wildlife Resources Commission",
+      "source_url": "https://www.ncwildlife.gov/fishing/hatcheries-and-stocking/warmwater-stocking-list-district-2026",
+      "as_of": "2026-02-20",
+      "as_of_label": "Page last modified February 20, 2026",
+      "scope": "Falls Lake",
+      "body": "Falls Lake does not appear on the 2026 NCWRC warmwater stocking list. This is a fact about the official list, not a catch report.",
+      "kind": "seasonal-official"
+    },
+    "jordan-sra": {
+      "title": "Jordan Lake State Recreation Area",
+      "source_name": "N.C. State Parks",
+      "source_url": "https://www.ncparks.gov/state-parks/jordan-lake-state-recreation-area",
+      "as_of": null,
+      "as_of_label": "Date not shown",
+      "scope": "Jordan Lake State Recreation Area",
+      "body": "Official park hours, access, and alerts. The park page has no fishing report."
+    },
+    "jordan-stocking": {
+      "title": "NCWRC 2026 warmwater stocking list — Jordan Reservoir",
+      "source_name": "N.C. Wildlife Resources Commission",
+      "source_url": "https://www.ncwildlife.gov/fishing/hatcheries-and-stocking/warmwater-stocking-list-district-2026",
+      "as_of": "2026-02-20",
+      "as_of_label": "Page last modified February 20, 2026",
+      "scope": "Jordan Reservoir, Farrington Point WRC boating access area",
+      "body": "Jordan Reservoir at Farrington Point (WRC BAA) appears on the 2026 official warmwater stocking list. This is a planned stocking notice, not a report of what is biting today.",
+      "kind": "seasonal-official"
+    },
+    "ncwrc-striped-bass": {
+      "title": "NCWRC striped bass fishing information",
+      "source_name": "N.C. Wildlife Resources Commission",
+      "source_url": "https://www.ncwildlife.gov/fishing/striped-bass-fishing-information",
+      "as_of": null,
+      "as_of_label": "Date not shown on the page",
+      "scope": "Coastal rivers, including the Neuse, as described by NCWRC",
+      "body": "Official seasons and handling guidance for striped bass. Linked, not restated. This is a regulations page, not a confirmed catch report for Falls Dam to Goldsboro."
+    }
+  }
+}

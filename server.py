@@ -1423,6 +1423,7 @@ import hrrrgrid  # noqa: E402
 import radarview  # noqa: E402
 import showcase  # noqa: E402  (homepage Wind & Radar section; HOME_SHOWCASE flag, default off)
 import theme_toggle  # noqa: E402  (homepage day/night toggle; /preview/home-b only for now)
+import whats_biting  # noqa: E402  (private /reports preview; cookie-gated, not public)
 import freshwater  # noqa: E402
 import brief  # noqa: E402
 import wave_intro  # noqa: E402
@@ -2812,6 +2813,7 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 <a class="card" href="/preview/home-b"><b>Homepage · Concept B, Balanced Nautical</b><span>The real homepage with the approved Concept B styling: warm marine forecast, four Also Observed tiles, Wind and Seas highlights, updated controls. Private; the public homepage is unchanged.</span></a>
 <a class="card" href="/preview/home-hybrid"><b>Homepage concept C · Hybrid</b><span>Private sprint concept: heritage instruments with an editorial grid.</span></a>
 <a class="card" href="/catch-wall"><b>Catch Wall photo submissions</b><span>Private test: the Share form and the review page work in this browser, even while public uploads stay off. Photos you send wait in the pending queue until you approve them.</span></a>
+<a class="card" href="/reports"><b>What’s Biting? · fishing reports</b><span>Private preview: a report index and five regional pages (Crystal Coast, Hatteras, Falls Lake, Jordan Lake, and the Neuse from Falls Dam to Goldsboro). Cookie-gated, noindex, not in the sitemap. Not on the public homepage.</span></a>
 <a class="card" href="/preview/photos-check"><b>Photo setup check</b><span>A private status report: storage, image tools, and the pending queue. It never shows keys.</span></a>
 <p><a href="/preview?lock=1">Lock this browser again</a></p></main></body></html>""" % PREVIEW_DAYS
 
@@ -2948,6 +2950,13 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.send_error(404, "not found")
             ctype = "image/avif" if path.suffix.lower() == ".avif" else "image/webp"
             return self._send_file(path, ctype)
+        if (parsed.path in ("/reports", "/reports/", "/reports.css",
+                            "/preview/reports", "/preview/reports/", "/preview/reports.css")
+                or parsed.path.startswith("/reports/")
+                or parsed.path.startswith("/preview/reports/")):
+            # Private What’s Biting? preview (Ed t401u). Same cookie as /preview; 404 without it.
+            # No public nav, no sitemap entry, no homepage changes.
+            return self._whats_biting_route(parsed)
         if parsed.path == "/preview":
             return self._preview_route(parsed)
         if parsed.path == "/preview/photos-check":
@@ -3483,6 +3492,21 @@ class Handler(SimpleHTTPRequestHandler):
             sys.stderr.write("sprint home preview failed: %s\n" % e)
             return self.send_error(500, "preview failed")
         return self._send_private(None, "text/html; charset=utf-8", data)
+
+
+    def _whats_biting_route(self, parsed):
+        """Cookie-gated /reports preview. 404 without the preview cookie. noindex, no-store."""
+        if not self._preview_ok():
+            return self.send_error(404, "not found")
+        q = parse_qs(parsed.query or "")
+        status, ctype, body = whats_biting.resolve_request(parsed.path, q)
+        if status != 200:
+            return self.send_error(status, "not found")
+        data = body.encode("utf-8") if isinstance(body, str) else body
+        return self._send_private(
+            None, ctype, data, status,
+            extra=[("Cache-Control", "no-store"), ("Vary", "Cookie")],
+        )
 
     def _send_private(self, path: Path, ctype: str, data: bytes | None = None, status: int = 200, extra=None, robots: str = "noindex, nofollow"):
         if data is None:
