@@ -135,7 +135,7 @@ html[data-page="catch-wall"]{
   --cap:#2F4A5A;--line:#D5DCDF;--line-2:#C5CED2;
 }
 html[data-page="catch-wall"] body{background:var(--page);color:var(--ink)}
-html[data-page="catch-wall"] .mh-hybrid{background:#F7F9F9}
+html[data-page="catch-wall"] .mh-hybrid{background:var(--paper)}
 .cw-head{padding:16px 16px 2px}
 .cw-h{letter-spacing:-.03em}
 .cw-dek{max-width:38em}

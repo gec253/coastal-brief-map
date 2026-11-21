@@ -86,6 +86,28 @@ class PublicCatchWallBrief(unittest.TestCase):
             self.assertIn('<a href="/catch-wall" aria-current="page">Catch Wall</a>', h)
             self._assert_public_clean(h, share_dialog=True)
 
+    def test_catch_wall_header_matches_folio_chrome(self):
+        """Public /catch-wall keeps its photos, but uses the Folio navy masthead and nav."""
+        s, h = self._get("/catch-wall")
+        self.assertEqual(s, 200)
+        self.assertIn('data-concept="a"', h)
+        self.assertIn("data-catch-wall", h)
+        self.assertIn('header class="site"', h)
+        self.assertIn("data-identity", h)
+        self.assertNotIn('<header class="mh mh-hybrid">', h)
+        self.assertNotIn('class="mh-name"', h)
+        self.assertIn('<a href="/catch-wall" aria-current="page">Catch Wall</a>', h)
+        self.assertIn("Conditions</a>", h)
+        self.assertIn("Coastal Life</a>", h)
+        self.assertIn('id="nav-brief"', h)
+        self.assertIn("coastalBrief.theme", h)
+        self.assertIn('id="cw-folio-chrome"', h)
+        self.assertIn("--id-navy", h)
+        self.assertIn('<h1 id="cw-h" class="cw-h">The Catch Wall</h1>', h)
+        self.assertIn('class="pl pl-f"', h)
+        self.assertIn('id="share-dlg"', h)
+        self.assertNotIn(".mh-hybrid{background:#F7F9F9}", h)
+
     def test_featured_catch_present_and_approved_only(self):
         s, h = self._get("/catch-wall")
         self.assertEqual(h.count('data-featured="1"'), 1)

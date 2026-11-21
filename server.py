@@ -2486,6 +2486,139 @@ def _paint_public_catch_wall(data: bytes, page: str, water: str = "all") -> byte
     return data
 
 
+# Public Catch Wall keeps its photo body, but uses the same Folio masthead and
+# section nav as Morning Brief and Coastal Life (Ed, t382u). A leftover Hybrid
+# nameplate plus a hardcoded light header background made cream type unreadable
+# when the phone was in dark mode.
+_CW_THEME_BOOT = b"""<script>
+(function () {
+  try {
+    var t = localStorage.getItem("coastalBrief.theme");
+    if (t !== "light" && t !== "dark") {
+      t = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    }
+    document.documentElement.setAttribute("data-theme", t);
+  } catch (e) {}
+})();
+</script>
+"""
+
+_CW_FOLIO_HEADER_CSS = """
+html[data-page="catch-wall"] header.site[data-identity],
+html[data-page="catch-wall"] .compact-bar {
+  background-color: var(--id-navy, #071C29);
+  color: var(--id-ivory, #F3E6D0);
+}
+html[data-page="catch-wall"] .visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+/* Catch Wall is statewide: drop the region picker so the compact Folio
+   tabs stay on one row at 390 and don't steal the first screen. */
+html[data-page="catch-wall"] .compact-bar .region-nav { display: none; }
+html[data-page="catch-wall"] .compact-bar .compact-inner,
+html[data-page="catch-wall"] .compact-bar .mast-nav-inner {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+html[data-page="catch-wall"] .compact-bar .site-nav {
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  gap: 0 8px;
+  min-width: 0;
+}
+@media (max-width: 760px) {
+  html[data-page="catch-wall"][data-concept] .compact-bar { min-height: 52px; }
+  html[data-page="catch-wall"][data-concept] .compact-bar .wrap,
+  html[data-page="catch-wall"] .compact-bar .wrap {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  html[data-page="catch-wall"][data-concept] .compact-bar .mast-mono,
+  html[data-page="catch-wall"] .compact-bar .mast-mono {
+    min-width: 32px;
+    padding: 0;
+    font-size: 0.7rem;
+  }
+  html[data-page="catch-wall"][data-concept] .compact-bar .compact-inner,
+  html[data-page="catch-wall"][data-concept] .compact-bar .mast-nav-inner,
+  html[data-page="catch-wall"][data-concept="a"] .compact-bar .compact-inner,
+  html[data-page="catch-wall"][data-concept="a"] .compact-bar .mast-nav-inner {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    min-height: 52px;
+    padding-top: 0;
+    padding-bottom: 0;
+    grid-template-columns: none;
+    grid-template-rows: none;
+  }
+  html[data-page="catch-wall"][data-concept] .compact-bar .site-nav,
+  html[data-page="catch-wall"][data-concept="a"] .compact-bar .site-nav {
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    display: flex;
+    width: auto;
+    min-width: 0;
+    gap: 0 6px;
+    font-size: 0.58rem;
+    letter-spacing: 0.03em;
+    grid-column: auto;
+    grid-row: auto;
+  }
+  html[data-page="catch-wall"][data-concept] .compact-bar .site-nav a,
+  html[data-page="catch-wall"][data-concept] .compact-bar #nav-brief,
+  html[data-page="catch-wall"][data-concept="a"] .compact-bar .site-nav a,
+  html[data-page="catch-wall"][data-concept="a"] .compact-bar #nav-brief {
+    flex: 0 1 auto;
+    padding: 0;
+    letter-spacing: 0.03em;
+  }
+}
+"""
+
+
+def _paint_folio_header_on_public_catch_wall(data: bytes) -> bytes:
+    """Replace the Hybrid newspaper masthead with Folio chrome. Photos stay as-is."""
+    start = data.find(b'<header class="mh')
+    end = data.find(b"</header>", start) if start >= 0 else -1
+    if start < 0 or end < 0:
+        raise RuntimeError("public catch wall: hybrid header missing")
+    end += len(b"</header>")
+    data = data[:start] + _folio_chrome("catch-wall") + data[end:]
+    data = _set_html_attr(data, b"data-concept", b"a")
+    data = _set_html_attr(data, b"data-catch-wall", b"")
+    if b"coastalBrief.theme" not in data:
+        data = data.replace(b"<head>", b"<head>\n" + _CW_THEME_BOOT, 1)
+    if b'id="cw-folio-chrome"' not in data:
+        css = (ROOT / "folio-chrome.css").read_text(encoding="utf-8")
+        block = (
+            b'  <style id="cw-folio-chrome">\n'
+            + (css + "\n" + _CW_FOLIO_HEADER_CSS).replace("</", "<\\/").encode("utf-8")
+            + b"\n  </style>\n"
+        )
+        marker = b'id="cw-css"'
+        close = data.find(b"</style>", data.find(marker)) if marker in data else -1
+        if close >= 0:
+            close += len(b"</style>")
+            data = data[:close] + b"\n" + block + data[close:]
+        else:
+            data = data.replace(b"</head>", block + b"</head>", 1)
+    if b"cb-mast-reveal" not in data:
+        data = data.replace(b"</head>", b"  " + _MASTHEAD_PLAY + b"</head>", 1)
+    data = _apply_preview_dateline(_apply_chrome(data))
+    for src in (b"/region-nav.js", b"/brief-link.js", b"/identity.js"):
+        data = _ensure_script(data, src)
+    return data
+
+
 def _public_catch_wall_redesign(water: str = "all") -> bytes | None:
     """Public /catch-wall: the Catch Wall redesign (approved photos only, no preview chrome).
     Returns None, so the caller serves the previous render, when there is nothing to show
@@ -2494,7 +2627,7 @@ def _public_catch_wall_redesign(water: str = "all") -> bytes | None:
         data = catch_wall_preview.public_page(water)
         if b'name="robots" content="index, follow"' not in data or b'class="pv-flag"' in data:
             raise RuntimeError("public catch wall render failed its own checks")
-        return data
+        return _paint_folio_header_on_public_catch_wall(data)
     except catch_wall_preview.NotReady:
         return None
     except Exception as e:  # never take the page down for a presentation change
