@@ -1,10 +1,16 @@
 /* What's Biting? private preview. Self-hosted Folio fonts already on the site. */
-@font-face{font-family:"Barlow Condensed";font-style:normal;font-weight:600;font-display:optional;src:url("/fonts/barlow-condensed-600.woff2") format("woff2");}
-@font-face{font-family:"Fraunces";font-style:normal;font-weight:500 600;font-display:optional;src:url("/fonts/fraunces-var.woff2") format("woff2");}
-@font-face{font-family:"Fraunces";font-style:italic;font-weight:500;font-display:optional;src:url("/fonts/fraunces-italic-var.woff2") format("woff2");}
-@font-face{font-family:"Source Sans 3";font-style:normal;font-weight:400 700;font-display:optional;src:url("/fonts/source-sans-3-var.woff2") format("woff2");}
-@font-face{font-family:"Fraunces Fallback";src:local("Georgia"),local("Times New Roman");size-adjust:97.5%;ascent-override:92%;descent-override:22%;line-gap-override:0%;}
-@font-face{font-family:"Source Sans 3 Fallback";src:local("Arial"),local("Helvetica");size-adjust:104.8%;ascent-override:93%;descent-override:24%;line-gap-override:0%;}
+/* Fallback metrics were measured in Chromium against the self-hosted woff2 files.
+   local("Arial") / local("Georgia") often fail to resolve on Linux, so Liberation
+   faces come first; they are metric-compatible with Arial / Times-style serifs.
+   size-adjust / ascent / descent were tuned so a swap does not move the layout. */
+@font-face{font-family:"Barlow Condensed";font-style:normal;font-weight:600;font-display:swap;src:url("/fonts/barlow-condensed-600.woff2") format("woff2");}
+@font-face{font-family:"Fraunces";font-style:normal;font-weight:500 600;font-display:swap;src:url("/fonts/fraunces-var.woff2") format("woff2");}
+@font-face{font-family:"Fraunces";font-style:italic;font-weight:500;font-display:swap;src:url("/fonts/fraunces-italic-var.woff2") format("woff2");}
+@font-face{font-family:"Source Sans 3";font-style:normal;font-weight:400 700;font-display:swap;src:url("/fonts/source-sans-3-var.woff2") format("woff2");}
+@font-face{font-family:"Fraunces Fallback";font-style:normal;src:local("Liberation Serif"),local("Georgia"),local("Times New Roman");size-adjust:116.9%;ascent-override:100%;descent-override:25%;line-gap-override:0%;}
+@font-face{font-family:"Fraunces Fallback";font-style:italic;src:local("Liberation Serif"),local("Georgia"),local("Times New Roman");size-adjust:111.4%;ascent-override:100%;descent-override:25%;line-gap-override:0%;}
+@font-face{font-family:"Source Sans 3 Fallback";src:local("Liberation Sans"),local("Arial"),local("Helvetica");size-adjust:91.9%;ascent-override:100%;descent-override:25%;line-gap-override:0%;}
+@font-face{font-family:"Barlow Condensed Fallback";src:local("Liberation Sans"),local("Arial"),local("Helvetica");size-adjust:78.5%;ascent-override:100%;descent-override:25%;line-gap-override:0%;}
 
 :root{
   --navy:#071C29;
@@ -21,7 +27,7 @@
   --aging-bg:#EDE8DD; --aging-ink:#3F3F3F;
   --f-display:"Fraunces","Fraunces Fallback",Georgia,"Times New Roman",serif;
   --f-ui:"Source Sans 3","Source Sans 3 Fallback",Helvetica,Arial,sans-serif;
-  --f-cond:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-cond:"Barlow Condensed","Barlow Condensed Fallback",Arial,sans-serif;
 }
 html{color-scheme:light dark;}
 *{box-sizing:border-box;}
@@ -93,9 +99,9 @@ body.wb-body{
 .fixture-kicker{margin:0 0 8px;padding:6px 8px;border:1px solid #8E4F2A;color:#8E4F2A;background:#F8E8DC;font-family:var(--f-cond);font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:.78rem;}
 h1{font-family:var(--f-display);font-weight:600;font-size:2rem;line-height:1.08;color:var(--navy);margin:0 0 .15em;}
 .sub{font-family:var(--f-display);font-style:italic;font-size:1.05rem;color:var(--navy);margin:0 0 .35em;}
-.scope,.lead,.checked{color:var(--muted);font-size:.92rem;margin:.2em 0 .7em;}
+.scope,.lead,.checked{color:var(--muted);font-size:.92rem;margin:.15em 0 .45em;}
 h2{font-family:var(--f-display);font-weight:600;font-size:1.15rem;color:var(--navy);margin:1.4em 0 .35em;padding-top:.5em;border-top:1.5px solid var(--brass);}
-.glance{display:grid;grid-template-columns:1fr;gap:6px;margin:12px 0 10px;}
+.glance{display:grid;grid-template-columns:1fr;gap:6px;margin:8px 0 8px;}
 @media (min-width:360px){.glance{grid-template-columns:1fr 1fr;}}
 .glance .g:last-child{grid-column:1 / -1;}
 .g{background:var(--navy);color:var(--ivory);padding:10px 12px;}

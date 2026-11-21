@@ -28,7 +28,7 @@
     {
       "id": "crystal-coast",
       "name": "Crystal Coast",
-      "short_name": "Morehead City · Beaufort",
+      "short_name": "Morehead City \u00b7 Beaufort",
       "water_type": "saltwater",
       "scope": "Morehead City, Beaufort, and the Emerald Isle / Bogue Inlet shore when a source is local to those waters.",
       "reports": [
@@ -42,15 +42,26 @@
       ],
       "confirmed": [],
       "outlooks": [],
-      "seasonal": [],
-      "notices": ["dmf-proclamations", "dmf-rec-guide", "dph-advisories"]
+      "seasonal": [
+        {
+          "title": "Bogue Inlet Pier\u2019s seasonal hours",
+          "body": "Bogue Inlet Pier says it closes for the season on Sunday, November 29, 2026, at 5 p.m., and reopens Friday, March 12, 2027. Season-pass holders and their guests may still use the pier in winter, according to the pier. This is the pier\u2019s own schedule, not a catch report or a forecast of what will be biting.",
+          "as_of": "2026-11-15",
+          "scope": "Bogue Inlet Pier, Emerald Isle"
+        }
+      ],
+      "notices": [
+        "dmf-proclamations",
+        "dmf-rec-guide",
+        "dph-advisories"
+      ]
     },
     {
       "id": "hatteras",
       "name": "Hatteras",
       "short_name": "Hatteras Island",
       "water_type": "saltwater",
-      "scope": "Hatteras Island. Nearby Outer Banks sources appear only when their true geographic scope is labeled, and none are shown on this page today.",
+      "scope": "Hatteras Island. Nearby Outer Banks sources appear only when their true geographic scope is labeled.",
       "reports": [
         {
           "source_name": "Capt. Marty, Outer Banks This Week / OneBoat",
@@ -84,7 +95,11 @@
       "confirmed": [],
       "outlooks": [],
       "seasonal": [],
-      "notices": ["dmf-proclamations", "dmf-rec-guide", "dph-advisories"]
+      "notices": [
+        "dmf-proclamations",
+        "dmf-rec-guide",
+        "dph-advisories"
+      ]
     },
     {
       "id": "falls-lake",
@@ -97,13 +112,19 @@
       "outlooks": [],
       "seasonal": [
         {
-          "title": "Late fall on a Piedmont reservoir",
-          "body": "Late fall is typically a transition period on Piedmont reservoirs as the water cools. This is a general seasonal pattern, not a report of recent or confirmed catches, and it is not a forecast of what is biting.",
-          "as_of": "2026-11-21",
-          "scope": "Falls Lake only"
+          "title": "2026 warmwater stocking list",
+          "body": "Falls Lake does not appear on the 2026 NCWRC warmwater stocking list (page last modified February 20, 2026). This is a fact about the official list, not a catch report.",
+          "as_of": "2026-02-20",
+          "scope": "Falls Lake"
         }
       ],
-      "notices": ["ncwrc-baa", "ncwrc-inland-regs", "dph-advisories", "falls-sra", "falls-stocking-note"]
+      "notices": [
+        "ncwrc-baa",
+        "ncwrc-inland-regs",
+        "dph-advisories",
+        "falls-sra",
+        "falls-stocking-note"
+      ]
     },
     {
       "id": "jordan-lake",
@@ -116,13 +137,19 @@
       "outlooks": [],
       "seasonal": [
         {
-          "title": "Late fall on a Piedmont reservoir",
-          "body": "Late fall is typically a transition period on Piedmont reservoirs as the water cools. This is a general seasonal pattern, not a report of recent or confirmed catches, and it is not a forecast of what is biting.",
-          "as_of": "2026-11-21",
-          "scope": "Jordan Lake only"
+          "title": "2026 warmwater stocking list",
+          "body": "Jordan Reservoir at Farrington Point appears on the 2026 NCWRC warmwater stocking list (page last modified February 20, 2026). That is a planned stocking notice, not a report of what is biting.",
+          "as_of": "2026-02-20",
+          "scope": "Jordan Reservoir, Farrington Point WRC boating access area"
         }
       ],
-      "notices": ["ncwrc-baa", "ncwrc-inland-regs", "dph-advisories", "jordan-sra", "jordan-stocking"]
+      "notices": [
+        "ncwrc-baa",
+        "ncwrc-inland-regs",
+        "dph-advisories",
+        "jordan-sra",
+        "jordan-stocking"
+      ]
     },
     {
       "id": "neuse-river",
@@ -135,13 +162,18 @@
       "outlooks": [],
       "seasonal": [
         {
-          "title": "Geography of this region",
-          "body": "This page covers the upper and middle Neuse from Falls Dam to Goldsboro only. Official stocking or magazine notes that refer to the lower tidal river, including Pamlico County, belong on a different region and are not shown here. This is a geography note, not a catch report.",
+          "title": "This stretch of the Neuse",
+          "body": "This page covers the Neuse from Falls Dam to Goldsboro only. Official stocking notes for the lower tidal river, including Pamlico County, are out of scope. Not a catch report.",
           "as_of": "2026-11-21",
           "scope": "Falls Dam to Goldsboro"
         }
       ],
-      "notices": ["ncwrc-baa", "ncwrc-inland-regs", "dph-advisories", "ncwrc-striped-bass"]
+      "notices": [
+        "ncwrc-baa",
+        "ncwrc-inland-regs",
+        "dph-advisories",
+        "ncwrc-striped-bass"
+      ]
     }
   ],
   "notices": {
@@ -161,7 +193,7 @@
       "as_of": "2026-11-01",
       "as_of_label": "PDF marked UPDATED 11/1/2026",
       "scope": "Statewide coastal and joint fishing waters",
-      "body": "Official printable size and bag guide. The PDF’s own updated date is shown. Limits are linked, not restated here.",
+      "body": "Official printable size and bag guide. The PDF\u2019s own updated date is shown. Limits are linked, not restated here.",
       "kind": "seasonal-official"
     },
     "dph-advisories": {
@@ -184,7 +216,7 @@
       "body": "Official full and partial ramp closures. Check the agency page before launching. This is an access notice, not a catch report."
     },
     "ncwrc-inland-regs": {
-      "title": "2026–27 Inland Fishing, Hunting & Trapping Regulations Digest",
+      "title": "2026\u201327 Inland Fishing, Hunting & Trapping Regulations Digest",
       "source_name": "N.C. Wildlife Resources Commission",
       "source_url": "https://www.ncwildlife.gov/hunt/fishing-hunting-trapping-regulations",
       "as_of": "2026-08-01",
@@ -222,7 +254,7 @@
       "body": "Official park hours, access, and alerts. The park page has no fishing report."
     },
     "jordan-stocking": {
-      "title": "NCWRC 2026 warmwater stocking list — Jordan Reservoir",
+      "title": "NCWRC 2026 warmwater stocking list \u2014 Jordan Reservoir",
       "source_name": "N.C. Wildlife Resources Commission",
       "source_url": "https://www.ncwildlife.gov/fishing/hatcheries-and-stocking/warmwater-stocking-list-district-2026",
       "as_of": "2026-02-20",

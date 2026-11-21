@@ -161,7 +161,7 @@ class DataAndPages(unittest.TestCase):
     def test_pages_are_noindex_and_do_not_republish_catch_body_from_sources(self):
         h = whats_biting.render_region(self.data, whats_biting.region_by_id(self.data, "hatteras"), self.now)
         self.assertIn('name="robots" content="noindex, nofollow"', h)
-        self.assertIn("do not republish", h.lower())
+        self.assertIn("not republished", h.lower())
         # Glance shows newest date near the top, before official notices.
         top = h.split("Latest local reports")[0]
         self.assertIn("November 20, 2026", top)

@@ -342,6 +342,10 @@ def _shell(title: str, body: str, fixture: bool = False) -> str:
 <link rel="icon" href="/favicon.ico?v=20261121" sizes="48x48">
 <link rel="icon" href="/branding/favicon.svg?v=20261121" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261121" sizes="180x180">
+<link rel="preload" href="/fonts/source-sans-3-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fraunces-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fraunces-italic-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/barlow-condensed-600.woff2" as="font" type="font/woff2" crossorigin>
 <style>{css_text}</style>
 {_THEME_BOOT}
 </head>
@@ -397,7 +401,6 @@ def _report_card(item: dict, fixture: bool = False) -> str:
     return f"""<article class="card card-report">
   <div class="card-meta">{_badge(item.get("freshness"))}{fixture_bit}<time>{esc(as_of)}</time></div>
   <h3>{esc(title)}</h3>
-  <p class="card-note">This is a dated link to a first-party report. We do not republish the source’s catch descriptions.</p>
   <p class="attr">Source: {esc(source)} · Scope: {esc(scope)}</p>
   {link}
 </article>"""
@@ -442,7 +445,7 @@ def _seasonal_card(item: dict) -> str:
   <div class="card-meta"><span class="badge badge-seasonal">Seasonal</span><time>{esc(as_of)}</time></div>
   <h3>{esc(title)}</h3>
   <p class="body">{esc(body)}</p>
-  <p class="attr">General pattern, not a current catch. Scope: {esc(scope)}</p>
+  <p class="attr">Not a catch report. Scope: {esc(scope)}</p>
 </article>"""
 
 
@@ -497,18 +500,19 @@ def render_region(data: dict, region: dict, now: datetime | None = None) -> str:
         if reports
         else _empty("reports", "No dated first-party local reports are on file for this region.")
     )
-    confirmed_html = (
-        "".join(_confirmed_card(c, fixture=fixture) for c in confirmed)
-        if confirmed
-        else _empty(
+    if confirmed:
+        confirmed_html = "".join(_confirmed_card(c, fixture=fixture) for c in confirmed)
+    else:
+        confirmed_html = _empty(
             "confirmed",
-            "No independently confirmed catch observations for this region. Dated shop or marina links above are not a Coastal Brief confirmation.",
+            "No independently confirmed catch observations for this region. "
+            "Dated first-party links, when present, are the source’s own reports — not a Coastal Brief confirmation. "
+            "There is no conditions-based outlook.",
         )
-    )
-    outlook_html = (
-        "".join(_outlook_card(o) for o in outlooks)
+    outlook_block = (
+        "<h2>Conditions-based outlook</h2>" + "".join(_outlook_card(o) for o in outlooks)
         if outlooks
-        else _empty("outlook", "No current conditions-based outlook. Outlooks expire within 48 hours and are never a catch report.")
+        else ""
     )
     seasonal_html = "".join(_seasonal_card(s) for s in seasonal) if seasonal else ""
     notice_html = "".join(_notice_card(n) for n in notices) if notices else _empty("notices", "No official notices listed for this region.")
@@ -529,25 +533,22 @@ def render_region(data: dict, region: dict, now: datetime | None = None) -> str:
 {fixture_head}
 <h1>{esc(region.get("name") or "Region")}</h1>
 <p class="sub">{esc(region.get("short_name") or "")}</p>
-<p class="scope">{esc(region.get("scope") or "")}</p>
 {_glance(region, reports, confirmed)}
+<p class="scope">{esc(region.get("scope") or "")}</p>
 {last_checked}
 
 <h2>Latest local reports</h2>
-<p class="lead">Dated first-party links. We do not copy the source’s catch descriptions.</p>
+<p class="lead">Dated first-party links. Catch descriptions are not republished.</p>
 {report_html}
 
 <h2>Confirmed activity</h2>
-<p class="lead">Verified, attributable observations only. Empty unless we have independently confirmed a catch.</p>
 {confirmed_html}
-
-<h2>Conditions-based outlook</h2>
-{outlook_html}
+{outlook_block}
 
 <h2>Official notices</h2>
 {notice_html}
 
-{"<h2>Seasonal patterns</h2>" + seasonal_html if seasonal_html else ""}
+{"<h2>Seasonal notes</h2>" + seasonal_html if seasonal_html else ""}
 {"" if fixture else '<nav class="region-nav" aria-label="What’s Biting? regions">' + _region_nav(data, region.get("id")) + "</nav>"}
 """
     title = f"{region.get('name')} — What’s Biting? (private preview)"
@@ -590,7 +591,7 @@ def render_index(data: dict, now: datetime | None = None) -> str:
     body = f"""
 <p class="kicker">North Carolina fishing reports</p>
 <h1>What’s Biting?</h1>
-<p class="scope">A private preview of dated first-party links, official notices, and independently confirmed activity — when we have it. Catch descriptions are not republished. This is not the Morning Brief and not a public page.</p>
+<p class="scope">Dated first-party links and official notices. Catch descriptions are not republished. Private preview — not a public page.</p>
 <p class="checked">Sources last checked {esc(checked)} · Eastern Time.</p>
 <div class="index-grid">
 {''.join(cards)}
