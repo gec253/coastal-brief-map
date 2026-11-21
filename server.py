@@ -1422,6 +1422,7 @@ import windgrid  # noqa: E402
 import hrrrgrid  # noqa: E402
 import radarview  # noqa: E402
 import showcase  # noqa: E402  (homepage Wind & Radar section; HOME_SHOWCASE flag, default off)
+import theme_toggle  # noqa: E402  (homepage day/night toggle; /preview/home-b only for now)
 import freshwater  # noqa: E402
 import brief  # noqa: E402
 import wave_intro  # noqa: E402
@@ -3461,6 +3462,7 @@ class Handler(SimpleHTTPRequestHandler):
             sc = showcase.variant(q, rid)
             if sc:
                 data = showcase.inject(data, sc, radar_meta=handle_radar_meta)
+            data = theme_toggle.apply(data)  # Ed t392u: masthead day/night toggle, preview only
         except Exception as e:
             sys.stderr.write("concept B preview failed: %s\n" % e)
             return self.send_error(500, "preview failed")

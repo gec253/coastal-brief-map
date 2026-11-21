@@ -303,6 +303,22 @@ html[data-sprint="hybrid"][data-water="fresh"]{--page:#F5F2E8}
 .mh-ear-in{max-width:1264px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:34px;padding:0 max(12px,env(safe-area-inset-left))}
 .mh-ear .mh-date{display:block;margin:0;color:#EDE5D3;font:600 .7rem/1.2 var(--f-ui);letter-spacing:.16em;text-transform:uppercase;font-variant-numeric:lining-nums}
 .mh-ear-in .mh-date:only-child{margin:0 auto}
+/* Day/night toggle (Ed t392u): sits over the ear's right edge, so the centred date and the ear height
+   never move (CLS 0). Ivory on the navy ear in both themes; brass only for the hairline and focus. */
+.mh-ear{position:relative}
+.mh-theme{position:absolute;z-index:3;top:0;right:max(6px,env(safe-area-inset-right));height:100%;display:inline-flex;align-items:center;gap:5px;margin:0;padding:0 8px;border:0;background:none;color:#EDE5D3;font:600 .64rem/1 var(--f-ui);letter-spacing:.12em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.mh-theme::before{content:"";position:absolute;left:3px;right:3px;top:50%;height:20px;margin-top:-10px;border:1px solid rgba(196,163,106,.6);border-radius:999px;transition:background-color .15s,border-color .15s}
+.mh-theme::after{content:"";position:absolute;left:0;right:0;top:0;bottom:-16px;min-height:44px}
+.mh-theme-i{position:relative;width:12px;height:12px;flex:none;fill:currentColor;stroke:currentColor;stroke-width:0}
+.mh-theme-i .i-sun path{fill:none;stroke-width:1.4;stroke-linecap:round}
+.mh-theme-i .i-sun{display:none}
+.mh-theme[aria-pressed="true"] .i-sun{display:inline}
+.mh-theme[aria-pressed="true"] .i-moon{display:none}
+.mh-theme-t{position:relative}
+.mh-theme:hover::before{background:rgba(196,163,106,.16);border-color:#C4A36A}
+.mh-theme:focus{outline:none}
+.mh-theme:focus-visible::before{border-color:#E9CF98;box-shadow:0 0 0 2px #E9CF98}
+@media (max-width:359px){.mh-theme{padding:0 12px}.mh-theme-t{display:none}}
 .mh-hybrid .mh-plate{padding:10px 14px 0;text-align:center;max-width:1264px;margin:0 auto}
 .mh-hybrid .mh-name{font:600 2.35rem/1 var(--f-display);letter-spacing:-.022em;color:#071C29;margin:0;font-variation-settings:"opsz" 144,"SOFT" 0,"WONK" 0}
 @media (prefers-color-scheme:dark){.mh-hybrid .mh-name{color:#F6F1E7}}
