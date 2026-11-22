@@ -1,12 +1,14 @@
-"""Ramp Finder — private, cookie-gated data preview (Ed t415u).
+"""Ramp Finder — private, cookie-gated data preview (Ed t415u, polish t417u).
 
 Server-rendered HTML for /preview/ramps and /preview/ramps/<id>.
 No public nav, no sitemap, no interactive map, no paid APIs.
 """
 from __future__ import annotations
 
+import hashlib
 import html
 import json
+import re
 from pathlib import Path
 from urllib.parse import urlencode
 
@@ -83,6 +85,21 @@ def css_bytes() -> bytes:
 
 def load_data() -> dict:
     return json.loads(DATA_PATH.read_text())
+
+
+def inventory_facts_digest(data: dict) -> str:
+    """Stable hash of inventory facts, classes, directions, notices, and counts.
+
+    Presentation changes must not alter this digest. It is compared to the
+    a03bf4c inventory in tests.
+    """
+    payload = {
+        "counts": data.get("counts"),
+        "meta": data.get("meta"),
+        "records": [{k: rec.get(k) for k in sorted(rec)} for rec in data.get("records") or []],
+    }
+    blob = json.dumps(payload, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
 
 def records(data=None) -> list:
@@ -192,7 +209,7 @@ def _shell(title: str, body: str, skip: str = "Skip to the ramp list") -> str:
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#071C29">
 <title>{esc(title)}</title>
@@ -263,24 +280,182 @@ def facility_rows(rec):
     return rows
 
 
-def notice_html(notices) -> str:
+PAGE_DISCLAIMER = (
+    "This page is not a live open/closed board. "
+    "Information is from official sources, checked Nov 22, 2026."
+)
+
+# Phrases that belong on the page once, not repeated in every block.
+_DISCLAIMER_RE = re.compile(
+    r"(?:\s*(?:This is a dated official graphic,\s+)?"
+    r"(?:That is a dated official graphic,\s+)?"
+    r"(?:not a live open/closed confirmation(?: and It is not a live open/closed confirmation)?"
+    r"|It is not a live open/closed confirmation"
+    r"|This is not a live open/closed confirmation"
+    r"|This is scheduled information, not a live(?: ramp)?-?availability check"
+    r"|Not a live availability check"
+    r"|not a live availability check"
+    r"|This is scheduled information, not a live check"
+    r"|See lake-level context)\.?)+",
+    re.I,
+)
+
+_CMS_RE = re.compile(
+    r"\s*The CMS image query string is t=\S+ \(asset timestamp June 1, 2026\)\.",
+)
+
+_DATED_PREFIX_RE = re.compile(r"^CONFIRMED CURRENT NOTICE \([^)]+\):\s*")
+
+
+def _clean_notice_text(text: str) -> str:
+    cleaned = _CMS_RE.sub("", text or "")
+    cleaned = _DISCLAIMER_RE.sub("", cleaned)
+    cleaned = re.sub(r"\s{2,}", " ", cleaned).strip()
+    cleaned = re.sub(r"\s+\.", ".", cleaned)
+    return cleaned
+
+
+def general_info_summary(rec, notice_text: str) -> str:
+    """Two or three visitor-facing sentences from existing verified data only."""
+    rid = rec.get("id") or ""
+    if rid in ("local-newbern-lawson-creek-1", "local-newbern-lawson-creek-2"):
+        return (
+            "The City of New Bern official boat-ramps map, still posted when checked "
+            "Nov 22, 2026, labels this as one of two city boat ramps at Lawson Creek Park. "
+            "The map was printed May 6, 2025, so its “Open” legend is a dated official graphic. "
+            "Lane counts, trailer-parking counts, hours, and coordinates are not stated on the map; "
+            "the two ramps share the official park address used for directions."
+        )
+    if rid == "local-newbern-glenburnie":
+        return (
+            "The City of New Bern official boat-ramps map, still posted when checked "
+            "Nov 22, 2026, labels Glenburnie Park Ramp as a city boat ramp. "
+            "The map was printed May 6, 2025, so its “Open” legend is a dated official graphic. "
+            "Lane counts, trailer-parking counts, hours, and coordinates are not stated on the map; "
+            "directions use the official park address at 340 Glenburnie Drive."
+        )
+    if rid == "local-newbern-union-point":
+        return (
+            "The City of New Bern official boat-ramps map, still posted when checked "
+            "Nov 22, 2026, labels “Union Point Ramp” with the map legend “Open.” "
+            "The map was printed May 6, 2025, so that label is a dated official graphic. "
+            "Amenity detail on the pages checked is thinner than for NCWRC boating access areas."
+        )
+    if rid == "parks-jordan-ebenezer":
+        return (
+            "Official sources disagree about hours at this access. Both the 24-hour boat-ramp "
+            "wording and the day-use gate schedule are shown under Hours; this preview does not choose one."
+        )
+    cleaned = _clean_notice_text(notice_text)
+    return cleaned or (notice_text or "").strip()
+
+
+def visible_notice_text(rec, notice: dict) -> str:
+    cat = notice.get("category") or "general_information"
+    raw = notice.get("text") or ""
+    if cat == "general_information":
+        return general_info_summary(rec, raw)
+    text = _DATED_PREFIX_RE.sub("", raw)
+    # Keep “not a construction closure” as a category distinction; drop the
+    # duplicated real-time disclaimer (stated once per page).
+    text = text.replace(
+        ", not a real-time open-right-now confirmation and not a construction closure",
+        ", not a construction closure",
+    )
+    return text
+
+
+def address_line(rec) -> str:
+    d = rec.get("directions") or {}
+    addr = rec.get("address") or d.get("address") or ""
+    if addr:
+        return addr
+    bits = [rec.get("street"), rec.get("city")]
+    if rec.get("zip") and rec.get("zip") != "not stated":
+        bits.append(rec.get("zip"))
+    return ", ".join(p for p in bits if p and p != "not stated")
+
+
+def notice_html(notices, rec=None) -> str:
     parts = []
+    rec = rec or {}
     for n in notices or []:
         cat = n.get("category") or "general_information"
+        visible = visible_notice_text(rec, n)
         srcs = []
-        for s in n.get("sources") or []:
-            srcs.append(f'<li><a href="{esc(s["url"])}" rel="noopener noreferrer">{esc(s.get("label") or s["url"])}</a></li>')
+        # Keep official links on dated notices and standing cautions; move
+        # general-info methodology links into Source Details.
+        if cat != "general_information":
+            for s in n.get("sources") or []:
+                srcs.append(
+                    f'<li><a href="{esc(s["url"])}" rel="noopener noreferrer">'
+                    f'{esc(s.get("label") or s["url"])}</a></li>'
+                )
         src_html = f'<ul class="sources">{"".join(srcs)}</ul>' if srcs else ""
-        as_of = n.get("as_of") or ""
+        checked = ""
+        if cat != "general_information" and n.get("as_of"):
+            checked = f'<p class="checked">Checked {esc(n.get("as_of"))}.</p>'
         parts.append(
             f'<aside class="notice notice-{esc(cat)}" data-notice-category="{esc(cat)}">'
             f'<span class="nl">{esc(n.get("label") or cat)}</span>'
-            f'<p>{esc(n.get("text") or "")}</p>'
+            f'<p>{esc(visible)}</p>'
             f'{src_html}'
-            f'<p class="checked">Checked {esc(as_of)}.</p>'
+            f'{checked}'
             f'</aside>'
         )
     return "\n".join(parts)
+
+
+def source_details_html(rec) -> str:
+    blocks = []
+    sources = []
+    for s in rec.get("sources") or []:
+        sources.append(
+            f'<li><a href="{esc(s["url"])}" rel="noopener noreferrer">{esc(s.get("label") or s["url"])}</a>'
+            f'<div class="checked">{esc(s.get("detail") or "")} Checked {esc(s.get("date_checked") or "")}.</div></li>'
+        )
+    if sources:
+        blocks.append("<h3>Official sources</h3>" f'<ul class="sources">{"".join(sources)}</ul>')
+    status = rec.get("site_status_official") or ""
+    note = rec.get("site_status_note") or ""
+    if status or note:
+        bits = ["<h3>Official status wording</h3>"]
+        if note:
+            bits.append(f"<p>{esc(note)}</p>")
+        if status:
+            bits.append(f"<p>Recorded official wording: {esc(status)}</p>")
+        blocks.append("".join(bits))
+    notices = rec.get("notices") or []
+    if notices:
+        items = []
+        for n in notices:
+            srcs = []
+            for s in n.get("sources") or []:
+                srcs.append(
+                    f'<li><a href="{esc(s["url"])}" rel="noopener noreferrer">'
+                    f'{esc(s.get("label") or s["url"])}</a></li>'
+                )
+            src_html = f'<ul class="sources">{"".join(srcs)}</ul>' if srcs else ""
+            items.append(
+                f'<div class="source-note" data-original-notice="{esc(n.get("category") or "")}">'
+                f'<span class="nl">{esc(n.get("label") or n.get("category") or "")}</span>'
+                f'<p>{esc(n.get("text") or "")}</p>'
+                f'{src_html}'
+                f'<p class="checked">Checked {esc(n.get("as_of") or "")}.</p>'
+                f"</div>"
+            )
+        blocks.append("<h3>Supporting documentation</h3>" + "".join(items))
+    notes = rec.get("notes") or ""
+    if notes:
+        blocks.append(f"<h3>Research notes</h3><p>{esc(notes)}</p>")
+    blocks.append(f'<p class="checked">Date checked: {esc(rec.get("date_checked") or "")}.</p>')
+    return (
+        '<details class="source-details">'
+        "<summary>Source Details</summary>"
+        f'<div class="source-details-body">{"".join(blocks)}</div>'
+        "</details>"
+    )
+
 
 
 def badges_for(rec) -> str:
@@ -536,6 +711,19 @@ def directions_html(rec) -> str:
     )
 
 
+def _split_notices(rec):
+    priority, general, other = [], [], []
+    for n in rec.get("notices") or []:
+        cat = n.get("category")
+        if cat in ("current_dated_notice", "standing_caution"):
+            priority.append(n)
+        elif cat == "general_information":
+            general.append(n)
+        else:
+            other.append(n)
+    return priority, general, other
+
+
 def render_detail(data, rec) -> str:
     loc_bits = [rec.get("city"), (rec.get("county") + " County") if rec.get("county") else "", rec.get("area_label")]
     loc = ", ".join(p for p in loc_bits if p)
@@ -544,50 +732,42 @@ def render_detail(data, rec) -> str:
     if rows:
         tr = "".join(f"<tr><th>{esc(k)}</th><td>{esc(v)}</td></tr>" for k, v in rows)
         facts = f'<h2>Facilities</h2><table class="facts">{tr}</table>'
-    sources = []
-    for s in rec.get("sources") or []:
-        sources.append(
-            f'<li><a href="{esc(s["url"])}" rel="noopener noreferrer">{esc(s.get("label") or s["url"])}</a>'
-            f'<div class="checked">{esc(s.get("detail") or "")} Checked {esc(s.get("date_checked") or "")}.</div></li>'
-        )
-    alias = f'<p class="meta">Also recorded as {esc(rec["alias"])}.</p>' if rec.get("alias") else ""
+    alias = f'<p class="meta">Also recorded as {esc(rec["alias"])}.</p>' if rec.get("alias") and rec.get("alias") != "not stated" else ""
     restrict = rec.get("restriction_notes") or ""
     restrict_html = f"<h2>Restrictions</h2><p>{esc(restrict)}</p>" if restrict and restrict != "not stated" else ""
-    notes = rec.get("notes") or ""
-    notes_html = f"<h2>Notes</h2><p>{esc(notes)}</p>" if notes else ""
-    status = rec.get("site_status_official") or ""
-    status_html = ""
-    if status:
-        status_html = (
-            "<h2>Official status wording</h2>"
-            f'<p>{esc(rec.get("site_status_note") or "")}</p>'
-            f'<p>Recorded official wording: {esc(status)}</p>'
-        )
     ctx = ""
     if rec["area"] in ("falls-lake", "jordan-lake"):
         ctx = lake_context_html(data, rec["area"])
+    addr = address_line(rec)
+    addr_html = f'<p class="addr">{esc(addr)}</p>' if addr else ""
+    priority, general, other = _split_notices(rec)
     title = f'{rec["display_name"]} — Ramp Finder (private preview)'
+    water = esc(rec.get("body_of_water") or "")
+    if rec.get("body_of_water_note") and rec.get("body_of_water_note") != rec.get("body_of_water"):
+        water = water + " — " + esc(rec.get("body_of_water_note"))
+    agency = esc(rec.get("managing_agency") or "")
+    if rec.get("program"):
+        agency = agency + " · " + esc(rec.get("program"))
     return _shell(title, f"""
 <p class="crumb"><a href="/preview/ramps">Ramp Finder</a> / {esc(rec["display_name"])}</p>
 <p class="kicker">{esc(rec.get("area_label") or "")}</p>
 <h1>{esc(rec["display_name"])}</h1>
-<p class="lead">{esc(rec.get("body_of_water") or "")}{" — " + esc(rec.get("body_of_water_note")) if rec.get("body_of_water_note") and rec.get("body_of_water_note") != rec.get("body_of_water") else ""}</p>
+<p class="lead">{water}</p>
+{addr_html}
 <p class="meta">{esc(loc)}</p>
-<p class="meta">{esc(rec.get("managing_agency") or "")}{" · " + esc(rec.get("program")) if rec.get("program") else ""}</p>
+<p class="meta">{agency}</p>
 {alias}
+<p class="rf-disclaimer">{esc(PAGE_DISCLAIMER)}</p>
 {badges_for(rec)}
-{notice_html(rec.get("notices"))}
+{notice_html(priority, rec)}
+{notice_html(general + other, rec)}
 {ctx}
+{restrict_html}
 {fees_html(rec)}
 {hours_html(rec)}
-{restrict_html}
 {facts}
 {directions_html(rec)}
-{status_html}
-{notes_html}
-<h2>Official sources</h2>
-<ul class="sources">{''.join(sources)}</ul>
-<p class="checked">Date checked: {esc(rec.get("date_checked") or "")}. This page does not confirm that a ramp is open right now.</p>
+{source_details_html(rec)}
 """, skip="Skip to ramp details")
 
 

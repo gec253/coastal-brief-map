@@ -1,4 +1,4 @@
-"""Ramp Finder private preview — gate, headers, data integrity (Ed t415u)."""
+"""Ramp Finder private preview — gate, headers, data integrity (Ed t415u, polish t417u)."""
 from __future__ import annotations
 
 import json
@@ -13,6 +13,7 @@ import ramp_finder
 ROOT = Path(__file__).resolve().parents[1]
 KEY = "a" * 32
 PROD = "e2e427a"
+POLISH_BASE = "a03bf4c"
 
 PROTECTED_PUBLIC_PATHS = (
     "index.html",
@@ -282,4 +283,116 @@ class PublicPagesUnchanged(unittest.TestCase):
         for rel in ("index.html", "wind.html", "radar.html", "lake.html", "catch-wall.html"):
             current = hashlib.sha256((ROOT / rel).read_bytes()).hexdigest()
             baseline = subprocess.check_output(["git", "show", f"{PROD}:{rel}"], cwd=ROOT)
+            self.assertEqual(current, hashlib.sha256(baseline).hexdigest(), rel)
+
+
+class InventoryUnchangedFromDeploy(unittest.TestCase):
+    """Verified facts, classes, counts, and directions stay at a03bf4c (Ed t417u)."""
+
+    def test_inventory_file_and_fact_digest_match_a03bf4c(self):
+        import hashlib
+        import json
+        import subprocess
+
+        current = (ROOT / "preview" / "ramp-finder" / "inventory.json").read_bytes()
+        baseline = subprocess.check_output(
+            ["git", "show", f"{POLISH_BASE}:preview/ramp-finder/inventory.json"],
+            cwd=ROOT,
+        )
+        self.assertEqual(
+            hashlib.sha256(current).hexdigest(),
+            hashlib.sha256(baseline).hexdigest(),
+        )
+        data = json.loads(current)
+        base = json.loads(baseline)
+        self.assertEqual(
+            ramp_finder.inventory_facts_digest(data),
+            ramp_finder.inventory_facts_digest(base),
+        )
+        self.assertEqual(data["counts"]["total"]["total"], 55)
+        self.assertEqual(data["counts"]["total"]["general"], 48)
+        self.assertEqual(data["counts"]["total"]["limited"], 3)
+        self.assertEqual(data["counts"]["total"]["needs_review"], 4)
+
+
+class PresentationPolish(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.data = ramp_finder.load_data()
+
+    def _visible(self, html: str) -> str:
+        import re
+        html = re.sub(r"<style>.*?</style>", "", html, flags=re.S)
+        html = re.sub(
+            r'<details class="source-details">.*?</details>',
+            "",
+            html,
+            flags=re.S,
+        )
+        return html
+
+    def test_viewport_and_safe_area_css(self):
+        rec = ramp_finder.by_id("local-newbern-lawson-creek-2", self.data)
+        html = ramp_finder.render_detail(self.data, rec)
+        self.assertIn("viewport-fit=cover", html)
+        css = ramp_finder.css_bytes().decode()
+        self.assertIn("env(safe-area-inset-top", css)
+        self.assertIn("--rf-safe-top", css)
+        self.assertIn("env(safe-area-inset-bottom", css)
+        list_html = ramp_finder.render_list(self.data, ramp_finder.parse_filters({}))
+        self.assertIn("viewport-fit=cover", list_html)
+
+    def test_source_details_is_native_and_accessible(self):
+        rec = ramp_finder.by_id("local-newbern-lawson-creek-2", self.data)
+        html = ramp_finder.render_detail(self.data, rec)
+        self.assertIn('<details class="source-details">', html)
+        self.assertIn("<summary>Source Details</summary>", html)
+        css = ramp_finder.css_bytes().decode()
+        self.assertIn(".source-details > summary{", css)
+        self.assertIn("min-height:var(--touch)", css)
+
+    def test_lawson_creek_general_info_is_summarized(self):
+        rec = ramp_finder.by_id("local-newbern-lawson-creek-2", self.data)
+        html = ramp_finder.render_detail(self.data, rec)
+        visible = self._visible(html)
+        self.assertIn("one of two city boat ramps at Lawson Creek Park", visible)
+        self.assertNotIn("CMS image query string", visible)
+        self.assertNotIn("t=202606010939380", visible)
+        self.assertIn("CMS image query string", html)
+        self.assertIn("t=202606010939380", html)
+        self.assertIn("1309 Country Club Road", visible)
+        # original research note remains in Source Details
+        self.assertIn("Date Printed 5/6/2025", html)
+
+    def test_disclaimer_once_in_visible_detail(self):
+        rec = ramp_finder.by_id("local-newbern-lawson-creek-2", self.data)
+        visible = self._visible(ramp_finder.render_detail(self.data, rec))
+        self.assertEqual(visible.count("not a live open/closed board"), 1)
+        self.assertNotIn("It is not a live open/closed confirmation", visible)
+        self.assertNotIn("Open Now", visible)
+
+    def test_notice_categories_remain_distinct_on_pages(self):
+        seaforth = ramp_finder.by_id("parks-jordan-seaforth", self.data)
+        html = ramp_finder.render_detail(self.data, seaforth)
+        visible = self._visible(html)
+        self.assertIn('data-notice-category="current_dated_notice"', visible)
+        self.assertIn("November 30, 2026", visible)
+        self.assertIn("Current dated notice", visible)
+        newport = ramp_finder.by_id("baa-newport", self.data)
+        nh = self._visible(ramp_finder.render_detail(self.data, newport))
+        self.assertIn('data-notice-category="standing_caution"', nh)
+        self.assertIn("VERY SHALLOW CANAL", nh)
+
+    def test_not_stated_alias_is_not_shown(self):
+        rec = ramp_finder.by_id("usace-jordan-poes-ridge", self.data)
+        html = ramp_finder.render_detail(self.data, rec)
+        self.assertNotIn("Also recorded as not stated", html)
+        self.assertIn("Jordan Dam Road", html)
+
+    def test_public_files_unchanged_vs_a03bf4c(self):
+        import hashlib
+        import subprocess
+        for rel in ("index.html", "wind.html", "radar.html", "lake.html", "catch-wall.html", "styles.css"):
+            current = hashlib.sha256((ROOT / rel).read_bytes()).hexdigest()
+            baseline = subprocess.check_output(["git", "show", f"{POLISH_BASE}:{rel}"], cwd=ROOT)
             self.assertEqual(current, hashlib.sha256(baseline).hexdigest(), rel)
