@@ -180,3 +180,34 @@ html[data-theme="dark"] .fixture-kicker{background:#3A2216;color:#F8E8DC;border-
 
 html[data-theme="dark"] .kicker,
 html[data-theme="dark"] .index-card .k{color:var(--brass);}
+
+
+/* On the Water articles and region headline cards */
+.crumb{margin:0 0 10px;font-size:.88rem;color:var(--muted);}
+.crumb a{color:var(--navy);text-underline-offset:2px;}
+.article-dek{font-family:"Fraunces",Georgia,"Times New Roman",serif;font-style:italic;font-optical-sizing:auto;font-weight:400;font-size:1.12rem;line-height:1.45;margin:0 0 8px;color:var(--navy);}
+.article-meta{margin:0 0 22px;padding-bottom:14px;border-bottom:1px solid rgba(7,28,41,.12);color:var(--muted);font-size:.88rem;}
+.article-body p,.article-body li,.rules p,.rules li,.sources li{max-width:38rem;}
+.article-body h2{font-family:"Fraunces",Georgia,"Times New Roman",serif;font-size:1.35rem;margin:26px 0 10px;}
+.article-body ul,.article-body ol,.rules ul,.rules ol{margin:8px 0 14px;padding-left:1.15rem;}
+.article-body li,.rules li,.sources li{margin:0 0 8px;}
+.rules{margin:22px 0;padding:16px 16px 14px;border:1px solid rgba(196,163,106,.55);border-left:4px solid var(--brass);background:#FBF6EA;border-radius:2px;}
+.rules h2{margin:0 0 8px;}
+.rules .rules-kicker{font-weight:700;margin:0 0 8px;color:var(--navy);}
+.sources{margin:8px 0 16px;padding-left:1.2rem;}
+.fact-types{font-size:.86rem;color:var(--muted);max-width:38rem;}
+.otw{margin:8px 0 22px;}
+a.otw-card{display:block;text-decoration:none;color:inherit;margin:0 0 12px;padding:14px 14px 14px 16px;border:1px solid rgba(7,28,41,.12);border-left:3px solid var(--brass);background:#fff;border-radius:2px;}
+a.otw-card:hover,a.otw-card:focus{border-color:rgba(196,163,106,.85);}
+a.otw-card h3{font-family:"Fraunces",Georgia,"Times New Roman",serif;font-size:1.2rem;line-height:1.25;margin:2px 0 8px;color:var(--navy);}
+a.otw-card .dek{margin:0 0 8px;color:var(--ink);font-size:.95rem;}
+a.otw-card .dates{margin:0;color:var(--muted);font-size:.84rem;}
+
+html[data-theme="dark"] .crumb a{color:var(--ivory);}
+html[data-theme="dark"] .article-dek{color:var(--ivory);}
+html[data-theme="dark"] .article-meta{border-bottom-color:rgba(243,230,208,.16);}
+html[data-theme="dark"] .rules{background:#13242E;border-color:rgba(196,163,106,.45);}
+html[data-theme="dark"] .rules .rules-kicker{color:var(--ivory);}
+html[data-theme="dark"] a.otw-card{background:#0C2430;border-color:rgba(243,230,208,.16);}
+html[data-theme="dark"] a.otw-card h3{color:var(--ivory);}
+html[data-theme="dark"] a.otw-card .dek{color:var(--ivory);}

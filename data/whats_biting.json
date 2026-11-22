@@ -54,6 +54,167 @@
         "dmf-proclamations",
         "dmf-rec-guide",
         "dph-advisories"
+      ],
+      "articles": [
+        {
+          "slug": "when-the-sound-turns-cold",
+          "headline": "When the Sound Turns Cold: Spotted Seatrout and Winter Water Temperatures",
+          "dek": "What official temperature marks mean for speckled trout in Bogue Sound, the creeks that feed it, and the waters inside Beaufort Inlet — and how to read a cold-stun closure if one is declared.",
+          "published_label": "pending approval",
+          "reviewed": "2026-11-21",
+          "lead": "Spotted seatrout — speckled trout to most North Carolina anglers — spend the winter in our estuaries. That is established biology from the N.C. Division of Marine Fisheries, not a report of what is happening this week in Bogue Sound or around Beaufort Inlet.",
+          "sections": [
+            {
+              "heading": "What the temperature marks mean",
+              "blocks": [
+                {
+                  "type": "p",
+                  "text": "DMF’s 2019 management explainer sets useful marks, in Fahrenheit:"
+                },
+                {
+                  "type": "ul",
+                  "items": [
+                    "Below about 45 degrees, seatrout begin to show stress and will try to reach warmer water.",
+                    "If they are trapped for an extended period below about 41 degrees, or if the temperature drops too fast for them to escape, they can become stunned. Most stunned fish do not survive.",
+                    "Below about 37 degrees, the division says there is very little chance of survival."
+                  ]
+                },
+                {
+                  "type": "p",
+                  "text": "Independent telemetry research, summarized by N.C. Sea Grant, found winterkill when water was below 44.6 degrees (7°C), with higher natural mortality in severe winters than in a mild one. Those findings describe a temperature limit. They are not a reading of Crystal Coast water today, and they do not forecast this winter."
+                }
+              ]
+            },
+            {
+              "heading": "Winter habitat on the Crystal Coast",
+              "blocks": [
+                {
+                  "type": "p",
+                  "text": "As winter approaches, DMF says, many seatrout move into deeper, warmer water in the sounds and, in some cases, the ocean. Fish that remain in relatively shallow estuarine water are more exposed when a sharp cold front or a long freeze drops the temperature quickly. Bogue Sound, the creeks that feed it, and the waters inside Beaufort Inlet are that kind of shallow-to-moderate estuarine habitat. Naming those waters explains why the thresholds matter here. It is not a prediction that a stun is underway or will occur this winter, and it is not advice to fish a particular creek or hole."
+                }
+              ]
+            },
+            {
+              "heading": "How a cold-stun closure works",
+              "blocks": [
+                {
+                  "type": "p",
+                  "text": "When a severe cold stun occurs, the Fisheries Director can close spotted seatrout harvest by proclamation. That authority remains part of Amendment 1 to the state spotted seatrout plan, adopted in March 2025. A closure is an official management action issued to protect fish that survive the cold. It is not a fishing report, and the absence of a closure is not a forecast of a good bite."
+                },
+                {
+                  "type": "p",
+                  "text": "The recent record is already public. DMF’s August 2026 fishery management plan update documents significant cold-stun events in January 2025 and in late January and early February 2026. Harvest was closed for most of February 2026 under Proclamation FF-12-2026. That closure is history. It does not describe current fishing, and it does not tell you whether a closure will be needed this winter. To know whether harvest is open, and what the limits are, check the official proclamations list and the recreational size-and-bag table — not a rumor, an informal temperature reading, or last year’s calendar. Current rules are summarized below and should be verified before you fish."
+                }
+              ]
+            }
+          ],
+          "rules": {
+            "kicker": "Current recreational harvest rules — verify before fishing.",
+            "intro": "These are regulatory facts, not a description of the bite. They can change by proclamation.",
+            "blocks": [
+              {
+                "type": "p",
+                "text": "As of Proclamation FF-31-2026 (issued June 25, 2026; effective July 1, 2026), which superseded FF-12-2026 and reopened harvest in coastal and joint fishing waters, including the Atlantic Ocean:"
+              },
+              {
+                "type": "ul",
+                "items": [
+                  "It is unlawful to possess spotted seatrout shorter than 14 inches or longer than 20 inches total length, except that one fish over 26 inches may be retained.",
+                  "It is unlawful to possess more than three spotted seatrout per person per day."
+                ]
+              },
+              {
+                "type": "p",
+                "text": "The official recreational size-and-bag table and the coastal recreational guide updated November 1, 2026, still showed those limits as of the November 21, 2026, review."
+              },
+              {
+                "type": "p",
+                "parts": [
+                  {
+                    "text": "Effective December 1, 2025, harvested spotted seatrout must be reported to DMF at "
+                  },
+                  {
+                    "text": "deq.nc.gov/report-my-fish",
+                    "url": "https://deq.nc.gov/report-my-fish"
+                  },
+                  {
+                    "text": "."
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "text": "Check before you fish:"
+              },
+              {
+                "type": "ol",
+                "items": [
+                  {
+                    "label": "Recreational Size and Bag Limits:",
+                    "url": "https://www.deq.nc.gov/about/divisions/marine-fisheries/rules-proclamations-and-size-and-bag-limits/recreational-size-and-bag-limits"
+                  },
+                  {
+                    "label": "Fisheries management proclamations:",
+                    "url": "https://www.deq.nc.gov/about/divisions/marine-fisheries/rules-proclamations-and-size-and-bag-limits/fisheries-management-proclamations"
+                  },
+                  {
+                    "label": "Proclamation FF-31-2026:",
+                    "url": "https://www.deq.nc.gov/marine-fisheries/fisheries-management-proclamations/2026/spotted-seatrout-commercial-and-recreational-coastal-and-joint-fishing-waters-including-atlantic/open"
+                  },
+                  {
+                    "label": "2026 recreational guide (updated Nov. 1, 2026):",
+                    "url": "https://www.deq.nc.gov/printable-recreational-guide/open"
+                  }
+                ]
+              }
+            ]
+          },
+          "sources": [
+            {
+              "cite": "N.C. Division of Marine Fisheries, “Cold Stun Facts.”",
+              "urls": [
+                "https://www.deq.nc.gov/about/divisions/marine-fisheries/public-information-and-education/cold-stun-facts"
+              ]
+            },
+            {
+              "cite": "N.C. DMF, Insight, “How the State Manages Spotted Seatrout in the Event of a Cold Stun,” February 2019.",
+              "urls": [
+                "https://www.deq.nc.gov/about/divisions/marine-fisheries/news-media/insight-newsletter/february-2019/how-state-manages-spotted-seatrout-event-cold-stun"
+              ]
+            },
+            {
+              "cite": "N.C. Sea Grant, Hook, Line & Science, “When Do Spotted Seatrout Succumb to Winterkill?” Dec. 30, 2019, summarizing Ellis, T., Buckel, J., & Hightower, J. (2017), *Marine Ecology Progress Series* 564: 145–161.",
+              "urls": [
+                "https://ncseagrant.ncsu.edu/hooklinescience/when-do-spotted-seatrout-succumb-to-winterkill/"
+              ]
+            },
+            {
+              "cite": "N.C. DMF, “Fishery Management Plan Update, Spotted Seatrout, August 2026.”",
+              "urls": [
+                "https://www.deq.nc.gov/marine-fisheries/fisheries-management/spotted-seatrout/spotted-seatrout-fmp-update-2026/open"
+              ]
+            },
+            {
+              "cite": "N.C. DMF, Proclamation FF-31-2026, June 25, 2026 (effective July 1, 2026), superseding FF-12-2026.",
+              "urls": [
+                "https://www.deq.nc.gov/marine-fisheries/fisheries-management-proclamations/2026/spotted-seatrout-commercial-and-recreational-coastal-and-joint-fishing-waters-including-atlantic/open"
+              ]
+            },
+            {
+              "cite": "N.C. DMF, Recreational Size and Bag Limits.",
+              "urls": [
+                "https://www.deq.nc.gov/about/divisions/marine-fisheries/rules-proclamations-and-size-and-bag-limits/recreational-size-and-bag-limits"
+              ]
+            },
+            {
+              "cite": "N.C. DMF, “2026 North Carolina Recreational Coastal and Joint Fishing Waters Guide for Sports Fishermen,” updated Nov. 1, 2026, including the Dec. 1, 2025, harvest-reporting note.",
+              "urls": [
+                "https://www.deq.nc.gov/printable-recreational-guide/open"
+              ]
+            }
+          ],
+          "fact_types": "Seasonal / biological: temperature thresholds, estuarine overwintering, Sea Grant / Ellis telemetry. Historical: January 2025 and late January–February 2026 stuns and the FF-12-2026 closure. Regulatory (re-verify before publication): FF-31-2026 slot and bag, director’s closure authority, harvest reporting, and the waters to which those rules apply."
+        }
       ]
     },
     {
@@ -99,6 +260,160 @@
         "dmf-proclamations",
         "dmf-rec-guide",
         "dph-advisories"
+      ],
+      "articles": [
+        {
+          "slug": "seatrout-winterkill-pamlico",
+          "headline": "Winterkill Science in Pamlico Sound: Spotted Seatrout After a Hard Winter",
+          "dek": "What tagged-fish research in Pamlico Sound shows about winterkill — and how to use official temperature marks and proclamations without treating last winter’s closure as a forecast.",
+          "published_label": "pending approval",
+          "reviewed": "2026-11-21",
+          "lead": "Pamlico Sound is a Hatteras fishing ground. It has also been a study area for how winter weather affects spotted seatrout. What follows is established science. It is not a substitute for a current, confirmed fishing report from the sound side or the ocean side of Hatteras Island, and it is not a claim about fish at Hatteras Inlet or Oregon Inlet.",
+          "sections": [
+            {
+              "heading": "What the studies found",
+              "blocks": [
+                {
+                  "type": "p",
+                  "text": "N.C. Sea Grant’s Hook, Line & Science series summarizes telemetry work by Ellis, Buckel, and Hightower, who tagged and tracked spotted seatrout over three winters, 2009 to 2012. Winterkill occurred when water temperatures were below 44.6 degrees Fahrenheit (7°C). Natural mortality among tagged fish was much higher in the severe winters of 2009–2010 and 2010–2011 than in the mild winter of 2011–2012. The same summary notes that some deeper water can remain warmer and may offer refuge during cold weather. The example in that paper is Pungo Creek, a tributary in the broader Pamlico system — not a recommended Hatteras fishing spot."
+                },
+                {
+                  "type": "p",
+                  "text": "A later Sea Grant brief, using DMF gillnet survey data from Pamlico Sound and the Neuse and Pamlico rivers, found that in its model, for each additional day the average water temperature stayed below 45 degrees, the difference in population size after winter decreased by almost 5.5 percent. Not all events were equal: some had localized effects, others were more widespread. Those results describe that study area. They do not measure this winter, and they do not describe Bogue Sound or waters outside the study."
+                }
+              ]
+            },
+            {
+              "heading": "What DMF’s temperature marks mean",
+              "blocks": [
+                {
+                  "type": "p",
+                  "text": "DMF’s guidance aligns with that picture. Seatrout begin to show stress below about 45 degrees Fahrenheit and will try to reach warmer water. Fish trapped below about 41 degrees for an extended period, or caught by a drop too fast to escape, may become stunned; most stunned fish do not survive. Below about 37 degrees, the division says there is very little chance of survival. As winter approaches, many seatrout move into deeper, warmer estuarine or ocean water; those that remain in shallower sound and creek habitat are more exposed. That is a habitat description, not advice to fish a particular depth, and it does not draw a legal line between the Pamlico Sound side of Hatteras Island and the ocean side."
+                }
+              ]
+            },
+            {
+              "heading": "How a cold-stun closure works",
+              "blocks": [
+                {
+                  "type": "p",
+                  "text": "When a severe cold stun occurs, the Fisheries Director can close harvest by proclamation. That authority remains part of Amendment 1 to the state spotted seatrout plan, adopted in March 2025. A closure protects fish that survive the cold. It is not a fishing report, and the absence of a closure is not a forecast of a good bite."
+                },
+                {
+                  "type": "p",
+                  "text": "DMF’s August 2026 plan update documents a significant cold-stun event in late January and early February 2026. Proclamation FF-12-2026 closed harvest; FF-31-2026, issued June 25, 2026, and effective July 1, reopened it. That sequence is public record, not a description of current fishing around Hatteras or Oregon Inlet, and not a forecast for this winter. When the fishery is open, the recreational rules in the box below are stated for coastal and joint waters, including the Atlantic Ocean. Check the official proclamations list and size-and-bag table for the water you are fishing, and verify those rules before you go."
+                }
+              ]
+            }
+          ],
+          "rules": {
+            "kicker": "Current recreational harvest rules — verify before fishing.",
+            "intro": "These are regulatory facts, not a description of the bite. They can change by proclamation.",
+            "blocks": [
+              {
+                "type": "p",
+                "text": "As of Proclamation FF-31-2026 (issued June 25, 2026; effective July 1, 2026), which superseded FF-12-2026 and reopened harvest in coastal and joint fishing waters, including the Atlantic Ocean:"
+              },
+              {
+                "type": "ul",
+                "items": [
+                  "It is unlawful to possess spotted seatrout shorter than 14 inches or longer than 20 inches total length, except that one fish over 26 inches may be retained.",
+                  "It is unlawful to possess more than three spotted seatrout per person per day."
+                ]
+              },
+              {
+                "type": "p",
+                "text": "The official recreational size-and-bag table and the coastal recreational guide updated November 1, 2026, still showed those limits as of the November 21, 2026, review."
+              },
+              {
+                "type": "p",
+                "parts": [
+                  {
+                    "text": "Effective December 1, 2025, harvested spotted seatrout must be reported to DMF at "
+                  },
+                  {
+                    "text": "deq.nc.gov/report-my-fish",
+                    "url": "https://deq.nc.gov/report-my-fish"
+                  },
+                  {
+                    "text": "."
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "text": "Check before you fish:"
+              },
+              {
+                "type": "ol",
+                "items": [
+                  {
+                    "label": "Recreational Size and Bag Limits:",
+                    "url": "https://www.deq.nc.gov/about/divisions/marine-fisheries/rules-proclamations-and-size-and-bag-limits/recreational-size-and-bag-limits"
+                  },
+                  {
+                    "label": "Fisheries management proclamations:",
+                    "url": "https://www.deq.nc.gov/about/divisions/marine-fisheries/rules-proclamations-and-size-and-bag-limits/fisheries-management-proclamations"
+                  },
+                  {
+                    "label": "Proclamation FF-31-2026:",
+                    "url": "https://www.deq.nc.gov/marine-fisheries/fisheries-management-proclamations/2026/spotted-seatrout-commercial-and-recreational-coastal-and-joint-fishing-waters-including-atlantic/open"
+                  },
+                  {
+                    "label": "2026 recreational guide (updated Nov. 1, 2026):",
+                    "url": "https://www.deq.nc.gov/printable-recreational-guide/open"
+                  }
+                ]
+              }
+            ]
+          },
+          "sources": [
+            {
+              "cite": "N.C. Sea Grant, Hook, Line & Science, “When Do Spotted Seatrout Succumb to Winterkill?” Dec. 30, 2019, summarizing Ellis, Buckel, and Hightower (2017), *Marine Ecology Progress Series* 564: 145–161.",
+              "urls": [
+                "https://ncseagrant.ncsu.edu/hooklinescience/when-do-spotted-seatrout-succumb-to-winterkill/"
+              ]
+            },
+            {
+              "cite": "N.C. Sea Grant, Hook, Line & Science, “How does winter weather affect spotted seatrout?” Feb. 10, 2025 (Pamlico Sound, Neuse and Pamlico river systems).",
+              "urls": [
+                "https://ncseagrant.ncsu.edu/hooklinescience/how-does-winter-weather-affect-spotted-seatrout/"
+              ]
+            },
+            {
+              "cite": "N.C. DMF, “Cold Stun Facts.”",
+              "urls": [
+                "https://www.deq.nc.gov/about/divisions/marine-fisheries/public-information-and-education/cold-stun-facts"
+              ]
+            },
+            {
+              "cite": "N.C. DMF, Insight, “How the State Manages Spotted Seatrout in the Event of a Cold Stun,” February 2019.",
+              "urls": [
+                "https://www.deq.nc.gov/about/divisions/marine-fisheries/news-media/insight-newsletter/february-2019/how-state-manages-spotted-seatrout-event-cold-stun"
+              ]
+            },
+            {
+              "cite": "N.C. DMF, “Fishery Management Plan Update, Spotted Seatrout, August 2026.”",
+              "urls": [
+                "https://www.deq.nc.gov/marine-fisheries/fisheries-management/spotted-seatrout/spotted-seatrout-fmp-update-2026/open"
+              ]
+            },
+            {
+              "cite": "N.C. DMF, Proclamation FF-31-2026, June 25, 2026 (effective July 1, 2026).",
+              "urls": [
+                "https://www.deq.nc.gov/marine-fisheries/fisheries-management-proclamations/2026/spotted-seatrout-commercial-and-recreational-coastal-and-joint-fishing-waters-including-atlantic/open"
+              ]
+            },
+            {
+              "cite": "N.C. DMF, Recreational Size and Bag Limits, and the recreational guide updated Nov. 1, 2026.",
+              "urls": [
+                "https://www.deq.nc.gov/about/divisions/marine-fisheries/rules-proclamations-and-size-and-bag-limits/recreational-size-and-bag-limits",
+                "https://www.deq.nc.gov/printable-recreational-guide/open"
+              ]
+            }
+          ],
+          "fact_types": "Seasonal / biological: Pamlico Sound / Neuse / Pamlico River study results, temperature thresholds, overwintering behavior. Historical: late January–February 2026 stun and the FF-12-2026 closure. Regulatory (re-verify before publication): FF-31-2026 slot and bag, director’s closure authority, harvest reporting, and the waters to which those rules apply."
+        }
       ]
     },
     {

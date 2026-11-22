@@ -306,5 +306,234 @@ class ProtectedSurfacesUnchanged(unittest.TestCase):
             self.assertEqual(proc.stdout.strip(), "", f"{rel} changed from {baseline}")
 
 
+
+
+class TestOnTheWaterArticles(unittest.TestCase):
+    """Cookie-gated On the Water articles and regional headline cards."""
+
+    CC = "/reports/crystal-coast/when-the-sound-turns-cold"
+    HI = "/reports/hatteras/seatrout-winterkill-pamlico"
+    PATHS = (
+        CC,
+        HI,
+        "/preview/reports/crystal-coast/when-the-sound-turns-cold",
+        "/preview/reports/hatteras/seatrout-winterkill-pamlico",
+    )
+
+    @classmethod
+    def setUpClass(cls):
+        import server
+        cls.server = server
+        cls.httpd = server.ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
+        cls.thread = threading.Thread(target=cls.httpd.serve_forever, daemon=True)
+        cls.thread.start()
+        cls.host, cls.port = cls.httpd.server_address
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.httpd.shutdown()
+        cls.httpd.server_close()
+
+    def _req(self, path, env=None, cookie=None):
+        saved = {k: os.environ.get(k) for k in ("PREVIEW_KEY", "MORNING_BRIEF_ENABLED", "FRESHWATER_ENABLED")}
+        try:
+            os.environ.pop("PREVIEW_KEY", None)
+            if env:
+                for k, v in env.items():
+                    if v is None:
+                        os.environ.pop(k, None)
+                    else:
+                        os.environ[k] = v
+            headers = {}
+            if cookie:
+                headers["Cookie"] = cookie
+            conn = HTTPConnection("127.0.0.1", self.port, timeout=12)
+            conn.request("GET", path, headers=headers)
+            resp = conn.getresponse()
+            body = resp.read()
+            hdrs = {k.lower(): v for k, v in resp.getheaders()}
+            conn.close()
+            return resp.status, body, hdrs
+        finally:
+            for k, v in saved.items():
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
+
+    def _cookie(self):
+        return "%s=%s" % (self.server.PREVIEW_COOKIE, self.server._preview_cookie_value(KEY))
+
+    def _ok(self, path):
+        return self._req(path, env={"PREVIEW_KEY": KEY}, cookie=self._cookie())
+
+    def _html(self, path: str) -> str:
+        status, body, _ = self._ok(path)
+        self.assertEqual(status, 200, path)
+        return body.decode("utf-8")
+
+    def _article_body(self, path: str) -> str:
+        return re.sub(r"<style>.*?</style>", "", self._html(path), flags=re.S)
+
+    def test_articles_404_without_cookie(self):
+        for path in self.PATHS:
+            with self.subTest(path=path):
+                status, _, _ = self._req(path)
+                self.assertEqual(status, 404)
+                status, _, _ = self._req(path, env={"PREVIEW_KEY": KEY})
+                self.assertEqual(status, 404, path + " key set, no cookie")
+
+    def test_articles_200_gated_headers(self):
+        for path in self.PATHS:
+            with self.subTest(path=path):
+                status, body, hdrs = self._ok(path)
+                self.assertEqual(status, 200)
+                self.assertIn("noindex", hdrs.get("x-robots-tag", "").lower())
+                self.assertIn("no-store", hdrs.get("cache-control", "").lower())
+                self.assertIn("Cookie", hdrs.get("vary", ""))
+                self.assertIn(b"noindex, nofollow", body)
+
+    def test_unknown_or_mismatched_slugs_404(self):
+        for path in (
+            "/reports/crystal-coast/missing",
+            "/reports/hatteras/when-the-sound-turns-cold",
+            "/reports/crystal-coast/seatrout-winterkill-pamlico",
+            "/reports/falls-lake/when-the-sound-turns-cold",
+            "/reports/jordan-lake/seatrout-winterkill-pamlico",
+            "/reports/hatteras/seatrout-winterkill-pamlico/extra",
+        ):
+            with self.subTest(path=path):
+                status, _, _ = self._ok(path)
+                self.assertEqual(status, 404)
+
+    def test_crystal_coast_approved_text(self):
+        html = self._article_body(self.CC)
+        self.assertIn("When the Sound Turns Cold: Spotted Seatrout and Winter Water Temperatures", html)
+        self.assertIn("DMF’s 2019 management explainer sets useful marks, in Fahrenheit:", html)
+        self.assertIn(
+            "Effective December 1, 2025, harvested spotted seatrout must be reported to DMF at",
+            html,
+        )
+        self.assertIn('href="https://deq.nc.gov/report-my-fish"', html)
+        self.assertIn("deq.nc.gov/report-my-fish", html)
+        self.assertNotIn("certain inland waters", html)
+        self.assertIn("Published: pending approval · Reviewed Nov 21, 2026", html)
+        self.assertIn('href="/reports/crystal-coast"', html)
+        self.assertIn("Rules to check", html)
+        self.assertIn("Skip to the article", html)
+
+    def test_hatteras_approved_text(self):
+        html = self._article_body(self.HI)
+        self.assertIn("Winterkill Science in Pamlico Sound: Spotted Seatrout After a Hard Winter", html)
+        self.assertIn("almost 5.5 percent", html)
+        self.assertIn("Pungo Creek", html)
+        self.assertIn(
+            "Effective December 1, 2025, harvested spotted seatrout must be reported to DMF at",
+            html,
+        )
+        self.assertIn('href="https://deq.nc.gov/report-my-fish"', html)
+        self.assertNotIn("DMF’s 2019 management explainer sets useful marks, in Fahrenheit:", html)
+        self.assertIn("Published: pending approval · Reviewed Nov 21, 2026", html)
+        self.assertIn('href="/reports/hatteras"', html)
+        self.assertIn("Rules to check", html)
+
+    def test_articles_have_no_freshness_labels(self):
+        for path in (self.CC, self.HI):
+            body = self._article_body(path)
+            with self.subTest(path=path):
+                self.assertNotIn("badge-fresh", body)
+                self.assertNotIn("badge-recent", body)
+                self.assertNotIn("badge-aging", body)
+                self.assertNotIn(">Fresh<", body)
+                self.assertNotIn(">Recent<", body)
+                self.assertNotIn(">Aging<", body)
+
+    def test_headline_cards_follow_reports_and_confirmed(self):
+        cc = self._html("/reports/crystal-coast")
+        self.assertIn('href="/reports/crystal-coast/when-the-sound-turns-cold"', cc)
+        self.assertIn("When the Sound Turns Cold: Spotted Seatrout and Winter Water Temperatures", cc)
+        self.assertIn("Published: pending approval · Reviewed Nov 21, 2026", cc)
+        self.assertLess(cc.find(">Latest local reports<"), cc.find(">Confirmed activity<"))
+        self.assertLess(cc.find(">Confirmed activity<"), cc.find('id="otw-heading"'))
+        self.assertLess(cc.find('id="otw-heading"'), cc.find(">Official notices<"))
+        otw = cc[cc.find('id="otw-heading"'):cc.find(">Official notices<")]
+        self.assertNotIn("badge-fresh", otw)
+        self.assertNotIn("badge-recent", otw)
+        self.assertNotIn("badge-aging", otw)
+
+        hi = self._html("/reports/hatteras")
+        self.assertIn('href="/reports/hatteras/seatrout-winterkill-pamlico"', hi)
+        self.assertIn("Winterkill Science in Pamlico Sound: Spotted Seatrout After a Hard Winter", hi)
+        self.assertLess(hi.find(">Latest local reports<"), hi.find(">Confirmed activity<"))
+        self.assertLess(hi.find(">Confirmed activity<"), hi.find('id="otw-heading"'))
+        self.assertLess(hi.find('id="otw-heading"'), hi.find(">Official notices<"))
+
+    def test_other_regions_have_no_article_cards_or_routes(self):
+        data = whats_biting.load()
+        slugs = sorted(
+            (r.get("id"), a.get("slug"))
+            for r in data.get("regions") or []
+            for a in (r.get("articles") or [])
+        )
+        self.assertEqual(
+            slugs,
+            [
+                ("crystal-coast", "when-the-sound-turns-cold"),
+                ("hatteras", "seatrout-winterkill-pamlico"),
+            ],
+        )
+        for path in ("/reports/falls-lake", "/reports/jordan-lake", "/reports/neuse-river", "/reports"):
+            html = re.sub(r"<style>.*?</style>", "", self._html(path), flags=re.S)
+            with self.subTest(path=path):
+                self.assertNotIn("otw-card", html)
+                self.assertNotIn('id="otw-heading"', html)
+                self.assertNotIn("when-the-sound-turns-cold", html)
+                self.assertNotIn("seatrout-winterkill-pamlico", html)
+
+    def test_articles_not_in_sitemap_robots_or_public_nav(self):
+        for path in ("/sitemap.xml", "/robots.txt", "/", "/catch-wall", "/wind", "/radar"):
+            status, body, _ = self._req(path)
+            text = body.decode("utf-8", "replace")
+            with self.subTest(path=path):
+                self.assertEqual(status, 200, path)
+                self.assertNotIn("when-the-sound-turns-cold", text)
+                self.assertNotIn("seatrout-winterkill-pamlico", text)
+        status, preview, _ = self._ok("/preview")
+        self.assertEqual(status, 200)
+        self.assertNotIn(b"when-the-sound-turns-cold", preview)
+        self.assertNotIn(b"seatrout-winterkill-pamlico", preview)
+
+    def test_official_source_links_present(self):
+        html = self._html(self.CC) + self._html(self.HI)
+        urls = [
+            "https://deq.nc.gov/report-my-fish",
+            "https://www.deq.nc.gov/about/divisions/marine-fisheries/public-information-and-education/cold-stun-facts",
+            "https://www.deq.nc.gov/about/divisions/marine-fisheries/news-media/insight-newsletter/february-2019/how-state-manages-spotted-seatrout-event-cold-stun",
+            "https://ncseagrant.ncsu.edu/hooklinescience/when-do-spotted-seatrout-succumb-to-winterkill/",
+            "https://ncseagrant.ncsu.edu/hooklinescience/how-does-winter-weather-affect-spotted-seatrout/",
+            "https://www.deq.nc.gov/marine-fisheries/fisheries-management/spotted-seatrout/spotted-seatrout-fmp-update-2026/open",
+            "https://www.deq.nc.gov/marine-fisheries/fisheries-management-proclamations/2026/spotted-seatrout-commercial-and-recreational-coastal-and-joint-fishing-waters-including-atlantic/open",
+            "https://www.deq.nc.gov/about/divisions/marine-fisheries/rules-proclamations-and-size-and-bag-limits/recreational-size-and-bag-limits",
+            "https://www.deq.nc.gov/about/divisions/marine-fisheries/rules-proclamations-and-size-and-bag-limits/fisheries-management-proclamations",
+            "https://www.deq.nc.gov/printable-recreational-guide/open",
+        ]
+        for url in urls:
+            with self.subTest(url=url):
+                self.assertIn(url, html)
+
+    def test_articles_do_not_name_excluded_publications(self):
+        html = (self._article_body(self.CC) + self._article_body(self.HI)).lower()
+        for bad in (
+            "fisherman's post",
+            "fisherman’s post",
+            "fishermanspost",
+            "carolina sportsman",
+            "coastal angler",
+            "outerbankssurffishing",
+            "island free press",
+        ):
+            self.assertNotIn(bad, html)
+
+
 if __name__ == "__main__":
     unittest.main()

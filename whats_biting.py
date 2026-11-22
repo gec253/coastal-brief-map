@@ -238,6 +238,12 @@ def format_date(d: date | None) -> str:
     return d.strftime("%B ") + str(d.day) + d.strftime(", %Y")
 
 
+def format_date_short(d: date | None) -> str:
+    if d is None:
+        return "Date not shown"
+    return d.strftime("%b ") + str(d.day) + d.strftime(", %Y")
+
+
 def format_dt(dt: datetime | None) -> str:
     if dt is None:
         return "Date not shown"
@@ -328,7 +334,7 @@ _THEME_TOGGLE = """<script>
 </script>"""
 
 
-def _shell(title: str, body: str, fixture: bool = False) -> str:
+def _shell(title: str, body: str, fixture: bool = False, skip: str = "Skip to the reports") -> str:
     css_text = css_bytes().decode("utf-8")
     note = "TEST FIXTURE — not real reports or catches" if fixture else "Private preview — not public, not indexed"
     return f"""<!DOCTYPE html>
@@ -350,7 +356,7 @@ def _shell(title: str, body: str, fixture: bool = False) -> str:
 {_THEME_BOOT}
 </head>
 <body class="wb-body{" is-fixture" if fixture else ""}">
-<a class="skip" href="#main">Skip to the reports</a>
+<a class="skip" href="#main">{esc(skip)}</a>
 <p class="wb-banner">{esc(note)}</p>
 <header class="wb-top">
   <div class="wb-top-row">
@@ -545,6 +551,8 @@ def render_region(data: dict, region: dict, now: datetime | None = None) -> str:
 {confirmed_html}
 {outlook_block}
 
+{"" if fixture else _otw_section(region)}
+
 <h2>Official notices</h2>
 {notice_html}
 
@@ -600,6 +608,155 @@ def render_index(data: dict, now: datetime | None = None) -> str:
     return _shell("What’s Biting? — private preview", body)
 
 
+
+def format_reviewed_line(article: dict) -> str:
+    pub = article.get("published_label") or "pending approval"
+    reviewed = format_date_short(parse_date(article.get("reviewed")))
+    return f"Published: {pub} · Reviewed {reviewed}"
+
+
+def region_articles(region: dict | None) -> list[dict]:
+    if not region:
+        return []
+    return list(region.get("articles") or [])
+
+
+def article_by_slug(region: dict | None, slug: str) -> dict | None:
+    for item in region_articles(region):
+        if item.get("slug") == slug:
+            return item
+    return None
+
+
+def _italic_markup(text: str) -> str:
+    """Escape text, then turn matched *pairs* into <em>."""
+    parts = (text or "").split("*")
+    out = []
+    for i, part in enumerate(parts):
+        escaped = esc(part)
+        out.append(f"<em>{escaped}</em>" if i % 2 else escaped)
+    return "".join(out)
+
+
+def _blocks_html(blocks: list | None) -> str:
+    out = []
+    for block in blocks or []:
+        typ = block.get("type")
+        if typ == "p":
+            if block.get("parts"):
+                bits = []
+                for part in block.get("parts") or []:
+                    chunk = esc(part.get("text") or "")
+                    url = part.get("url") or ""
+                    if url:
+                        bits.append(
+                            f'<a href="{esc(url)}" rel="noopener noreferrer">{chunk}</a>'
+                        )
+                    else:
+                        bits.append(chunk)
+                out.append(f"<p>{''.join(bits)}</p>")
+            else:
+                out.append(f"<p>{esc(block.get('text') or '')}</p>")
+        elif typ == "ul":
+            items = "".join(f"<li>{esc(item)}</li>" for item in (block.get("items") or []))
+            out.append(f"<ul>{items}</ul>")
+        elif typ == "ol":
+            items = []
+            for item in block.get("items") or []:
+                if isinstance(item, dict):
+                    label = esc(item.get("label") or "")
+                    url = item.get("url") or ""
+                    items.append(
+                        f'<li>{label} <a href="{esc(url)}" rel="noopener noreferrer">{esc(url)}</a></li>'
+                    )
+                else:
+                    items.append(f"<li>{esc(item)}</li>")
+            out.append(f"<ol>{''.join(items)}</ol>")
+    return "\n".join(out)
+
+
+def _otw_card(region: dict, article: dict) -> str:
+    rid = region.get("id") or ""
+    slug = article.get("slug") or ""
+    href = f"/reports/{esc(rid)}/{esc(slug)}"
+    headline = article.get("headline") or ""
+    dek = article.get("dek") or ""
+    dates = format_reviewed_line(article)
+    return f"""<a class="otw-card" href="{href}">
+  <p class="kicker">On the Water</p>
+  <h3>{esc(headline)}</h3>
+  <p class="dek">{esc(dek)}</p>
+  <p class="dates">{esc(dates)}</p>
+</a>"""
+
+
+def _otw_section(region: dict) -> str:
+    articles = region_articles(region)
+    if not articles:
+        return ""
+    cards = "".join(_otw_card(region, article) for article in articles)
+    return f"""<section class="otw" aria-labelledby="otw-heading">
+<h2 id="otw-heading">On the Water</h2>
+<p class="lead">Background and science. These are not dated fishing reports.</p>
+{cards}
+</section>
+"""
+
+
+def _sources_html(sources: list | None) -> str:
+    items = []
+    for src in sources or []:
+        cite = _italic_markup(src.get("cite") or "")
+        links = []
+        for url in src.get("urls") or []:
+            links.append(f'<a href="{esc(url)}" rel="noopener noreferrer">{esc(url)}</a>')
+        joined = (" · ").join(links)
+        space = " " if joined else ""
+        items.append(f"<li>{cite}{space}{joined}</li>")
+    return f'<ol class="sources">{"".join(items)}</ol>'
+
+
+def render_article(data: dict, region: dict, article: dict) -> str:
+    rid = region.get("id") or ""
+    rname = region.get("name") or rid
+    headline = article.get("headline") or "On the Water"
+    dek = article.get("dek") or ""
+    dates = format_reviewed_line(article)
+    sections = []
+    for section in article.get("sections") or []:
+        heading = section.get("heading") or ""
+        sections.append(f"<h2>{esc(heading)}</h2>\n{_blocks_html(section.get('blocks'))}")
+    body_sections = "\n".join(sections)
+    rules = article.get("rules") or {}
+    rules_html = f"""<aside class="rules" aria-labelledby="rules-heading">
+<h2 id="rules-heading">Rules to check</h2>
+<p class="rules-kicker">{esc(rules.get("kicker") or "")}</p>
+<p>{esc(rules.get("intro") or "")}</p>
+{_blocks_html(rules.get("blocks"))}
+</aside>
+"""
+    fact = article.get("fact_types") or ""
+    fact_html = f'<p class="fact-types">{esc(fact)}</p>' if fact else ""
+    body = f"""
+<p class="crumb"><a href="/reports">What’s Biting?</a> / <a href="/reports/{esc(rid)}">{esc(rname)}</a></p>
+<p class="kicker">On the Water</p>
+<h1>{esc(headline)}</h1>
+<p class="article-dek">{esc(dek)}</p>
+<p class="article-meta">{esc(dates)}</p>
+<div class="article-body">
+<p>{esc(article.get("lead") or "")}</p>
+{body_sections}
+</div>
+{rules_html}
+<h2>Sources</h2>
+{_sources_html(article.get("sources"))}
+{fact_html}
+<nav class="region-nav" aria-label="What’s Biting? regions">{_region_nav(data, rid)}</nav>
+"""
+    title = f"{headline} — What’s Biting? (private preview)"
+    return _shell(title, body, skip="Skip to the article")
+
+
 def resolve_request(path: str, query: dict[str, list[str]] | None = None, now: datetime | None = None, data: dict | None = None) -> tuple[int, str, str]:
     """Return (status, content_type, body) for a gated /reports path. Caller must enforce the cookie."""
     data = data or load()
@@ -625,8 +782,17 @@ def resolve_request(path: str, query: dict[str, list[str]] | None = None, now: d
             return 200, "text/html; charset=utf-8", render_region(data, freshness_fixture_region(now), now)
         if fixture == "empty":
             return 200, "text/html; charset=utf-8", render_region(data, empty_fixture_region(), now)
-        region = region_by_id(data, rid)
-        if not region:
-            return 404, "text/plain; charset=utf-8", "not found"
-        return 200, "text/html; charset=utf-8", render_region(data, region, now)
+        parts = [p for p in rid.split("/") if p]
+        if len(parts) == 1:
+            region = region_by_id(data, parts[0])
+            if not region:
+                return 404, "text/plain; charset=utf-8", "not found"
+            return 200, "text/html; charset=utf-8", render_region(data, region, now)
+        if len(parts) == 2:
+            region = region_by_id(data, parts[0])
+            article = article_by_slug(region, parts[1]) if region else None
+            if not region or not article:
+                return 404, "text/plain; charset=utf-8", "not found"
+            return 200, "text/html; charset=utf-8", render_article(data, region, article)
+        return 404, "text/plain; charset=utf-8", "not found"
     return 404, "text/plain; charset=utf-8", "not found"
