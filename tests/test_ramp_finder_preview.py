@@ -1,4 +1,4 @@
-"""Ramp Finder private preview — gate, headers, data integrity (Ed t415u, polish t417u)."""
+"""Ramp Finder private preview — gate, headers, data integrity (Ed t415u, polish t417u, masthead t419u)."""
 from __future__ import annotations
 
 import json
@@ -388,6 +388,22 @@ class PresentationPolish(unittest.TestCase):
         html = ramp_finder.render_detail(self.data, rec)
         self.assertNotIn("Also recorded as not stated", html)
         self.assertIn("Jordan Dam Road", html)
+
+    def test_masthead_uses_fluid_type_and_keeps_safe_area(self):
+        css = ramp_finder.css_bytes().decode()
+        self.assertIn("env(safe-area-inset-top", css)
+        self.assertIn("--rf-safe-top", css)
+        self.assertIn("viewport-fit=cover", ramp_finder.render_list(self.data, ramp_finder.parse_filters({})))
+        # Fluid masthead (Ed t419u): clamp, not a rigid px/rem, 44px controls kept.
+        brand = css.split(".rf-brand{", 1)[1].split("}", 1)[0]
+        self.assertIn("clamp(", brand)
+        self.assertIn("vw", brand)
+        self.assertIn("white-space:nowrap", brand)
+        self.assertIn("italic", brand)
+        self.assertIn("var(--ivory)", brand)
+        self.assertIn("min-height:var(--touch)", brand)
+        self.assertIn("--touch:44px", css)
+        self.assertIn("min-height:var(--touch)", css.split(".theme-toggle{", 1)[1].split("}", 1)[0])
 
     def test_public_files_unchanged_vs_a03bf4c(self):
         import hashlib
