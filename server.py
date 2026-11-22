@@ -1422,6 +1422,7 @@ import windgrid  # noqa: E402
 import hrrrgrid  # noqa: E402
 import radarview  # noqa: E402
 import showcase  # noqa: E402  (homepage Wind & Radar section; HOME_SHOWCASE flag, default off)
+import featured_home  # noqa: E402  (cookie-gated Featured in The Coastal Brief; public / unchanged)
 import theme_toggle  # noqa: E402  (homepage day/night toggle; /preview/home-b only for now)
 import whats_biting  # noqa: E402  (private /reports preview; cookie-gated, not public)
 import freshwater  # noqa: E402
@@ -3443,14 +3444,18 @@ class Handler(SimpleHTTPRequestHandler):
             return self._send_html(ROOT / "index.html", region_id=rid)
         if sc:  # Concept A Wind & Radar section; only when HOME_SHOWCASE is on
             data = showcase.inject(data, sc, radar_meta=handle_radar_meta)
-            self.send_response(200)
-            self.send_header("Cache-Control", "no-store")
-            self.send_header("Content-Type", "text/html; charset=utf-8")
-            self.send_header("Content-Length", str(len(data)))
-            self.end_headers()
-            self.wfile.write(data)
-            return
+        # Cookie-gated Featured in The Coastal Brief (Ed t412u). Public HTML and
+        # headers stay on the existing path: inject only when cb_preview is valid.
+        preview = self._preview_ok()
+        if preview:
+            data = featured_home.inject(data, rid)
         self.send_response(200)
+        if sc:
+            self.send_header("Cache-Control", "no-store")
+        if preview:
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Vary", "Cookie")
+            self.send_header("X-Robots-Tag", "noindex, nofollow")
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()

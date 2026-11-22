@@ -1,0 +1,21 @@
+{
+  "category": "On the Water",
+  "kicker": "Featured in The Coastal Brief",
+  "headline": "When the Sound Turns Cold",
+  "dek": "What winter water temperatures mean for speckled trout in North Carolina’s coastal sounds.",
+  "href": "/reports/crystal-coast/when-the-sound-turns-cold",
+  "cta": "Read the Story",
+  "image": {
+    "id": "bogue-sound-fog",
+    "alt": "Fog over Bogue Sound, with a pier in silhouette.",
+    "credit": "Photograph: Vancemiller, public domain, via Wikimedia Commons.",
+    "width": 1920,
+    "height": 1080,
+    "base": "/static/featured-in/bogue-sound-fog/bogue-sound-fog",
+    "widths": [
+      640,
+      960,
+      1280
+    ]
+  }
+}

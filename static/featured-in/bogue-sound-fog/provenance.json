@@ -1,0 +1,51 @@
+{
+  "id": "bogue-sound-fog",
+  "title": "Bogue Sound fog and sunset",
+  "location": "Bogue Sound, North Carolina",
+  "location_note": "The source states only Bogue Sound. Do not name the pier or claim a more precise location.",
+  "photographer": "Vancemiller",
+  "photographer_note": "Wikimedia Commons username. No legal name is given on the source page.",
+  "date": "2008-01-17",
+  "date_note": "EXIF DateTimeOriginal 2008-01-17 16:47. Commons description: \u201cBogue Sound fog and sunset.\u201d",
+  "license": "Public domain",
+  "license_basis": "PD-self: the author released the work worldwide on the Wikimedia Commons file page.",
+  "source_page": "https://commons.wikimedia.org/wiki/File:Bogue_Sound_fog.jpg",
+  "file_url": "https://upload.wikimedia.org/wikipedia/commons/e/e5/Bogue_Sound_fog.jpg",
+  "credit_line": "Photograph: Vancemiller, public domain, via Wikimedia Commons.",
+  "original": {
+    "width": 1920,
+    "height": 1080,
+    "mime": "image/jpeg",
+    "bytes": 659379,
+    "sha256": "4bd3d46e106dfd932d3dec67353b1c88ce517199b25fed7eb07230c631ccda50",
+    "aspect_ratio": "16:9"
+  },
+  "derivatives": {
+    "640": {
+      "avif": "bogue-sound-fog-640.avif",
+      "avif_bytes": 11224,
+      "webp": "bogue-sound-fog-640.webp",
+      "webp_bytes": 10430
+    },
+    "960": {
+      "avif": "bogue-sound-fog-960.avif",
+      "avif_bytes": 19737,
+      "webp": "bogue-sound-fog-960.webp",
+      "webp_bytes": 18892
+    },
+    "1280": {
+      "avif": "bogue-sound-fog-1280.avif",
+      "avif_bytes": 27442,
+      "webp": "bogue-sound-fog-1280.webp",
+      "webp_bytes": 26620
+    }
+  },
+  "jpeg_fallback": {
+    "file": "bogue-sound-fog-1280.jpg",
+    "width": 1280,
+    "height": 720,
+    "bytes": 88945
+  },
+  "alt": "Fog over Bogue Sound, with a pier in silhouette.",
+  "approved": "Ed t412u, 22 November 2026"
+}

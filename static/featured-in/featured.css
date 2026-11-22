@@ -1,0 +1,70 @@
+/* Featured in The Coastal Brief — cookie-gated homepage section.
+   No new fonts. No homepage JavaScript. Day/night: prefers-color-scheme only. */
+.cb-featured{
+  --navy:#071C29;--ivory:#F3E6D0;--brass:#C4A36A;--brass-ink:#6B4A18;--ink:#132833;
+  margin:0;padding:24px 18px 28px;background:var(--ivory);color:var(--ink);
+  border-top:1px solid rgba(7,28,41,.10);
+  border-bottom:1px solid rgba(7,28,41,.10);
+}
+.cb-feat-kicker{
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:.45rem .85rem;
+  margin:0 0 12px;
+}
+.cb-feat-series{
+  font:600 .82rem/1.2 "Barlow Condensed",sans-serif;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--brass-ink);
+}
+.cb-feat-cat{
+  font:600 .72rem/1.2 "Barlow Condensed",sans-serif;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--navy);
+  border:1px solid rgba(196,163,106,.7);padding:.18rem .5rem;border-radius:1px;
+}
+.cb-feat-grid{display:block;}
+.cb-feat-media{margin:0 0 14px;}
+.cb-feat-frame{
+  aspect-ratio:16/9;width:100%;overflow:hidden;background:#E8D9BE;
+  border:1px solid rgba(196,163,106,.45);
+}
+.cb-feat-frame img{
+  display:block;width:100%;height:100%;object-fit:cover;
+}
+.cb-feat-credit{
+  margin:8px 0 0;font:400 .78rem/1.35 "Source Sans 3",Helvetica,Arial,sans-serif;
+  color:#3E5868;
+}
+.cb-feat-copy h2{
+  margin:0 0 10px;color:var(--navy);
+  font:600 clamp(1.7rem,6.2vw,2.35rem)/1.12 "Fraunces",Georgia,"Times New Roman",serif;
+  letter-spacing:-.015em;
+}
+.cb-feat-dek{
+  margin:0 0 16px;max-width:32rem;
+  font:400 1.02rem/1.5 "Source Sans 3",Helvetica,Arial,sans-serif;
+  color:var(--ink);
+}
+.cb-feat-cta-wrap{margin:0;}
+.cb-feat-cta{
+  display:inline-flex;align-items:center;min-height:44px;padding:0 2px;
+  color:var(--navy);font:600 .95rem/1 "Source Sans 3",Helvetica,Arial,sans-serif;
+  letter-spacing:.02em;text-decoration:none;
+  border-bottom:2px solid var(--brass);
+}
+.cb-feat-cta:hover,.cb-feat-cta:focus-visible{border-bottom-color:var(--navy);outline:none;}
+@media (min-width:900px){
+  .cb-featured{padding:36px 48px 40px;}
+  .cb-feat-grid{
+    display:grid;grid-template-columns:1.15fr .95fr;gap:28px 48px;align-items:center;
+  }
+  .cb-feat-media{margin:0;}
+  .cb-feat-copy h2{font-size:2.35rem;}
+}
+@media (prefers-color-scheme:dark){
+  .cb-featured{background:#0D2230;color:#F3E6D0;border-top-color:rgba(243,230,208,.14);border-bottom-color:rgba(243,230,208,.14);}
+  .cb-feat-series{color:var(--brass);}
+  .cb-feat-cat{color:var(--ivory);border-color:rgba(196,163,106,.55);}
+  .cb-feat-frame{background:#132833;border-color:rgba(196,163,106,.45);}
+  .cb-feat-copy h2,.cb-feat-dek,.cb-feat-cta{color:var(--ivory);}
+  .cb-feat-credit{color:#C9B89A;}
+  .cb-feat-cta{border-bottom-color:var(--brass);}
+  .cb-feat-cta:hover,.cb-feat-cta:focus-visible{border-bottom-color:var(--ivory);}
+}
