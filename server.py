@@ -1425,6 +1425,7 @@ import showcase  # noqa: E402  (homepage Wind & Radar section; HOME_SHOWCASE fla
 import featured_home  # noqa: E402  (cookie-gated Featured in The Coastal Brief; public / unchanged)
 import theme_toggle  # noqa: E402  (homepage day/night toggle; /preview/home-b only for now)
 import whats_biting  # noqa: E402  (private /reports preview; cookie-gated, not public)
+import ramp_finder  # noqa: E402  (private /preview/ramps data preview; cookie-gated, not public)
 import freshwater  # noqa: E402
 import brief  # noqa: E402
 import wave_intro  # noqa: E402
@@ -2815,6 +2816,7 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 <a class="card" href="/preview/home-hybrid"><b>Homepage concept C · Hybrid</b><span>Private sprint concept: heritage instruments with an editorial grid.</span></a>
 <a class="card" href="/catch-wall"><b>Catch Wall photo submissions</b><span>Private test: the Share form and the review page work in this browser, even while public uploads stay off. Photos you send wait in the pending queue until you approve them.</span></a>
 <a class="card" href="/reports"><b>What’s Biting? · fishing reports</b><span>Private preview: a report index and five regional pages (Crystal Coast, Hatteras, Falls Lake, Jordan Lake, and the Neuse from Falls Dam to Goldsboro). Cookie-gated, noindex, not in the sitemap. Not on the public homepage.</span></a>
+<a class="card" href="/preview/ramps"><b>Ramp Finder</b><span>Private data preview: searchable public boat-ramp list for the Crystal Coast, Falls Lake, Jordan Lake and the Neuse River. Cookie-gated, noindex, not in the sitemap. No interactive map. Not on the public homepage.</span></a>
 <a class="card" href="/preview/photos-check"><b>Photo setup check</b><span>A private status report: storage, image tools, and the pending queue. It never shows keys.</span></a>
 <p><a href="/preview?lock=1">Lock this browser again</a></p></main></body></html>""" % PREVIEW_DAYS
 
@@ -2958,6 +2960,12 @@ class Handler(SimpleHTTPRequestHandler):
             # Private What’s Biting? preview (Ed t401u). Same cookie as /preview; 404 without it.
             # No public nav, no sitemap entry, no homepage changes.
             return self._whats_biting_route(parsed)
+        if (parsed.path in ("/preview/ramps", "/preview/ramps/", "/preview/ramps.css",
+                            "/preview/ramps.json")
+                or parsed.path.startswith("/preview/ramps/")):
+            # Private Ramp Finder data preview (Ed t415u). Same cookie as /preview; 404 without it.
+            # No public nav, no sitemap entry, no homepage, map, Wind, or Radar changes.
+            return self._ramp_finder_route(parsed)
         if parsed.path == "/preview":
             return self._preview_route(parsed)
         if parsed.path == "/preview/photos-check":
@@ -3498,6 +3506,20 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_error(500, "preview failed")
         return self._send_private(None, "text/html; charset=utf-8", data)
 
+
+    def _ramp_finder_route(self, parsed):
+        """Cookie-gated /preview/ramps preview. 404 without the preview cookie. noindex, no-store."""
+        if not self._preview_ok():
+            return self.send_error(404, "not found")
+        q = parse_qs(parsed.query or "")
+        status, ctype, body = ramp_finder.resolve_request(parsed.path, q)
+        if status != 200:
+            return self.send_error(status, "not found")
+        data = body.encode("utf-8") if isinstance(body, str) else body
+        return self._send_private(
+            None, ctype, data, status,
+            extra=[("Cache-Control", "no-store"), ("Vary", "Cookie")],
+        )
 
     def _whats_biting_route(self, parsed):
         """Cookie-gated /reports preview. 404 without the preview cookie. noindex, no-store."""
