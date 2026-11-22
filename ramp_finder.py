@@ -1,7 +1,8 @@
-"""Ramp Finder — private, cookie-gated data preview (Ed t415u, polish t417u).
+"""Ramp Finder — private, cookie-gated data preview (Ed t415u, polish t417u, map prototype t421u).
 
-Server-rendered HTML for /preview/ramps and /preview/ramps/<id>.
-No public nav, no sitemap, no interactive map, no paid APIs.
+Server-rendered HTML for /preview/ramps, /preview/ramps/<id>, and the
+private interactive map at /preview/ramps/map. No public nav, no sitemap,
+no paid APIs. Pins are drawn only from official inventory coordinates.
 """
 from __future__ import annotations
 
@@ -15,6 +16,8 @@ from urllib.parse import urlencode
 ROOT = Path(__file__).resolve().parent
 DATA_PATH = ROOT / "preview" / "ramp-finder" / "inventory.json"
 CSS_PATH = ROOT / "preview" / "ramp-finder" / "ramps.css"
+MAP_JS_PATH = ROOT / "preview" / "ramp-finder" / "ramps-map.js"
+MAP_ASSET_SLUGS = frozenset({"map", "map.js", "map.json"})
 
 PROTECTED_PATHS = (
     "index.html",
@@ -203,7 +206,7 @@ def hidden_counts(data, filters: dict):
     return hid_lim, hid_rev
 
 
-def _shell(title: str, body: str, skip: str = "Skip to the ramp list") -> str:
+def _shell(title: str, body: str, skip: str = "Skip to the ramp list", *, current: str = "list", extra_head: str = "", extra_script: str = "", main_class: str = "") -> str:
     css_text = css_bytes().decode("utf-8")
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -222,6 +225,7 @@ def _shell(title: str, body: str, skip: str = "Skip to the ramp list") -> str:
 <link rel="preload" href="/fonts/barlow-condensed-600.woff2" as="font" type="font/woff2" crossorigin>
 <style>{css_text}</style>
 {_THEME_BOOT}
+{extra_head}
 </head>
 <body class="rf-body">
 <a class="skip" href="#main">{esc(skip)}</a>
@@ -233,14 +237,16 @@ def _shell(title: str, body: str, skip: str = "Skip to the ramp list") -> str:
   </div>
   <nav class="rf-nav" aria-label="Preview">
     <a href="/preview">Preview hub</a>
-    <a href="/preview/ramps" aria-current="page">Ramp Finder</a>
+    <a href="/preview/ramps"{' aria-current="page"' if current == "list" else ""}>Ramp Finder</a>
+    <a href="/preview/ramps/map"{' aria-current="page"' if current == "map" else ""}>Map</a>
   </nav>
 </header>
-<main class="rf-main" id="main">
+<main class="rf-main{(" " + main_class) if main_class else ""}" id="main">
 {body}
 <p class="rf-sign">Know the Water. Live the Coast.</p>
 </main>
 {_THEME_TOGGLE}
+{extra_script}
 </body>
 </html>
 """
@@ -768,21 +774,284 @@ def render_detail(data, rec) -> str:
 {facts}
 {directions_html(rec)}
 {source_details_html(rec)}
-""", skip="Skip to ramp details")
+""", skip="Skip to ramp details", current="detail")
+
+
+
+def official_coordinates(rec):
+    """Return (lat, lon) only when the inventory recorded official coordinates."""
+    d = rec.get("directions") or {}
+    if d.get("mode") != "coordinates":
+        return None
+    lat, lon = d.get("latitude"), d.get("longitude")
+    if isinstance(lat, (int, float)) and isinstance(lon, (int, float)):
+        return float(lat), float(lon)
+    return None
+
+
+def has_official_pin(rec) -> bool:
+    return official_coordinates(rec) is not None
+
+
+def pin_inventory_counts(data=None) -> dict:
+    """How many records have official pins vs address-only directions."""
+    data = data or load_data()
+    pins = addr = 0
+    by_class = {"general": {"pin": 0, "address": 0}, "limited": {"pin": 0, "address": 0}, "needs_review": {"pin": 0, "address": 0}}
+    by_area = {}
+    for rec in records(data):
+        cls = rec["listing_class"]
+        area = rec["area"]
+        by_area.setdefault(area, {"pin": 0, "address": 0})
+        if has_official_pin(rec):
+            pins += 1
+            by_class[cls]["pin"] += 1
+            by_area[area]["pin"] += 1
+        else:
+            addr += 1
+            by_class[cls]["address"] += 1
+            by_area[area]["address"] += 1
+    return {"pin": pins, "address": addr, "total": pins + addr, "by_class": by_class, "by_area": by_area}
+
+
+def _map_notice_excerpt(rec, notice: dict, limit: int = 240) -> str:
+    text = visible_notice_text(rec, notice).strip()
+    if len(text) <= limit:
+        return text
+    cut = text[:limit].rsplit(" ", 1)[0]
+    return cut + "…"
+
+
+def map_record(rec) -> dict:
+    """Slim, presentation-only record for the private map. Never invents coordinates."""
+    d = rec.get("directions") or {}
+    coords = official_coordinates(rec)
+    dated = caution = None
+    for n in rec.get("notices") or []:
+        cat = n.get("category")
+        if cat == "current_dated_notice" and dated is None:
+            dated = _map_notice_excerpt(rec, n)
+        elif cat == "standing_caution" and caution is None:
+            caution = _map_notice_excerpt(rec, n)
+    restriction = rec.get("restriction_notes")
+    if restriction in (None, "", "not stated"):
+        restriction = None
+    flags = rec.get("flags") or {}
+    active = {k: True for k, v in flags.items() if v}
+    return {
+        "id": rec["id"],
+        "name": rec.get("display_name") or rec.get("official_name"),
+        "waterbody": rec.get("body_of_water_note") or rec.get("body_of_water") or "",
+        "area": rec["area"],
+        "area_label": rec.get("area_label") or "",
+        "listing_class": rec["listing_class"],
+        "has_pin": coords is not None,
+        "lat": coords[0] if coords else None,
+        "lon": coords[1] if coords else None,
+        "address": d.get("address"),
+        "apple_url": d.get("apple_url"),
+        "google_url": d.get("google_url"),
+        "restriction": restriction,
+        "dated_notice": dated,
+        "standing_caution": caution,
+        "flags": active,
+        "detail_url": "/preview/ramps/" + rec["id"],
+    }
+
+
+def map_payload(data=None) -> dict:
+    data = data or load_data()
+    recs = [map_record(rec) for rec in records(data)]
+    counts = pin_inventory_counts(data)
+    return {
+        "disclaimer": PAGE_DISCLAIMER,
+        "counts": counts,
+        "records": recs,
+    }
+
+
+def map_js_bytes() -> bytes:
+    return MAP_JS_PATH.read_bytes()
+
+
+def _map_list_item(rec, payload_rec) -> str:
+    pin = payload_rec["has_pin"]
+    pin_note = "" if pin else (
+        '<span class="rf-no-pin">No map pin — address directions</span>'
+    )
+    badges = []
+    if payload_rec.get("dated_notice"):
+        badges.append('<span class="badge badge-notice">Current dated notice</span>')
+    if payload_rec.get("standing_caution"):
+        badges.append('<span class="badge badge-caution">Standing caution</span>')
+    if rec["listing_class"] == "limited":
+        badges.append('<span class="badge">Limited access</span>')
+    elif rec["listing_class"] == "needs_review":
+        badges.append('<span class="badge">Needs review</span>')
+    if (rec.get("flags") or {}).get("fee_conflict"):
+        badges.append('<span class="badge">Fee figures differ</span>')
+    if (rec.get("flags") or {}).get("hours_uncertain"):
+        badges.append('<span class="badge">Hours uncertain</span>')
+    loc = rec.get("city") or rec.get("county") or ""
+    notice_bit = ""
+    if payload_rec.get("dated_notice"):
+        notice_bit = f'<p class="rf-list-notice">{esc(payload_rec["dated_notice"])}</p>'
+    elif payload_rec.get("standing_caution"):
+        notice_bit = f'<p class="rf-list-caution">{esc(payload_rec["standing_caution"])}</p>'
+    return (
+        f'<li class="rf-sync-item{" rf-has-pin" if pin else " rf-address-only"}"'
+        f' id="ramp-{esc(rec["id"])}" data-ramp-id="{esc(rec["id"])}">'
+        f'<button type="button" class="rf-sync-select" data-ramp-id="{esc(rec["id"])}">'
+        f'<span class="rf-sync-name">{esc(payload_rec["name"])}</span>'
+        f'<span class="rf-sync-meta">{esc(payload_rec["waterbody"])}'
+        f'{" — " + esc(loc) if loc else ""}</span>'
+        f'{pin_note}'
+        f'<span class="rf-sync-badges">{"".join(badges)}</span>'
+        f'{notice_bit}'
+        f'</button>'
+        f'<a class="rf-sync-detail" href="/preview/ramps/{esc(rec["id"])}">Details</a>'
+        f'</li>'
+    )
+
+
+def render_map(data, filters: dict) -> str:
+    general, limited, review = visible_sets(data, filters)
+    hid_lim, hid_rev = hidden_counts(data, filters)
+    region = filters.get("region") or ""
+    payload = map_payload(data)
+    by_id_payload = {r["id"]: r for r in payload["records"]}
+
+    def section(title, recs, cls):
+        if not recs:
+            return ""
+        items = "\n".join(_map_list_item(rec, by_id_payload[rec["id"]]) for rec in recs)
+        return f'<h2 class="rf-sync-h">{esc(title)}</h2>\n<ul class="rf-sync-list" data-class="{esc(cls)}">{items}</ul>'
+
+    shown = general + limited + review
+    pin_shown = sum(1 for r in shown if has_official_pin(r))
+    addr_shown = len(shown) - pin_shown
+
+    hidden = []
+    if hid_lim:
+        hidden.append(f"{hid_lim} limited-access")
+    if hid_rev:
+        hidden.append(f"{hid_rev} needs-review")
+    hidden_note = ""
+    if hidden:
+        hidden_note = (
+            f'<p class="hidden-note">{esc(" and ".join(hidden))} '
+            f'{"entry is" if (hid_lim + hid_rev) == 1 else "entries are"} hidden. '
+            f'Use the optional filters to show them on the map and in the list.</p>'
+        )
+
+    chips = []
+    for key, label in AREAS:
+        params = {k: v for k, v in filters.items() if k != "theme"}
+        params["region"] = key
+        url = "/preview/ramps/map"
+        q = _qs(params)
+        if q:
+            url += "?" + q
+        current = ' aria-current="page"' if key == region else ""
+        if key == region:
+            chips.append(f'<span{current}>{esc(label)}</span>')
+        else:
+            chips.append(f'<a href="{esc(url)}"{current}>{esc(label)}</a>')
+
+    checks = []
+    for key, label in (("limited", "Show limited-access launches"), ("needs_review", "Show needs-review entries")):
+        on = " checked" if filters.get(key) else ""
+        checks.append(
+            f'<label class="flag"><input type="checkbox" name="{esc(key)}" value="1"{on}> {esc(label)}</label>'
+        )
+
+    status = (
+        f'{pin_shown} {"ramp has" if pin_shown == 1 else "ramps have"} a verified map pin'
+        f' · {addr_shown} {"is" if addr_shown == 1 else "are"} listed with no map pin — address directions'
+    )
+
+    lists = (
+        section("General-use ramps", general, "general")
+        + section("Limited-access launches", limited, "limited")
+        + section("Needs review", review, "needs_review")
+    )
+    if not shown:
+        lists = '<p class="count">No ramps match these filters.</p>'
+
+    visible_ids = {r["id"] for r in shown}
+    page_payload = {
+        "disclaimer": payload["disclaimer"],
+        "counts": payload["counts"],
+        "records": [r for r in payload["records"] if r["id"] in visible_ids],
+    }
+
+    body = f"""
+<p class="kicker">Private preview</p>
+<h1>Ramp map</h1>
+<p class="rf-disclaimer">{esc(PAGE_DISCLAIMER)} Pins are placed only from official coordinates.</p>
+<div class="regions rf-map-regions" aria-label="Region">{''.join(chips)}</div>
+<p class="count rf-map-status" id="rf-map-status" aria-live="polite">{esc(status)}</p>
+<div class="rf-map-layout">
+  <div class="rf-map-frame">
+    <div class="rf-map-toolbar">
+      <div class="rf-basemap" role="group" aria-label="Basemap">
+        <button type="button" class="rf-basemap-btn is-active" id="rf-basemap-topo" aria-pressed="true">Topo</button>
+        <button type="button" class="rf-basemap-btn" id="rf-basemap-aerial" aria-pressed="false">Aerial</button>
+      </div>
+    </div>
+    <div id="rf-map" class="rf-map-stage" role="region" aria-label="Interactive ramp map">
+      <p class="rf-map-placeholder">Loading map…</p>
+    </div>
+    <p class="rf-map-credit">Basemap: map services and data available from U.S. Geological Survey, National Geospatial Program (public domain). Not for navigation.</p>
+  </div>
+  <div class="rf-map-list-wrap" id="rf-map-list">
+    <form class="filters rf-map-filters" id="filters" method="get" action="/preview/ramps/map" role="search">
+      <input type="hidden" name="region" value="{esc(region)}">
+      <div class="flag-row">{''.join(checks)}</div>
+      <div class="actions">
+        <button type="submit">Update map</button>
+        <button type="reset" onclick="location.href='/preview/ramps/map'; return false;">Reset</button>
+      </div>
+    </form>
+    {hidden_note}
+    <h2 class="rf-sync-title">Ramp list</h2>
+    <p class="count">Selecting a name highlights its marker, and tapping a marker highlights its row. Address-only ramps have no pin.</p>
+    {lists}
+  </div>
+</div>
+<script type="application/json" id="rf-map-data">{json.dumps(page_payload, ensure_ascii=False)}</script>
+"""
+    extra_script = '<script src="/preview/ramps/map.js" defer></script>'
+    return _shell(
+        "Ramp map — The Coastal Brief (private preview)",
+        body,
+        skip="Skip to the ramp map",
+        current="map",
+        extra_script=extra_script,
+        main_class="rf-map-main",
+    )
 
 
 def resolve_request(path: str, query: dict):
     raw = path.rstrip("/") or "/preview/ramps"
     if raw in ("/preview/ramps.css",):
         return 200, "text/css; charset=utf-8", css_bytes()
+    if raw in ("/preview/ramps/map.js",):
+        return 200, "text/javascript; charset=utf-8", map_js_bytes()
     data = load_data()
     if raw in ("/preview/ramps.json",):
         return 200, "application/json; charset=utf-8", json.dumps(data, ensure_ascii=False)
+    if raw in ("/preview/ramps/map.json",):
+        return 200, "application/json; charset=utf-8", json.dumps(map_payload(data), ensure_ascii=False)
+    if raw in ("/preview/ramps/map",):
+        return 200, "text/html; charset=utf-8", render_map(data, parse_filters(query or {}))
     if raw in ("/preview/ramps",):
         return 200, "text/html; charset=utf-8", render_list(data, parse_filters(query or {}))
     prefix = "/preview/ramps/"
     if raw.startswith(prefix):
         rid = raw[len(prefix):].strip("/")
+        if rid in MAP_ASSET_SLUGS:
+            return 404, "text/plain", "not found"
         rec = by_id(rid, data)
         if not rec:
             return 404, "text/plain", "not found"

@@ -1,4 +1,4 @@
-"""Ramp Finder private preview — gate, headers, data integrity (Ed t415u, polish t417u, masthead t419u)."""
+"""Ramp Finder private preview — gate, headers, data integrity (Ed t415u–t421u)."""
 from __future__ import annotations
 
 import json
@@ -207,6 +207,7 @@ class Gating(unittest.TestCase):
         paths = [
             "/preview/ramps", "/preview/ramps/", "/preview/ramps.css",
             "/preview/ramps.json", "/preview/ramps/usace-jordan-poes-ridge",
+            "/preview/ramps/map", "/preview/ramps/map.js", "/preview/ramps/map.json",
         ]
         for path in paths:
             status, _, _ = self._req(path)
@@ -218,7 +219,8 @@ class Gating(unittest.TestCase):
         for path in ("/preview/ramps", "/preview/ramps/",
                      "/preview/ramps/usace-jordan-poes-ridge",
                      "/preview/ramps/parks-jordan-ebenezer",
-                     "/preview/ramps/parks-jordan-seaforth"):
+                     "/preview/ramps/parks-jordan-seaforth",
+                     "/preview/ramps/map"):
             status, body, hdrs = self._ok(path)
             self.assertEqual(status, 200, path)
             self.assertIn("noindex", hdrs.get("x-robots-tag", ""))
@@ -412,3 +414,119 @@ class PresentationPolish(unittest.TestCase):
             current = hashlib.sha256((ROOT / rel).read_bytes()).hexdigest()
             baseline = subprocess.check_output(["git", "show", f"{POLISH_BASE}:{rel}"], cwd=ROOT)
             self.assertEqual(current, hashlib.sha256(baseline).hexdigest(), rel)
+
+
+class MapPrototype(unittest.TestCase):
+    """Private interactive map (Ed t421u). Inventory facts stay frozen."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.data = ramp_finder.load_data()
+        cls.payload = ramp_finder.map_payload(cls.data)
+        cls.records = cls.payload["records"]
+
+    def test_pin_counts_and_no_invented_coordinates(self):
+        counts = ramp_finder.pin_inventory_counts(self.data)
+        self.assertEqual(counts["total"], 55)
+        self.assertEqual(counts["pin"], 40)
+        self.assertEqual(counts["address"], 15)
+        self.assertEqual(counts["by_class"]["general"], {"pin": 39, "address": 9})
+        self.assertEqual(counts["by_class"]["limited"], {"pin": 1, "address": 2})
+        self.assertEqual(counts["by_class"]["needs_review"], {"pin": 0, "address": 4})
+        self.assertEqual(len(self.records), 55)
+        inv = {r["id"]: r for r in self.data["records"]}
+        pin_ids = set()
+        for item in self.records:
+            rec = inv[item["id"]]
+            d = rec["directions"]
+            if item["has_pin"]:
+                pin_ids.add(item["id"])
+                self.assertEqual(d["mode"], "coordinates", item["id"])
+                self.assertEqual(item["lat"], d["latitude"])
+                self.assertEqual(item["lon"], d["longitude"])
+                self.assertIsInstance(item["lat"], float)
+                self.assertIsInstance(item["lon"], float)
+            else:
+                self.assertEqual(d["mode"], "address", item["id"])
+                self.assertIsNone(d.get("latitude"), item["id"])
+                self.assertIsNone(d.get("longitude"), item["id"])
+                self.assertIsNone(item["lat"], item["id"])
+                self.assertIsNone(item["lon"], item["id"])
+                self.assertTrue(item["address"], item["id"])
+        official = {
+            r["id"] for r in self.data["records"]
+            if r["directions"].get("mode") == "coordinates"
+            and r["directions"].get("latitude") is not None
+        }
+        self.assertEqual(pin_ids, official)
+        self.assertEqual(len(pin_ids), 40)
+
+    def test_every_map_pin_is_in_the_inventory(self):
+        ids = {r["id"] for r in self.data["records"]}
+        for item in self.records:
+            self.assertIn(item["id"], ids)
+            if item["has_pin"]:
+                rec = ramp_finder.by_id(item["id"], self.data)
+                self.assertEqual(item["lat"], rec["directions"]["latitude"])
+                self.assertEqual(item["lon"], rec["directions"]["longitude"])
+
+    def test_map_default_is_general_and_omits_limited(self):
+        html = ramp_finder.render_map(self.data, ramp_finder.parse_filters({}))
+        self.assertIn("viewport-fit=cover", html)
+        self.assertIn("No map pin — address directions", html)
+        self.assertIn("Seaforth", html)
+        self.assertIn("November 30, 2026", html)
+        self.assertIn("Current dated notice", html)
+        self.assertIn("Poe", html)
+        self.assertIn("Fee figures differ", html)
+        self.assertIn("Newport", html)
+        self.assertIn("Standing caution", html)
+        self.assertIn("VERY SHALLOW CANAL", html)
+        self.assertNotIn("Open Now", html)
+        self.assertNotIn("Beaverdam", html)
+        self.assertNotIn("West Bogue", html)
+        self.assertNotIn("South 10th", html)
+        self.assertIn('aria-current="page">Map</a>', html)
+        self.assertIn("/vendor/leaflet/leaflet", ramp_finder.MAP_JS_PATH.read_text())
+        shown = [r for r in self.data["records"] if r["id"] in html and r["listing_class"] != "general"]
+        # Limited / needs-review names should not appear in the default list.
+        self.assertFalse(any(r["listing_class"] != "general" and r["display_name"] in html.split("id=\"rf-map-list\"")[-1] for r in self.data["records"]))
+
+    def test_map_filters_reveal_limited_and_needs_review(self):
+        html = ramp_finder.render_map(
+            self.data, ramp_finder.parse_filters({"limited": ["1"], "needs_review": ["1"]})
+        )
+        self.assertIn("Beaverdam", html)
+        self.assertIn("West Bogue", html)
+        self.assertIn("Limited access", html)
+        self.assertIn("Needs review", html)
+        self.assertIn("No map pin — address directions", html)
+
+    def test_map_payload_has_no_open_now_and_keeps_digest(self):
+        blob = json.dumps(self.payload)
+        self.assertNotIn("Open Now", blob)
+        self.assertEqual(
+            ramp_finder.inventory_facts_digest(self.data),
+            "e93754a3cfdd705701e62728f559e26f805b3d40be22aa0601f666febaecca26",
+        )
+
+    def test_map_assets_and_reserved_height(self):
+        css = ramp_finder.css_bytes().decode()
+        self.assertIn(".rf-map-stage{", css)
+        self.assertIn("min-height:280px", css)
+        self.assertIn("58svh", css)
+        js = ramp_finder.map_js_bytes().decode()
+        self.assertIn("basemap.nationalmap.gov", js)
+        self.assertIn("USGSTopo", js)
+        self.assertIn("USGSImageryOnly", js)
+        self.assertNotIn("tile.openstreetmap.org", js)
+        self.assertNotIn("arcgisonline.com", js)
+        status, ctype, body = ramp_finder.resolve_request("/preview/ramps/map.js", {})
+        self.assertEqual(status, 200)
+        self.assertIn("javascript", ctype)
+        self.assertEqual(body, ramp_finder.map_js_bytes())
+        status, ctype, raw = ramp_finder.resolve_request("/preview/ramps/map.json", {})
+        self.assertEqual(status, 200)
+        payload = json.loads(raw)
+        self.assertEqual(payload["counts"]["pin"], 40)
+        self.assertEqual(payload["counts"]["address"], 15)

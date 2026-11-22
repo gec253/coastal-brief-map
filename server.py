@@ -2816,7 +2816,7 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 <a class="card" href="/preview/home-hybrid"><b>Homepage concept C · Hybrid</b><span>Private sprint concept: heritage instruments with an editorial grid.</span></a>
 <a class="card" href="/catch-wall"><b>Catch Wall photo submissions</b><span>Private test: the Share form and the review page work in this browser, even while public uploads stay off. Photos you send wait in the pending queue until you approve them.</span></a>
 <a class="card" href="/reports"><b>What’s Biting? · fishing reports</b><span>Private preview: a report index and five regional pages (Crystal Coast, Hatteras, Falls Lake, Jordan Lake, and the Neuse from Falls Dam to Goldsboro). Cookie-gated, noindex, not in the sitemap. Not on the public homepage.</span></a>
-<a class="card" href="/preview/ramps"><b>Ramp Finder</b><span>Private data preview: searchable public boat-ramp list for the Crystal Coast, Falls Lake, Jordan Lake and the Neuse River. Cookie-gated, noindex, not in the sitemap. No interactive map. Not on the public homepage.</span></a>
+<a class="card" href="/preview/ramps"><b>Ramp Finder</b><span>Private data preview: searchable public boat-ramp list and a private interactive map prototype for the Crystal Coast, Falls Lake, Jordan Lake and the Neuse River. Cookie-gated, noindex, not in the sitemap. Not a public launch. Not on the public homepage.</span></a>
 <a class="card" href="/preview/photos-check"><b>Photo setup check</b><span>A private status report: storage, image tools, and the pending queue. It never shows keys.</span></a>
 <p><a href="/preview?lock=1">Lock this browser again</a></p></main></body></html>""" % PREVIEW_DAYS
 
