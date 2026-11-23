@@ -117,7 +117,7 @@ class Routes(unittest.TestCase):
         cls.httpd.server_close()
 
     def setUp(self):
-        self._env = {k: os.environ.get(k) for k in ("PREVIEW_KEY", "HOME_SHOWCASE", "MORNING_BRIEF_ENABLED", "FRESHWATER_ENABLED")}
+        self._env = {k: os.environ.get(k) for k in ("PREVIEW_KEY", "HOME_SHOWCASE", "MORNING_BRIEF_ENABLED", "FRESHWATER_ENABLED", "PUBLIC_WHATS_BITING", "PUBLIC_RAMPS", "PUBLIC_RAMP_MAP")}
         for k in self._env:
             os.environ.pop(k, None)
 
@@ -201,9 +201,18 @@ class Routes(unittest.TestCase):
         self.assertEqual(_normalize_live(body), _normalize_live(expected))
         self.assertNotIn(SECTION, body)
 
-    def test_valid_cookie_renders_section_text_credit_link_and_picture(self):
+    def test_valid_cookie_does_not_inject_featured_when_flag_off(self):
         os.environ["HOME_SHOWCASE"] = "1"
         status, hdrs, body = self._req("/", cookie="valid", key=KEY)
+        self.assertEqual(status, 200)
+        self.assertNotIn(SECTION, body)
+        self.assertNotIn("cookie", (hdrs.get("vary") or "").lower())
+        self.assertNotIn("noindex", (hdrs.get("x-robots-tag") or "").lower())
+
+    def test_flag_on_renders_featured_for_everyone_without_noindex_or_cookie_vary(self):
+        os.environ["PUBLIC_WHATS_BITING"] = "1"
+        os.environ["HOME_SHOWCASE"] = "1"
+        status, hdrs, body = self._req("/")
         self.assertEqual(status, 200)
         self.assertIn(SECTION, body)
         self.assertIn(b">On the Water<", body)
@@ -224,9 +233,8 @@ class Routes(unittest.TestCase):
         self.assertIn(b'decoding="async"', body)
         feat_html = body[body.find(SECTION):body.find(b'<aside class="cb-life"')]
         self.assertNotIn(b"fetchpriority", feat_html)
-        self.assertIn("no-store", hdrs.get("cache-control") or "")
-        self.assertIn("Cookie", hdrs.get("vary") or "")
-        self.assertIn("noindex", hdrs.get("x-robots-tag") or "")
+        self.assertNotIn("cookie", (hdrs.get("vary") or "").lower())
+        self.assertNotIn("noindex", (hdrs.get("x-robots-tag") or "").lower())
         # Placement: after Wind & Radar, before the lifestyle aside.
         sc = body.find(b'id="showcase"')
         feat = body.find(SECTION)
@@ -237,11 +245,13 @@ class Routes(unittest.TestCase):
         self.assertIn(b'data-sprint="hybrid"', body)
         self.assertIn(b"More than the forecast", body)
 
-    def test_valid_cookie_without_showcase_still_sits_before_lifestyle(self):
-        # HOME_SHOWCASE defaults off in tests.
-        status, _, body = self._req("/", cookie="valid", key=KEY)
+    def test_flag_on_without_showcase_still_sits_before_lifestyle(self):
+        os.environ["PUBLIC_WHATS_BITING"] = "1"
+        status, hdrs, body = self._req("/")
         self.assertEqual(status, 200)
         self.assertIn(SECTION, body)
+        self.assertNotIn("cookie", (hdrs.get("vary") or "").lower())
+        self.assertNotIn("noindex", (hdrs.get("x-robots-tag") or "").lower())
         self.assertEqual(body.find(b'id="showcase"'), -1)
         self.assertLess(body.find(SECTION), body.find(b'<aside class="cb-life"'))
 

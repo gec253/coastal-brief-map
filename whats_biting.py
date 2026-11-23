@@ -10,6 +10,7 @@ import json
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
+import html
 from xml.sax.saxutils import escape as esc
 
 ROOT = Path(__file__).resolve().parent
@@ -334,16 +335,28 @@ _THEME_TOGGLE = """<script>
 </script>"""
 
 
-def _shell(title: str, body: str, fixture: bool = False, skip: str = "Skip to the reports") -> str:
+SITE_ORIGIN = "https://thecoastalbrief.com"
+
+
+def _shell(title: str, body: str, fixture: bool = False, skip: str = "Skip to the reports", *, public: bool = False, canonical: str | None = None) -> str:
     css_text = css_bytes().decode("utf-8")
-    note = "TEST FIXTURE — not real reports or catches" if fixture else "Private preview — not public, not indexed"
+    robots = "index, follow" if public else "noindex, nofollow"
+    canon = f'<link rel="canonical" href="{html.escape(canonical, quote=True)}">\n' if (public and canonical) else ""
+    if fixture:
+        banner = '<p class="wb-banner">TEST FIXTURE — not real reports or catches</p>\n'
+    elif public:
+        banner = ""
+    else:
+        banner = '<p class="wb-banner">Private preview — not public, not indexed</p>\n'
+    brand = "/" if public else "/reports"
+    nav_label = "Site" if public else "Preview sections"
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#071C29">
+<meta name="robots" content="{robots}">
+{canon}<meta name="theme-color" content="#071C29">
 <title>{esc(title)}</title>
 <link rel="icon" href="/favicon.ico?v=20261121" sizes="48x48">
 <link rel="icon" href="/branding/favicon.svg?v=20261121" type="image/svg+xml">
@@ -357,15 +370,14 @@ def _shell(title: str, body: str, fixture: bool = False, skip: str = "Skip to th
 </head>
 <body class="wb-body{" is-fixture" if fixture else ""}">
 <a class="skip" href="#main">{esc(skip)}</a>
-<p class="wb-banner">{esc(note)}</p>
-<header class="wb-top">
+{banner}<header class="wb-top">
   <div class="wb-top-row">
-    <a class="wb-brand" href="/reports">The Coastal Brief</a>
+    <a class="wb-brand" href="{brand}">The Coastal Brief</a>
     <div class="wb-tools">
       <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
     </div>
   </div>
-  <nav class="wb-nav" aria-label="Preview sections">
+  <nav class="wb-nav" aria-label="{nav_label}">
     <a href="/reports" aria-current="page">What’s Biting?</a>
     <a href="/brief?region=crystal-coast">Morning Brief</a>
     <a href="/catch-wall">Catch Wall</a>
@@ -491,7 +503,7 @@ def _glance(region: dict, reports: list, confirmed: list) -> str:
 </div>"""
 
 
-def render_region(data: dict, region: dict, now: datetime | None = None) -> str:
+def render_region(data: dict, region: dict, now: datetime | None = None, *, public: bool = False) -> str:
     fixture = bool(region.get("is_fixture"))
     reports = visible_reports(region, now)
     confirmed = visible_confirmed(region, now)
@@ -559,8 +571,11 @@ def render_region(data: dict, region: dict, now: datetime | None = None) -> str:
 {"<h2>Seasonal notes</h2>" + seasonal_html if seasonal_html else ""}
 {"" if fixture else '<nav class="region-nav" aria-label="What’s Biting? regions">' + _region_nav(data, region.get("id")) + "</nav>"}
 """
-    title = f"{region.get('name')} — What’s Biting? (private preview)"
-    return _shell(title, body, fixture=fixture)
+    name = region.get("name") or "Region"
+    title = f"{name} — What’s Biting?" if public else f"{name} — What’s Biting? (private preview)"
+    rid = region.get("id") or ""
+    canonical = f"{SITE_ORIGIN}/reports/{rid}" if rid and not region.get("is_fixture") else (f"{SITE_ORIGIN}/reports" if public else None)
+    return _shell(title, body, fixture=fixture, public=public, canonical=canonical)
 
 
 def _region_nav(data: dict, current: str | None) -> str:
@@ -573,7 +588,7 @@ def _region_nav(data: dict, current: str | None) -> str:
     return "".join(bits)
 
 
-def render_index(data: dict, now: datetime | None = None) -> str:
+def render_index(data: dict, now: datetime | None = None, *, public: bool = False) -> str:
     cards = []
     for r in data.get("regions") or []:
         reports = visible_reports(r, now)
@@ -599,20 +614,31 @@ def render_index(data: dict, now: datetime | None = None) -> str:
     body = f"""
 <p class="kicker">North Carolina fishing reports</p>
 <h1>What’s Biting?</h1>
-<p class="scope">Dated first-party links and official notices. Catch descriptions are not republished. Private preview — not a public page.</p>
+<p class="scope">Dated first-party links and official notices. Catch descriptions are not republished.{"" if public else " Private preview — not a public page."}</p>
 <p class="checked">Sources last checked {esc(checked)} · Eastern Time.</p>
 <div class="index-grid">
 {''.join(cards)}
 </div>
 """
-    return _shell("What’s Biting? — private preview", body)
+    title = "What’s Biting?" if public else "What’s Biting? — private preview"
+    return _shell(title, body, public=public, canonical=f"{SITE_ORIGIN}/reports")
 
 
 
 def format_reviewed_line(article: dict) -> str:
-    pub = article.get("published_label") or "pending approval"
+    """Publication date is hidden until published_at is set at release time.
+
+    No fallback label such as "pending approval" is shown. reviewed stays visible
+    when present.
+    """
+    parts = []
+    published_at = parse_date(article.get("published_at"))
+    if published_at:
+        parts.append(f"Published {format_date_short(published_at)}")
     reviewed = format_date_short(parse_date(article.get("reviewed")))
-    return f"Published: {pub} · Reviewed {reviewed}"
+    if reviewed:
+        parts.append(f"Reviewed {reviewed}")
+    return " · ".join(parts)
 
 
 def region_articles(region: dict | None) -> list[dict]:
@@ -716,7 +742,7 @@ def _sources_html(sources: list | None) -> str:
     return f'<ol class="sources">{"".join(items)}</ol>'
 
 
-def render_article(data: dict, region: dict, article: dict) -> str:
+def render_article(data: dict, region: dict, article: dict, *, public: bool = False) -> str:
     rid = region.get("id") or ""
     rname = region.get("name") or rid
     headline = article.get("headline") or "On the Water"
@@ -742,7 +768,7 @@ def render_article(data: dict, region: dict, article: dict) -> str:
 <p class="kicker">On the Water</p>
 <h1>{esc(headline)}</h1>
 <p class="article-dek">{esc(dek)}</p>
-<p class="article-meta">{esc(dates)}</p>
+{f'<p class="article-meta">{esc(dates)}</p>' if dates else ""}
 <div class="article-body">
 <p>{esc(article.get("lead") or "")}</p>
 {body_sections}
@@ -753,24 +779,31 @@ def render_article(data: dict, region: dict, article: dict) -> str:
 {fact_html}
 <nav class="region-nav" aria-label="What’s Biting? regions">{_region_nav(data, rid)}</nav>
 """
-    title = f"{headline} — What’s Biting? (private preview)"
-    return _shell(title, body, skip="Skip to the article")
+    title = f"{headline} — What’s Biting?" if public else f"{headline} — What’s Biting? (private preview)"
+    slug = article.get("slug") or ""
+    canonical = f"{SITE_ORIGIN}/reports/{rid}/{slug}" if rid and slug else None
+    return _shell(title, body, skip="Skip to the article", public=public, canonical=canonical)
 
 
-def resolve_request(path: str, query: dict[str, list[str]] | None = None, now: datetime | None = None, data: dict | None = None) -> tuple[int, str, str]:
-    """Return (status, content_type, body) for a gated /reports path. Caller must enforce the cookie."""
+def resolve_request(path: str, query: dict[str, list[str]] | None = None, now: datetime | None = None, data: dict | None = None, *, public: bool = False, allow_fixtures: bool = False) -> tuple[int, str, str]:
+    """Return (status, content_type, body) for a /reports path.
+
+    Fixtures are served only when allow_fixtures is true, which the server
+    grants solely on cookie-gated /preview/reports paths (and tests). Public
+    /reports routes never honor ?fixture=.
+    """
     data = data or load()
     q = query or {}
-    fixture = (q.get("fixture") or [""])[0].strip().lower()
+    fixture = (q.get("fixture") or [""])[0].strip().lower() if allow_fixtures else ""
     raw = path.rstrip("/") or "/reports"
     if raw in ("/reports", "/preview/reports"):
         if fixture == "freshness":
             region = freshness_fixture_region(now)
-            return 200, "text/html; charset=utf-8", render_region(data, region, now)
+            return 200, "text/html; charset=utf-8", render_region(data, region, now, public=False)
         if fixture == "empty":
             region = empty_fixture_region()
-            return 200, "text/html; charset=utf-8", render_region(data, region, now)
-        return 200, "text/html; charset=utf-8", render_index(data, now)
+            return 200, "text/html; charset=utf-8", render_region(data, region, now, public=False)
+        return 200, "text/html; charset=utf-8", render_index(data, now, public=public)
     if raw in ("/reports.css", "/preview/reports.css"):
         return 200, "text/css; charset=utf-8", css_bytes().decode("utf-8")
     prefix = "/reports/"
@@ -779,20 +812,36 @@ def resolve_request(path: str, query: dict[str, list[str]] | None = None, now: d
         rid = raw[len(prefix):] if raw.startswith(prefix) else raw[len(alt):]
         rid = rid.strip("/")
         if fixture == "freshness":
-            return 200, "text/html; charset=utf-8", render_region(data, freshness_fixture_region(now), now)
+            return 200, "text/html; charset=utf-8", render_region(data, freshness_fixture_region(now), now, public=False)
         if fixture == "empty":
-            return 200, "text/html; charset=utf-8", render_region(data, empty_fixture_region(), now)
+            return 200, "text/html; charset=utf-8", render_region(data, empty_fixture_region(), now, public=False)
         parts = [p for p in rid.split("/") if p]
         if len(parts) == 1:
             region = region_by_id(data, parts[0])
             if not region:
                 return 404, "text/plain; charset=utf-8", "not found"
-            return 200, "text/html; charset=utf-8", render_region(data, region, now)
+            return 200, "text/html; charset=utf-8", render_region(data, region, now, public=public)
         if len(parts) == 2:
             region = region_by_id(data, parts[0])
             article = article_by_slug(region, parts[1]) if region else None
             if not region or not article:
                 return 404, "text/plain; charset=utf-8", "not found"
-            return 200, "text/html; charset=utf-8", render_article(data, region, article)
+            return 200, "text/html; charset=utf-8", render_article(data, region, article, public=public)
         return 404, "text/plain; charset=utf-8", "not found"
     return 404, "text/plain; charset=utf-8", "not found"
+
+
+def sitemap_paths() -> list[str]:
+    """Public URL paths to add to sitemap.xml when PUBLIC_WHATS_BITING is on."""
+    paths = ["/reports"]
+    data = load()
+    for r in data.get("regions") or []:
+        rid = r.get("id")
+        if not rid:
+            continue
+        paths.append(f"/reports/{rid}")
+        for article in r.get("articles") or []:
+            slug = article.get("slug")
+            if slug:
+                paths.append(f"/reports/{rid}/{slug}")
+    return paths

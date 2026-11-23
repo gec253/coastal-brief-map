@@ -309,6 +309,17 @@ class InventoryUnchangedFromDeploy(unittest.TestCase):
     DIGEST_AFTER_COORDINATE_UPDATE = (
         "bc484d966b24131ab101f289345d81bf775ee03234c0a474d9752a5cbcb699b5"
     )
+    DIGEST_AFTER_NOTICE_UPDATE = (
+        "d4710de871b32705e0a9f877809b973774de3904fbd082a778b4f9f302041d91"
+    )
+    ALLOWED_NOTICE_RECORDS = frozenset({
+        "parks-jordan-seaforth",
+        "parks-jordan-vista-point-sailboat",
+        "parks-jordan-ebenezer",
+        "parks-jordan-new-hope",
+        "parks-falls-holly-point-campers",
+    })
+    ALLOWED_META_KEYS = frozenset({"jordan_lake_official_notice", "recheck_before_release"})
     DIGEST_AT_A03BF4C = (
         "e93754a3cfdd705701e62728f559e26f805b3d40be22aa0601f666febaecca26"
     )
@@ -325,16 +336,37 @@ class InventoryUnchangedFromDeploy(unittest.TestCase):
         data = json.loads(current)
         base = json.loads(baseline)
         self.assertEqual(data["counts"], base["counts"])
-        self.assertEqual(data["meta"], base["meta"])
         self.assertEqual(len(data["records"]), 55)
         self.assertEqual([r["id"] for r in data["records"]], [r["id"] for r in base["records"]])
+        self.assertNotIn("parkers", " ".join(r["id"] for r in data["records"]))
+        meta_diffs = []
+        for key in sorted(set(data["meta"]) | set(base["meta"])):
+            if data["meta"].get(key) == base["meta"].get(key):
+                continue
+            if key not in self.ALLOWED_META_KEYS:
+                meta_diffs.append(key)
+        self.assertEqual(meta_diffs, [], msg=meta_diffs)
+        self.assertIn("jordan_lake_official_notice", data["meta"])
+        self.assertIn("Parkers Creek", data["meta"]["jordan_lake_official_notice"]["text"])
+        self.assertIn("no ramp record or coordinates were added", data["meta"]["jordan_lake_official_notice"]["text"])
 
         diffs = []
         for rec, old in zip(data["records"], base["records"]):
             if rec == old:
                 continue
-            if rec["id"] != self.ALLOWED_COORDINATE_RECORD:
+            if rec["id"] == self.ALLOWED_COORDINATE_RECORD:
+                pass
+            elif rec["id"] in self.ALLOWED_NOTICE_RECORDS:
+                for key in sorted(set(rec) | set(old)):
+                    if rec.get(key) == old.get(key):
+                        continue
+                    if key != "notices":
+                        diffs.append((rec["id"], f"disallowed field changed: {key}"))
+                continue
+            else:
                 diffs.append((rec["id"], "unexpected record changed"))
+                continue
+            if rec["id"] != self.ALLOWED_COORDINATE_RECORD:
                 continue
             for key in sorted(set(rec) | set(old)):
                 if rec.get(key) == old.get(key):
@@ -358,7 +390,7 @@ class InventoryUnchangedFromDeploy(unittest.TestCase):
         self.assertIn("Nov 22, 2026", wb["coordinates_source"])
 
         self.assertEqual(ramp_finder.inventory_facts_digest(base), self.DIGEST_AT_A03BF4C)
-        self.assertEqual(ramp_finder.inventory_facts_digest(data), self.DIGEST_AFTER_COORDINATE_UPDATE)
+        self.assertEqual(ramp_finder.inventory_facts_digest(data), self.DIGEST_AFTER_NOTICE_UPDATE)
         self.assertEqual(data["counts"]["total"]["total"], 55)
         self.assertEqual(data["counts"]["total"]["general"], 48)
         self.assertEqual(data["counts"]["total"]["limited"], 3)
@@ -555,7 +587,7 @@ class MapPrototype(unittest.TestCase):
         self.assertNotIn("Open Now", blob)
         self.assertEqual(
             ramp_finder.inventory_facts_digest(self.data),
-            "bc484d966b24131ab101f289345d81bf775ee03234c0a474d9752a5cbcb699b5",
+            "d4710de871b32705e0a9f877809b973774de3904fbd082a778b4f9f302041d91",
         )
 
     def test_map_assets_and_reserved_height(self):

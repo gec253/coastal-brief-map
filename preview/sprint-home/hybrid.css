@@ -560,6 +560,14 @@ html[data-mastchart] .mh-hybrid .mh-plate::before{content:"";position:absolute;l
 @media (min-width:640px){.nstrip{height:112px}}
 @media (min-width:1024px){.nstrip{height:132px}}
 
+/* Folio body entry links (t425u). 44px targets, not in the masthead. */
+.folio-guides{margin:10px 0 14px;padding:0;}
+.folio-guides-k{margin:0 0 4px;font:700 .7rem/1.3 var(--f-ui);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);}
+.folio-guides-l{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:stretch;}
+.folio-guides a{display:inline-flex;align-items:center;gap:8px;min-height:44px;min-width:44px;padding:0 14px;border-radius:6px;border:1px solid var(--band-edge);background:var(--paper);color:var(--ink);text-decoration:none;font:600 .9rem/1.2 var(--f-ui);}
+.folio-guides a:hover,.folio-guides a:focus-visible{outline:2px solid var(--accent-2);outline-offset:2px;}
+.folio-guides-note{font:500 .78rem/1.2 var(--f-ui);color:var(--ink-2);}
+
 /* Night only: one continuous wash above both photo halves.
    Same natural-color assets, box dimensions and daytime presentation. */
 @media (prefers-color-scheme:dark){

@@ -1422,7 +1422,8 @@ import windgrid  # noqa: E402
 import hrrrgrid  # noqa: E402
 import radarview  # noqa: E402
 import showcase  # noqa: E402  (homepage Wind & Radar section; HOME_SHOWCASE flag, default off)
-import featured_home  # noqa: E402  (cookie-gated Featured in The Coastal Brief; public / unchanged)
+import featured_home  # noqa: E402  (Featured in The Coastal Brief; public when PUBLIC_WHATS_BITING is on)
+import launch_flags  # noqa: E402  (default-off public launch flags; t425u)
 import theme_toggle  # noqa: E402  (homepage day/night toggle; /preview/home-b only for now)
 import whats_biting  # noqa: E402  (private /reports preview; cookie-gated, not public)
 import ramp_finder  # noqa: E402  (private /preview/ramps data preview; cookie-gated, not public)
@@ -2713,6 +2714,13 @@ def public_sitemap_urls() -> list[str]:
     if freshwater.flag_on():
         for rid in ("falls-lake", "jordan-lake", "neuse-river"):
             urls.append(SITE_ORIGIN + "/lake?region=" + rid)
+    if launch_flags.whats_biting_public():
+        for path in whats_biting.sitemap_paths():
+            urls.append(SITE_ORIGIN + path)
+    if launch_flags.ramps_public():
+        urls.append(SITE_ORIGIN + "/ramps")
+    if launch_flags.ramp_map_public():
+        urls.append(SITE_ORIGIN + "/ramps/map")
     return urls
 
 
@@ -2960,6 +2968,9 @@ class Handler(SimpleHTTPRequestHandler):
             # Private What’s Biting? preview (Ed t401u). Same cookie as /preview; 404 without it.
             # No public nav, no sitemap entry, no homepage changes.
             return self._whats_biting_route(parsed)
+        if (parsed.path in ("/ramps", "/ramps/", "/ramps.css", "/ramps.json")
+                or parsed.path.startswith("/ramps/")):
+            return self._ramp_finder_public_route(parsed)
         if (parsed.path in ("/preview/ramps", "/preview/ramps/", "/preview/ramps.css",
                             "/preview/ramps.json")
                 or parsed.path.startswith("/preview/ramps/")):
@@ -3452,18 +3463,14 @@ class Handler(SimpleHTTPRequestHandler):
             return self._send_html(ROOT / "index.html", region_id=rid)
         if sc:  # Concept A Wind & Radar section; only when HOME_SHOWCASE is on
             data = showcase.inject(data, sc, radar_meta=handle_radar_meta)
-        # Cookie-gated Featured in The Coastal Brief (Ed t412u). Public HTML and
-        # headers stay on the existing path: inject only when cb_preview is valid.
-        preview = self._preview_ok()
-        if preview:
+        # Featured is public only when PUBLIC_WHATS_BITING is on. It must not
+        # noindex, cookie-vary, or add no-store to the public homepage.
+        # /preview/home-b stays a separate cookie-gated route.
+        if launch_flags.whats_biting_public():
             data = featured_home.inject(data, rid)
         self.send_response(200)
         if sc:
             self.send_header("Cache-Control", "no-store")
-        if preview:
-            self.send_header("Cache-Control", "no-store")
-            self.send_header("Vary", "Cookie")
-            self.send_header("X-Robots-Tag", "noindex, nofollow")
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
@@ -3507,12 +3514,31 @@ class Handler(SimpleHTTPRequestHandler):
         return self._send_private(None, "text/html; charset=utf-8", data)
 
 
+    def _ramp_finder_public_route(self, parsed):
+        """Public /ramps and /ramps/map, only when the matching launch flag is on."""
+        path = parsed.path or "/ramps"
+        is_map = (
+            path.rstrip("/") == "/ramps/map"
+            or path in ("/ramps/map.js", "/ramps/map.json")
+        )
+        if is_map:
+            if not launch_flags.ramp_map_public():
+                return self.send_error(404, "not found")
+        elif not launch_flags.ramps_routes_public():
+            return self.send_error(404, "not found")
+        q = parse_qs(parsed.query or "")
+        status, ctype, body = ramp_finder.resolve_request(path, q, public=True)
+        if status != 200:
+            return self.send_error(status, "not found")
+        data = body.encode("utf-8") if isinstance(body, str) else body
+        return self._send_private(None, ctype, data, status, robots="index, follow")
+
     def _ramp_finder_route(self, parsed):
         """Cookie-gated /preview/ramps preview. 404 without the preview cookie. noindex, no-store."""
         if not self._preview_ok():
             return self.send_error(404, "not found")
         q = parse_qs(parsed.query or "")
-        status, ctype, body = ramp_finder.resolve_request(parsed.path, q)
+        status, ctype, body = ramp_finder.resolve_request(parsed.path, q, public=False)
         if status != 200:
             return self.send_error(status, "not found")
         data = body.encode("utf-8") if isinstance(body, str) else body
@@ -3522,14 +3548,38 @@ class Handler(SimpleHTTPRequestHandler):
         )
 
     def _whats_biting_route(self, parsed):
-        """Cookie-gated /reports preview. 404 without the preview cookie. noindex, no-store."""
-        if not self._preview_ok():
-            return self.send_error(404, "not found")
+        """What’s Biting? /reports.
+
+        /preview/reports stays cookie-gated and may serve test fixtures.
+        Public /reports is reachable without a cookie only when
+        PUBLIC_WHATS_BITING is on; fixtures are never honored on /reports.
+        When the flag is off, /reports remains cookie-gated (no fixtures).
+        """
+        path = parsed.path or "/reports"
+        preview_path = path.startswith("/preview/reports")
+        public_flag = launch_flags.whats_biting_public()
+        if preview_path:
+            if not self._preview_ok():
+                return self.send_error(404, "not found")
+            public = False
+            allow_fixtures = True
+        elif public_flag:
+            public = True
+            allow_fixtures = False
+        else:
+            if not self._preview_ok():
+                return self.send_error(404, "not found")
+            public = False
+            allow_fixtures = False
         q = parse_qs(parsed.query or "")
-        status, ctype, body = whats_biting.resolve_request(parsed.path, q)
+        status, ctype, body = whats_biting.resolve_request(
+            path, q, public=public, allow_fixtures=allow_fixtures,
+        )
         if status != 200:
             return self.send_error(status, "not found")
         data = body.encode("utf-8") if isinstance(body, str) else body
+        if public:
+            return self._send_private(None, ctype, data, status, robots="index, follow")
         return self._send_private(
             None, ctype, data, status,
             extra=[("Cache-Control", "no-store"), ("Vary", "Cookie")],

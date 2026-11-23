@@ -1612,8 +1612,11 @@ def page_hybrid(m: dict, P: dict, public: bool = False) -> str:
              credit_html(hero))
     else:
         horizon = '<div class="hz-none" aria-hidden="true"></div>'
+    import folio_entry
+    rid = (m.get("region") or {}).get("id") or ""
     return (
         conditions_html(m, variant="hybrid", public=public)
+        + folio_entry.guides_html(rid, public_page=public)
         + character_html(m, P)
         + horizon
         + BRAND_LINE

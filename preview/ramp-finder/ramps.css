@@ -457,3 +457,6 @@ html[data-theme="dark"] .rf-sheet-panel{background:var(--card);color:var(--ivory
 html[data-theme="dark"] .rf-sheet-panel h3,
 html[data-theme="dark"] .rf-sheet-close{color:var(--ivory);}
 html[data-theme="dark"] .rf-sheet-actions .btn{background:var(--ivory);color:var(--navy);border-color:var(--ivory);}
+
+.region-notice{border-left:4px solid #8c2f23;margin:12px 0;}
+.region-notice .notice-meta{margin:6px 0 0;font-size:.88rem;}

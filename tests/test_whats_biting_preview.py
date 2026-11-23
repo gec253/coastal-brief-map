@@ -92,7 +92,9 @@ class DataAndPages(unittest.TestCase):
         self.assertTrue(any("Frank" in n and "Fran" in n for n in names))
         self.assertTrue(any("Frisco" in n for n in names))
         self.assertTrue(any("Hatteras Harbor" in n for n in names))
-        self.assertEqual({r["as_of"] for r in h["reports"]}, {"2026-11-20"})
+        as_of = {r["source_name"]: r["as_of"] for r in h["reports"]}
+        self.assertEqual(as_of.get("Frank & Fran's, Avon"), "2026-11-21")
+        self.assertEqual({r["as_of"] for r in h["reports"] if "Fran" not in r["source_name"]}, {"2026-11-20"})
         cc = whats_biting.region_by_id(self.data, "crystal-coast")
         self.assertEqual(cc["reports"][0]["source_name"], "Bogue Inlet Pier")
         self.assertEqual(cc["reports"][0]["as_of"], "2026-11-15")
@@ -150,9 +152,10 @@ class DataAndPages(unittest.TestCase):
         self.assertNotIn('data-empty="reports"', h)
         self.assertIn('data-empty="confirmed"', h)
         self.assertIn("None independently confirmed", h)
-        # Nov 20 versus Nov 21 is Fresh.
+        # Nov 20 or Nov 21 versus Nov 21 is Fresh.
         self.assertIn("badge-fresh", h)
         self.assertIn("November 20, 2026", h)
+        self.assertIn("November 21, 2026", h)
         cc = whats_biting.render_region(self.data, whats_biting.region_by_id(self.data, "crystal-coast"), self.now)
         # Nov 15 versus Nov 21 is Recent (6 days).
         self.assertIn("badge-recent", cc)
@@ -164,7 +167,7 @@ class DataAndPages(unittest.TestCase):
         self.assertIn("not republished", h.lower())
         # Glance shows newest date near the top, before official notices.
         top = h.split("Latest local reports")[0]
-        self.assertIn("November 20, 2026", top)
+        self.assertIn("November 21, 2026", top)
         self.assertIn("Verified species", top)
 
     def test_flagged_publications_are_not_rendered(self):
@@ -205,7 +208,7 @@ class Gating(unittest.TestCase):
         cls.httpd.server_close()
 
     def _req(self, path, env=None, cookie=None):
-        saved = {k: os.environ.get(k) for k in ("PREVIEW_KEY", "MORNING_BRIEF_ENABLED", "FRESHWATER_ENABLED")}
+        saved = {k: os.environ.get(k) for k in ("PREVIEW_KEY", "MORNING_BRIEF_ENABLED", "FRESHWATER_ENABLED", "PUBLIC_WHATS_BITING", "PUBLIC_RAMPS", "PUBLIC_RAMP_MAP")}
         try:
             os.environ.pop("PREVIEW_KEY", None)
             if env:
@@ -335,7 +338,7 @@ class TestOnTheWaterArticles(unittest.TestCase):
         cls.httpd.server_close()
 
     def _req(self, path, env=None, cookie=None):
-        saved = {k: os.environ.get(k) for k in ("PREVIEW_KEY", "MORNING_BRIEF_ENABLED", "FRESHWATER_ENABLED")}
+        saved = {k: os.environ.get(k) for k in ("PREVIEW_KEY", "MORNING_BRIEF_ENABLED", "FRESHWATER_ENABLED", "PUBLIC_WHATS_BITING", "PUBLIC_RAMPS", "PUBLIC_RAMP_MAP")}
         try:
             os.environ.pop("PREVIEW_KEY", None)
             if env:
@@ -417,7 +420,9 @@ class TestOnTheWaterArticles(unittest.TestCase):
         self.assertIn('href="https://deq.nc.gov/report-my-fish"', html)
         self.assertIn("deq.nc.gov/report-my-fish", html)
         self.assertNotIn("certain inland waters", html)
-        self.assertIn("Published: pending approval · Reviewed Nov 21, 2026", html)
+        self.assertIn("Reviewed Nov 21, 2026", html)
+        self.assertNotIn("pending approval", html)
+        self.assertNotIn("Published:", html)
         self.assertIn('href="/reports/crystal-coast"', html)
         self.assertIn("Rules to check", html)
         self.assertIn("Skip to the article", html)
@@ -433,7 +438,9 @@ class TestOnTheWaterArticles(unittest.TestCase):
         )
         self.assertIn('href="https://deq.nc.gov/report-my-fish"', html)
         self.assertNotIn("DMF’s 2019 management explainer sets useful marks, in Fahrenheit:", html)
-        self.assertIn("Published: pending approval · Reviewed Nov 21, 2026", html)
+        self.assertIn("Reviewed Nov 21, 2026", html)
+        self.assertNotIn("pending approval", html)
+        self.assertNotIn("Published:", html)
         self.assertIn('href="/reports/hatteras"', html)
         self.assertIn("Rules to check", html)
 
@@ -452,7 +459,9 @@ class TestOnTheWaterArticles(unittest.TestCase):
         cc = self._html("/reports/crystal-coast")
         self.assertIn('href="/reports/crystal-coast/when-the-sound-turns-cold"', cc)
         self.assertIn("When the Sound Turns Cold: Spotted Seatrout and Winter Water Temperatures", cc)
-        self.assertIn("Published: pending approval · Reviewed Nov 21, 2026", cc)
+        self.assertIn("Reviewed Nov 21, 2026", cc)
+        self.assertNotIn("pending approval", cc)
+        self.assertNotIn("Published:", cc)
         self.assertLess(cc.find(">Latest local reports<"), cc.find(">Confirmed activity<"))
         self.assertLess(cc.find(">Confirmed activity<"), cc.find('id="otw-heading"'))
         self.assertLess(cc.find('id="otw-heading"'), cc.find(">Official notices<"))

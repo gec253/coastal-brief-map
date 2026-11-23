@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "last_checked": "2026-11-21",
-  "last_checked_note": "Official pages and first-party report dates were verified Saturday, November 21, 2026, America/New_York. Catch descriptions are not republished.",
+  "last_checked": "2026-11-22",
+  "last_checked_note": "Official pages and first-party report dates were re-verified Sunday, November 22, 2026, 8:39 PM EST, America/New_York. Catch descriptions are not republished. Frank & Fran's latest dated report on the shop hub was November 21, 2026. The fish-consumption advisory hub now redirects to https://epi.dph.ncdhhs.gov/oee/fish/arcg.html.",
   "flagged_for_review": [
     {
       "name": "outerbankssurffishing.com report roundup",
@@ -28,7 +28,7 @@
     {
       "id": "crystal-coast",
       "name": "Crystal Coast",
-      "short_name": "Morehead City \u00b7 Beaufort",
+      "short_name": "Morehead City · Beaufort",
       "water_type": "saltwater",
       "scope": "Morehead City, Beaufort, and the Emerald Isle / Bogue Inlet shore when a source is local to those waters.",
       "reports": [
@@ -44,8 +44,8 @@
       "outlooks": [],
       "seasonal": [
         {
-          "title": "Bogue Inlet Pier\u2019s seasonal hours",
-          "body": "Bogue Inlet Pier says it closes for the season on Sunday, November 29, 2026, at 5 p.m., and reopens Friday, March 12, 2027. Season-pass holders and their guests may still use the pier in winter, according to the pier. This is the pier\u2019s own schedule, not a catch report or a forecast of what will be biting.",
+          "title": "Bogue Inlet Pier’s seasonal hours",
+          "body": "Bogue Inlet Pier says it closes for the season on Sunday, November 29, 2026, at 5 p.m., and reopens Friday, March 12, 2027. Season-pass holders and their guests may still use the pier in winter, according to the pier. This is the pier’s own schedule, not a catch report or a forecast of what will be biting.",
           "as_of": "2026-11-15",
           "scope": "Bogue Inlet Pier, Emerald Isle"
         }
@@ -60,7 +60,6 @@
           "slug": "when-the-sound-turns-cold",
           "headline": "When the Sound Turns Cold: Spotted Seatrout and Winter Water Temperatures",
           "dek": "What official temperature marks mean for speckled trout in Bogue Sound, the creeks that feed it, and the waters inside Beaufort Inlet — and how to read a cold-stun closure if one is declared.",
-          "published_label": "pending approval",
           "reviewed": "2026-11-21",
           "lead": "Spotted seatrout — speckled trout to most North Carolina anglers — spend the winter in our estuaries. That is established biology from the N.C. Division of Marine Fisheries, not a report of what is happening this week in Bogue Sound or around Beaufort Inlet.",
           "sections": [
@@ -213,7 +212,8 @@
               ]
             }
           ],
-          "fact_types": "Seasonal / biological: temperature thresholds, estuarine overwintering, Sea Grant / Ellis telemetry. Historical: January 2025 and late January–February 2026 stuns and the FF-12-2026 closure. Regulatory (re-verify before publication): FF-31-2026 slot and bag, director’s closure authority, harvest reporting, and the waters to which those rules apply."
+          "fact_types": "Seasonal / biological: temperature thresholds, estuarine overwintering, Sea Grant / Ellis telemetry. Historical: January 2025 and late January–February 2026 stuns and the FF-12-2026 closure. Regulatory (re-verify before publication): FF-31-2026 slot and bag, director’s closure authority, harvest reporting, and the waters to which those rules apply.",
+          "published_at": null
         }
       ]
     },
@@ -234,7 +234,7 @@
         {
           "source_name": "Frank & Fran's, Avon",
           "source_url": "https://hatteras-island.com/fishing-report/",
-          "as_of": "2026-11-20",
+          "as_of": "2026-11-21",
           "scope": "Hatteras Island",
           "title": "Hatteras Island fishing report"
         },
@@ -266,7 +266,6 @@
           "slug": "seatrout-winterkill-pamlico",
           "headline": "Winterkill Science in Pamlico Sound: Spotted Seatrout After a Hard Winter",
           "dek": "What tagged-fish research in Pamlico Sound shows about winterkill — and how to use official temperature marks and proclamations without treating last winter’s closure as a forecast.",
-          "published_label": "pending approval",
           "reviewed": "2026-11-21",
           "lead": "Pamlico Sound is a Hatteras fishing ground. It has also been a study area for how winter weather affects spotted seatrout. What follows is established science. It is not a substitute for a current, confirmed fishing report from the sound side or the ocean side of Hatteras Island, and it is not a claim about fish at Hatteras Inlet or Oregon Inlet.",
           "sections": [
@@ -412,7 +411,8 @@
               ]
             }
           ],
-          "fact_types": "Seasonal / biological: Pamlico Sound / Neuse / Pamlico River study results, temperature thresholds, overwintering behavior. Historical: late January–February 2026 stun and the FF-12-2026 closure. Regulatory (re-verify before publication): FF-31-2026 slot and bag, director’s closure authority, harvest reporting, and the waters to which those rules apply."
+          "fact_types": "Seasonal / biological: Pamlico Sound / Neuse / Pamlico River study results, temperature thresholds, overwintering behavior. Historical: late January–February 2026 stun and the FF-12-2026 closure. Regulatory (re-verify before publication): FF-31-2026 slot and bag, director’s closure authority, harvest reporting, and the waters to which those rules apply.",
+          "published_at": null
         }
       ]
     },
@@ -508,15 +508,15 @@
       "as_of": "2026-11-01",
       "as_of_label": "PDF marked UPDATED 11/1/2026",
       "scope": "Statewide coastal and joint fishing waters",
-      "body": "Official printable size and bag guide. The PDF\u2019s own updated date is shown. Limits are linked, not restated here.",
+      "body": "Official printable size and bag guide. The PDF’s own updated date is shown. Limits are linked, not restated here.",
       "kind": "seasonal-official"
     },
     "dph-advisories": {
       "title": "North Carolina fish consumption advisories",
       "source_name": "N.C. Division of Public Health",
-      "source_url": "https://epi.dph.ncdhhs.gov/oee/fish/advisories.html",
+      "source_url": "https://epi.dph.ncdhhs.gov/oee/fish/arcg.html",
       "as_of": null,
-      "as_of_label": "Date not shown on the hub page",
+      "as_of_label": "Destination verified Nov 22, 2026, 8:39 PM EST. The previous advisories.html URL meta-refreshes here. Date is not shown on the hub page.",
       "scope": "Statewide, with waterbody-specific advisories",
       "body": "Official health advisories. Linked only; this page does not paraphrase an advisory as fishing advice.",
       "kind": "advisory"
@@ -531,7 +531,7 @@
       "body": "Official full and partial ramp closures. Check the agency page before launching. This is an access notice, not a catch report."
     },
     "ncwrc-inland-regs": {
-      "title": "2026\u201327 Inland Fishing, Hunting & Trapping Regulations Digest",
+      "title": "2026–27 Inland Fishing, Hunting & Trapping Regulations Digest",
       "source_name": "N.C. Wildlife Resources Commission",
       "source_url": "https://www.ncwildlife.gov/hunt/fishing-hunting-trapping-regulations",
       "as_of": "2026-08-01",
@@ -569,7 +569,7 @@
       "body": "Official park hours, access, and alerts. The park page has no fishing report."
     },
     "jordan-stocking": {
-      "title": "NCWRC 2026 warmwater stocking list \u2014 Jordan Reservoir",
+      "title": "NCWRC 2026 warmwater stocking list — Jordan Reservoir",
       "source_name": "N.C. Wildlife Resources Commission",
       "source_url": "https://www.ncwildlife.gov/fishing/hatcheries-and-stocking/warmwater-stocking-list-district-2026",
       "as_of": "2026-02-20",

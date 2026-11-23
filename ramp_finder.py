@@ -125,9 +125,31 @@ def _qs(params: dict) -> str:
     return urlencode(items)
 
 
-def _list_url(params: dict) -> str:
+SITE_ORIGIN = "https://thecoastalbrief.com"
+
+
+def list_base(public: bool = False) -> str:
+    return "/ramps" if public else "/preview/ramps"
+
+
+def map_base(public: bool = False) -> str:
+    return "/ramps/map" if public else "/preview/ramps/map"
+
+
+def _list_url(params: dict, public: bool = False) -> str:
     q = _qs(params)
-    return "/preview/ramps?" + q if q else "/preview/ramps"
+    base = list_base(public)
+    return base + "?" + q if q else base
+
+
+def _map_url(params: dict, public: bool = False) -> str:
+    q = _qs(params)
+    base = map_base(public)
+    return base + "?" + q if q else base
+
+
+def _detail_url(rid: str, public: bool = False) -> str:
+    return f"{list_base(public)}/{rid}"
 
 
 def parse_filters(q: dict) -> dict:
@@ -243,15 +265,21 @@ def hidden_counts(data, filters: dict):
     return hid_lim, hid_rev
 
 
-def _shell(title: str, body: str, skip: str = "Skip to the ramp list", *, current: str = "list", extra_head: str = "", extra_script: str = "", main_class: str = "") -> str:
+def _shell(title: str, body: str, skip: str = "Skip to the ramp list", *, current: str = "list", extra_head: str = "", extra_script: str = "", main_class: str = "", public: bool = False, canonical: str | None = None) -> str:
+    import launch_flags
     css_text = css_bytes().decode("utf-8")
+    if public and not launch_flags.ramp_map_public():
+        map_nav = ""
+    else:
+        cur = " aria-current=\"page\"" if current == "map" else ""
+        map_nav = f'<a href="{map_base(public)}"{cur}>Map</a>'
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#071C29">
+<meta name="robots" content="{"index, follow" if public else "noindex, nofollow"}">
+{f'<link rel="canonical" href="{esc(canonical)}">\n' if (public and canonical) else ""}<meta name="theme-color" content="#071C29">
 <title>{esc(title)}</title>
 <link rel="icon" href="/favicon.ico?v=20261121" sizes="48x48">
 <link rel="icon" href="/branding/favicon.svg?v=20261121" type="image/svg+xml">
@@ -266,16 +294,15 @@ def _shell(title: str, body: str, skip: str = "Skip to the ramp list", *, curren
 </head>
 <body class="rf-body">
 <a class="skip" href="#main">{esc(skip)}</a>
-<p class="rf-banner">Private preview · this browser only · not public · not indexed</p>
-<header class="rf-top">
+{"" if public else '<p class="rf-banner">Private preview · this browser only · not public · not indexed</p>\n'}<header class="rf-top">
   <div class="rf-top-row">
-    <a class="rf-brand" href="/preview/ramps">The Coastal Brief</a>
+    <a class="rf-brand" href="{"/" if public else list_base(False)}">The Coastal Brief</a>
     <button type="button" class="theme-toggle" id="theme-toggle">Dark mode</button>
   </div>
-  <nav class="rf-nav" aria-label="Preview">
-    <a href="/preview">Preview hub</a>
-    <a href="/preview/ramps"{' aria-current="page"' if current == "list" else ""}>Ramp Finder</a>
-    <a href="/preview/ramps/map"{' aria-current="page"' if current == "map" else ""}>Map</a>
+  <nav class="rf-nav" aria-label="{"Site" if public else "Preview"}">
+    {"" if public else '<a href="/preview">Preview hub</a>'}
+    <a href="{list_base(public)}"{' aria-current="page"' if current == "list" else ""}>Ramp Finder</a>
+    {map_nav}
   </nav>
 </header>
 <main class="rf-main{(" " + main_class) if main_class else ""}" id="main">
@@ -547,19 +574,41 @@ def amenity_line(rec) -> str:
     return " · ".join(str(b) for b in bits)
 
 
-def card_html(rec) -> str:
+def card_html(rec, *, public: bool = False) -> str:
     amen = amenity_line(rec)
     amen_html = f'<span class="amen">{esc(amen)}</span>' if amen else ""
     county = rec.get("county") or ""
     loc = ", ".join(p for p in (rec.get("city"), county and f"{county} County", rec.get("area_label")) if p)
     return (
-        f'<li><a class="ramp-card" href="/preview/ramps/{esc(rec["id"])}">'
+        f'<li><a class="ramp-card" href="{esc(_detail_url(rec["id"], public=public))}">'
         f'<h3>{esc(rec["display_name"])}</h3>'
         f'<span class="meta">{esc(rec.get("body_of_water") or "")}'
         f'{" — " + esc(loc) if loc else ""}</span>'
         f'{amen_html}'
         f'{badges_for(rec)}'
         f'</a></li>'
+    )
+
+
+
+def region_notice_html(data, area: str | None) -> str:
+    """Lake-level official notices. Parkers Creek is recorded only here, with no new record."""
+    notice = (data.get("meta") or {}).get("jordan_lake_official_notice")
+    if not notice:
+        return ""
+    if area not in (None, "", "jordan-lake"):
+        return ""
+    src = notice.get("source_url") or ""
+    src_name = notice.get("source_name") or src
+    accessed = notice.get("accessed_at_label") or notice.get("as_of") or ""
+    return (
+        f'<aside class="context region-notice" data-notice-category="{esc(notice.get("category") or "current_dated_notice")}">'
+        f'<strong>{esc(notice.get("title") or "Official lake notice")}</strong>'
+        f'<p>{esc(notice.get("text") or "")}</p>'
+        f'<p class="notice-meta">Accessed {esc(accessed)}. '
+        f'<a href="{esc(src)}" rel="noopener noreferrer">{esc(src_name)}</a>. '
+        "Recheck this official page before any public release.</p>"
+        "</aside>"
     )
 
 
@@ -580,7 +629,7 @@ def lake_context_html(data, area: str) -> str:
     )
 
 
-def render_list(data, filters: dict) -> str:
+def render_list(data, filters: dict, *, public: bool = False) -> str:
     general, limited, review = visible_sets(data, filters)
     hid_lim, hid_rev = hidden_counts(data, filters)
     q = filters.get("q") or ""
@@ -606,7 +655,7 @@ def render_list(data, filters: dict) -> str:
         if slug:
             p["region"] = slug
         current = ' aria-current="page"' if slug == region else ""
-        chips.append(f'<a href="{esc(_list_url(p))}"{current}>{esc(label)}</a>')
+        chips.append(f'<a href="{esc(_list_url(p, public=public))}"{current}>{esc(label)}</a>')
 
     checks = []
     for key, label in FLAG_FILTERS:
@@ -621,11 +670,12 @@ def render_list(data, filters: dict) -> str:
         ctx = lake_context_html(data, region)
     elif not region:
         ctx = lake_context_html(data, "falls-lake") + lake_context_html(data, "jordan-lake")
+    ctx = region_notice_html(data, region or None) + ctx
 
     def section(title, lead, rows, kind):
         if not rows:
             return ""
-        items = "".join(card_html(r) for r in rows)
+        items = "".join(card_html(r, public=public) for r in rows)
         return (
             f'<section class="rf-section" data-section="{esc(kind)}">'
             f'<h2>{esc(title)} ({len(rows)})</h2>'
@@ -657,11 +707,14 @@ def render_list(data, filters: dict) -> str:
         body_sections.append('<p class="empty" data-empty="ramps">No ramps match those filters.</p>')
 
     shown = len(general) + len(limited) + len(review)
-    return _shell("Ramp Finder — private preview", f"""
-<p class="kicker">Private data preview</p>
+    title = "Ramp Finder" if public else "Ramp Finder — private preview"
+    kicker = "Boat ramps" if public else "Private data preview"
+    base = list_base(public)
+    return _shell(title, f"""
+<p class="kicker">{kicker}</p>
 <h1>Ramp Finder</h1>
 <p class="lead">Crystal Coast, Falls Lake, Jordan Lake, and the Neuse River. Official sources only, checked Nov 22, 2026. This is not a live open/closed board.</p>
-<form class="filters" id="filters" method="get" action="/preview/ramps" role="search">
+<form class="filters" id="filters" method="get" action="{base}" role="search">
   {region_input}
   <label class="q-lab" for="q">Search by name, body of water, or region</label>
   <input type="search" id="q" name="q" value="{esc(q)}" placeholder="Search ramps" autocomplete="off">
@@ -672,14 +725,14 @@ def render_list(data, filters: dict) -> str:
   </fieldset>
   <div class="actions">
     <button type="submit">Apply filters</button>
-    <button type="reset" onclick="location.href='/preview/ramps'; return false;">Reset</button>
+    <button type="reset" onclick="location.href='{base}'; return false;">Reset</button>
   </div>
 </form>
 <p class="count">Showing {shown} {"ramp" if shown == 1 else "ramps"}{f" in {dict(AREAS).get(region)}" if region else ""}.</p>
 {hidden_note}
 {ctx}
 {''.join(body_sections)}
-""")
+""", public=public, canonical=(SITE_ORIGIN + _list_url({"region": region} if region else {}, public=True)) if public else None)
 
 
 def fees_html(rec) -> str:
@@ -767,7 +820,7 @@ def _split_notices(rec):
     return priority, general, other
 
 
-def render_detail(data, rec) -> str:
+def render_detail(data, rec, *, public: bool = False) -> str:
     loc_bits = [rec.get("city"), (rec.get("county") + " County") if rec.get("county") else "", rec.get("area_label")]
     loc = ", ".join(p for p in loc_bits if p)
     rows = facility_rows(rec)
@@ -781,10 +834,12 @@ def render_detail(data, rec) -> str:
     ctx = ""
     if rec["area"] in ("falls-lake", "jordan-lake"):
         ctx = lake_context_html(data, rec["area"])
+    if rec["area"] == "jordan-lake":
+        ctx = region_notice_html(data, "jordan-lake") + ctx
     addr = address_line(rec)
     addr_html = f'<p class="addr">{esc(addr)}</p>' if addr else ""
     priority, general, other = _split_notices(rec)
-    title = f'{rec["display_name"]} — Ramp Finder (private preview)'
+    title = rec["display_name"] + (" — Ramp Finder" if public else " — Ramp Finder (private preview)")
     water = esc(rec.get("body_of_water") or "")
     if rec.get("body_of_water_note") and rec.get("body_of_water_note") != rec.get("body_of_water"):
         water = water + " — " + esc(rec.get("body_of_water_note"))
@@ -792,7 +847,7 @@ def render_detail(data, rec) -> str:
     if rec.get("program"):
         agency = agency + " · " + esc(rec.get("program"))
     return _shell(title, f"""
-<p class="crumb"><a href="/preview/ramps">Ramp Finder</a> / {esc(rec["display_name"])}</p>
+<p class="crumb"><a href="{list_base(public)}">Ramp Finder</a> / {esc(rec["display_name"])}</p>
 <p class="kicker">{esc(rec.get("area_label") or "")}</p>
 <h1>{esc(rec["display_name"])}</h1>
 <p class="lead">{water}</p>
@@ -801,17 +856,17 @@ def render_detail(data, rec) -> str:
 <p class="meta">{agency}</p>
 {alias}
 <p class="rf-disclaimer">{esc(PAGE_DISCLAIMER)}</p>
+{ctx}
 {badges_for(rec)}
 {notice_html(priority, rec)}
 {notice_html(general + other, rec)}
-{ctx}
 {restrict_html}
 {fees_html(rec)}
 {hours_html(rec)}
 {facts}
 {directions_html(rec)}
 {source_details_html(rec)}
-""", skip="Skip to ramp details", current="detail")
+""", skip="Skip to ramp details", current="detail", public=public, canonical=(SITE_ORIGIN + _detail_url(rec["id"], public=True)) if public else None)
 
 
 
@@ -859,7 +914,7 @@ def _map_notice_excerpt(rec, notice: dict, limit: int = 240) -> str:
     return cut + "…"
 
 
-def map_record(rec) -> dict:
+def map_record(rec, *, public: bool = False) -> dict:
     """Slim, presentation-only record for the private map. Never invents coordinates."""
     d = rec.get("directions") or {}
     coords = official_coordinates(rec)
@@ -892,13 +947,13 @@ def map_record(rec) -> dict:
         "dated_notice": dated,
         "standing_caution": caution,
         "flags": active,
-        "detail_url": "/preview/ramps/" + rec["id"],
+        "detail_url": _detail_url(rec["id"], public=public),
     }
 
 
-def map_payload(data=None) -> dict:
+def map_payload(data=None, *, public: bool = False) -> dict:
     data = data or load_data()
-    recs = [map_record(rec) for rec in records(data)]
+    recs = [map_record(rec, public=public) for rec in records(data)]
     counts = pin_inventory_counts(data)
     return {
         "disclaimer": PAGE_DISCLAIMER,
@@ -946,16 +1001,16 @@ def _map_list_item(rec, payload_rec) -> str:
         f'<span class="rf-sync-badges">{"".join(badges)}</span>'
         f'{notice_bit}'
         f'</button>'
-        f'<a class="rf-sync-detail" href="/preview/ramps/{esc(rec["id"])}">Details</a>'
+        f'<a class="rf-sync-detail" href="{esc(payload_rec["detail_url"])}">Details</a>'
         f'</li>'
     )
 
 
-def render_map(data, filters: dict) -> str:
+def render_map(data, filters: dict, *, public: bool = False) -> str:
     general, limited, review = visible_sets(data, filters)
     hid_lim, hid_rev = hidden_counts(data, filters)
     region = filters.get("region") or ""
-    payload = map_payload(data)
+    payload = map_payload(data, public=public)
     by_id_payload = {r["id"]: r for r in payload["records"]}
 
     def section(title, recs, cls):
@@ -985,7 +1040,7 @@ def render_map(data, filters: dict) -> str:
     for key, label in AREAS:
         params = {k: v for k, v in filters.items() if k != "theme"}
         params["region"] = MAP_ALL_REGION if key == "" else key
-        url = "/preview/ramps/map?" + _qs(params)
+        url = _map_url(params, public=public)
         current = key == region
         if current:
             chips.append(f'<span aria-current="page">{esc(label)}</span>')
@@ -1020,13 +1075,16 @@ def render_map(data, filters: dict) -> str:
         item = {k: v for k, v in r.items() if v not in (None, "", [], {})}
         page_records.append(item)
     page_payload = {"counts": payload["counts"], "records": page_records}
+    map_notice = region_notice_html(data, region if region else None)
+    map_kicker = "Boat ramps" if public else "Private preview"
 
     body = f"""
-<p class="kicker">Private preview</p>
+<p class="kicker">{map_kicker}</p>
 <h1>Ramp map</h1>
 <p class="rf-disclaimer">{esc(PAGE_DISCLAIMER)} Pins are placed only from official coordinates.</p>
 <div class="regions rf-map-regions" aria-label="Region">{''.join(chips)}</div>
 <p class="count rf-map-status" id="rf-map-status" aria-live="polite">{esc(status)}</p>
+{map_notice}
 <div class="rf-map-layout">
   <div class="rf-map-frame">
     <div class="rf-map-toolbar">
@@ -1041,12 +1099,12 @@ def render_map(data, filters: dict) -> str:
     <p class="rf-map-credit">Basemap: map services and data available from U.S. Geological Survey, National Geospatial Program (public domain). Not for navigation.</p>
   </div>
   <div class="rf-map-list-wrap" id="rf-map-list">
-    <form class="filters rf-map-filters" id="filters" method="get" action="/preview/ramps/map" role="search">
+    <form class="filters rf-map-filters" id="filters" method="get" action="{map_base(public)}" role="search">
       <input type="hidden" name="region" value="{esc(region)}">
       <div class="flag-row">{''.join(checks)}</div>
       <div class="actions">
         <button type="submit">Update map</button>
-        <button type="reset" onclick="location.href='/preview/ramps/map'; return false;">Reset</button>
+        <button type="reset" onclick="location.href='{map_base(public)}'; return false;">Reset</button>
       </div>
     </form>
     {hidden_note}
@@ -1071,19 +1129,36 @@ def render_map(data, filters: dict) -> str:
 </div>
 <script type="application/json" id="rf-map-data">{json.dumps(page_payload, ensure_ascii=False, separators=(",", ":"))}</script>
 """
-    extra_script = '<script src="/preview/ramps/map.js" defer></script>'
+    extra_script = f'<script src="{list_base(public)}/map.js" defer></script>'
+    title = "Ramp map — The Coastal Brief" if public else "Ramp map — The Coastal Brief (private preview)"
     return _shell(
-        "Ramp map — The Coastal Brief (private preview)",
+        title,
         body,
         skip="Skip to the ramp map",
         current="map",
         extra_script=extra_script,
         main_class="rf-map-main",
+        public=public,
+        canonical=(SITE_ORIGIN + _map_url({"region": region} if region else {}, public=True)) if public else None,
     )
 
 
-def resolve_request(path: str, query: dict):
-    raw = path.rstrip("/") or "/preview/ramps"
+def _canonical_ramp_path(raw: str) -> str:
+    """Map public /ramps paths onto the existing /preview/ramps names."""
+    if raw in ("/ramps.css",):
+        return "/preview/ramps.css"
+    if raw in ("/ramps.json",):
+        return "/preview/ramps.json"
+    if raw == "/ramps":
+        return "/preview/ramps"
+    if raw.startswith("/ramps/"):
+        return "/preview/ramps/" + raw[len("/ramps/"):]
+    return raw
+
+
+def resolve_request(path: str, query: dict, *, public: bool = False):
+    raw = path.rstrip("/") or ("/ramps" if public else "/preview/ramps")
+    raw = _canonical_ramp_path(raw)
     if raw in ("/preview/ramps.css",):
         return 200, "text/css; charset=utf-8", css_bytes()
     if raw in ("/preview/ramps/map.js",):
@@ -1092,11 +1167,11 @@ def resolve_request(path: str, query: dict):
     if raw in ("/preview/ramps.json",):
         return 200, "application/json; charset=utf-8", json.dumps(data, ensure_ascii=False)
     if raw in ("/preview/ramps/map.json",):
-        return 200, "application/json; charset=utf-8", json.dumps(map_payload(data), ensure_ascii=False)
+        return 200, "application/json; charset=utf-8", json.dumps(map_payload(data, public=public), ensure_ascii=False)
     if raw in ("/preview/ramps/map",):
-        return 200, "text/html; charset=utf-8", render_map(data, parse_map_filters(query or {}))
+        return 200, "text/html; charset=utf-8", render_map(data, parse_map_filters(query or {}), public=public)
     if raw in ("/preview/ramps",):
-        return 200, "text/html; charset=utf-8", render_list(data, parse_filters(query or {}))
+        return 200, "text/html; charset=utf-8", render_list(data, parse_filters(query or {}), public=public)
     prefix = "/preview/ramps/"
     if raw.startswith(prefix):
         rid = raw[len(prefix):].strip("/")
@@ -1105,5 +1180,5 @@ def resolve_request(path: str, query: dict):
         rec = by_id(rid, data)
         if not rec:
             return 404, "text/plain", "not found"
-        return 200, "text/html; charset=utf-8", render_detail(data, rec)
+        return 200, "text/html; charset=utf-8", render_detail(data, rec, public=public)
     return 404, "text/plain", "not found"
