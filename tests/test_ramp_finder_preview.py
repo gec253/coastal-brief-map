@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import threading
 import unittest
 from http.client import HTTPConnection
@@ -660,3 +661,52 @@ class MapPrototype(unittest.TestCase):
         self.assertIn("Escape", js)
         self.assertIn("maxZoom: 13", js)
         self.assertIn("USGSTopo", js)
+
+
+class StageBPresentation(unittest.TestCase):
+    """Visitor-facing list/detail polish. No inventory fact or coordinate changes."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.data = ramp_finder.load_data()
+
+    def test_all_detail_leads_avoid_duplicated_waterbody_names(self):
+        self.assertEqual(len(self.data["records"]), 55)
+        for rec in self.data["records"]:
+            lead = ramp_finder.waterbody_lead(rec)
+            html = ramp_finder.render_detail(self.data, rec, public=True)
+            self.assertIn(f'<p class="lead">{lead}</p>', html)
+            if " — " in lead:
+                left, right = lead.split(" — ", 1)
+                left_n = re.sub(r"[\s.]+", " ", left).strip().casefold()
+                right_n = re.sub(r"[\s.]+", " ", right).strip().casefold()
+                self.assertNotEqual(left_n, right_n, rec["id"])
+                self.assertFalse(right_n.startswith(left_n), rec["id"])
+
+    def test_seaforth_and_goldsboro_leads_are_single_labels(self):
+        sea = ramp_finder.by_id("parks-jordan-seaforth", self.data)
+        self.assertEqual(ramp_finder.waterbody_lead(sea), "B. Everett Jordan Lake")
+        html = ramp_finder.render_detail(self.data, sea, public=True)
+        self.assertIn("<p class=\"lead\">B. Everett Jordan Lake</p>", html)
+        self.assertNotIn("B. Everett Jordan Lake — B. Everett Jordan Lake", html)
+        golds = ramp_finder.by_id("baa-goldsboro", self.data)
+        self.assertEqual(ramp_finder.waterbody_lead(golds), "Neuse River")
+        # Distinct official name and common name stay side by side.
+        farr = ramp_finder.by_id("baa-farrington-point", self.data)
+        self.assertEqual(ramp_finder.waterbody_lead(farr), "LAKE JORDAN — B. Everett Jordan Lake")
+
+    def test_public_pages_do_not_say_preview_or_show_bare_not_stated_sections(self):
+        for rec in self.data["records"]:
+            html = ramp_finder.render_detail(self.data, rec, public=True)
+            self.assertNotRegex(html, r"(?i)this preview")
+            self.assertNotRegex(html, r"(?i)<h2>Hours</h2><p>not stated</p>")
+            self.assertNotRegex(html, r"(?i)<h2>Fees</h2><p>not stated</p>")
+        poes = ramp_finder.render_detail(self.data, ramp_finder.by_id("usace-jordan-poes-ridge", self.data), public=True)
+        self.assertIn("This page shows both figures and does not choose one.", poes)
+        eben = ramp_finder.render_detail(self.data, ramp_finder.by_id("parks-jordan-ebenezer", self.data), public=True)
+        self.assertIn("this page does not choose one", eben)
+        west = ramp_finder.render_detail(
+            self.data, ramp_finder.by_id("local-atlantic-beach-west-bogue-sound", self.data), public=True
+        )
+        self.assertNotIn("<h2>Hours</h2>", west)
+        self.assertNotIn("<h2>Fees</h2>", west)

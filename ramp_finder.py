@@ -414,10 +414,10 @@ def general_info_summary(rec, notice_text: str) -> str:
     if rid == "parks-jordan-ebenezer":
         return (
             "Official sources disagree about hours at this access. Both the 24-hour boat-ramp "
-            "wording and the day-use gate schedule are shown under Hours; this preview does not choose one."
+            "wording and the day-use gate schedule are shown under Hours; this page does not choose one."
         )
     cleaned = _clean_notice_text(notice_text)
-    return cleaned or (notice_text or "").strip()
+    return _visitor_prose(cleaned or (notice_text or "").strip())
 
 
 def visible_notice_text(rec, notice: dict) -> str:
@@ -432,7 +432,7 @@ def visible_notice_text(rec, notice: dict) -> str:
         ", not a real-time open-right-now confirmation and not a construction closure",
         ", not a construction closure",
     )
-    return text
+    return _visitor_prose(text)
 
 
 def address_line(rec) -> str:
@@ -509,7 +509,7 @@ def source_details_html(rec) -> str:
             items.append(
                 f'<div class="source-note" data-original-notice="{esc(n.get("category") or "")}">'
                 f'<span class="nl">{esc(n.get("label") or n.get("category") or "")}</span>'
-                f'<p>{esc(n.get("text") or "")}</p>'
+                f'<p>{esc(_visitor_prose(n.get("text") or ""))}</p>'
                 f'{src_html}'
                 f'<p class="checked">Checked {esc(n.get("as_of") or "")}.</p>'
                 f"</div>"
@@ -759,12 +759,14 @@ def fees_html(rec) -> str:
         return (
             '<section class="conflict" data-fee-conflict="true">'
             "<h3>Official fee information conflicts</h3>"
-            f'<p>{esc(fees.get("summary") or "")}</p>'
+            f'<p>{esc(_visitor_prose(fees.get("summary") or ""))}</p>'
             + "".join(entries)
             + "</section>"
         )
-    summary = fees.get("summary") or "not stated"
-    return f'<h2>Fees</h2><p>{esc(summary)}</p>'
+    summary = fees.get("summary")
+    if not _has_stated_summary(summary):
+        return ""
+    return f'<h2>Fees</h2><p>{esc(_visitor_prose(summary))}</p>'
 
 
 def hours_html(rec) -> str:
@@ -782,11 +784,14 @@ def hours_html(rec) -> str:
         return (
             '<section class="conflict" data-hours-conflict="true">'
             "<h3>Official hours information conflicts</h3>"
-            f'<p>{esc(hours.get("summary") or "")}</p>'
+            f'<p>{esc(_visitor_prose(hours.get("summary") or ""))}</p>'
             + "".join(entries)
             + "</section>"
         )
-    return f'<h2>Hours</h2><p>{esc(hours.get("summary") or "not stated")}</p>'
+    summary = hours.get("summary")
+    if not _has_stated_summary(summary):
+        return ""
+    return f'<h2>Hours</h2><p>{esc(_visitor_prose(summary))}</p>'
 
 
 def directions_html(rec) -> str:
@@ -828,6 +833,51 @@ def _split_notices(rec):
     return priority, general, other
 
 
+def waterbody_lead(rec) -> str:
+    """One visitor-facing waterbody line, without a duplicated name.
+
+    The inventory often stores an official body_of_water (sometimes ALL CAPS)
+    and a body_of_water_note that is the same label with different casing or a
+    trailing period, plus an optional qualifier. The previous exact-string
+    comparison treated those as different and printed "Name — Name."
+    """
+    water = (rec.get("body_of_water") or "").strip()
+    note = (rec.get("body_of_water_note") or "").strip()
+    if not note:
+        return water
+    if not water:
+        return note
+    water_core = re.sub(r"[\s.,;:]+$", "", water)
+    if re.match(re.escape(water_core) + r"(?:[\s.,;:\u2013\u2014-]|$)", note, flags=re.I):
+        rest = re.sub(
+            r"^" + re.escape(water_core) + r"[\s.,;:\u2013\u2014-]*",
+            "",
+            note,
+            count=1,
+            flags=re.I,
+        ).strip()
+        if not rest:
+            return re.sub(r"[\s.,;:]+$", "", note) or water_core
+        return note
+    return f"{water} — {note}"
+
+
+def _visitor_prose(text: str) -> str:
+    """Replace leftover private-preview wording in visitor-facing copy."""
+    if not text:
+        return text
+    return (
+        text.replace("This preview shows", "This page shows")
+        .replace("this preview does not", "this page does not")
+        .replace("This preview does not", "This page does not")
+    )
+
+
+def _has_stated_summary(val) -> bool:
+    s = (val or "").strip()
+    return bool(s) and s.casefold() != "not stated"
+
+
 def render_detail(data, rec, *, public: bool = False) -> str:
     loc_bits = [rec.get("city"), (rec.get("county") + " County") if rec.get("county") else "", rec.get("area_label")]
     loc = ", ".join(p for p in loc_bits if p)
@@ -848,9 +898,7 @@ def render_detail(data, rec, *, public: bool = False) -> str:
     addr_html = f'<p class="addr">{esc(addr)}</p>' if addr else ""
     priority, general, other = _split_notices(rec)
     title = rec["display_name"] + (" — Ramp Finder" if public else " — Ramp Finder (private preview)")
-    water = esc(rec.get("body_of_water") or "")
-    if rec.get("body_of_water_note") and rec.get("body_of_water_note") != rec.get("body_of_water"):
-        water = water + " — " + esc(rec.get("body_of_water_note"))
+    water = esc(waterbody_lead(rec))
     agency = esc(rec.get("managing_agency") or "")
     if rec.get("program"):
         agency = agency + " · " + esc(rec.get("program"))
