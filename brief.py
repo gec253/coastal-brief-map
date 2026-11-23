@@ -34,6 +34,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+import brief_astro
+import brief_format
 import conditions
 
 ET = ZoneInfo("America/New_York")
@@ -257,16 +259,11 @@ def build_salt(rid: str, now: datetime) -> dict:
             age = r.get("ageMin")
             fresh.append({"label": label, "time": _t(r["time"]), "station": (r.get("station") or {}).get("id"), "stale": bool(age is not None and r.get("staleAfterMin") and age > r["staleAfterMin"])})
 
-    # advisories first
+    # advisories first — current vs upcoming, with start, end, and affected waters
     al = d.get("alerts") or {}
-    if al.get("status") == "ok":
-        if al["items"]:
-            adv = "; ".join("%s until %s" % (a["event"], _t(a["ends"])) if a.get("ends") else a["event"] for a in al["items"])
-            items.append(("Advisories", adv + "."))
-        else:
-            items.append(("Advisories", "No NWS marine advisories for this area."))
-    else:
-        items.append(("Advisories", "Could not check NWS advisories at issue time."))
+    hazards = brief_format.format_hazards(al, now)
+    items.append(("Advisories", hazards["line"]))
+    if hazards["status"] == "unknown":
         missing.append("advisories")
 
     wind_tr = seas_tr = pres_tr = None
@@ -354,6 +351,9 @@ def build_salt(rid: str, now: datetime) -> dict:
     elif mar.get("status") == "ok" and mar.get("periods"):
         first = re.split(r"(?<=\.)\s", mar["periods"][0]["text"].strip())[0]
         items.append(("Marine forecast", "%s: %s (NWS %s)" % (mar["periods"][0]["name"], first, mar.get("zone"))))
+        outlook = brief_format.format_outlook(mar)
+        if outlook:
+            items.append(("Outlook", outlook))
     else:
         missing.append("marine forecast")
     fc = d.get("forecast") or {}
@@ -365,7 +365,12 @@ def build_salt(rid: str, now: datetime) -> dict:
     else:
         ps = fc["periods"][:2]
         rain = max(p.get("pop") or 0 for p in ps)
-        items.append(("Rain", "%d%% chance through tonight; %s, high %s°F." % (rain, ps[0]["short"].lower(), ps[0]["tempF"])))
+        day = brief_format.daytime_period(fc.get("periods") or [], now)
+        if day and day.get("tempF") is not None:
+            short = (day.get("short") or "").lower() or "forecast"
+            items.append(("Rain", "%d%% chance through tonight; %s, high %s°F." % (rain, short, day["tempF"])))
+        else:
+            items.append(("Rain", "%d%% chance through tonight. Today's high is unavailable." % rain))
     t = d.get("tides") or {}
     if t.get("status") != "ok":
         missing.append("tides")
@@ -394,14 +399,17 @@ def build_salt(rid: str, now: datetime) -> dict:
     else:
         miss("water temp", R.get("waterTemp"))
 
+    for i, (k, v) in enumerate(items):
+        if k in ("Seas", "Swell") and "not a beach surf height" not in v.lower():
+            items[i] = (k, v.rstrip(".") + ". Offshore buoy observation, not a beach surf height.")
+
     # ---- Captain's take: fixed rules over the numbers above ----
-    if al.get("status") == "ok" and al["items"]:
-        a = al["items"][0]
-        until = " until " + _t(a["ends"]) if a.get("ends") else ""
-        if a["event"] == "Small Craft Advisory":
-            take.append("NWS rates conditions hazardous to small craft%s." % until)
-        else:
-            take.append("A %s is in effect%s." % (a["event"], until))
+    # Upcoming or current official hazards, with start/end/area. Never "is in effect"
+    # for a watch whose onset is still in the future.
+    if hazards.get("status") == "active":
+        sig = (hazards.get("upcoming") or []) + (hazards.get("current") or [])
+        if sig:
+            take.append(sig[0]["text"])
     if wind_tr:
         dlt = wind_tr["now"] - wind_tr["then"]
         if dlt <= -4:
@@ -410,7 +418,10 @@ def build_salt(rid: str, now: datetime) -> dict:
             take.append("Wind has built %d kt over the past %d h." % (round(dlt), wind_tr["hours"]))
     if ok("seas") and R["seas"]["values"]["dominantPeriodS"] < 7 and R["seas"]["values"]["heightFt"] >= 3:
         take.append("Seas are short-period wind chop, so expect a steep, close-together ride.")
-    if mar.get("status") == "ok" and mar.get("periods") and re.search(r"diminish|subsid", mar["periods"][0]["text"], re.I):
+    easing_ok = brief_format.take_easing_allowed(al.get("items") or [], mar, now)
+    if (mar.get("status") == "ok" and mar.get("periods")
+            and re.search(r"diminish|subsid", mar["periods"][0]["text"], re.I)
+            and easing_ok):
         take.append("The NWS marine forecast has wind or seas easing later today.")
     elif mar.get("status") == "ok" and mar.get("periods") and re.search(r"increas|build", mar["periods"][0]["text"], re.I):
         take.append("The NWS marine forecast has wind or seas building later today.")
@@ -421,6 +432,7 @@ def build_salt(rid: str, now: datetime) -> dict:
     if not take:
         take.append("No advisories and no big overnight changes in the readings.")
     out = {"region": d["region"], "waterType": "saltwater", "items": items, "freshness": fresh, "take": take[:4], "missing": missing,
+            "hazards": hazards,
             "marineZone": (d.get("marine") or {}).get("zone"), "marineUpdated": (d.get("marine") or {}).get("updated"),
             "forecastUpdated": fc.get("updated"),
             "sources": "NOAA NDBC, NOAA CO-OPS, NWS (api.weather.gov)"}
@@ -437,7 +449,8 @@ def build_fresh(rid: str, now: datetime) -> dict:
         raise RuntimeError("freshwater unavailable")
     L = d["lake"]; items, fresh, take, missing = [], [], [], []
     al = d.get("alerts") or {}
-    items.append(("Alerts", "; ".join("%s until %s" % (a["event"], _t(a["ends"])) if a.get("ends") else a["event"] for a in al.get("items", [])) + "." if al.get("items") else "No NWS alerts at the dam." if al.get("status") == "ok" else "Could not check NWS alerts."))
+    hazards = brief_format.format_fresh_alerts(al, now)
+    items.append(("Alerts", hazards["line"]))
     if L.get("elevation"):
         e = L["elevation"]; fresh.append({"label": "Lake level", "time": _t(e["time"]), "station": L["usgs"], "stale": e.get("stale")})
         items.append(("Lake level", "%.2f ft (NGVD29), %.2f ft %s the %.1f ft guide curve; %s ft in 24 h." % (e["value"], abs(L["vsGuideFt"]), "below" if L["vsGuideFt"] < 0 else "above", L["guideCurveFt"], ("%+.2f" % L["change24hFt"]) if L.get("change24hFt") is not None else "n/a")))
@@ -463,7 +476,11 @@ def build_fresh(rid: str, now: datetime) -> dict:
         items.append(("Rain", "%.2f in last 24 h at the dam; NWS forecast %s in next 24 h." % (rn["last24In"], ("%.2f in" % q["next24In"]) if q.get("status") == "ok" else "unavailable")))
     fc = d.get("forecast") or {}
     if fc.get("status") == "ok" and fc.get("periods"):
-        p = fc["periods"][0]; items.append(("Weather", "%s, high %s°F, wind %s %s." % (p["short"], p["tempF"], p["windDir"], p["windMph"])))
+        p = brief_format.daytime_period(fc.get("periods") or [], now)
+        if p and p.get("tempF") is not None:
+            items.append(("Weather", "%s, high %s°F, wind %s %s." % (p.get("short") or "Forecast", p["tempF"], p.get("windDir") or "", p.get("windMph") or "")))
+        else:
+            items.append(("Weather", "Today's high is unavailable."))
     else:
         missing.append("weather forecast")
     if L.get("vsGuideFt") is not None and L["vsGuideFt"] <= -3:
@@ -475,7 +492,7 @@ def build_fresh(rid: str, now: datetime) -> dict:
     if not take:
         take.append("Lake and river readings are close to normal for the date.")
     return {"region": d["region"], "waterType": "freshwater", "items": items, "freshness": fresh, "take": take[:4], "missing": missing,
-            "sources": "USGS, USACE Wilmington District, NWS"}
+            "hazards": hazards, "sources": "USGS, USACE Wilmington District, NWS"}
 
 
 # ------------------------------------------------------------------ validate
@@ -542,6 +559,8 @@ def compose(rid: str, reason: str, now: datetime | None = None) -> dict:
     now = now or datetime.now(timezone.utc)
     fw = rid in ("falls-lake", "neuse-river", "jordan-lake")
     body = build_fresh(rid, now) if fw else build_salt(rid, now)
+    if rid in brief_astro.REGIONS:
+        body["astro"] = brief_astro.for_brief(rid, _et(now).date())
     words = len(" ".join([v for _, v in body["items"]] + body["take"]).split())
     b = {"ok": True, "regionId": rid, "issueDate": _issue_date(now), "issuedAt": now.isoformat(), "issuedEt": _et(now).strftime("%a %b %-d, %-I:%M %p ET"),
          "reason": reason, "words": words, **body}
@@ -865,12 +884,13 @@ def _glance(b: dict) -> list[dict]:
     seas = _item(b, "Seas")
     m = re.search(r"([\d.]+)\s*ft every (\d+)\s*s from the (\w+)", seas)
     if m:
-        cells.append({"key": "Seas", "kind": "observed", "value": m.group(1), "unit": "ft", "sub": "every %s s · from %s" % (m.group(2), m.group(3)), "tone": "seas"})
+        sub = brief_format.seas_sub(seas, b.get("freshness") or [], "Seas")
+        cells.append({"key": "Seas", "kind": "observed", "value": m.group(1), "unit": "ft", "sub": sub, "tone": "seas"})
     swell = _item(b, "Swell")
     m = re.search(r"([\d.]+)\s*ft at ([\d.]+)\s*s from the (\w+)", swell)
     if m:
-        per = m.group(2).rstrip("0").rstrip(".") if "." in m.group(2) else m.group(2)
-        cells.append({"key": "Swell", "kind": "observed", "value": m.group(1), "unit": "ft", "sub": "%s s · from %s" % (per, m.group(3)), "tone": "swell"})
+        sub = brief_format.seas_sub(swell, b.get("freshness") or [], "Swell")
+        cells.append({"key": "Swell", "kind": "observed", "value": m.group(1), "unit": "ft", "sub": sub, "tone": "swell"})
     nxt = _next_tide(_item(b, "Tides"), b.get("issuedAt"))
     if nxt:
         label = "Tide next" if nxt["when"] == "next" else "Last tide today"
@@ -903,7 +923,246 @@ def _advisory(b: dict):
     return None
 
 
-def page(b: dict, include_fresh: bool = False, public: bool = False, ads_on: bool = False) -> str:
+
+def _astro_for_page(b: dict) -> dict | None:
+    """Stored astro, or a local recompute from the issued date; never fetched live."""
+    astro = b.get("astro")
+    if astro and astro.get("status") in ("ok", "unavailable"):
+        return astro
+    rid = b.get("regionId") or (b.get("region") or {}).get("id")
+    if rid not in brief_astro.REGIONS:
+        return None
+    issued = b.get("issuedAt")
+    try:
+        d = datetime.fromisoformat(str(issued).replace("Z", "+00:00")).astimezone(ET).date() if issued else None
+    except (TypeError, ValueError):
+        d = None
+    if not d:
+        return {"status": "unavailable", "regionId": rid}
+    return brief_astro.for_brief(rid, d)
+
+
+def _moon_svg(pct: int, waxing: bool) -> str:
+    """Compact northern-hemisphere moon: the right limb is lit when waxing."""
+    pct = max(0, min(100, int(pct)))
+    # Shade width as a fraction of the radius. 0 = new, 100 = full.
+    lit = pct / 100.0
+    # Use a simple two-circle shadow. For waxing, shadow covers the left.
+    # A full moon has no shadow; a new moon is all shadow.
+    if pct >= 99:
+        shade = ""
+    elif pct <= 1:
+        shade = '<circle cx="12" cy="12" r="9" fill="#1A2430" fill-opacity="0.82"/>'
+    else:
+        # shift a dark disc across the face
+        direction = 1 if waxing else -1  # waxing: shadow on the left, moving away
+        # at 50% the shadow edge is at the center
+        cx = 12 - direction * (2 * lit - 1) * 9
+        shade = '<circle cx="%.1f" cy="12" r="9" fill="#1A2430" fill-opacity="0.78"/>' % cx
+    return (
+        '<svg class="mb-moon-svg" viewBox="0 0 24 24" width="36" height="36" aria-hidden="true" focusable="false">'
+        '<circle cx="12" cy="12" r="9.4" fill="#E6D4A8" stroke="#A7864F" stroke-width="1.2"/>'
+        '<clipPath id="mb-moon-clip"><circle cx="12" cy="12" r="9"/></clipPath>'
+        '<g clip-path="url(#mb-moon-clip)">%s</g>'
+        '</svg>' % shade
+    )
+
+
+def _astro_html(b: dict, esc) -> str:
+    rid = b.get("regionId") or (b.get("region") or {}).get("id")
+    if rid not in brief_astro.REGIONS:
+        return ""
+    astro = _astro_for_page(b)
+    if not astro or astro.get("status") == "unavailable":
+        return ('<section class="mb-astro is-missing" aria-label="Sun and moon">'
+                "<p>Sunrise, sunset, and moon phase not available.</p></section>")
+    rise = astro.get("sunriseEt")
+    sett = astro.get("sunsetEt")
+    moon = astro.get("moon") or {}
+    sun_bits = []
+    if rise:
+        sun_bits.append('<div class="mb-sun-cell"><span class="mb-astro-k">Sunrise</span>'
+                        '<time class="mb-astro-v">%s</time></div>' % esc(rise))
+    if sett:
+        sun_bits.append('<div class="mb-sun-cell"><span class="mb-astro-k">Sunset</span>'
+                        '<time class="mb-astro-v">%s</time></div>' % esc(sett))
+    if not sun_bits:
+        sun_bits.append("<p>Sunrise and sunset not available.</p>")
+    if moon and moon.get("name"):
+        pct = moon.get("illuminationPct")
+        moon_html = (
+            '<div class="mb-moon-cell">%s'
+            '<div class="mb-moon-meta"><span class="mb-astro-k">Moon</span>'
+            '<span class="mb-astro-v">%s</span>'
+            '<span class="mb-moon-pct">%s%% illuminated</span></div></div>'
+            % (_moon_svg(int(pct or 0), bool(moon.get("waxing"))), esc(moon["name"]),
+               esc(str(pct) if pct is not None else "—"))
+        )
+    else:
+        moon_html = '<div class="mb-moon-cell"><p>Moon phase not available.</p></div>'
+    return ('<section class="mb-astro" aria-label="Sunrise, sunset, and moon phase">'
+            '<div class="mb-sun">%s</div>%s</section>' % ("".join(sun_bits), moon_html))
+
+
+def _outlook_html(b: dict, esc) -> str:
+    if (b.get("waterType") or "saltwater") == "freshwater":
+        return ""
+    text = _item(b, "Outlook")
+    if not text:
+        return ""
+    return ('<section class="mb-outlook" aria-label="Marine outlook">'
+            '<p class="mb-outlook-k">Outlook</p><p class="mb-outlook-t">%s</p></section>' % esc(text))
+
+
+def _hazards_html(b: dict, esc) -> str:
+    water = b.get("waterType") or "saltwater"
+    label = "Alerts" if water == "freshwater" else "Advisories"
+    stored = _item(b, label)
+    hz = b.get("hazards")
+    if hz and hz.get("status") == "clear":
+        return ('<section class="mb-adv is-clear" aria-label="%s"><span class="mb-adv-dot" aria-hidden="true"></span>'
+                '<div><p class="mb-adv-k">%s</p><p class="mb-adv-t">%s</p></div></section>'
+                % (esc(label), esc(label), esc(hz.get("line") or stored or "")))
+    if hz and hz.get("status") == "unknown":
+        return ('<section class="mb-adv is-unknown" aria-label="%s"><span class="mb-adv-dot" aria-hidden="true"></span>'
+                '<div><p class="mb-adv-k">%s</p><p class="mb-adv-t">%s</p></div></section>'
+                % (esc(label), esc(label), esc(hz.get("line") or stored or "")))
+    groups = []
+    if hz and hz.get("status") == "active":
+        for kind, key in (("Current", "current"), ("Upcoming", "upcoming")):
+            rows = hz.get(key) or []
+            if not rows:
+                continue
+            cls = "mb-adv-k mb-adv-up" if key == "upcoming" else "mb-adv-k"
+            lis = "".join("<li>%s</li>" % esc(r["text"]) for r in rows)
+            groups.append('<p class="%s">%s</p><ul class="mb-adv-list">%s</ul>' % (cls, kind, lis))
+    if groups:
+        # Keep the stored snapshot line in the page so archived wording still matches tests.
+        hidden = ('<p class="mb-adv-stored">%s</p>' % esc(stored)) if stored else ""
+        return ('<section class="mb-adv is-active" aria-label="%s"><span class="mb-adv-dot" aria-hidden="true"></span>'
+                '<div>%s%s</div></section>' % (esc(label), "".join(groups), hidden))
+    # Legacy stored briefs with no hazards object.
+    adv = _advisory(b)
+    if not adv:
+        return ""
+    return ('<section class="mb-adv is-%s" aria-label="%s"><span class="mb-adv-dot" aria-hidden="true"></span>'
+            '<div><p class="mb-adv-k">%s</p><p class="mb-adv-t">%s</p></div></section>'
+            % (esc(adv["kind"]), esc(adv["label"]), esc(adv["label"]), esc(adv["text"])))
+
+
+def _glance_html(b: dict, view_now: datetime, esc, group: str = "all") -> str:
+    """Glance strip, with a render-time tide adjustment that does not edit the snapshot."""
+    tides_line = _item(b, "Tides")
+    view = brief_format.tide_view(tides_line, b.get("issuedAt"), view_now) if tides_line else None
+    evs = brief_format.parse_tide_events(tides_line, b.get("issuedAt")) if tides_line else []
+    payload = json.dumps({
+        "issuedAt": b.get("issuedAt"),
+        "events": [{"iso": e["time"].isoformat(), "type": e["type"], "ft": e["ft"], "label": e["label"]} for e in evs],
+    }, separators=(",", ":"))
+    cells = []
+    def _primary(c):
+        k = (c.get("key") or "").lower()
+        return k.startswith("tide") or k in (
+            "wind", "seas", "lake level", "rain, 24 h", "rain", "air high", "release",
+        )
+    for c in _glance(b):
+        if group == "primary" and not _primary(c):
+            continue
+        if group == "rest" and _primary(c):
+            continue
+        attrs = ""
+        note = ""
+        key, value, unit, sub = c["key"], c["value"], c["unit"], c["sub"]
+        if "tide" in c["key"].lower():
+            attrs = ' id="mb-tide" data-tides="%s"' % esc(payload)
+            if view and view.get("adjusted"):
+                if view.get("next"):
+                    nxt = view["next"]
+                    key = "Tide next"
+                    tm = nxt["label"]
+                    value = tm.replace(" AM", "").replace(" PM", "")
+                    unit = "AM" if "AM" in tm else "PM"
+                    sub = "%s · %s ft" % (nxt["type"].capitalize(), nxt["ft"])
+                elif view.get("last") or view.get("passed"):
+                    last = view.get("last") or (view["passed"][-1] if view.get("passed") else None)
+                    if last:
+                        key = "Last tide today"
+                        tm = last["label"]
+                        value = tm.replace(" AM", "").replace(" PM", "")
+                        unit = "AM" if "AM" in tm else "PM"
+                        sub = "%s · %s ft" % (last["type"].capitalize(), last["ft"])
+                note = '<span class="mb-view-note">Updated at view time from NOAA predictions</span>'
+        cells.append(
+            '<div class="mb-gc tone-%s kind-%s"%s><span class="mb-gk">%s</span>'
+            '<span class="mb-gv"><b>%s</b><span class="mb-gu">%s</span></span>'
+            '<span class="mb-gs">%s</span><span class="mb-gkind">%s</span>%s</div>'
+            % (esc(c["tone"]), esc(c["kind"]), attrs, esc(key), esc(value), esc(unit),
+               esc(sub), esc(c["kind"]), note)
+        )
+    return ('<section class="mb-glance" aria-label="At a glance">%s</section>' % "".join(cells)) if cells else ""
+
+
+_TIDE_JS = """
+<script>
+(function(){
+  var el=document.getElementById("mb-tide");
+  if(!el||!el.getAttribute("data-tides"))return;
+  function parse(s){try{return JSON.parse(s)}catch(e){return null}}
+  function fmt(d){
+    // Always display and interpret clock times in America/New_York, not the browser TZ.
+    var parts=new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",hour:"numeric",minute:"2-digit",hour12:true}).formatToParts(d);
+    var h="",m="",ap="";
+    parts.forEach(function(p){
+      if(p.type==="hour") h=p.value;
+      if(p.type==="minute") m=p.value;
+      if(p.type==="dayPeriod") ap=p.value;
+    });
+    return {value:h+":"+m, unit:ap};
+  }
+  function apply(){
+    var data=parse(el.getAttribute("data-tides"));
+    if(!data||!data.events||!data.events.length)return;
+    var now=Date.now();
+    var evs=data.events.map(function(e){return {t:Date.parse(e.iso), type:e.type, ft:e.ft, label:e.label};});
+    var issued=Date.parse(data.issuedAt);
+    var issuedNext=null;
+    evs.forEach(function(e){ if(issued && e.t>issued && !issuedNext) issuedNext=e; });
+    var next=null, last=null;
+    evs.forEach(function(e){
+      if(e.t>now && !next) next=e;
+      if(e.t<=now) last=e;
+    });
+    var changed=false;
+    if(next && issuedNext && next.t!==issuedNext.t) changed=true;
+    if(!next && last) changed=true;
+    if(!changed) return;
+    var key=el.querySelector(".mb-gk");
+    var b=el.querySelector(".mb-gv b");
+    var u=el.querySelector(".mb-gu");
+    var sub=el.querySelector(".mb-gs");
+    var ev=next||last;
+    if(!ev||!key||!b||!u||!sub)return;
+    var clock=fmt(new Date(ev.t));
+    key.textContent=next?"Tide next":"Last tide today";
+    b.textContent=clock.value;
+    u.textContent=clock.unit;
+    var typ=(ev.type||"").charAt(0).toUpperCase()+(ev.type||"").slice(1);
+    sub.textContent=typ+" · "+ev.ft+" ft";
+    if(!el.querySelector(".mb-view-note")){
+      var n=document.createElement("span");
+      n.className="mb-view-note";
+      n.textContent="Updated at view time from NOAA predictions";
+      el.appendChild(n);
+    }
+  }
+  apply();
+  setInterval(apply, 60000);
+})();
+</script>
+"""
+
+
+def page(b: dict, include_fresh: bool = False, public: bool = False, ads_on: bool = False, view_now: datetime | None = None) -> str:
     """Render the brief page. On phones (<=600px) the prose
     sections under the at-a-glance strip start collapsed so readings
     are not shown twice above the fold; they stay open on tablet,
@@ -929,22 +1188,12 @@ def page(b: dict, include_fresh: bool = False, public: bool = False, ads_on: boo
         stn = (' <span class="mb-stn">%s</span>' % esc(f["station"])) if f.get("station") else ""
         fr_bits.append("<li><span class=\"mb-fk\">%s</span> <time>%s</time>%s%s</li>" % (esc(f["label"]), esc(f["time"]), stn, stale))
     fr = "".join(fr_bits) or "<li>No observation times were recorded at issue time.</li>"
-    adv = _advisory(b)
-    if adv:
-        adv_html = ('<section class="mb-adv is-%s" aria-label="%s"><span class="mb-adv-dot" aria-hidden="true"></span>'
-                    '<div><p class="mb-adv-k">%s</p><p class="mb-adv-t">%s</p></div></section>'
-                    % (esc(adv["kind"]), esc(adv["label"]), esc(adv["label"]), esc(adv["text"])))
-    else:
-        adv_html = ""
-    glance_cells = []
-    for c in _glance(b):
-        glance_cells.append(
-            '<div class="mb-gc tone-%s kind-%s"><span class="mb-gk">%s</span>'
-            '<span class="mb-gv"><b>%s</b><span class="mb-gu">%s</span></span>'
-            '<span class="mb-gs">%s</span><span class="mb-gkind">%s</span></div>'
-            % (esc(c["tone"]), esc(c["kind"]), esc(c["key"]), esc(c["value"]), esc(c["unit"]), esc(c["sub"]), esc(c["kind"]))
-        )
-    glance = ('<section class="mb-glance" aria-label="At a glance">%s</section>' % "".join(glance_cells)) if glance_cells else ""
+    view_now = view_now or datetime.now(timezone.utc)
+    adv_html = _hazards_html(b, esc)
+    glance = _glance_html(b, view_now, esc, group="primary")
+    glance_rest = _glance_html(b, view_now, esc, group="rest")
+    astro_html = _astro_html(b, esc)
+    outlook_html = _outlook_html(b, esc)
     rows = []
     for k, v in b.get("items") or []:
         if k in ("Advisories", "Alerts"):
@@ -970,8 +1219,13 @@ def page(b: dict, include_fresh: bool = False, public: bool = False, ads_on: boo
     share_bits = ["Morning Brief for %s, issued %s." % (name, issued)]
     for c in _glance(b):
         share_bits.append("%s %s %s (%s), %s." % (c["key"], c["value"], c["unit"], c["kind"], c["sub"]))
-    if adv and adv["kind"] == "active":
-        share_bits.append(adv["text"])
+    hz = b.get("hazards") or {}
+    if hz.get("status") == "active" and hz.get("line"):
+        share_bits.append(hz["line"])
+    else:
+        adv = _advisory(b)
+        if adv and adv["kind"] == "active":
+            share_bits.append(adv["text"])
     share_bits.append("Not a fishing report. Not endorsed by NOAA.")
     desc = esc(" ".join(share_bits)[:300].rsplit(" ", 1)[0] + ".")
     og_title = esc("Morning Brief · %s — The Coastal Brief" % name)
@@ -1037,6 +1291,9 @@ def page(b: dict, include_fresh: bool = False, public: bool = False, ads_on: boo
   %(stale)s
   %(adv)s
   %(glance)s
+  %(outlook)s
+  %(astro)s
+  %(glance_rest)s
   <details class="mb-details" id="mb-details">
     <summary>Full readings <span class="mb-details-hint">the same observations in full</span></summary>
     <dl class="mb-body">%(rows)s</dl>
@@ -1059,6 +1316,7 @@ def page(b: dict, include_fresh: bool = False, public: bool = False, ads_on: boo
     window.addEventListener("afterprint", apply);
   })();
   </script>
+  %(tide_js)s
   %(ad)s
   <section class="mb-take">
     <p class="mb-take-k"><span>Captain’s take</span> <span class="mb-interp">Interpretation</span></p>
@@ -1106,7 +1364,10 @@ def page(b: dict, include_fresh: bool = False, public: bool = False, ads_on: boo
         "fr": fr,
         "stale": stale,
         "adv": adv_html,
-        "glance": glance,
+        "glance": glance, "glance_rest": glance_rest,
+        "astro": astro_html,
+        "outlook": outlook_html,
+        "tide_js": _TIDE_JS,
         "rows": rows_html,
         "miss": miss,
         "take": take_ps,

@@ -671,3 +671,120 @@ html[data-concept] header.site[data-identity] .mb-print:focus-visible {
   outline: 3px solid var(--id-brass, #C4A36A);
   outline-offset: 2px;
 }
+
+/* --- t440u refinement: hazards, outlook, astro, compact brief chrome --- */
+.mb-adv-stored {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0);
+  white-space: nowrap; border: 0;
+}
+.mb-adv-list {
+  list-style: none;
+  margin: 2px 0 8px;
+  padding: 0;
+}
+.mb-adv-list li {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+.mb-adv-list li:last-child { margin-bottom: 0; }
+.mb-adv-k.mb-adv-up { margin-top: 8px; color: var(--copper-ink); }
+.mb-outlook {
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+  background: var(--card);
+}
+.mb-outlook-k, .mb-astro-k {
+  margin: 0;
+  font: 700 0.68rem/1.2 var(--f-ui);
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink-2);
+}
+.mb-outlook-t { margin: 4px 0 0; font-size: 0.92rem; line-height: 1.4; color: var(--ink); }
+.mb-astro {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px 14px;
+  align-items: center;
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+  background: var(--card);
+}
+.mb-sun { display: flex; gap: 18px; flex-wrap: wrap; }
+.mb-sun-cell, .mb-moon-cell { display: flex; flex-direction: column; gap: 2px; }
+.mb-moon-cell { flex-direction: row; align-items: center; gap: 10px; }
+.mb-astro-v {
+  font-family: var(--f-num);
+  font-weight: 600; font-size: 1.35rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.mb-moon-pct { font-size: 0.82rem; color: var(--ink-2); }
+.mb-moon-meta { display: flex; flex-direction: column; gap: 1px; }
+.mb-astro.is-missing p { margin: 0; color: var(--ink-2); font-size: 0.9rem; }
+.mb-view-note {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: var(--pred);
+  line-height: 1.25;
+}
+.mb-gc .mb-gs { line-height: 1.25; }
+
+/* Compact the Morning Brief chrome only. Homepage masthead files are unchanged. */
+@media (max-width: 600px) {
+  .mb { padding: 6px 14px 40px; }
+  .mb-tag, .mb-area, .mb-kicker, .mb-badge { display: none; }
+  .mb h1 { font-size: 1.18rem; margin: 0 0 2px; }
+  .mb-issue { min-height: 0; margin-top: 6px; padding: 6px 10px; }
+  .mb-issued time { font-size: 1.15rem; }
+  .mb-issue { padding: 6px 10px !important; }
+  .mb-issue .mb-sources { display: none; }
+
+  .mb-why { display: none; }
+  .mb-regions { margin-top: 4px; gap: 4px; }
+  .mb-regions a { padding: 4px 10px; font-size: 0.8rem; }
+  .mb-adv, .mb-outlook, .mb-astro, .mb-glance { margin-top: 6px; }
+  .mb-adv { padding: 7px 10px; min-height: 0; }
+  .mb-adv-list li { margin-bottom: 3px; font-size: 0.82rem; line-height: 1.25; }
+  .mb-outlook, .mb-astro { padding: 6px 10px; }
+  .mb-outlook-t { font-size: 0.8rem; line-height: 1.28; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+  .mb-astro-v { font-size: 1.05rem; }
+  .mb-glance { gap: 5px; }
+  .mb-gc { min-height: 0; padding: 5px 8px; }
+  .mb-gv b { font-size: 1.22rem; }
+  .mb-gs { font-size: 0.68rem; }
+  /* Brief-page-only Folio compact. Shared masthead files are unchanged. */
+  body.mb-page .mast-mission,
+  body.mb-page .mast-motto,
+  body.mb-page .mast-wave,
+  body.mb-page .mast-kicker-center {
+    display: none !important;
+  }
+  body.mb-page .mast-nameplate h1 { margin: 0; font-size: 1.55rem; }
+  body.mb-page .mast-nameplate { padding-bottom: 0; }
+  body.mb-page .masthead,
+  html[data-concept] body.mb-page .masthead {
+    min-height: 0 !important;
+    padding: 2px 0 0;
+  }
+  body.mb-page .mast-top { padding-top: 2px; padding-bottom: 0; }
+  html[data-concept] body.mb-page .compact-bar {
+    min-height: 44px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+  }
+}
+[data-theme="dark"] .mb-outlook,
+[data-theme="dark"] .mb-astro {
+  background: var(--card);
+}
+[data-theme="dark"] .mb-moon-svg circle:first-child { fill: #E6D4A8; }
