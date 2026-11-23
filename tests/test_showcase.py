@@ -48,7 +48,7 @@ class Gate(unittest.TestCase):
             self.assertEqual(showcase.variant({}, None), "A")
             self.assertEqual(showcase.variant({}, "crystal-coast"), "A")
             self.assertEqual(showcase.variant({"showcase": ["B"]}, "crystal-coast"), "A")
-            self.assertIsNone(showcase.variant({}, "hatteras"))
+            self.assertEqual(showcase.variant({}, "hatteras"), "A")  # every region (fix t444u)
         with env(HOME_SHOWCASE="true"):
             self.assertTrue(showcase.enabled())
         with env(HOME_SHOWCASE="0"):
@@ -188,8 +188,9 @@ class Routes(unittest.TestCase):
             self.assertIn(b'data-showcase="A"', home)
             self.assertIn(b"/showcase.js", home)
             st, _, other = self._get("/?region=hatteras")
-            if st == 200:
-                self.assertNotIn(b'id="showcase"', other)
+            if st == 200:  # t444u: other regions get their own instruments, focused on that region
+                self.assertIn(b'id="showcase"', other)
+                self.assertIn(b'data-region="hatteras"', other)
 
     def test_public_home_wind_is_gfs_only_cached_and_ignores_hrrr(self):
         calls = []
