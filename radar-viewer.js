@@ -11,7 +11,12 @@
   let dark = root.getAttribute("data-theme") === "dark";
   const mm = (s) => !!(window.matchMedia && matchMedia(s).matches);
   const reduce = mm("(prefers-reduced-motion: reduce)") || /[?&]motion=off\b/.test(q);
-  const HOME = L.latLngBounds([33.75, -78.3], [36.55, -75.25]);
+  // ?at=lat,lon (from a region's homepage instrument) centres the opening view on that region's
+  // forecast point; anything outside the loaded data area is ignored and the coast-wide view is used.
+  const AT = (/[?&]at=(-?\d{1,2}(?:\.\d{1,5})?),(-?\d{1,3}(?:\.\d{1,5})?)(?:&|$)/.exec(q) || []).slice(1).map(Number);
+  const HOME = AT.length === 2 && AT[0] >= 32.5 && AT[0] <= 37.5 && AT[1] >= -80 && AT[1] <= -73
+    ? L.latLngBounds([AT[0] - 0.9, AT[1] - 1.2], [AT[0] + 0.9, AT[1] + 1.2])
+    : L.latLngBounds([33.75, -78.3], [36.55, -75.25]);
   const yieldTask = () => new Promise((r) => (window.scheduler && scheduler.yield ? scheduler.yield().then(r) : setTimeout(r, 0)));
 
   const clockF = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" });
