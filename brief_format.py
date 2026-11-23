@@ -238,8 +238,8 @@ def daytime_period(periods: list, now: datetime | None = None) -> dict | None:
     return None
 
 
-def format_outlook(marine: dict) -> str | None:
-    """Tonight and tomorrow from the already-fetched marine zone forecast."""
+def outlook_periods(marine: dict) -> dict | None:
+    """Tonight and the next official marine period, condensed, not paraphrased."""
     if (marine or {}).get("status") != "ok":
         return None
     periods = marine.get("periods") or []
@@ -254,20 +254,59 @@ def format_outlook(marine: dict) -> str | None:
             continue
         sentences = [s.strip() for s in re.split(r"(?<=\.)\s+", text) if s.strip()]
         clip = " ".join(sentences[:2]) if sentences else text
-        picks.append("%s: %s" % (name, clip))
+        picks.append({"name": name, "text": clip})
         if len(picks) >= 2:
             break
     if not picks:
         return None
     zone = marine.get("zone") or ""
-    issued = ""
-    upd = marine.get("updated")
-    if upd:
-        issued = when_et(upd)
-    tail = "NWS %s" % zone if zone else "NWS"
+    issued = when_et(marine.get("updated")) if marine.get("updated") else ""
+    source = "NWS %s" % zone if zone else "NWS"
     if issued:
-        tail += ", issued %s" % issued
-    return " ".join(picks) + " (%s)." % tail
+        source += ", issued %s" % issued
+    return {"periods": picks, "source": source}
+
+
+def format_outlook(marine: dict) -> str | None:
+    """Single-line form of outlook_periods, for the stored Full Readings item."""
+    parsed = outlook_periods(marine)
+    if not parsed:
+        return None
+    bits = ["%s: %s" % (p["name"], p["text"]) for p in parsed["periods"]]
+    return " ".join(bits) + " (%s)." % parsed["source"]
+
+
+_OUTLOOK_LABEL = re.compile(
+    r"(Tonight|This Evening|Overnight|This Afternoon|"
+    r"(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|"
+    r"Mon|Tue|Wed|Thu|Fri|Sat|Sun)(?:\s+Night)?)"
+    r":\s*"
+)
+
+
+def parse_outlook_text(text: str) -> dict | None:
+    """Split a stored Outlook string into official period labels plus the source line."""
+    if not text or not str(text).strip():
+        return None
+    raw = str(text).strip()
+    source = ""
+    body = raw
+    msrc = re.search(r"\s*\((NWS[^)]+)\)\.?\s*$", raw)
+    if msrc:
+        source = msrc.group(1).strip()
+        body = raw[:msrc.start()].strip()
+    marks = [(m.start(), m.end(), m.group(1)) for m in _OUTLOOK_LABEL.finditer(body)]
+    if not marks:
+        return {"periods": [{"name": "Outlook", "text": body}], "source": source} if body else None
+    periods = []
+    for i, (s, e, name) in enumerate(marks):
+        stop = marks[i + 1][0] if i + 1 < len(marks) else len(body)
+        clip = body[e:stop].strip()
+        if clip:
+            periods.append({"name": name, "text": clip})
+    if not periods:
+        return None
+    return {"periods": periods, "source": source}
 
 
 def parse_tide_events(text: str, issued_at) -> list[dict]:

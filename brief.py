@@ -267,6 +267,7 @@ def build_salt(rid: str, now: datetime) -> dict:
         missing.append("advisories")
 
     wind_tr = seas_tr = pres_tr = None
+    parsed_outlook = None
     wind_src = None
     if ok("wind"):
         w = R["wind"]; v = w["values"]; fr("Wind", w)
@@ -351,6 +352,7 @@ def build_salt(rid: str, now: datetime) -> dict:
     elif mar.get("status") == "ok" and mar.get("periods"):
         first = re.split(r"(?<=\.)\s", mar["periods"][0]["text"].strip())[0]
         items.append(("Marine forecast", "%s: %s (NWS %s)" % (mar["periods"][0]["name"], first, mar.get("zone"))))
+        parsed_outlook = brief_format.outlook_periods(mar)
         outlook = brief_format.format_outlook(mar)
         if outlook:
             items.append(("Outlook", outlook))
@@ -436,6 +438,8 @@ def build_salt(rid: str, now: datetime) -> dict:
             "marineZone": (d.get("marine") or {}).get("zone"), "marineUpdated": (d.get("marine") or {}).get("updated"),
             "forecastUpdated": fc.get("updated"),
             "sources": "NOAA NDBC, NOAA CO-OPS, NWS (api.weather.gov)"}
+    if parsed_outlook:
+        out["outlookPeriods"] = parsed_outlook
     if wind_src:
         out["windSource"] = wind_src
     return out
@@ -943,28 +947,41 @@ def _astro_for_page(b: dict) -> dict | None:
 
 
 def _moon_svg(pct: int, waxing: bool) -> str:
-    """Compact northern-hemisphere moon: the right limb is lit when waxing."""
-    pct = max(0, min(100, int(pct)))
-    # Shade width as a fraction of the radius. 0 = new, 100 = full.
-    lit = pct / 100.0
-    # Use a simple two-circle shadow. For waxing, shadow covers the left.
-    # A full moon has no shadow; a new moon is all shadow.
-    if pct >= 99:
+    """Compact northern-hemisphere moon with an elliptical terminator.
+
+    The right limb is lit when waxing. Inexpensive inline SVG; no images.
+    """
+    k = max(0, min(100, int(pct))) / 100.0
+    r, cx, cy = 9.0, 12.0, 12.0
+    face = ('<circle cx="12" cy="12" r="9.4" fill="#E6D4A8" '
+            'stroke="#A7864F" stroke-width="1.2"/>')
+    if k >= 0.995:
         shade = ""
-    elif pct <= 1:
+    elif k <= 0.005:
         shade = '<circle cx="12" cy="12" r="9" fill="#1A2430" fill-opacity="0.82"/>'
     else:
-        # shift a dark disc across the face
-        direction = 1 if waxing else -1  # waxing: shadow on the left, moving away
-        # at 50% the shadow edge is at the center
-        cx = 12 - direction * (2 * lit - 1) * 9
-        shade = '<circle cx="%.1f" cy="12" r="9" fill="#1A2430" fill-opacity="0.78"/>' % cx
+        # Terminator is an ellipse of horizontal radius r*|2k-1| (0 at quarter, r at new/full).
+        rx = r * abs(2 * k - 1)
+        north, south = (cx, cy - r), (cx, cy + r)
+        if waxing:
+            # Dark limb is the left; light comes from the right.
+            limb = "A %.1f %.1f 0 0 0 %.1f %.1f" % (r, r, south[0], south[1])
+            # Gibbous: terminator in the left half. Crescent: terminator in the right half.
+            sweep = 1 if k >= 0.5 else 0
+            term = "A %.1f %.1f 0 0 %d %.1f %.1f" % (rx, r, sweep, north[0], north[1])
+        else:
+            limb = "A %.1f %.1f 0 0 1 %.1f %.1f" % (r, r, south[0], south[1])
+            sweep = 0 if k >= 0.5 else 1
+            term = "A %.1f %.1f 0 0 %d %.1f %.1f" % (rx, r, sweep, north[0], north[1])
+        path = "M %.1f %.1f %s %s Z" % (north[0], north[1], limb, term)
+        shade = '<path d="%s" fill="#1A2430" fill-opacity="0.82"/>' % path
     return (
-        '<svg class="mb-moon-svg" viewBox="0 0 24 24" width="36" height="36" aria-hidden="true" focusable="false">'
-        '<circle cx="12" cy="12" r="9.4" fill="#E6D4A8" stroke="#A7864F" stroke-width="1.2"/>'
+        '<svg class="mb-moon-svg" viewBox="0 0 24 24" width="36" height="36" '
+        'aria-hidden="true" focusable="false">'
+        '%s'
         '<clipPath id="mb-moon-clip"><circle cx="12" cy="12" r="9"/></clipPath>'
         '<g clip-path="url(#mb-moon-clip)">%s</g>'
-        '</svg>' % shade
+        '</svg>' % (face, shade)
     )
 
 
@@ -1007,11 +1024,23 @@ def _astro_html(b: dict, esc) -> str:
 def _outlook_html(b: dict, esc) -> str:
     if (b.get("waterType") or "saltwater") == "freshwater":
         return ""
-    text = _item(b, "Outlook")
-    if not text:
+    parsed = b.get("outlookPeriods")
+    if not parsed or not parsed.get("periods"):
+        text = _item(b, "Outlook")
+        parsed = brief_format.parse_outlook_text(text) if text else None
+    if not parsed or not parsed.get("periods"):
         return ""
+    rows = []
+    for p in parsed["periods"]:
+        rows.append(
+            '<div class="mb-outlook-period">'
+            '<p class="mb-outlook-p">%s</p>'
+            '<p class="mb-outlook-t">%s</p></div>'
+            % (esc(p.get("name") or ""), esc(p.get("text") or ""))
+        )
+    src = ('<p class="mb-outlook-src">%s</p>' % esc(parsed["source"])) if parsed.get("source") else ""
     return ('<section class="mb-outlook" aria-label="Marine outlook">'
-            '<p class="mb-outlook-k">Outlook</p><p class="mb-outlook-t">%s</p></section>' % esc(text))
+            '<p class="mb-outlook-k">Outlook</p>%s%s</section>' % ("".join(rows), src))
 
 
 def _hazards_html(b: dict, esc) -> str:

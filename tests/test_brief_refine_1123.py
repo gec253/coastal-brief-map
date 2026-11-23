@@ -135,7 +135,11 @@ class FutureHazards(unittest.TestCase):
         # Outlook is outside the collapsed Full readings section.
         before, after = html.split('id="mb-details"', 1)
         self.assertIn("Outlook", before)
-        self.assertIn("Tuesday:", before)
+        self.assertIn('class="mb-outlook-p"', before)
+        self.assertIn("Tonight", before)
+        self.assertIn("Tuesday", before)
+        self.assertIn('class="mb-outlook-src"', before)
+        self.assertIn("AMZ158", before)
 
 
 class DaytimeHigh(unittest.TestCase):
@@ -248,6 +252,82 @@ class SeasLabel(unittest.TestCase):
         # Never labeled as surf conditions.
         self.assertNotIn("beach surf conditions", html.lower())
         self.assertNotIn(">Surf<", html)
+
+
+class OutlookParse(unittest.TestCase):
+    def test_parses_tonight_and_tuesday_from_stored_string(self):
+        text = ("Tonight: NW winds around 5 kt. "
+                "Tuesday: N winds 20 to 25 kt. Seas 4 to 6 ft. "
+                "(NWS AMZ158, issued Mon 4:14 AM ET).")
+        parsed = brief_format.parse_outlook_text(text)
+        self.assertIsNotNone(parsed)
+        names = [p["name"] for p in parsed["periods"]]
+        self.assertEqual(names, ["Tonight", "Tuesday"])
+        self.assertIn("NW winds around 5 kt", parsed["periods"][0]["text"])
+        self.assertIn("20 to 25 kt", parsed["periods"][1]["text"])
+        self.assertIn("AMZ158", parsed["source"])
+        self.assertIn("4:14 AM ET", parsed["source"])
+
+    def test_outlook_periods_skips_today(self):
+        marine = {
+            "status": "ok", "zone": "AMZ154", "updated": "2026-11-23T09:14:00+00:00",
+            "periods": [
+                {"name": "Today", "text": "N winds 5 to 10 kt."},
+                {"name": "Tonight", "text": "N winds around 5 kt, increasing after midnight."},
+                {"name": "Tuesday", "text": "N winds around 25 kt. Seas 5 to 7 ft, building."},
+            ],
+        }
+        parsed = brief_format.outlook_periods(marine)
+        self.assertEqual([p["name"] for p in parsed["periods"]], ["Tonight", "Tuesday"])
+        self.assertTrue(parsed["periods"][0]["text"].startswith("N winds around 5 kt"))
+        self.assertIn("AMZ154", parsed["source"])
+
+
+class StationLabelWrap(unittest.TestCase):
+    def test_css_does_not_ellipsize_station_labels(self):
+        css = (Path(__file__).resolve().parents[1] / "brief.css").read_text()
+        import re
+        bodies = re.findall(r"\.mb-gs\b[^{]*\{([^}]+)\}", css)
+        self.assertTrue(bodies, "expected .mb-gs rules in brief.css")
+        for body in bodies:
+            self.assertNotIn("text-overflow: ellipsis", body)
+            for m in re.finditer(r"-webkit-line-clamp:\s*([^;]+)", body):
+                self.assertEqual(m.group(1).strip(), "unset", body)
+        self.assertIn("overflow-wrap: anywhere", css)
+
+    def test_page_keeps_full_station_name_in_markup(self):
+        b = _build(_salt_payload())
+        b["regionId"] = "crystal-coast"
+        b["issuedAt"] = NOW.isoformat()
+        html = brief.page(b, view_now=NOW)
+        self.assertIn("Onslow Bay Outer (CDIP 217)", html)
+        self.assertNotIn("bu…", html)
+        self.assertNotIn('class="ellipsis"', html)
+        self.assertIn('class="mb-gs"', html)
+
+
+class MobileTimestamps(unittest.TestCase):
+    def test_reading_times_are_in_the_markup(self):
+        import brief_preview
+        b = _build(_salt_payload())
+        b["regionId"] = "crystal-coast"
+        b["issuedAt"] = NOW.isoformat()
+        html = brief.page(b, view_now=NOW)
+        self.assertIn("Reading times", html)
+        self.assertIn("<time>", html)
+        # Public polish folds the list into a reachable details panel; it is not removed.
+        wrapped = brief_preview._wrap_reading_times(html)
+        self.assertIn('id="mb-sources"', wrapped)
+        self.assertIn("<summary>Reading times</summary>", wrapped)
+        self.assertIn("<time>", wrapped)
+
+    def test_mobile_css_does_not_hide_reading_times(self):
+        css = (Path(__file__).resolve().parents[1] / "brief.css").read_text()
+        mobile = css.split("@media (max-width: 600px)")[-1]
+        self.assertIn(".mb-sources", mobile)
+        self.assertNotIn(".mb-issue .mb-sources { display: none; }", css)
+        self.assertNotIn(".mb-sources { display: none", mobile)
+        self.assertNotIn(".mb-fresh { display: none", mobile)
 
 
 if __name__ == "__main__":
