@@ -25,9 +25,10 @@
   // ?at=lat,lon (from a region's homepage instrument) centres the opening view on that region's
   // forecast point; anything outside the loaded data area is ignored and the coast-wide view is used.
   const AT = (/[?&]at=(-?\d{1,2}(?:\.\d{1,5})?),(-?\d{1,3}(?:\.\d{1,5})?)(?:&|$)/.exec(q) || []).slice(1).map(Number);
+  const COAST = L.latLngBounds([33.75, -78.3], [36.55, -75.25]);
   const HOME = AT.length === 2 && AT[0] >= 32.5 && AT[0] <= 37.5 && AT[1] >= -80 && AT[1] <= -73
     ? L.latLngBounds([AT[0] - 0.9, AT[1] - 1.2], [AT[0] + 0.9, AT[1] + 1.2])
-    : L.latLngBounds([33.75, -78.3], [36.55, -75.25]);
+    : COAST;
   const yieldTask = () => new Promise((r) => (window.scheduler && scheduler.yield ? scheduler.yield().then(r) : setTimeout(r, 0)));
 
   // ET clock (now). Clearly separate from the model's valid time.
@@ -115,7 +116,7 @@
       motion = !motion; setPlay(); try { localStorage.setItem("coastalBrief.windMotion", motion ? "on" : "off"); } catch (e) {}
       wind.setMotion(motion);
     });
-    $("w-center").addEventListener("click", function () { map.flyToBounds(HOME, { duration: osReduce ? 0 : 0.6 }); });
+    $("w-center").addEventListener("click", function () { map.flyToBounds(COAST, { duration: osReduce ? 0 : 0.6 }); });
 
     let dot = null;
     function readAt(latlng, label) {
