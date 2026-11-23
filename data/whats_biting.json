@@ -213,7 +213,7 @@
             }
           ],
           "fact_types": "Seasonal / biological: temperature thresholds, estuarine overwintering, Sea Grant / Ellis telemetry. Historical: January 2025 and late January–February 2026 stuns and the FF-12-2026 closure. Regulatory (re-verify before publication): FF-31-2026 slot and bag, director’s closure authority, harvest reporting, and the waters to which those rules apply.",
-          "published_at": null
+          "published_at": "2026-11-23"
         }
       ]
     },
@@ -227,9 +227,9 @@
         {
           "source_name": "Capt. Marty, Outer Banks This Week / OneBoat",
           "source_url": "https://obxguides.com/ocracoke/capt-marty/activity-reports",
-          "as_of": "2026-11-20",
+          "as_of": "2026-11-23",
           "scope": "Outer Banks, including Hatteras",
-          "title": "Fishing Report 11-20"
+          "title": "Fishing Report 11-23"
         },
         {
           "source_name": "Frank & Fran's, Avon",
@@ -412,7 +412,7 @@
             }
           ],
           "fact_types": "Seasonal / biological: Pamlico Sound / Neuse / Pamlico River study results, temperature thresholds, overwintering behavior. Historical: late January–February 2026 stun and the FF-12-2026 closure. Regulatory (re-verify before publication): FF-31-2026 slot and bag, director’s closure authority, harvest reporting, and the waters to which those rules apply.",
-          "published_at": null
+          "published_at": "2026-11-23"
         }
       ]
     },

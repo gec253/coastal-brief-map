@@ -213,16 +213,22 @@ class LaunchPrepRoutes(unittest.TestCase):
         data = whats_biting.load()
         region = whats_biting.region_by_id(data, "crystal-coast")
         article = whats_biting.article_by_slug(region, "when-the-sound-turns-cold")
-        self.assertIsNone(article.get("published_at"))
+        # Hidden when unset; set to the actual Stage A public-release date, never earlier.
+        self.assertEqual(article.get("published_at"), "2026-11-23")
         html = whats_biting.render_article(data, region, article, public=True)
-        self.assertIn("Reviewed Nov 21, 2026", html)
-        self.assertNotIn("Published ", html)
-        self.assertNotIn("pending approval", html)
-        copy = dict(article)
-        copy["published_at"] = "2026-11-23"
-        html = whats_biting.render_article(data, region, copy, public=True)
         self.assertIn("Published Nov 23, 2026", html)
         self.assertIn("Reviewed Nov 21, 2026", html)
+        self.assertNotIn("pending approval", html)
+        copy = dict(article)
+        copy["published_at"] = None
+        html = whats_biting.render_article(data, region, copy, public=True)
+        self.assertIn("Reviewed Nov 21, 2026", html)
+        self.assertNotIn("Published ", html)
+        earlier = dict(article)
+        earlier["published_at"] = "2026-11-22"
+        html = whats_biting.render_article(data, region, earlier, public=True)
+        self.assertIn("Published Nov 22, 2026", html)
+        self.assertNotEqual(article.get("published_at"), "2026-11-22")
 
     def test_ramps_and_map_flags_off_keep_preview_cookie_gate(self):
         os.environ["PREVIEW_KEY"] = KEY

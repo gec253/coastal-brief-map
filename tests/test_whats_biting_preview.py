@@ -94,7 +94,13 @@ class DataAndPages(unittest.TestCase):
         self.assertTrue(any("Hatteras Harbor" in n for n in names))
         as_of = {r["source_name"]: r["as_of"] for r in h["reports"]}
         self.assertEqual(as_of.get("Frank & Fran's, Avon"), "2026-11-21")
-        self.assertEqual({r["as_of"] for r in h["reports"] if "Fran" not in r["source_name"]}, {"2026-11-20"})
+        marty = next(r for r in h["reports"] if "Capt. Marty" in r["source_name"])
+        self.assertEqual(marty["as_of"], "2026-11-23")
+        self.assertEqual(marty["title"], "Fishing Report 11-23")
+        self.assertEqual(
+            {r["as_of"] for r in h["reports"] if "Fran" not in r["source_name"] and "Capt. Marty" not in r["source_name"]},
+            {"2026-11-20"},
+        )
         cc = whats_biting.region_by_id(self.data, "crystal-coast")
         self.assertEqual(cc["reports"][0]["source_name"], "Bogue Inlet Pier")
         self.assertEqual(cc["reports"][0]["as_of"], "2026-11-15")
@@ -167,7 +173,7 @@ class DataAndPages(unittest.TestCase):
         self.assertIn("not republished", h.lower())
         # Glance shows newest date near the top, before official notices.
         top = h.split("Latest local reports")[0]
-        self.assertIn("November 21, 2026", top)
+        self.assertIn("November 23, 2026", top)
         self.assertIn("Verified species", top)
 
     def test_flagged_publications_are_not_rendered(self):
