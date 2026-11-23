@@ -515,9 +515,25 @@ def source_details_html(rec) -> str:
                 f"</div>"
             )
         blocks.append("<h3>Supporting documentation</h3>" + "".join(items))
+    water = rec.get("body_of_water") or ""
+    water_note = rec.get("body_of_water_note") or ""
+    if water or water_note:
+        bits = ["<h3>Official waterbody name as recorded</h3>"]
+        if water:
+            bits.append(f"<p>{esc(water)}</p>")
+        if water_note and water_note != water:
+            bits.append(f"<p>{esc(water_note)}</p>")
+        blocks.append("".join(bits))
     notes = rec.get("notes") or ""
+    asides = research_asides_for(rec)
+    research_bits = []
     if notes:
-        blocks.append(f"<h3>Research notes</h3><p>{esc(notes)}</p>")
+        research_bits.append(f"<p>{esc(notes)}</p>")
+    for a in asides:
+        if a and a != notes:
+            research_bits.append(f"<p>{esc(a)}</p>")
+    if research_bits:
+        blocks.append("<h3>Research notes</h3>" + "".join(research_bits))
     blocks.append(f'<p class="checked">Date checked: {esc(rec.get("date_checked") or "")}.</p>')
     return (
         '<details class="source-details">'
@@ -582,7 +598,7 @@ def card_html(rec, *, public: bool = False) -> str:
     return (
         f'<li><a class="ramp-card" href="{esc(_detail_url(rec["id"], public=public))}">'
         f'<h3>{esc(rec["display_name"])}</h3>'
-        f'<span class="meta">{esc(rec.get("body_of_water") or "")}'
+        f'<span class="meta">{esc(display_waterbody_name(rec.get("body_of_water") or ""))}'
         f'{" — " + esc(loc) if loc else ""}</span>'
         f'{amen_html}'
         f'{badges_for(rec)}'
@@ -763,10 +779,8 @@ def fees_html(rec) -> str:
             + "".join(entries)
             + "</section>"
         )
-    summary = fees.get("summary")
-    if not _has_stated_summary(summary):
-        return ""
-    return f'<h2>Fees</h2><p>{esc(_visitor_prose(summary))}</p>'
+    text, _ = official_summary_for_visitors(fees.get("summary"))
+    return f'<h2>Fees</h2><p>{esc(text)}</p>'
 
 
 def hours_html(rec) -> str:
@@ -788,10 +802,8 @@ def hours_html(rec) -> str:
             + "".join(entries)
             + "</section>"
         )
-    summary = hours.get("summary")
-    if not _has_stated_summary(summary):
-        return ""
-    return f'<h2>Hours</h2><p>{esc(_visitor_prose(summary))}</p>'
+    text, _ = official_summary_for_visitors(hours.get("summary"))
+    return f'<h2>Hours</h2><p>{esc(text)}</p>'
 
 
 def directions_html(rec) -> str:
@@ -833,14 +845,112 @@ def _split_notices(rec):
     return priority, general, other
 
 
-def waterbody_lead(rec) -> str:
-    """One visitor-facing waterbody line, without a duplicated name.
+NOT_LISTED_OFFICIAL = "Not listed in the official sources checked."
 
-    The inventory often stores an official body_of_water (sometimes ALL CAPS)
-    and a body_of_water_note that is the same label with different casing or a
-    trailing period, plus an optional qualifier. The previous exact-string
-    comparison treated those as different and printed "Name — Name."
-    """
+# Acronyms and initialisms left uppercase in presentation-only title case.
+WATER_ACRONYMS = {
+    "NC", "N.C.", "US", "USA", "USACE", "NCWRC", "NCDMF", "DMF", "ICW",
+    "USGS", "ADA", "DCM", "BAA", "TL", "NGVD",
+}
+
+# Research asides stripped from visitor-facing leads, fees, and hours.
+# The original wording is preserved in Source Details. Restrictions stay
+# in their visitor-facing restriction fields.
+_ASIDE_PATTERNS = [
+    re.compile(r"\s*Never present as Jordan Lake\.?", re.I),
+    re.compile(r"\s*\(name on the official town list\)", re.I),
+    re.compile(
+        r"\s*\(Town of Atlantic Beach official page lists this among public boat ramps\)",
+        re.I,
+    ),
+    re.compile(r"\s*\(not named on the city page\)", re.I),
+    re.compile(
+        r"\s*DCM site name is Union Street Park at East Front Street and South Front Street, "
+        r"which matches the city parks list location for Union Point Park\.?",
+        re.I,
+    ),
+    re.compile(r"\s*The official page does not name the water body\.?", re.I),
+    re.compile(r"\s*\(?DCM PRK_FEE\s*=\s*No\)?\.?", re.I),
+]
+
+
+def display_waterbody_name(name: str) -> str:
+    """Presentation-only title case for waterbody labels. Inventory is unchanged."""
+    s = (name or "").strip()
+    if not s:
+        return s
+    if any("a" <= c <= "z" for c in s):
+        return s
+    parts = []
+    for word in s.split():
+        prefix = suffix = ""
+        core = word
+        while core and core[0] in "([{":
+            prefix += core[0]
+            core = core[1:]
+        while core and core[-1] in ".,;:)]}":
+            suffix = core[-1] + suffix
+            core = core[:-1]
+        if not core:
+            parts.append(word)
+            continue
+        key = core.upper()
+        if key in WATER_ACRONYMS or core.upper().replace(".", "") + ("." if "." in core else "") in WATER_ACRONYMS:
+            if key in WATER_ACRONYMS:
+                core = key if key != "N.C." else "N.C."
+            else:
+                core = core.upper()
+        else:
+            core = core.capitalize()
+        parts.append(prefix + core + suffix)
+    return " ".join(parts)
+
+
+def _title_lead(lead: str) -> str:
+    if " — " not in lead:
+        return display_waterbody_name(lead)
+    left, right = lead.split(" — ", 1)
+    # Title-case an ALL-CAPS official name; leave an already mixed-case qualifier alone.
+    right_out = display_waterbody_name(right) if right.isupper() else right
+    return f"{display_waterbody_name(left)} — {right_out}"
+
+
+def extract_research_asides(text: str) -> tuple[str, list[str]]:
+    """Split visitor copy from research asides. Inventory text is not modified."""
+    s = (text or "").strip()
+    asides: list[str] = []
+    if not s:
+        return "", asides
+    for pat in _ASIDE_PATTERNS:
+        for m in pat.finditer(s):
+            chunk = re.sub(r"^[\s,;.(]+", "", m.group(0).strip())
+            chunk = chunk.strip(" 	,;().")
+            if chunk:
+                asides.append(chunk)
+        s = pat.sub("", s)
+    s = re.sub(r"\s{2,}", " ", s).strip(" 	,;")
+    s = re.sub(r"\s+\.", ".", s).strip()
+    return s, asides
+
+
+def official_summary_for_visitors(summary: str | None) -> tuple[str, list[str]]:
+    """Visitor Hours/Fees line, plus any research asides for Source Details."""
+    raw = (summary or "").strip()
+    if not raw or raw.casefold() == "not stated":
+        return NOT_LISTED_OFFICIAL, []
+    if re.fullmatch(r"(?:not stated\s*)?\(?DCM PRK_FEE\s*=\s*No\)?\.?", raw, re.I):
+        return NOT_LISTED_OFFICIAL, [raw]
+    s = re.sub(r"^not stated\.\s+", "", raw, flags=re.I).strip()
+    s, asides = extract_research_asides(s)
+    if not s:
+        if raw not in asides:
+            asides.insert(0, raw)
+        return NOT_LISTED_OFFICIAL, asides
+    return _visitor_prose(s), asides
+
+
+def _waterbody_lead_raw(rec) -> str:
+    """Deduped waterbody line from inventory fields, before presentation cleanup."""
     water = (rec.get("body_of_water") or "").strip()
     note = (rec.get("body_of_water_note") or "").strip()
     if not note:
@@ -848,6 +958,12 @@ def waterbody_lead(rec) -> str:
     if not water:
         return note
     water_core = re.sub(r"[\s.,;:]+$", "", water)
+    # Beaverdam: the note restates the separated-section fact and quotes the
+    # gas-motor prohibition, which already appears under Restrictions.
+    if re.search(r"separated section of Falls Lake", water, re.I) and re.match(
+        r"Beaverdam Lake is separated", note, re.I
+    ):
+        return water
     if re.match(re.escape(water_core) + r"(?:[\s.,;:\u2013\u2014-]|$)", note, flags=re.I):
         rest = re.sub(
             r"^" + re.escape(water_core) + r"[\s.,;:\u2013\u2014-]*",
@@ -860,6 +976,47 @@ def waterbody_lead(rec) -> str:
             return re.sub(r"[\s.,;:]+$", "", note) or water_core
         return note
     return f"{water} — {note}"
+
+
+def waterbody_lead(rec) -> str:
+    """Visitor-facing waterbody line: no duplicated name, no research asides, title case."""
+    raw = _waterbody_lead_raw(rec)
+    cleaned, _ = extract_research_asides(raw)
+    lead = cleaned or raw
+    if " — " in lead:
+        left, right = lead.split(" — ", 1)
+        right = right.strip(" ,;")
+        if not right:
+            lead = left
+        else:
+            lead = f"{left} — {right}"
+    return _title_lead(lead)
+
+
+def research_asides_for(rec) -> list[str]:
+    """Asides removed from visitor leads, fees, and hours. For Source Details only."""
+    found: list[str] = []
+    raw_lead = _waterbody_lead_raw(rec)
+    _, lead_asides = extract_research_asides(raw_lead)
+    found.extend(lead_asides)
+    # When the Beaverdam note is held back from the lead, keep the full note.
+    note = (rec.get("body_of_water_note") or "").strip()
+    water = (rec.get("body_of_water") or "").strip()
+    if note and re.search(r"separated section of Falls Lake", water, re.I) and re.match(
+        r"Beaverdam Lake is separated", note, re.I
+    ):
+        found.append(note)
+    for summary in ((rec.get("fees") or {}).get("summary"), (rec.get("hours") or {}).get("summary")):
+        _, asides = official_summary_for_visitors(summary)
+        found.extend(asides)
+    # Dedup while preserving order.
+    out, seen = [], set()
+    for a in found:
+        key = re.sub(r"\s+", " ", a).strip().casefold()
+        if key and key not in seen:
+            seen.add(key)
+            out.append(a.strip())
+    return out
 
 
 def _visitor_prose(text: str) -> str:

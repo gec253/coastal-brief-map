@@ -693,7 +693,7 @@ class StageBPresentation(unittest.TestCase):
         self.assertEqual(ramp_finder.waterbody_lead(golds), "Neuse River")
         # Distinct official name and common name stay side by side.
         farr = ramp_finder.by_id("baa-farrington-point", self.data)
-        self.assertEqual(ramp_finder.waterbody_lead(farr), "LAKE JORDAN — B. Everett Jordan Lake")
+        self.assertEqual(ramp_finder.waterbody_lead(farr), "Lake Jordan — B. Everett Jordan Lake")
 
     def test_public_pages_do_not_say_preview_or_show_bare_not_stated_sections(self):
         for rec in self.data["records"]:
@@ -708,5 +708,82 @@ class StageBPresentation(unittest.TestCase):
         west = ramp_finder.render_detail(
             self.data, ramp_finder.by_id("local-atlantic-beach-west-bogue-sound", self.data), public=True
         )
-        self.assertNotIn("<h2>Hours</h2>", west)
-        self.assertNotIn("<h2>Fees</h2>", west)
+        self.assertIn("<h2>Hours</h2>", west)
+        self.assertIn("<h2>Fees</h2>", west)
+        self.assertIn(ramp_finder.NOT_LISTED_OFFICIAL, west)
+
+    def test_inventory_fields_unchanged_from_bc68cd6(self):
+        """Presentation-only: every inventory field is identical to bc68cd6.
+
+        The facts digest stays
+        8bccf90797ec5c7593da6b009dd93928bc8acf41ad4e63db8d3d47b4406a877c
+        because official names, notices, coordinates, and counts were not edited.
+        """
+        import json
+        import subprocess
+        raw = subprocess.check_output(
+            ["git", "show", "bc68cd6:preview/ramp-finder/inventory.json"],
+            cwd=ROOT,
+        )
+        base = json.loads(raw)
+        data = ramp_finder.load_data()
+        self.assertEqual(data["counts"], base["counts"])
+        self.assertEqual(data["meta"], base["meta"])
+        self.assertEqual(len(data["records"]), len(base["records"]))
+        diffs = []
+        for rec, old in zip(data["records"], base["records"]):
+            if rec == old:
+                continue
+            changed = [k for k in sorted(set(rec) | set(old)) if rec.get(k) != old.get(k)]
+            diffs.append((rec.get("id"), changed))
+        self.assertEqual(diffs, [], msg=diffs)
+        self.assertEqual(data, base)
+        self.assertEqual(
+            ramp_finder.inventory_facts_digest(data),
+            "8bccf90797ec5c7593da6b009dd93928bc8acf41ad4e63db8d3d47b4406a877c",
+        )
+
+    def test_list_and_detail_title_case_keep_official_name_in_source_details(self):
+        html = ramp_finder.render_list(
+            self.data, ramp_finder.parse_filters({"region": ["crystal-coast"]}), public=True
+        )
+        self.assertIn("Pamlico Sound", html)
+        self.assertNotIn("PAMLICO SOUND —", html)
+        rec = ramp_finder.by_id("baa-farrington-point", self.data)
+        self.assertEqual(rec["body_of_water"], "LAKE JORDAN")
+        detail = ramp_finder.render_detail(self.data, rec, public=True)
+        self.assertIn('<p class="lead">Lake Jordan — B. Everett Jordan Lake</p>', detail)
+        self.assertIn("Official waterbody name as recorded", detail)
+        self.assertIn("LAKE JORDAN", detail)
+
+    def test_research_asides_move_to_source_details_and_restrictions_remain(self):
+        hwy = ramp_finder.by_id("parks-falls-highway-50", self.data)
+        html = ramp_finder.render_detail(self.data, hwy, public=True)
+        lead = '<p class="lead">Falls Lake (main reservoir).</p>'
+        self.assertIn(lead, html)
+        body, _, details = html.partition('<details class="source-details">')
+        self.assertNotIn("Never present as Jordan Lake", body)
+        self.assertIn("Never present as Jordan Lake", details)
+        beaver = ramp_finder.render_detail(
+            self.data, ramp_finder.by_id("parks-falls-beaverdam", self.data), public=True
+        )
+        body, _, details = beaver.partition('<details class="source-details">')
+        self.assertIn("Beaverdam Lake (a separated section of Falls Lake)", body)
+        self.assertNotIn("Beaverdam Lake is separated from the main area", body)
+        self.assertIn("gas-motored boats are prohibited on Beaverdam Lake", body)
+        self.assertIn("Beaverdam Lake is separated from the main area", details)
+        west = ramp_finder.render_detail(
+            self.data, ramp_finder.by_id("local-atlantic-beach-west-bogue-sound", self.data), public=True
+        )
+        body, _, details = west.partition('<details class="source-details">')
+        self.assertIn('<p class="lead">Bogue Sound</p>', west)
+        self.assertNotIn("name on the official town list", body)
+        self.assertIn("name on the official town list", details)
+        union = ramp_finder.render_detail(
+            self.data, ramp_finder.by_id("local-newbern-union-point", self.data), public=True
+        )
+        body, _, details = union.partition('<details class="source-details">')
+        self.assertIn("Neuse River at New Bern (brackish).", body)
+        self.assertNotIn("DCM PRK_FEE", body)
+        self.assertIn("DCM PRK_FEE", details)
+        self.assertIn(ramp_finder.NOT_LISTED_OFFICIAL, union)
