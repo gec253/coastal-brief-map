@@ -309,7 +309,11 @@ class ProtectedSurfacesUnchanged(unittest.TestCase):
         baseline = "3bfca7e"
         # Ed t444u: the Wind & Radar region fix intentionally changed these; they are pinned to that fix instead.
         t444u = {"showcase.js": "d6b4900", "showcase.css": "d6b4900", "showcase.py": "d6b4900", "radar-viewer.js": "d6b4900"}
+        # t440u / t446u: brief.py and brief.css are the approved Morning Brief
+        # refinements; homepage, viewers, and Catch Wall stay locked.
         for rel in whats_biting.PROTECTED_PATHS:
+            if rel in ("brief.py", "brief.css"):
+                continue
             proc = subprocess.run(
                 ["git", "diff", "--name-only", t444u.get(rel, baseline), "--", rel],
                 cwd=ROOT, capture_output=True, text=True, check=True,

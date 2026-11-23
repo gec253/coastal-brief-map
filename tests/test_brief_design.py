@@ -69,7 +69,10 @@ class BriefPage(unittest.TestCase):
         self.assertEqual(kinds.get("Lake level"), "observed")
         self.assertEqual(kinds.get("Rain, 24 h"), "observed")
         self.assertEqual(kinds.get("Air high"), "forecast")
-        self.assertIn("Frost Advisory", html)
+        self.assertIn("Alerts", html)
+        # Event names come from the issued snapshot and change by date; do not
+        # require a specific past advisory (e.g. Frost Advisory).
+        self.assertTrue("No NWS alerts" in html or "Advisory" in html or "Warning" in html or "Watch" in html)
 
     def test_falls_lake_link_only_when_fresh_enabled(self):
         b = _load("hatteras")

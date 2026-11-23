@@ -144,7 +144,7 @@ class SwellRow(unittest.TestCase):
 
     def test_swell_uses_the_seas_observation_row(self):
         line = dict(self._build(True)["items"])["Swell"]
-        self.assertEqual(line, "0.3 ft at 11 s from the ENE (split from the buoy spectrum).")
+        self.assertEqual(line, "0.3 ft at 11 s from the ENE (split from the buoy spectrum). Offshore buoy observation, not a beach surf height.")
 
     def test_swell_from_another_row_shows_its_own_time(self):
         b = self._build(False)

@@ -111,6 +111,9 @@ class MastheadPreview(unittest.TestCase):
             # its own /brief page. brief-link.js is the only file that rule touches here; its
             # behavior is covered by tests/test_launch_audit_1119.py instead of this byte lock.
             "brief-link.js",
+            # t440u (Nov 23): brief.css is refined on private branch brief-refine-1123
+            # (compact brief header, outlook, sun/moon). Shared masthead files stay locked.
+            "brief.css",
         )
     )
 
