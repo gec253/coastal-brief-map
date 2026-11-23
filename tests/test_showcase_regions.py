@@ -91,6 +91,10 @@ class Client(unittest.TestCase):
         self.assertIn("No model wind for", self.js)
         self.assertNotIn("innerHTML = (k < 1", self.js)
 
+    def test_place_labels_never_clamped_from_off_face(self):
+        self.assertIn("never pull an off-face place into view", self.js)
+        self.assertIn("if (regional && CC) continue;", self.js)
+
     def test_full_viewers_accept_bounded_at(self):
         for f in ("wind-viewer.js", "radar-viewer.js"):
             s = (ROOT / f).read_text(encoding="utf-8")

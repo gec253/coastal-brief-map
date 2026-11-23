@@ -19,9 +19,11 @@
   // Radar-only labels at true WGS84 positions. Water names (w=1) sit in the sound; never used as weather.
   // ax: 0 right of the point, 1 centered (water), 2 left, 3 above. Positions are true WGS84.
   const PLACES = [["Cape Lookout",34.605,-76.536,0,0],["Morehead City",34.722,-76.695,0,3],["Pamlico Sound",35.22,-76.32,1,1],["Ocracoke",35.115,-75.981,0,2],["Emerald Isle",34.668,-77.063,0,2],["Core Sound",34.80,-76.28,1,1],["Cape Hatteras",35.222,-75.530,0,2],["New Bern",35.108,-77.044,0,2],
-    ["Wilmington",34.226,-77.945,0,2],["Jacksonville",34.754,-77.430,0,2],["Nags Head",35.957,-75.624,0,2],["Manteo",35.908,-75.676,0,2],
-    ["Albemarle Sound",36.06,-76.25,1,1],["Raleigh",35.780,-78.638,0,0],["Durham",35.994,-78.899,0,2],["Chapel Hill",35.913,-79.056,0,2],
-    ["Goldsboro",35.385,-77.993,0,0],["Fayetteville",35.053,-78.878,0,0]];
+    // Labels for the other regions' faces (t444u). Not drawn on the Crystal Coast face, which keeps its approved look.
+    ["Wilmington",34.226,-77.945,0,2,1],["Jacksonville",34.754,-77.430,0,2,1],["Nags Head",35.957,-75.624,0,2,1],["Manteo",35.908,-75.676,0,2,1],
+    ["Albemarle Sound",36.06,-76.25,1,1,1],["Raleigh",35.780,-78.638,0,0,1],["Durham",35.994,-78.899,0,2,1],["Chapel Hill",35.913,-79.056,0,2,1],
+    ["Goldsboro",35.385,-77.993,0,0,1],["Fayetteville",35.053,-78.878,0,0,1]];
+  const CC = !sec.dataset.region || sec.dataset.region === "crystal-coast";
   const SANS = "\"Barlow Condensed\",\"Arial Narrow\",sans-serif";
   const dark = () => matchMedia("(prefers-color-scheme: dark)").matches;
   const $ = (k) => sec.querySelector('[data-k="' + k + '"]');
@@ -122,8 +124,10 @@
     const x = v.ctx, fs = v.w < 260 ? 8 : 9.5;
     const taken = [[0, v.h - 52, Math.min(220, v.w * 0.62), v.h], [v.w - 42, 0, v.w, 40], [v.w - 90, v.h - 28, v.w, v.h]];
     x.save(); x.lineWidth = 3; x.lineJoin = "round"; x.textBaseline = "middle"; x.textAlign = "left";
-    for (const [name, lat, lon, water, ax] of PLACES) {
+    for (const [name, lat, lon, water, ax, regional] of PLACES) {
+      if (regional && CC) continue;
       const q = v.px(lon, lat);
+      if (q[0] < 0 || q[0] > v.w || q[1] < 0 || q[1] > v.h) continue; // never pull an off-face place into view
       x.font = (water ? "italic 500 " : "600 ") + fs + "px " + (water ? "Fraunces,Georgia,serif" : SANS);
       const tw = x.measureText(name).width;
       let tx, ty;
