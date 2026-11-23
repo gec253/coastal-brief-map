@@ -13,9 +13,9 @@
    "time": "4:30 AM ET"
   }
  ],
- "issueDate": "2026-11-22",
- "issuedAt": "2026-11-22T10:15:01.246393+00:00",
- "issuedEt": "Sun Nov 22, 5:15 AM ET",
+ "issueDate": "2026-11-23",
+ "issuedAt": "2026-11-23T10:15:01.066871+00:00",
+ "issuedEt": "Mon Nov 23, 5:15 AM ET",
  "items": [
   [
    "Alerts",
@@ -23,7 +23,7 @@
   ],
   [
    "Lake level",
-   "244.71 ft (NGVD29), 6.79 ft below the 251.5 ft guide curve; -0.02 ft in 24 h."
+   "244.75 ft (NGVD29), 6.75 ft below the 251.5 ft guide curve; +0.04 ft in 24 h."
   ],
   [
    "Dam release",
@@ -31,19 +31,19 @@
   ],
   [
    "Inflows",
-   "Eno River near Durham 7.8 cfs, below normal; Flat River at Bahama 3.4 cfs, much below normal."
+   "Eno River near Durham 12 cfs, below normal; Flat River at Bahama 4.8 cfs, below normal."
   ],
   [
    "Water temp",
-   "58°F at the dam sensor."
+   "59°F at the dam sensor."
   ],
   [
    "Rain",
-   "0.17 in last 24 h at the dam; NWS forecast 0.16 in in next 24 h."
+   "0.81 in last 24 h at the dam; NWS forecast 0.02 in in next 24 h."
   ],
   [
    "Weather",
-   "Light Rain Likely, high 57°F, wind NE 7 mph."
+   "Patchy Fog, high 54°F, wind NW 1 mph."
   ]
  ],
  "missing": [],
@@ -68,7 +68,7 @@
   "Flow below the dam is very low for the date."
  ],
  "validation": {
-  "checkedAt": "2026-11-22T10:15:01.246393+00:00",
+  "checkedAt": "2026-11-23T10:15:01.066871+00:00",
   "checks": [
    "region",
    "location",
@@ -80,5 +80,5 @@
   "status": "ok"
  },
  "waterType": "freshwater",
- "words": 110
+ "words": 108
 }
