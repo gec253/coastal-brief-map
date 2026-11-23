@@ -5,17 +5,23 @@
 (function () {
   "use strict";
   const sec = document.getElementById("showcase");
-  if (!sec) return;
+  if (!sec || sec.dataset.unsupported) return;
   const KT = 1.943844, D = Math.PI / 180;
   const DIRS = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
-  const HOME = { lat: 34.72, lon: -76.70, name: "Morehead City" };
-  const CENTER = { lat: 34.62, lon: -76.75 };
+  // Focus comes from the server (the region's own NWS forecast point, data/regions.json). Crystal Coast
+  // keeps its original framing; these defaults match it exactly.
+  const num = (k, d) => { const n = parseFloat(sec.dataset[k]); return isFinite(n) ? n : d; };
+  const HOME = { lat: num("lat", 34.72), lon: num("lon", -76.70), name: sec.dataset.label || "Morehead City" };
+  const CENTER = { lat: num("clat", 34.62), lon: num("clon", -76.75) };
   const SPAN_DEG = 2.9; // longitude across the instrument face
   const STOPS_DARK = [[0, [120, 160, 190]], [8, [110, 200, 215]], [15, [140, 220, 170]], [22, [235, 215, 120]], [30, [245, 150, 90]], [38, [240, 95, 95]]];
   const STOPS_LIGHT = [[0, [70, 110, 140]], [8, [25, 120, 150]], [15, [30, 125, 95]], [22, [170, 130, 30]], [30, [190, 85, 40]], [38, [150, 35, 35]]];
   // Radar-only labels at true WGS84 positions. Water names (w=1) sit in the sound; never used as weather.
   // ax: 0 right of the point, 1 centered (water), 2 left, 3 above. Positions are true WGS84.
-  const PLACES = [["Cape Lookout",34.605,-76.536,0,0],["Morehead City",34.722,-76.695,0,3],["Pamlico Sound",35.22,-76.32,1,1],["Ocracoke",35.115,-75.981,0,2],["Emerald Isle",34.668,-77.063,0,2],["Core Sound",34.80,-76.28,1,1],["Cape Hatteras",35.222,-75.530,0,2],["New Bern",35.108,-77.044,0,2]];
+  const PLACES = [["Cape Lookout",34.605,-76.536,0,0],["Morehead City",34.722,-76.695,0,3],["Pamlico Sound",35.22,-76.32,1,1],["Ocracoke",35.115,-75.981,0,2],["Emerald Isle",34.668,-77.063,0,2],["Core Sound",34.80,-76.28,1,1],["Cape Hatteras",35.222,-75.530,0,2],["New Bern",35.108,-77.044,0,2],
+    ["Wilmington",34.226,-77.945,0,2],["Jacksonville",34.754,-77.430,0,2],["Nags Head",35.957,-75.624,0,2],["Manteo",35.908,-75.676,0,2],
+    ["Albemarle Sound",36.06,-76.25,1,1],["Raleigh",35.780,-78.638,0,0],["Durham",35.994,-78.899,0,2],["Chapel Hill",35.913,-79.056,0,2],
+    ["Goldsboro",35.385,-77.993,0,0],["Fayetteville",35.053,-78.878,0,0]];
   const SANS = "\"Barlow Condensed\",\"Arial Narrow\",sans-serif";
   const dark = () => matchMedia("(prefers-color-scheme: dark)").matches;
   const $ = (k) => sec.querySelector('[data-k="' + k + '"]');
@@ -174,9 +180,11 @@
     }
     coastline(v, coast); graticule(v); homeDot(v); scaleBar(v); neatline(v); cv.classList.add("is-on");
     const h = uv(HOME.lat, HOME.lon);
+    if (!h) $("w-read").textContent = "No model wind for " + HOME.name;
     if (h) {
       const k = Math.round(Math.hypot(h[0], h[1]) * KT), dir = DIRS[Math.round(((Math.atan2(-h[0], -h[1]) / D + 360) % 360) / 22.5) % 16];
-      $("w-read").innerHTML = (k < 1 ? "Calm" : dir + " " + k + " kt") + "<small>" + HOME.name + "</small>";
+      const el = $("w-read"), sm = document.createElement("small"); sm.textContent = HOME.name;
+      el.textContent = k < 1 ? "Calm" : dir + " " + k + " kt"; el.appendChild(sm);
     }
     const valid = new Date(g.valid);
     $("w-time").textContent = "Valid " + etTime(valid) + " " + et(valid, { weekday: "short" });

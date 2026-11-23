@@ -3044,7 +3044,7 @@ class Handler(SimpleHTTPRequestHandler):
             rid = (parse_qs(parsed.query).get("region") or [""])[0].strip()
             if rid in ("falls-lake", "jordan-lake", "neuse-river") and parsed.path in ("/", "/index.html") and freshwater.flag_on():
                 # Public lakes and the Neuse open the Hybrid page in freshwater mode; /lake?region= is unchanged.
-                return self._send_public_home(rid)
+                return self._send_public_home(rid, sc=showcase.variant(parse_qs(parsed.query), rid))
             if rid in ("falls-lake", "jordan-lake", "neuse-river") and (freshwater.flag_on() or self._preview_ok()):
                 self.send_response(303)
                 self.send_header("Location", "/lake?region=%s" % rid)
@@ -3461,8 +3461,11 @@ class Handler(SimpleHTTPRequestHandler):
         except Exception as e:
             sys.stderr.write("hybrid home failed, serving dashboard: %s\n" % e)
             return self._send_html(ROOT / "index.html", region_id=rid)
-        if sc:  # Concept A Wind & Radar section; only when HOME_SHOWCASE is on
-            data = showcase.inject(data, sc, radar_meta=handle_radar_meta)
+        if sc:  # Concept A Wind & Radar section, focused on this region; only when HOME_SHOWCASE is on
+            try:
+                data = showcase.inject(data, sc, radar_meta=handle_radar_meta, region=rid)
+            except Exception as e:  # never take the homepage down for the instruments
+                sys.stderr.write("showcase inject failed: %s\n" % e)
         # Featured is public only when PUBLIC_WHATS_BITING is on. It must not
         # noindex, cookie-vary, or add no-store to the public homepage.
         # /preview/home-b stays a separate cookie-gated route.
@@ -3490,7 +3493,7 @@ class Handler(SimpleHTTPRequestHandler):
             data = refine_b_page(sprint_home.page("hybrid", rid, public=True))
             sc = showcase.variant(q, rid)
             if sc:
-                data = showcase.inject(data, sc, radar_meta=handle_radar_meta)
+                data = showcase.inject(data, sc, radar_meta=handle_radar_meta, region=rid)
             data = theme_toggle.apply(data)  # Ed t392u: masthead day/night toggle, preview only
         except Exception as e:
             sys.stderr.write("concept B preview failed: %s\n" % e)

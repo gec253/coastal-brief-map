@@ -45,3 +45,5 @@
 .sc-age i{font-style:normal}
 .sc-b .sc-age{display:block}.sc-b .sc-age i{display:none}
 @media (prefers-reduced-motion:reduce){.sc-cv{transition:none}}
+.sc-note{margin:0;padding:12px 14px;border:1px solid var(--line);border-radius:6px;font-size:.95rem;line-height:1.45}
+.sc-note a{color:inherit;text-decoration:underline;display:inline-block;min-height:24px}
