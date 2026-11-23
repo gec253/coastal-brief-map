@@ -1,4 +1,4 @@
-/* Private Ramp Finder map prototype (Ed t421u).
+/* Private Ramp Finder map (Ed t421u, refine t422u).
    Vendored Leaflet only. Pins are drawn solely from official inventory coordinates.
    No third-party tile keys, no Esri, no OSM Foundation default tiles. */
 (function () {
@@ -10,6 +10,7 @@
   var AERIAL_URL = "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}";
   var USGS_ATTR = "Map services and data available from U.S. Geological Survey, National Geospatial Program";
   var MAX_ZOOM = 16;
+  var MOBILE_MQ = "(max-width: 879px)";
 
   var dataNode = document.getElementById("rf-map-data");
   var stage = document.getElementById("rf-map");
@@ -27,10 +28,19 @@
   var markersById = {};
   var map, topoLayer, aerialLayer, markerLayer;
   var selectedId = null;
+  var lastFocus = null;
   var reduceMotion = false;
   try {
     reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   } catch (e) {}
+
+  function isMobile() {
+    try {
+      return window.matchMedia(MOBILE_MQ).matches;
+    } catch (e) {
+      return window.innerWidth <= 879;
+    }
+  }
 
   function loadCss(href) {
     return new Promise(function (resolve, reject) {
@@ -61,6 +71,14 @@
     return loadCss(VENDOR_CSS).then(function () { return loadScript(VENDOR_JS); });
   }
 
+  function whenIdle(fn) {
+    if (typeof window.requestIdleCallback === "function") {
+      window.requestIdleCallback(function () { fn(); }, { timeout: 250 });
+    } else {
+      setTimeout(fn, 1);
+    }
+  }
+
   function isPin(rec) {
     return !!(rec && rec.has_pin && typeof rec.lat === "number" && typeof rec.lon === "number"
       && isFinite(rec.lat) && isFinite(rec.lon));
@@ -87,25 +105,34 @@
       .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
 
+  function primaryAlert(rec) {
+    if (rec.dated_notice) {
+      return { kind: "notice", label: "Current dated notice", text: rec.dated_notice };
+    }
+    if (rec.standing_caution) {
+      return { kind: "caution", label: "Standing caution", text: rec.standing_caution };
+    }
+    if (rec.restriction) {
+      return { kind: "restriction", label: "Restrictions", text: rec.restriction };
+    }
+    if (rec.flags && rec.flags.fee_conflict) {
+      return { kind: "restriction", label: "Fee figures differ", text: "Official sources list more than one fee. See Ramp details for both figures and sources." };
+    }
+    if (rec.flags && rec.flags.hours_uncertain) {
+      return { kind: "restriction", label: "Hours uncertain", text: "Official sources disagree about hours. See Ramp details for both descriptions." };
+    }
+    return null;
+  }
+
   function popupHtml(rec) {
     var bits = [];
     bits.push('<div class="rf-popup">');
     bits.push("<h3>" + esc(rec.name) + "</h3>");
     if (rec.waterbody) bits.push('<p class="rf-popup-water">' + esc(rec.waterbody) + "</p>");
-    if (rec.dated_notice) {
-      bits.push('<p class="rf-popup-notice"><strong>Current dated notice.</strong> ' + esc(rec.dated_notice) + "</p>");
-    }
-    if (rec.standing_caution) {
-      bits.push('<p class="rf-popup-caution"><strong>Standing caution.</strong> ' + esc(rec.standing_caution) + "</p>");
-    }
-    if (rec.restriction) {
-      bits.push("<p><strong>Restrictions.</strong> " + esc(rec.restriction) + "</p>");
-    }
-    if (rec.flags && rec.flags.fee_conflict) {
-      bits.push("<p>Official sources list more than one fee. See the detail page for both figures and sources.</p>");
-    }
-    if (rec.flags && rec.flags.hours_uncertain) {
-      bits.push("<p>Official sources disagree about hours. See the detail page for both descriptions.</p>");
+    var alert = primaryAlert(rec);
+    if (alert) {
+      var cls = alert.kind === "notice" ? "rf-popup-notice" : (alert.kind === "caution" ? "rf-popup-caution" : "");
+      bits.push("<p" + (cls ? ' class="' + cls + '"' : "") + "><strong>" + esc(alert.label) + ".</strong> " + esc(alert.text) + "</p>");
     }
     bits.push('<p class="rf-popup-disclaimer">Not a live open/closed confirmation.</p>');
     bits.push('<div class="rf-popup-actions">');
@@ -114,6 +141,113 @@
     if (rec.google_url) bits.push('<a class="btn" href="' + esc(rec.google_url) + '" rel="noopener noreferrer" target="_blank">Google Maps directions</a>');
     bits.push("</div></div>");
     return bits.join("");
+  }
+
+  function sheetEls() {
+    return {
+      root: document.getElementById("rf-sheet"),
+      scrim: document.getElementById("rf-sheet-scrim"),
+      panel: document.getElementById("rf-sheet-panel"),
+      close: document.getElementById("rf-sheet-close"),
+      title: document.getElementById("rf-sheet-title"),
+      water: document.getElementById("rf-sheet-water"),
+      alert: document.getElementById("rf-sheet-alert"),
+      detail: document.getElementById("rf-sheet-detail"),
+      apple: document.getElementById("rf-sheet-apple"),
+      google: document.getElementById("rf-sheet-google")
+    };
+  }
+
+  function sheetOpen() {
+    var els = sheetEls();
+    return !!(els.root && !els.root.hasAttribute("hidden"));
+  }
+
+  function focusables(panel) {
+    return panel.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+  }
+
+  function closeSheet() {
+    var els = sheetEls();
+    if (!els.root) return;
+    els.root.setAttribute("hidden", "");
+    if (els.scrim) els.scrim.setAttribute("hidden", "");
+    els.root.classList.remove("is-open");
+    if (lastFocus && typeof lastFocus.focus === "function") {
+      try { lastFocus.focus(); } catch (e) {}
+    }
+    lastFocus = null;
+  }
+
+  function openSheet(rec) {
+    var els = sheetEls();
+    if (!els.root || !els.panel || !els.title) return;
+    lastFocus = document.activeElement;
+    els.title.textContent = rec.name || "";
+    if (els.water) {
+      els.water.textContent = rec.waterbody || "";
+      els.water.hidden = !rec.waterbody;
+    }
+    var alert = primaryAlert(rec);
+    if (els.alert) {
+      if (alert) {
+        els.alert.hidden = false;
+        els.alert.className = "rf-sheet-alert rf-sheet-alert-" + alert.kind;
+        els.alert.innerHTML = "<strong>" + esc(alert.label) + ".</strong> " + esc(alert.text);
+      } else {
+        els.alert.hidden = true;
+        els.alert.textContent = "";
+        els.alert.className = "rf-sheet-alert";
+      }
+    }
+    function hook(el, url) {
+      if (!el) return;
+      if (url) {
+        el.href = url;
+        el.removeAttribute("hidden");
+      } else {
+        el.setAttribute("hidden", "");
+        el.removeAttribute("href");
+      }
+    }
+    hook(els.detail, rec.detail_url);
+    hook(els.apple, rec.apple_url);
+    hook(els.google, rec.google_url);
+    els.root.removeAttribute("hidden");
+    if (els.scrim) els.scrim.removeAttribute("hidden");
+    els.root.classList.add("is-open");
+    var closeBtn = els.close;
+    if (closeBtn && closeBtn.focus) closeBtn.focus();
+  }
+
+  function onSheetKeydown(ev) {
+    if (!sheetOpen()) return;
+    if (ev.key === "Escape") {
+      ev.preventDefault();
+      closeSheet();
+      return;
+    }
+    if (ev.key !== "Tab") return;
+    var els = sheetEls();
+    var list = focusables(els.panel);
+    if (!list.length) return;
+    var first = list[0];
+    var last = list[list.length - 1];
+    if (ev.shiftKey && document.activeElement === first) {
+      ev.preventDefault();
+      last.focus();
+    } else if (!ev.shiftKey && document.activeElement === last) {
+      ev.preventDefault();
+      first.focus();
+    }
+  }
+
+  function bindSheet() {
+    var els = sheetEls();
+    if (!els.root) return;
+    if (els.close) els.close.addEventListener("click", closeSheet);
+    if (els.scrim) els.scrim.addEventListener("click", closeSheet);
+    document.addEventListener("keydown", onSheetKeydown);
   }
 
   function makeIcon(rec, selected) {
@@ -156,13 +290,13 @@
     });
     if (!rec) {
       setListSelection("");
+      closeSheet();
       return;
     }
     setListSelection(rec.id, { scrollList: !!fromMap });
     var marker = markersById[rec.id];
     if (marker) {
       if (!fromMap) {
-        var stage = document.getElementById("rf-map");
         if (stage && stage.scrollIntoView) {
           stage.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
         }
@@ -170,9 +304,18 @@
         if (reduceMotion) map.setView(marker.getLatLng(), z, { animate: false });
         else map.flyTo(marker.getLatLng(), z, { duration: 0.6 });
       }
-      marker.openPopup();
+      if (isMobile()) {
+        if (marker.closePopup) marker.closePopup();
+        if (map) map.closePopup();
+        openSheet(rec);
+      } else {
+        closeSheet();
+        marker.openPopup();
+      }
     } else {
       if (map) map.closePopup();
+      if (isMobile()) openSheet(rec);
+      else closeSheet();
       announce(rec.name + " has no map pin — address directions. Official coordinates are not on file.");
     }
   }
@@ -189,7 +332,9 @@
         keyboard: true,
         riseOnHover: true
       });
-      marker.bindPopup(popupHtml(rec), { maxWidth: 300, className: "rf-leaflet-popup", autoPanPadding: [20, 72] });
+      if (!isMobile()) {
+        marker.bindPopup(popupHtml(rec), { maxWidth: 300, className: "rf-leaflet-popup", autoPanPaddingTopLeft: [24, 160], autoPanPaddingBottomRight: [24, 48] });
+      }
       marker.on("click", function () { selectRecord(rec, true); });
       marker.addTo(markerLayer);
       markersById[rec.id] = marker;
@@ -203,11 +348,23 @@
       return;
     }
     if (pinRecs.length === 1) {
-      map.setView([pinRecs[0].lat, pinRecs[0].lon], 12, { animate: !reduceMotion });
+      map.setView([pinRecs[0].lat, pinRecs[0].lon], 13, { animate: !reduceMotion });
       return;
     }
     var bounds = window.L.latLngBounds(pinRecs.map(function (r) { return [r.lat, r.lon]; }));
-    map.fitBounds(bounds, { padding: [28, 28], maxZoom: pinRecs.length < 6 ? 12 : 10, animate: !reduceMotion });
+    map.fitBounds(bounds, { padding: [32, 32], maxZoom: 13, animate: !reduceMotion });
+  }
+
+  function tileOpts() {
+    return {
+      attribution: USGS_ATTR,
+      maxZoom: MAX_ZOOM,
+      maxNativeZoom: MAX_ZOOM,
+      tileSize: 256,
+      updateWhenIdle: true,
+      updateWhenZooming: false,
+      keepBuffer: 1
+    };
   }
 
   function initMap(L) {
@@ -223,20 +380,7 @@
     L.control.zoom({ position: "topright" }).addTo(map);
     map.attributionControl.setPrefix('<a href="https://leafletjs.com" title="A JavaScript library for interactive maps">Leaflet</a>');
 
-    topoLayer = L.tileLayer(TOPO_URL, {
-      attribution: USGS_ATTR,
-      maxZoom: MAX_ZOOM,
-      maxNativeZoom: MAX_ZOOM,
-      tileSize: 256,
-      updateWhenIdle: true
-    });
-    aerialLayer = L.tileLayer(AERIAL_URL, {
-      attribution: USGS_ATTR,
-      maxZoom: MAX_ZOOM,
-      maxNativeZoom: MAX_ZOOM,
-      tileSize: 256,
-      updateWhenIdle: true
-    });
+    topoLayer = L.tileLayer(TOPO_URL, tileOpts());
     topoLayer.addTo(map);
     markerLayer = L.layerGroup().addTo(map);
 
@@ -250,11 +394,12 @@
     function setBasemap(which) {
       var aerial = which === "aerial";
       if (aerial) {
+        if (!aerialLayer) aerialLayer = L.tileLayer(AERIAL_URL, tileOpts());
         if (map.hasLayer(topoLayer)) map.removeLayer(topoLayer);
         if (!map.hasLayer(aerialLayer)) aerialLayer.addTo(map);
         markerLayer.addTo(map);
       } else {
-        if (map.hasLayer(aerialLayer)) map.removeLayer(aerialLayer);
+        if (aerialLayer && map.hasLayer(aerialLayer)) map.removeLayer(aerialLayer);
         if (!map.hasLayer(topoLayer)) topoLayer.addTo(map);
         markerLayer.addTo(map);
       }
@@ -281,6 +426,7 @@
   }
 
   document.addEventListener("click", onListClick);
+  bindSheet();
 
   function boot() {
     loadLeaflet().then(initMap).catch(function () {
@@ -288,12 +434,13 @@
     });
   }
 
-  // Lazy-load after first paint so the reserved map frame does not shift.
+  // Render the list first; load Leaflet when the browser is idle so first paint stays light.
+  function start() {
+    requestAnimationFrame(function () { whenIdle(boot); });
+  }
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", function () {
-      requestAnimationFrame(boot);
-    });
+    document.addEventListener("DOMContentLoaded", start);
   } else {
-    requestAnimationFrame(boot);
+    start();
   }
 })();

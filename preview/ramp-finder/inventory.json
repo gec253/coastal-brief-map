@@ -1548,13 +1548,13 @@
         }
       ],
       "directions": {
-        "mode": "address",
-        "latitude": null,
-        "longitude": null,
+        "mode": "coordinates",
+        "latitude": 34.70275096,
+        "longitude": -76.73657852,
         "address": "West Bogue Sound Drive, Atlantic Beach, NC",
-        "apple_url": "https://maps.apple.com/?daddr=West+Bogue+Sound+Drive%2C+Atlantic+Beach%2C+NC",
-        "google_url": "https://www.google.com/maps/dir/?api=1&destination=West+Bogue+Sound+Drive%2C+Atlantic+Beach%2C+NC",
-        "caveat": "The official town page gives the street name only. No street number or coordinates were published."
+        "apple_url": "https://maps.apple.com/?daddr=34.70275096,-76.73657852",
+        "google_url": "https://www.google.com/maps/dir/?api=1&destination=34.70275096,-76.73657852",
+        "caveat": ""
       },
       "sources": [
         {
@@ -1566,7 +1566,7 @@
       ],
       "date_checked": "2026-11-22",
       "notes": "Needs a later on-site or town-source check before treating this as a usable trailered-motorboat launch. Do not imply it is a full public trailer ramp.",
-      "coordinates_source": "not stated by the managing agency in the pages and datasets checked"
+      "coordinates_source": "Carteret County official Boat_access feature service Latitude and Longitude for West Bogue Sound Drive Ramp (https://arcgisweb.carteretcountync.gov/arcgis/rest/services/Layers/Boat_access/FeatureServer/0), retrieved Nov 22, 2026"
     },
     {
       "id": "parks-falls-bw-wells-campers",

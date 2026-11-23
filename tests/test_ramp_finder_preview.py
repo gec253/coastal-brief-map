@@ -1,4 +1,4 @@
-"""Ramp Finder private preview — gate, headers, data integrity (Ed t415u–t421u)."""
+"""Ramp Finder private preview — gate, headers, data integrity (Ed t415u–t422u)."""
 from __future__ import annotations
 
 import json
@@ -289,10 +289,31 @@ class PublicPagesUnchanged(unittest.TestCase):
 
 
 class InventoryUnchangedFromDeploy(unittest.TestCase):
-    """Verified facts, classes, counts, and directions stay at a03bf4c (Ed t417u)."""
+    """Verified facts stay at a03bf4c except official coordinates added in t422u.
 
-    def test_inventory_file_and_fact_digest_match_a03bf4c(self):
-        import hashlib
+    The only allowed inventory change is official coordinates (and the
+    directions fields derived from them) for ramps where an official source
+    published coordinates for that specific ramp. Counts, restrictions, fee
+    conflicts, scheduled closures, sources, and all other record fields must
+    match a03bf4c.
+    """
+
+    # Coordinate-related fields only, on this one record:
+    # local-atlantic-beach-west-bogue-sound, from the official Carteret County
+    # Boat_access feature service (retrieved Nov 22, 2026).
+    ALLOWED_COORDINATE_RECORD = "local-atlantic-beach-west-bogue-sound"
+    ALLOWED_TOP_FIELDS = frozenset({"coordinates_source", "directions"})
+    ALLOWED_DIRECTIONS_FIELDS = frozenset({
+        "mode", "latitude", "longitude", "apple_url", "google_url", "caveat",
+    })
+    DIGEST_AFTER_COORDINATE_UPDATE = (
+        "bc484d966b24131ab101f289345d81bf775ee03234c0a474d9752a5cbcb699b5"
+    )
+    DIGEST_AT_A03BF4C = (
+        "e93754a3cfdd705701e62728f559e26f805b3d40be22aa0601f666febaecca26"
+    )
+
+    def test_inventory_facts_unchanged_except_documented_official_coordinates(self):
         import json
         import subprocess
 
@@ -301,16 +322,43 @@ class InventoryUnchangedFromDeploy(unittest.TestCase):
             ["git", "show", f"{POLISH_BASE}:preview/ramp-finder/inventory.json"],
             cwd=ROOT,
         )
-        self.assertEqual(
-            hashlib.sha256(current).hexdigest(),
-            hashlib.sha256(baseline).hexdigest(),
-        )
         data = json.loads(current)
         base = json.loads(baseline)
-        self.assertEqual(
-            ramp_finder.inventory_facts_digest(data),
-            ramp_finder.inventory_facts_digest(base),
-        )
+        self.assertEqual(data["counts"], base["counts"])
+        self.assertEqual(data["meta"], base["meta"])
+        self.assertEqual(len(data["records"]), 55)
+        self.assertEqual([r["id"] for r in data["records"]], [r["id"] for r in base["records"]])
+
+        diffs = []
+        for rec, old in zip(data["records"], base["records"]):
+            if rec == old:
+                continue
+            if rec["id"] != self.ALLOWED_COORDINATE_RECORD:
+                diffs.append((rec["id"], "unexpected record changed"))
+                continue
+            for key in sorted(set(rec) | set(old)):
+                if rec.get(key) == old.get(key):
+                    continue
+                if key not in self.ALLOWED_TOP_FIELDS:
+                    diffs.append((rec["id"], f"disallowed field changed: {key}"))
+                    continue
+                if key == "directions":
+                    for dkey in sorted(set(rec[key]) | set(old[key])):
+                        if rec[key].get(dkey) == old[key].get(dkey):
+                            continue
+                        if dkey not in self.ALLOWED_DIRECTIONS_FIELDS:
+                            diffs.append((rec["id"], f"disallowed directions field changed: {dkey}"))
+        self.assertEqual(diffs, [], msg=diffs)
+
+        wb = ramp_finder.by_id(self.ALLOWED_COORDINATE_RECORD, data)
+        self.assertEqual(wb["directions"]["mode"], "coordinates")
+        self.assertEqual(wb["directions"]["latitude"], 34.70275096)
+        self.assertEqual(wb["directions"]["longitude"], -76.73657852)
+        self.assertIn("arcgisweb.carteretcountync.gov", wb["coordinates_source"])
+        self.assertIn("Nov 22, 2026", wb["coordinates_source"])
+
+        self.assertEqual(ramp_finder.inventory_facts_digest(base), self.DIGEST_AT_A03BF4C)
+        self.assertEqual(ramp_finder.inventory_facts_digest(data), self.DIGEST_AFTER_COORDINATE_UPDATE)
         self.assertEqual(data["counts"]["total"]["total"], 55)
         self.assertEqual(data["counts"]["total"]["general"], 48)
         self.assertEqual(data["counts"]["total"]["limited"], 3)
@@ -417,7 +465,7 @@ class PresentationPolish(unittest.TestCase):
 
 
 class MapPrototype(unittest.TestCase):
-    """Private interactive map (Ed t421u). Inventory facts stay frozen."""
+    """Private interactive map (Ed t421u, refine t422u)."""
 
     @classmethod
     def setUpClass(cls):
@@ -428,11 +476,11 @@ class MapPrototype(unittest.TestCase):
     def test_pin_counts_and_no_invented_coordinates(self):
         counts = ramp_finder.pin_inventory_counts(self.data)
         self.assertEqual(counts["total"], 55)
-        self.assertEqual(counts["pin"], 40)
-        self.assertEqual(counts["address"], 15)
+        self.assertEqual(counts["pin"], 41)
+        self.assertEqual(counts["address"], 14)
         self.assertEqual(counts["by_class"]["general"], {"pin": 39, "address": 9})
         self.assertEqual(counts["by_class"]["limited"], {"pin": 1, "address": 2})
-        self.assertEqual(counts["by_class"]["needs_review"], {"pin": 0, "address": 4})
+        self.assertEqual(counts["by_class"]["needs_review"], {"pin": 1, "address": 3})
         self.assertEqual(len(self.records), 55)
         inv = {r["id"]: r for r in self.data["records"]}
         pin_ids = set()
@@ -459,7 +507,7 @@ class MapPrototype(unittest.TestCase):
             and r["directions"].get("latitude") is not None
         }
         self.assertEqual(pin_ids, official)
-        self.assertEqual(len(pin_ids), 40)
+        self.assertEqual(len(pin_ids), 41)
 
     def test_every_map_pin_is_in_the_inventory(self):
         ids = {r["id"] for r in self.data["records"]}
@@ -507,7 +555,7 @@ class MapPrototype(unittest.TestCase):
         self.assertNotIn("Open Now", blob)
         self.assertEqual(
             ramp_finder.inventory_facts_digest(self.data),
-            "e93754a3cfdd705701e62728f559e26f805b3d40be22aa0601f666febaecca26",
+            "bc484d966b24131ab101f289345d81bf775ee03234c0a474d9752a5cbcb699b5",
         )
 
     def test_map_assets_and_reserved_height(self):
@@ -528,5 +576,45 @@ class MapPrototype(unittest.TestCase):
         status, ctype, raw = ramp_finder.resolve_request("/preview/ramps/map.json", {})
         self.assertEqual(status, 200)
         payload = json.loads(raw)
-        self.assertEqual(payload["counts"]["pin"], 40)
-        self.assertEqual(payload["counts"]["address"], 15)
+        self.assertEqual(payload["counts"]["pin"], 41)
+        self.assertEqual(payload["counts"]["address"], 14)
+
+
+    def test_map_defaults_to_crystal_coast_and_keeps_all_areas(self):
+        status, _, html = ramp_finder.resolve_request("/preview/ramps/map", {})
+        self.assertEqual(status, 200)
+        self.assertIn("Newport", html)
+        self.assertIn("Morehead City", html)
+        self.assertNotIn("Seaforth", html)
+        self.assertNotIn("Poe", html)
+        self.assertIn("region=all", html)
+        self.assertIn("All areas", html)
+        self.assertIn('id="rf-sheet"', html)
+        self.assertIn('aria-label="Close ramp panel"', html)
+        filters = ramp_finder.parse_map_filters({})
+        self.assertEqual(filters["region"], "crystal-coast")
+        self.assertEqual(ramp_finder.parse_map_filters({"region": ["all"]})["region"], "")
+        self.assertEqual(ramp_finder.parse_map_filters({"region": ["falls-lake"]})["region"], "falls-lake")
+        self.assertEqual(ramp_finder.parse_map_filters({"water": ["Jordan Lake"]})["region"], "jordan-lake")
+        all_html = ramp_finder.render_map(
+            self.data, ramp_finder.parse_map_filters({"region": ["all"]})
+        )
+        self.assertIn("Seaforth", all_html)
+        self.assertIn("No map pin — address directions", all_html)
+
+    def test_west_bogue_uses_official_carteret_coordinates(self):
+        rec = next(r for r in self.records if r["id"] == "local-atlantic-beach-west-bogue-sound")
+        self.assertTrue(rec["has_pin"])
+        self.assertEqual(rec["lat"], 34.70275096)
+        self.assertEqual(rec["lon"], -76.73657852)
+
+    def test_mobile_sheet_styles_and_leaflet_idle_load(self):
+        css = ramp_finder.css_bytes().decode()
+        self.assertIn(".rf-sheet-panel{", css)
+        self.assertIn("safe-area-inset-bottom", css)
+        js = ramp_finder.map_js_bytes().decode()
+        self.assertIn("requestIdleCallback", js)
+        self.assertIn("rf-sheet", js)
+        self.assertIn("Escape", js)
+        self.assertIn("maxZoom: 13", js)
+        self.assertIn("USGSTopo", js)

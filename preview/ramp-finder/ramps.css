@@ -408,3 +408,52 @@ html[data-theme="dark"] .rf-sync-name,
 html[data-theme="dark"] .rf-sync-detail{color:var(--ivory);}
 html[data-theme="dark"] .rf-sync-item.is-selected{border-color:var(--ivory);}
 html[data-theme="dark"] .rf-popup-actions .btn{background:var(--ivory);color:var(--navy);border-color:var(--ivory);}
+
+/* Mobile bottom sheet (t422u). Desktop keeps Leaflet popups at min-width 880px. */
+.rf-sheet{position:fixed;inset:0;z-index:2000;pointer-events:none;}
+.rf-sheet.is-open{pointer-events:auto;}
+.rf-sheet[hidden]{display:none;}
+.rf-sheet-scrim{
+  position:absolute;inset:0;border:0;padding:0;margin:0;
+  background:rgba(7,28,41,.4);cursor:pointer;
+}
+.rf-sheet-scrim[hidden]{display:none;}
+.rf-sheet-panel{
+  position:absolute;left:0;right:0;bottom:0;
+  background:var(--card);color:var(--ink);
+  border-radius:16px 16px 0 0;
+  box-shadow:0 -8px 28px rgba(7,28,41,.22);
+  padding:12px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  max-height:min(48svh, 360px);
+  overflow:auto;
+  pointer-events:auto;
+}
+.rf-sheet-close{
+  appearance:none;position:absolute;top:8px;right:8px;
+  min-width:var(--touch);min-height:var(--touch);
+  border:0;background:transparent;color:var(--navy);
+  font-family:var(--f-cond);font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;font-size:.72rem;cursor:pointer;
+}
+.rf-sheet-close:focus-visible{outline:3px solid var(--brass);outline-offset:2px;}
+.rf-sheet-panel h3{
+  font-family:var(--f-display);font-size:1.15rem;margin:0 56px 4px 0;color:var(--navy);
+  padding-right:0;
+}
+.rf-sheet-water{margin:0 0 8px;color:var(--muted);font-size:.92rem;}
+.rf-sheet-alert{margin:0 0 10px;font-size:.92rem;padding:8px;border-radius:4px;}
+.rf-sheet-alert-notice{background:var(--notice-bg);color:var(--notice);}
+.rf-sheet-alert-caution{background:var(--caution-bg);color:var(--caution);}
+.rf-sheet-actions{display:flex;flex-direction:column;gap:8px;}
+.rf-sheet-actions .btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:var(--touch);width:100%;text-decoration:none;
+}
+@media (min-width:880px){
+  .rf-sheet{display:none !important;}
+}
+html[data-theme="dark"] .rf-sheet-scrim{background:rgba(0,0,0,.55);}
+html[data-theme="dark"] .rf-sheet-panel{background:var(--card);color:var(--ivory);box-shadow:0 -8px 28px rgba(0,0,0,.45);}
+html[data-theme="dark"] .rf-sheet-panel h3,
+html[data-theme="dark"] .rf-sheet-close{color:var(--ivory);}
+html[data-theme="dark"] .rf-sheet-actions .btn{background:var(--ivory);color:var(--navy);border-color:var(--ivory);}

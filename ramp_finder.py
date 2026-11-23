@@ -1,4 +1,4 @@
-"""Ramp Finder — private, cookie-gated data preview (Ed t415u, polish t417u, map prototype t421u).
+"""Ramp Finder — private, cookie-gated data preview (Ed t415u–t422u).
 
 Server-rendered HTML for /preview/ramps, /preview/ramps/<id>, and the
 private interactive map at /preview/ramps/map. No public nav, no sitemap,
@@ -142,6 +142,43 @@ def parse_filters(q: dict) -> dict:
         region = ""
     flags = {key: first(key) in ("1", "true", "on", "yes") for key, _ in FLAG_FILTERS}
     return {"q": first("q").strip(), "region": region, **flags, "theme": first("theme")}
+
+
+MAP_DEFAULT_REGION = "crystal-coast"
+MAP_ALL_REGION = "all"
+
+
+def parse_map_filters(q: dict) -> dict:
+    """Map framing: default to Crystal Coast when the visitor has no region or water preference.
+
+    Keep All Areas via ?region=all. The list page still uses parse_filters (default all areas).
+    Also accepts ?area= and ?water= as aliases for an existing region key or label.
+    """
+    def first(name, default=""):
+        vals = q.get(name)
+        if not vals:
+            return default
+        return (vals[0] if isinstance(vals, list) else vals) or default
+
+    raw = (first("region") or first("area") or "").strip()
+    water = first("water").strip()
+    if not raw and water:
+        water_key = water.lower().replace(" ", "-")
+        keys = {a for a, _ in AREAS if a}
+        labels = {label.lower(): key for key, label in AREAS if key}
+        if water_key in keys:
+            raw = water_key
+        elif water.lower() in labels:
+            raw = labels[water.lower()]
+    filters = parse_filters(q)
+    if not raw:
+        filters["region"] = MAP_DEFAULT_REGION
+    elif raw == MAP_ALL_REGION:
+        filters["region"] = ""
+    else:
+        # Honor region, area, or water aliases even when parse_filters ignored them.
+        filters["region"] = raw
+    return filters
 
 
 def matches_search(rec, term: str) -> bool:
@@ -947,16 +984,13 @@ def render_map(data, filters: dict) -> str:
     chips = []
     for key, label in AREAS:
         params = {k: v for k, v in filters.items() if k != "theme"}
-        params["region"] = key
-        url = "/preview/ramps/map"
-        q = _qs(params)
-        if q:
-            url += "?" + q
-        current = ' aria-current="page"' if key == region else ""
-        if key == region:
-            chips.append(f'<span{current}>{esc(label)}</span>')
+        params["region"] = MAP_ALL_REGION if key == "" else key
+        url = "/preview/ramps/map?" + _qs(params)
+        current = key == region
+        if current:
+            chips.append(f'<span aria-current="page">{esc(label)}</span>')
         else:
-            chips.append(f'<a href="{esc(url)}"{current}>{esc(label)}</a>')
+            chips.append(f'<a href="{esc(url)}">{esc(label)}</a>')
 
     checks = []
     for key, label in (("limited", "Show limited-access launches"), ("needs_review", "Show needs-review entries")):
@@ -979,11 +1013,13 @@ def render_map(data, filters: dict) -> str:
         lists = '<p class="count">No ramps match these filters.</p>'
 
     visible_ids = {r["id"] for r in shown}
-    page_payload = {
-        "disclaimer": payload["disclaimer"],
-        "counts": payload["counts"],
-        "records": [r for r in payload["records"] if r["id"] in visible_ids],
-    }
+    page_records = []
+    for r in payload["records"]:
+        if r["id"] not in visible_ids:
+            continue
+        item = {k: v for k, v in r.items() if v not in (None, "", [], {})}
+        page_records.append(item)
+    page_payload = {"counts": payload["counts"], "records": page_records}
 
     body = f"""
 <p class="kicker">Private preview</p>
@@ -1019,7 +1055,21 @@ def render_map(data, filters: dict) -> str:
     {lists}
   </div>
 </div>
-<script type="application/json" id="rf-map-data">{json.dumps(page_payload, ensure_ascii=False)}</script>
+<div id="rf-sheet" class="rf-sheet" hidden>
+  <div class="rf-sheet-scrim" id="rf-sheet-scrim" hidden></div>
+  <div class="rf-sheet-panel" id="rf-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="rf-sheet-title" tabindex="-1">
+    <button type="button" class="rf-sheet-close" id="rf-sheet-close" aria-label="Close ramp panel">Close</button>
+    <h3 id="rf-sheet-title"></h3>
+    <p id="rf-sheet-water" class="rf-sheet-water"></p>
+    <p id="rf-sheet-alert" class="rf-sheet-alert" hidden></p>
+    <div class="rf-sheet-actions">
+      <a class="btn" id="rf-sheet-detail" href="#">Ramp details</a>
+      <a class="btn" id="rf-sheet-apple" href="#">Apple Maps directions</a>
+      <a class="btn" id="rf-sheet-google" href="#" rel="noopener noreferrer" target="_blank">Google Maps directions</a>
+    </div>
+  </div>
+</div>
+<script type="application/json" id="rf-map-data">{json.dumps(page_payload, ensure_ascii=False, separators=(",", ":"))}</script>
 """
     extra_script = '<script src="/preview/ramps/map.js" defer></script>'
     return _shell(
@@ -1044,7 +1094,7 @@ def resolve_request(path: str, query: dict):
     if raw in ("/preview/ramps/map.json",):
         return 200, "application/json; charset=utf-8", json.dumps(map_payload(data), ensure_ascii=False)
     if raw in ("/preview/ramps/map",):
-        return 200, "text/html; charset=utf-8", render_map(data, parse_filters(query or {}))
+        return 200, "text/html; charset=utf-8", render_map(data, parse_map_filters(query or {}))
     if raw in ("/preview/ramps",):
         return 200, "text/html; charset=utf-8", render_list(data, parse_filters(query or {}))
     prefix = "/preview/ramps/"
