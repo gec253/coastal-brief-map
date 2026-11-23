@@ -66,7 +66,9 @@
       "accessed_at_label": "8:39 PM EST, Nov 22, 2026",
       "source_name": "N.C. State Parks — Jordan Lake State Recreation Area",
       "source_url": "https://www.ncparks.gov/state-parks/jordan-lake-state-recreation-area",
-      "text": "Official park banner wording, accessed 8:39 PM EST, Nov 22, 2026: \"Vista Point & Parkers Creek boat ramps closed, Seaforth has 1 ramp open for 1 axle trailers. Ebenezer Church and New Hope are open as alternatives due to low water levels.\" Parkers Creek is not in this inventory; no ramp record or coordinates were added. This notice is recorded at the lake and region level only. It is distinct from Seaforth’s published seasonal close on November 30, 2026. This is not a live open/closed board and is not an opening confirmation.",
+      "text": "LOW-WATER ACCESS NOTICE — N.C. State Parks reports Vista Point and Parkers Creek boat ramps closed. Seaforth has one ramp available for single-axle trailers only. Ebenezer Church and New Hope are listed as alternatives. Check the official park notice before traveling.",
+      "official_banner_quote": "Vista Point & Parkers Creek boat ramps closed, Seaforth has 1 ramp open for 1 axle trailers. Ebenezer Church and New Hope are open as alternatives due to low water levels.",
+      "internal_notes": "Parkers Creek is not in this inventory; no ramp record or coordinates were added. This notice is recorded at the lake and region level only. It is distinct from Seaforth’s published seasonal close on November 30, 2026. This is not a live open/closed board and is not an opening confirmation. Official park banner wording, accessed 8:39 PM EST, Nov 22, 2026: \"Vista Point & Parkers Creek boat ramps closed, Seaforth has 1 ramp open for 1 axle trailers. Ebenezer Church and New Hope are open as alternatives due to low water levels.\"",
       "recheck_before_release": true
     },
     "recheck_before_release": [
@@ -2671,18 +2673,6 @@
             }
           ],
           "as_of": "2026-11-22"
-        },
-        {
-          "category": "current_dated_notice",
-          "label": "Current dated notice — low water (named alternative)",
-          "text": "The official Jordan Lake State Recreation Area home page banner, accessed 8:39 PM EST, Nov 22, 2026, states: \"Vista Point & Parkers Creek boat ramps closed, Seaforth has 1 ramp open for 1 axle trailers. Ebenezer Church and New Hope are open as alternatives due to low water levels.\" This page records that official wording only. It is not a live confirmation of conditions at this ramp and is not an opening confirmation.",
-          "sources": [
-            {
-              "label": "N.C. State Parks — Jordan Lake State Recreation Area",
-              "url": "https://www.ncparks.gov/state-parks/jordan-lake-state-recreation-area"
-            }
-          ],
-          "as_of": "2026-11-22"
         }
       ],
       "directions": {
@@ -2911,18 +2901,6 @@
             },
             {
               "label": "Official source (related page or dataset)",
-              "url": "https://www.ncparks.gov/state-parks/jordan-lake-state-recreation-area"
-            }
-          ],
-          "as_of": "2026-11-22"
-        },
-        {
-          "category": "current_dated_notice",
-          "label": "Current dated notice — low water (named alternative)",
-          "text": "The official Jordan Lake State Recreation Area home page banner, accessed 8:39 PM EST, Nov 22, 2026, states: \"Vista Point & Parkers Creek boat ramps closed, Seaforth has 1 ramp open for 1 axle trailers. Ebenezer Church and New Hope are open as alternatives due to low water levels.\" This page records that official wording only. It is not a live confirmation of conditions at this ramp and is not an opening confirmation.",
-          "sources": [
-            {
-              "label": "N.C. State Parks — Jordan Lake State Recreation Area",
               "url": "https://www.ncparks.gov/state-parks/jordan-lake-state-recreation-area"
             }
           ],
@@ -3281,18 +3259,6 @@
             }
           ],
           "as_of": "2026-11-22"
-        },
-        {
-          "category": "current_dated_notice",
-          "label": "Current dated notice — low water",
-          "text": "CONFIRMED CURRENT NOTICE (low water, official park banner, not a seasonal schedule): The Jordan Lake State Recreation Area home page banner, accessed 8:39 PM EST, Nov 22, 2026, states: \"Vista Point & Parkers Creek boat ramps closed, Seaforth has 1 ramp open for 1 axle trailers. Ebenezer Church and New Hope are open as alternatives due to low water levels.\" This page records the official wording for Seaforth: one ramp open, single-axle trailers only. This is not a live open/closed confirmation and is not the published seasonal schedule (see the separate November 30, 2026 seasonal close).",
-          "sources": [
-            {
-              "label": "N.C. State Parks — Jordan Lake State Recreation Area",
-              "url": "https://www.ncparks.gov/state-parks/jordan-lake-state-recreation-area"
-            }
-          ],
-          "as_of": "2026-11-22"
         }
       ],
       "directions": {
@@ -3399,18 +3365,6 @@
             {
               "label": "Official source",
               "url": "https://www.ncparks.gov/park-features/jordan-lake-state-recreation-area-vista-point-access"
-            }
-          ],
-          "as_of": "2026-11-22"
-        },
-        {
-          "category": "current_dated_notice",
-          "label": "Current dated notice — low water",
-          "text": "CONFIRMED CURRENT NOTICE (low water, official park banner): The Jordan Lake State Recreation Area home page banner, accessed 8:39 PM EST, Nov 22, 2026, states that Vista Point boat ramps are closed due to low water levels. This inventory still does not treat this site as a confirmed general public motorboat trailer ramp. This notice is not an opening confirmation.",
-          "sources": [
-            {
-              "label": "N.C. State Parks — Jordan Lake State Recreation Area",
-              "url": "https://www.ncparks.gov/state-parks/jordan-lake-state-recreation-area"
             }
           ],
           "as_of": "2026-11-22"

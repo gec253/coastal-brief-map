@@ -310,7 +310,7 @@ class InventoryUnchangedFromDeploy(unittest.TestCase):
         "bc484d966b24131ab101f289345d81bf775ee03234c0a474d9752a5cbcb699b5"
     )
     DIGEST_AFTER_NOTICE_UPDATE = (
-        "d4710de871b32705e0a9f877809b973774de3904fbd082a778b4f9f302041d91"
+        "8bccf90797ec5c7593da6b009dd93928bc8acf41ad4e63db8d3d47b4406a877c"
     )
     ALLOWED_NOTICE_RECORDS = frozenset({
         "parks-jordan-seaforth",
@@ -347,8 +347,12 @@ class InventoryUnchangedFromDeploy(unittest.TestCase):
                 meta_diffs.append(key)
         self.assertEqual(meta_diffs, [], msg=meta_diffs)
         self.assertIn("jordan_lake_official_notice", data["meta"])
-        self.assertIn("Parkers Creek", data["meta"]["jordan_lake_official_notice"]["text"])
-        self.assertIn("no ramp record or coordinates were added", data["meta"]["jordan_lake_official_notice"]["text"])
+        notice = data["meta"]["jordan_lake_official_notice"]
+        self.assertEqual(notice["text"], ramp_finder.JORDAN_LOW_WATER_VISITOR_TEXT)
+        self.assertIn("Parkers Creek", notice["text"])
+        self.assertIn("no ramp record or coordinates were added", notice["internal_notes"])
+        self.assertIn("Parkers Creek is not in this inventory", notice["internal_notes"])
+        self.assertIn("Vista Point & Parkers Creek boat ramps closed", notice["official_banner_quote"])
 
         diffs = []
         for rec, old in zip(data["records"], base["records"]):
@@ -587,7 +591,7 @@ class MapPrototype(unittest.TestCase):
         self.assertNotIn("Open Now", blob)
         self.assertEqual(
             ramp_finder.inventory_facts_digest(self.data),
-            "d4710de871b32705e0a9f877809b973774de3904fbd082a778b4f9f302041d91",
+            "8bccf90797ec5c7593da6b009dd93928bc8acf41ad4e63db8d3d47b4406a877c",
         )
 
     def test_map_assets_and_reserved_height(self):

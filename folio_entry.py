@@ -38,7 +38,8 @@ def whats_biting_entry(region_id: str | None) -> tuple[str, str, str]:
         return f"/reports/{rid}", "What’s Biting?", ""
     if rid in WB_ALIASES:
         dest = WB_ALIASES[rid]
-        return f"/reports/{dest}", "What’s Biting?", ""
+        note = "Crystal Coast reports" if dest == "crystal-coast" else ""
+        return f"/reports/{dest}", "What’s Biting?", note
     if rid == "nags-head":
         return "/reports/hatteras", "What’s Biting?", "Hatteras Island reports"
     return "/reports", "What’s Biting?", "Regional reports index"

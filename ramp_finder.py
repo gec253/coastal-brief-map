@@ -591,8 +591,16 @@ def card_html(rec, *, public: bool = False) -> str:
 
 
 
+JORDAN_LOW_WATER_VISITOR_TEXT = (
+    "LOW-WATER ACCESS NOTICE — N.C. State Parks reports Vista Point and Parkers Creek boat ramps closed. "
+    "Seaforth has one ramp available for single-axle trailers only. "
+    "Ebenezer Church and New Hope are listed as alternatives. "
+    "Check the official park notice before traveling."
+)
+
+
 def region_notice_html(data, area: str | None) -> str:
-    """Lake-level official notices. Parkers Creek is recorded only here, with no new record."""
+    """Visitor-facing lake-level notice. Internal inventory notes stay in meta only."""
     notice = (data.get("meta") or {}).get("jordan_lake_official_notice")
     if not notice:
         return ""
@@ -601,13 +609,13 @@ def region_notice_html(data, area: str | None) -> str:
     src = notice.get("source_url") or ""
     src_name = notice.get("source_name") or src
     accessed = notice.get("accessed_at_label") or notice.get("as_of") or ""
+    visitor = notice.get("text") or JORDAN_LOW_WATER_VISITOR_TEXT
     return (
         f'<aside class="context region-notice" data-notice-category="{esc(notice.get("category") or "current_dated_notice")}">'
-        f'<strong>{esc(notice.get("title") or "Official lake notice")}</strong>'
-        f'<p>{esc(notice.get("text") or "")}</p>'
-        f'<p class="notice-meta">Accessed {esc(accessed)}. '
+        f'<p>{esc(visitor)}</p>'
+        f'<p class="notice-meta">'
         f'<a href="{esc(src)}" rel="noopener noreferrer">{esc(src_name)}</a>. '
-        "Recheck this official page before any public release.</p>"
+        f'Last checked {esc(accessed)}.</p>'
         "</aside>"
     )
 
