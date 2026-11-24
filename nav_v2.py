@@ -96,6 +96,9 @@ _I = {
     "gauge": ('<circle cx="12" cy="12" r="9"/><path d="M12 12l4.5-4.5"/><path d="M12 5v1.5M5 12h1.5M17.5 12H19M7 7l1 1"/>'
               '<circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/>'),
     "chev": '<path d="M9 5l7 7-7 7"/>',
+    "wave": '<path d="M2 9c2.5-2 5-2 7.5 0s5 2 7.5 0 3.5-1.6 5-1"/><path d="M2 15c2.5-2 5-2 7.5 0s5 2 7.5 0 3.5-1.6 5-1"/>',
+    "lake": ('<path d="M3 12l4.5-5 3 3.5 3-4.5 6.5 6"/><path d="M2 16c2.5-2 5-2 7.5 0s5 2 7.5 0 3.5-1.6 5-1"/>'
+             '<path d="M5 20c2-1.4 4-1.4 6 0s4 1.4 6 0"/>'),
 }
 
 
@@ -161,6 +164,64 @@ def masthead_html(current: str, rid: str, *, tools: str = "", picker: str = "", 
 
 
 # ---------------------------------------------------------------------------------------------
+# Water choice (homepage, Ed t454u): Saltwater / Freshwater segments plus an area picker, built from
+# the page's own "Choose your water" list, so region ids, names and public gating stay exactly as served.
+
+_RR = re.compile(rb'<nav class="rr" aria-label="Choose your water">(.*?)</nav>', re.S)
+_RR_G = re.compile(rb'<div class="rr-g rr-(saltwater|freshwater)">(.*?)</div></div>', re.S)
+_RR_A = re.compile(rb'<a href="/\?region=([a-z0-9-]+)"( aria-current="page")?>([^<]+)</a>')
+
+
+def regions_from_page(data: bytes) -> list[tuple[str, list[tuple[str, str, bool]]]]:
+    """[(water, [(rid, name, current), ...]), ...] from the homepage region list, or []."""
+    m = _RR.search(data)
+    if not m:
+        return []
+    out = []
+    for g in _RR_G.finditer(m.group(1)):
+        items = [(a.group(1).decode(), html.unescape(a.group(3).decode("utf-8")), bool(a.group(2)))
+                 for a in _RR_A.finditer(g.group(2))]
+        if items:
+            out.append((g.group(1).decode(), items))
+    return out
+
+
+def water_html(groups, rid: str) -> str:
+    if not groups:
+        return ""
+    cur_water, cur_rid = "", ""
+    for water, items in groups:
+        for r, _, c in items:
+            if c or (rid and r == rid):
+                cur_water, cur_rid = water, r
+    if not cur_water:
+        cur_water = "saltwater"
+    seg = []
+    for water, items in groups:
+        label = "Saltwater" if water == "saltwater" else "Freshwater"
+        # Same targets as the old homepage tabs: Saltwater opens /, Freshwater the first lake.
+        href = "/" if water == "saltwater" else "/?region=%s" % items[0][0]
+        cur = ""
+        if water == cur_water:
+            cur = ' aria-current="true"'
+            href = "/?region=%s" % cur_rid if cur_rid else href  # current water keeps its area
+        icon = _icon("wave" if water == "saltwater" else "lake", "cbw-i")
+        seg.append('<a class="cbw-s cbw-%s" href="%s"%s>%s<span>%s</span></a>' % (water, _esc(href), cur, icon, label))
+    opts = []
+    for water, items in groups:
+        label = "Saltwater" if water == "saltwater" else "Freshwater"
+        o = "".join('<option value="%s"%s>%s</option>' % (_esc(r), " selected" if r == cur_rid else "", _esc(n, False))
+                    for r, n, _ in items)
+        opts.append('<optgroup label="%s">%s</optgroup>' % (label, o))
+    return ('<section class="cbw" aria-label="Choose your water">'
+            '<div class="cbw-seg" role="group" aria-label="Water">%s</div>'
+            '<form class="cbw-pick" action="/" method="get"><label class="cbw-k" for="cbw-r">Area</label>'
+            '<div class="cbw-row"><select id="cbw-r" name="region">%s</select>'
+            '<button type="submit" class="cbw-go">Show</button></div></form></section>'
+            % ("".join(seg), "".join(opts)))
+
+
+# ---------------------------------------------------------------------------------------------
 # Guides (homepage): destination cards.
 
 def _fresh(rid: str) -> bool:
@@ -197,7 +258,7 @@ def guides_html(rid: str) -> str:
 # CSS. One small inline block; same fonts the pages already load (Fraunces, Source Sans 3).
 
 CSS = """
-.cbm,.cbg,.cbn{--cb-navy:#071C29;--cb-ivory:#F6F1E7;--cb-brass:#C4A36A;--cb-brass-ink:#7A5D2C;--cb-ink:#0B2A3D;--cb-ink2:#40596A;
+.cbm,.cbg,.cbn,.cbw{--cb-navy:#071C29;--cb-ivory:#F6F1E7;--cb-brass:#C4A36A;--cb-brass-ink:#7A5D2C;--cb-ink:#0B2A3D;--cb-ink2:#40596A;
 --cb-page:#F6F1E7;--cb-chip:#FFFDF8;--cb-edge:rgba(11,42,61,.22);--cb-serif:"Fraunces","Fraunces Fallback",Georgia,"Times New Roman",serif;
 --cb-ui:"Source Sans 3","Source Sans 3 Fallback","Segoe UI",Helvetica,Arial,sans-serif}
 .cbm{display:block;background:var(--cb-page);color:var(--cb-ink);margin:0;padding:0;border:0;position:relative;z-index:20;text-align:left}
@@ -249,6 +310,20 @@ CSS = """
 .mh-hybrid .cbn{margin:6px 0 10px}
 @media (min-width:761px){.mh-hybrid .cbn{margin:10px auto 12px}}
 html[data-mastchart] .mh-hybrid .mh-plate::before{bottom:auto;height:96px}
+.cbw{margin:12px 0 4px;padding:0 12px;display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.cbw-seg{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1.5px solid var(--cb-navy);border-radius:12px;overflow:hidden;background:var(--cb-chip)}
+.cbw-s{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:4px 8px;color:var(--cb-ink);text-decoration:none;font:700 1rem/1.1 var(--cb-ui);letter-spacing:.01em}
+.cbw-s+.cbw-s{border-left:1.5px solid var(--cb-navy)}
+.cbw-i{width:20px;height:20px;flex:none;color:var(--cb-brass-ink)}
+.cbw-s[aria-current]{background:var(--cb-navy);color:var(--cb-ivory);box-shadow:inset 0 -3px 0 var(--cb-brass)}
+.cbw-s[aria-current] .cbw-i{color:var(--cb-brass)}
+.cbw-s:focus-visible,.cbw-go:focus-visible,.cbw-row select:focus-visible{outline:3px solid var(--cb-brass);outline-offset:2px}
+.cbw-pick{margin:0;min-width:0}
+.cbw-k{display:block;margin:0 0 3px;font:700 .72rem/1.2 var(--cb-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--cb-ink2)}
+.cbw-row{display:flex;gap:8px;min-width:0}
+.cbw-row select{flex:1 1 0;min-width:0;width:100%;text-overflow:ellipsis;min-height:48px;padding:0 12px;border:1px solid var(--cb-edge);border-radius:10px;background:var(--cb-chip);color:var(--cb-ink);font:600 1rem/1.2 var(--cb-ui)}
+.cbw-go{flex:none;min-width:72px;min-height:48px;padding:0 16px;border:1px solid var(--cb-navy);border-radius:10px;background:var(--cb-navy);color:var(--cb-ivory);font:700 1rem/1 var(--cb-ui);cursor:pointer}
+@media (min-width:761px){.cbw{padding:0;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:end;gap:16px;margin:14px 0 4px}}
 .cbg{margin:18px 0 20px;padding:0 12px}
 .cbg-h{margin:0 0 8px;font:600 1.35rem/1.15 var(--cb-serif);letter-spacing:-.005em;color:var(--cb-ink);padding-bottom:6px;border-bottom:3px double var(--cb-brass)}
 .cbg-l{display:grid;gap:10px}
@@ -274,6 +349,12 @@ html[data-mastchart] .mh-hybrid .mh-plate::before{bottom:auto;height:96px}
 :where(html:not([data-theme="light"])) .cbn-a[aria-current] .cbn-i{color:#7A5D2C}
 :where(html:not([data-theme="light"])) .cbg{--cb-ink:#F3EEE3}
 :where(html:not([data-theme="light"])) .cbg-card{background:linear-gradient(180deg,#123247,#0B2536);border-color:rgba(196,163,106,.45)}
+:where(html:not([data-theme="light"])) .cbw{--cb-ink:#F3EEE3;--cb-ink2:#B9C7CF;--cb-chip:rgba(246,241,231,.05);--cb-edge:rgba(246,241,231,.3);--cb-navy:#C9BCA5}
+:where(html:not([data-theme="light"])) .cbw-s[aria-current]{background:#F6F1E7;color:#071C29}
+:where(html:not([data-theme="light"])) .cbw-s[aria-current] .cbw-i{color:#7A5D2C}
+:where(html:not([data-theme="light"])) .cbw-i{color:var(--cb-brass)}
+:where(html:not([data-theme="light"])) .cbw-go{background:#F6F1E7;color:#071C29;border-color:#F6F1E7}
+:where(html:not([data-theme="light"])) .cbw-row select{background:#0E2433;color-scheme:dark}
 }
 html[data-theme="dark"] .cbm,html[data-theme="dark"] .cbn{--cb-page:#071C29;--cb-ink:#F3EEE3;--cb-ink2:#B9C7CF;--cb-chip:rgba(246,241,231,.05);--cb-edge:rgba(246,241,231,.24)}
 html[data-theme="dark"] .cbm-name{color:#F6F1E7}
@@ -285,6 +366,12 @@ html[data-theme="dark"] .cbn-a[aria-current]{background:#F6F1E7;border-color:#F6
 html[data-theme="dark"] .cbn-a[aria-current] .cbn-i{color:#7A5D2C}
 html[data-theme="dark"] .cbg{--cb-ink:#F3EEE3}
 html[data-theme="dark"] .cbg-card{background:linear-gradient(180deg,#123247,#0B2536);border-color:rgba(196,163,106,.45)}
+html[data-theme="dark"] .cbw{--cb-ink:#F3EEE3;--cb-ink2:#B9C7CF;--cb-chip:rgba(246,241,231,.05);--cb-edge:rgba(246,241,231,.3);--cb-navy:#C9BCA5}
+html[data-theme="dark"] .cbw-s[aria-current]{background:#F6F1E7;color:#071C29}
+html[data-theme="dark"] .cbw-s[aria-current] .cbw-i{color:#7A5D2C}
+html[data-theme="dark"] .cbw-i{color:var(--cb-brass)}
+html[data-theme="dark"] .cbw-go{background:#F6F1E7;color:#071C29;border-color:#F6F1E7}
+html[data-theme="dark"] .cbw-row select{background:#0E2433;color-scheme:dark}
 @media print{.cbn,.cbm-ear{display:none}}
 """
 
@@ -295,7 +382,7 @@ _FONT = ('@font-face{font-family:"Fraunces";font-style:normal;font-weight:400 70
 def _keep(sel: str, home: bool) -> bool:
     """Homepage keeps nav + Guides rules; secondary pages keep masthead + nav rules."""
     if home:
-        return ".cbn" in sel or ".cbg" in sel or ".mh-hybrid" in sel
+        return ".cbn" in sel or ".cbg" in sel or ".cbw" in sel or ".mh-hybrid" in sel
     return ".cbm" in sel or ".cbn" in sel
 
 
@@ -372,6 +459,12 @@ def _apply_home(data: bytes, rid: str) -> bytes:
         raise ValueError("home nav not found")
     j = _balanced(data, i, b"nav")
     data = data[:i] + nav_html("conditions", rid).encode("utf-8") + data[j:]
+    water = water_html(regions_from_page(data), rid).encode("utf-8")
+    if water:
+        k = data.find(b'<main id="main">')
+        if k >= 0:
+            k += len(b'<main id="main">')
+            data = data[:k] + water + data[k:]
     g = data.find(b'<nav class="folio-guides"')
     new = guides_html(rid).encode("utf-8")
     if g >= 0:
