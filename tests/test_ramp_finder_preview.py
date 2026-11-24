@@ -266,11 +266,14 @@ class Gating(unittest.TestCase):
     def test_public_pages_not_changed_on_disk(self):
         import subprocess
         # t440u: brief.py is refined on brief-refine-1123; other public pages stay locked.
+        # t449u: conditions.py and freshwater.py carry the approved duplicate-alert safety fix
+        # (c610f2f); they are pinned to that commit instead. Every other public page stays on PROD.
+        t449u = {"conditions.py": "c610f2f", "freshwater.py": "c610f2f"}
         for rel in PROTECTED_PUBLIC_PATHS:
             if rel in ("brief.py", "brief.css"):
                 continue
             proc = subprocess.run(
-                ["git", "diff", "--name-only", PROD, "--", rel],
+                ["git", "diff", "--name-only", t449u.get(rel, PROD), "--", rel],
                 cwd=ROOT, capture_output=True, text=True, check=True,
             )
             self.assertEqual(proc.stdout.strip(), "", f"{rel} changed from {PROD}")
