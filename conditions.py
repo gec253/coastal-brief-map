@@ -885,24 +885,52 @@ def marine_block(mcfg):
     return primary
 
 
+_NWS_REPLACED_RE = re.compile(r"^\s*The .{0,80}? has been (replaced|cancelled|canceled)\b", re.I)
+
+
+def _nws_replaced(p):
+    """True when NWS itself marks the alert cancelled or replaced (same rule as brief_format, t448u)."""
+    if p.get("messageType") == "Cancel" or p.get("replacedBy"):
+        return True
+    return bool(_NWS_REPLACED_RE.search(p.get("headline") or "") or _NWS_REPLACED_RE.search(p.get("description") or ""))
+
+
+def _union_areas(a, b):
+    """areaDesc union, NWS order kept, no area repeated."""
+    parts = []
+    for s in (a, b):
+        for x in (s or "").split(";"):
+            x = x.strip()
+            if x and x not in parts:
+                parts.append(x)
+    return "; ".join(parts) or a
+
+
 def alerts_block(zones):
     url = "https://api.weather.gov/alerts/active?status=actual&zone=" + ",".join(zones)
     d = nws_json(url, TTL_ALERTS)
     if d is None:
         return {"status": "unavailable", "items": []}
     items = []
-    seen = set()
+    seen = {}
     for f in d.get("features") or []:
         p = f.get("properties") or {}
         if (p.get("status") or "Actual") != "Actual":
             continue  # skip NWS test/exercise messages
-        key = (p.get("event"), p.get("ends") or p.get("expires"))
+        if _nws_replaced(p):
+            continue  # NWS marked this one replaced/cancelled; its replacement is in the feed
+        # t449u: (event, onset, ends). Two NWS products with the same event and end time but
+        # different areas (Nov 24, 2026: Pamlico Sound SCA, West Carteret Coastal Flood Watch)
+        # are no longer dropped; same event+onset+end share one row listing every area.
+        key = (p.get("event"), p.get("onset"), p.get("ends") or p.get("expires"))
         if key in seen:
+            seen[key]["areas"] = _union_areas(seen[key]["areas"], p.get("areaDesc"))
             continue
-        seen.add(key)
-        items.append({"event": p.get("event"), "headline": p.get("headline"), "severity": p.get("severity"),
-                      "areas": p.get("areaDesc"), "onset": p.get("onset"), "ends": p.get("ends") or p.get("expires"),
-                      "sender": p.get("senderName")})
+        it = {"event": p.get("event"), "headline": p.get("headline"), "severity": p.get("severity"),
+              "areas": p.get("areaDesc"), "onset": p.get("onset"), "ends": p.get("ends") or p.get("expires"),
+              "sender": p.get("senderName")}
+        seen[key] = it
+        items.append(it)
     return {"status": "ok", "items": items, "zones": zones,
             "sourceUrl": "https://alerts.weather.gov/"}
 

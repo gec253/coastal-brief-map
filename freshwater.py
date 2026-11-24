@@ -275,17 +275,22 @@ def alerts_point(lat, lon):
     d = _get_json("https://api.weather.gov/alerts/active?status=actual&point=%.4f,%.4f" % (lat, lon), 300)
     if d is None:
         return {"status": "unavailable", "items": []}
-    items, seen = [], set()
+    items, seen = [], {}
     for f in d.get("features") or []:
         p = f.get("properties") or {}
         if (p.get("status") or "Actual") != "Actual":
             continue  # skip NWS test/exercise messages
-        key = (p.get("event"), p.get("ends") or p.get("expires"))
+        if conditions._nws_replaced(p):
+            continue  # NWS marked this one replaced/cancelled; its replacement is in the feed
+        # t449u: same rule as conditions.alerts_block; distinct products are never dropped.
+        key = (p.get("event"), p.get("onset"), p.get("ends") or p.get("expires"))
         if key in seen:
+            seen[key]["areas"] = conditions._union_areas(seen[key]["areas"], p.get("areaDesc"))
             continue
-        seen.add(key)
-        items.append({"event": p.get("event"), "severity": p.get("severity"), "areas": p.get("areaDesc"),
-                      "ends": p.get("ends") or p.get("expires"), "headline": p.get("headline")})
+        it = {"event": p.get("event"), "severity": p.get("severity"), "areas": p.get("areaDesc"),
+              "ends": p.get("ends") or p.get("expires"), "headline": p.get("headline")}
+        seen[key] = it
+        items.append(it)
     return {"status": "ok", "items": items, "sourceUrl": "https://alerts.weather.gov/"}
 
 
