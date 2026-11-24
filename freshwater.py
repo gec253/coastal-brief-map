@@ -38,11 +38,26 @@ ASSEMBLED_TTL = 300
 # refresh runs, so a visitor never waits on slow USGS calls. Every reading keeps its own observation time.
 ASSEMBLED_SERVE_MAX = 1200
 WARM_EVERY = 240
+# Freshwater-only fetch bound (installed from server.py). Saltwater fetch_url stays 45s / 4 tries.
+FETCH_TIMEOUT = 12
+FETCH_TRIES = 2
+FETCH_BACKOFF = 0.5
+RESULT_TIMEOUT = 12
+USER_DEADLINE = 20
 
 _POOL = ThreadPoolExecutor(max_workers=8)
+
+
+def _pool():
+    global _POOL
+    if _POOL is None or getattr(_POOL, "_shutdown", False):
+        _POOL = ThreadPoolExecutor(max_workers=8)
+    return _POOL
 _LOCK = threading.Lock()
 _ASSEMBLED: dict[str, tuple[float, dict]] = {}
 _REFRESHING: set = set()
+_FLIGHT: dict[str, threading.Event] = {}
+_FETCH = None  # optional (url, timeout=, tries=) -> (status, ctype, raw)
 
 
 def flag_on() -> bool:
@@ -69,8 +84,39 @@ def is_preview_region(rid: str | None) -> bool:
     return bool(r.get("previewReady")) and not r.get("enabled") and not r.get("draft")
 
 
+def install_fetch(fn):
+    """Install a freshwater-only fetch wrapper. Called from server.py; not used by saltwater."""
+    global _FETCH
+    _FETCH = fn
+
+
+def _get_body(url, ttl, accept="application/json"):
+    """Cache then fetch. Uses the bounded freshwater fetch when installed, else conditions.get_json."""
+    if _FETCH is None:
+        return conditions.get_json(url, ttl, accept=accept)
+    hooks = conditions._hooks
+    cg = hooks.get("cache_get")
+    if cg:
+        cached = cg(url)
+        if cached is not None:
+            return cached
+    try:
+        status, _ct, raw = _FETCH(url, timeout=FETCH_TIMEOUT, tries=FETCH_TRIES)
+    except Exception:
+        status, raw = 0, None
+    if status == 200 and raw:
+        put = hooks.get("cache_put_ttl")
+        if put:
+            put(url, ttl, raw)
+        return raw
+    anyg = hooks.get("cache_get_any")
+    if anyg:
+        return anyg(url)
+    return None
+
+
 def _get_json(url, ttl):
-    body = conditions.get_json(url, ttl)
+    body = _get_body(url, ttl)
     if not body:
         return None
     try:
@@ -80,7 +126,7 @@ def _get_json(url, ttl):
 
 
 def _get_text(url, ttl):
-    body = conditions.get_json(url, ttl, accept="*/*")
+    body = _get_body(url, ttl, accept="*/*")
     if not body:
         return None
     try:
@@ -314,7 +360,7 @@ def usace_guide_check(expected):
 
 # ---------- assemble ----------
 
-def _flow_station(spec, iv, now, stats_day):
+def _flow_station(spec, iv, now, stats_day, stats_lookup=None):
     site = spec["usgs"]
     stage_only = spec.get("flow") is False
     # Stage-only gauges (Smithfield) must never expose discharge, even if IV still
@@ -339,7 +385,10 @@ def _flow_station(spec, iv, now, stats_day):
         out["flowCfs"] = None
         out["flowNote"] = spec.get("flowNote") or "Discharge not published at this gauge. Stage only."
     if out["flowCfs"] and not out["flowCfs"]["stale"]:
-        st = usgs_daily_stats(site, stats_day)
+        if stats_lookup is not None:
+            st = stats_lookup.get(site)
+        else:
+            st = usgs_daily_stats(site, stats_day)
         out["stats"] = st
         out["band"] = flow_band(out["flowCfs"]["value"], st)
     return out
@@ -360,7 +409,117 @@ def _attach_nwps(spec, block, nw):
     return block
 
 
-def assemble(rid, force=False):
+def _wait(fut, fallback, timeout=RESULT_TIMEOUT):
+    """Wait on a future with a bound. Timed-out or failed work becomes fallback, never invented data."""
+    if fut is None:
+        return fallback
+    try:
+        return fut.result(timeout=timeout)
+    except Exception:
+        return fallback
+
+
+def _wait_from(fut, fallback, started, budget=RESULT_TIMEOUT):
+    """Same bound measured from when the wave of futures was submitted, so parallel work is not stacked."""
+    rem = budget - (time.time() - started)
+    if rem <= 0:
+        if fut is not None and getattr(fut, "done", lambda: False)():
+            return _wait(fut, fallback, timeout=0.05)
+        return fallback
+    return _wait(fut, fallback, timeout=rem)
+
+
+def empty_payload(rid):
+    """Honest unavailable shell for a region. No numerals, no substitute readings. Not cached."""
+    r = regions().get(rid) or {"id": rid, "name": rid}
+    inst = r.get("instrumentSet")
+    lake_out = None
+    if inst == "freshwater-lake" and r.get("lake"):
+        lake = r["lake"]
+        lake_out = {"kind": "observed", "usgs": lake.get("usgs"), "elevation": None,
+                    "guideCurveFt": lake.get("guideCurveFt"), "datum": "NGVD29"}
+    rel = None
+    if r.get("release"):
+        rel = {"usgs": r["release"].get("usgs"), "label": r["release"].get("label"),
+               "tileTitle": r["release"].get("tileTitle"), "kind": "observed",
+               "flowCfs": None, "stageFt": None}
+    inflows = [{"usgs": s.get("usgs"), "label": s.get("label"), "kind": "observed",
+                "flowCfs": None, "stageFt": None} for s in (r.get("inflows") or [])]
+    river = []
+    for s in (r.get("river") or []):
+        block = {"usgs": s.get("usgs"), "label": s.get("label"), "kind": "observed",
+                 "flowCfs": None, "stageFt": None}
+        if s.get("flow") is False:
+            block["stageOnly"] = True
+            block["flowNote"] = s.get("flowNote") or "Discharge not published at this gauge. Stage only."
+        river.append(block)
+    rain = {"status": "unavailable"} if (r.get("lake") or {}).get("rain") else None
+    return {"ok": True, "generatedAt": None, "partial": True,
+            "region": {k: r.get(k) for k in ("id", "name", "area", "anchor", "waterType", "instrumentSet")},
+            "lake": lake_out,
+            "waterTemp": {"kind": "observed", "status": "unavailable", "c": None, "f": None},
+            "rain": rain, "release": rel, "inflows": inflows, "river": river,
+            "forecast": {"status": "unavailable"},
+            "alerts": {"status": "unavailable", "items": []},
+            "links": r.get("links") or [], "staleRuleH": STALE_H}
+
+
+def peek_age(rid):
+    """Return (payload, age_s) when a cached assemble is still servable, else (None, age or None)."""
+    with _LOCK:
+        hit = _ASSEMBLED.get(rid)
+    if not hit:
+        return None, None
+    age = time.time() - hit[0]
+    if age < ASSEMBLED_SERVE_MAX:
+        return hit[1], age
+    return None, age
+
+
+def peek(rid):
+    payload, _age = peek_age(rid)
+    return payload
+
+
+def _begin_flight(rid):
+    with _LOCK:
+        ev = _FLIGHT.get(rid)
+        if ev is not None:
+            return ev, False
+        ev = threading.Event()
+        _FLIGHT[rid] = ev
+        _REFRESHING.add(rid)
+        return ev, True
+
+
+def _end_flight(rid, ev):
+    with _LOCK:
+        if _FLIGHT.get(rid) is ev:
+            _FLIGHT.pop(rid, None)
+        _REFRESHING.discard(rid)
+    ev.set()
+
+
+def ensure_refresh(rid):
+    """Start or join a single in-flight assemble for this region. Returns the Event."""
+    ev, lead = _begin_flight(rid)
+    if not lead:
+        return ev
+
+    def run():
+        try:
+            _assemble_build(rid)
+        except Exception as e:  # never let a refresh crash the server
+            import sys
+            sys.stderr.write("freshwater refresh %s failed: %s\n" % (rid, e))
+        finally:
+            _end_flight(rid, ev)
+
+    threading.Thread(target=run, daemon=True, name="fw-refresh-%s" % rid).start()
+    return ev
+
+
+def assemble(rid, force=False, wait=USER_DEADLINE):
     regs = regions()
     if rid not in regs:
         return 404, {"ok": False, "error": "Unknown freshwater region."}
@@ -377,16 +536,35 @@ def assemble(rid, force=False):
     else:
         return 404, {"ok": False, "error": "This freshwater view is not built yet."}
     if not force:
-        with _LOCK:
-            hit = _ASSEMBLED.get(rid)
-            age = time.time() - hit[0] if hit else None
-            if hit and age < ASSEMBLED_TTL:
-                return 200, hit[1]
-            if hit and age < ASSEMBLED_SERVE_MAX:
-                if rid not in _REFRESHING:
-                    _REFRESHING.add(rid)
-                    threading.Thread(target=_refresh, args=(rid,), daemon=True).start()
-                return 200, hit[1]
+        hit, age = peek_age(rid)
+        if hit is not None and age is not None and age < ASSEMBLED_TTL:
+            return 200, hit
+        if hit is not None and age is not None and age < ASSEMBLED_SERVE_MAX:
+            ensure_refresh(rid)
+            return 200, hit
+    ev = ensure_refresh(rid)
+    ev.wait(timeout=None if wait is None else wait)
+    hit, _age = peek_age(rid)
+    if hit is not None:
+        return 200, hit
+    return 200, empty_payload(rid)
+
+
+def _stats_sites(specs, iv, now):
+    sites = []
+    for spec in specs:
+        if not spec or spec.get("flow") is False:
+            continue
+        q = latest(iv.get((spec["usgs"], "00060")), now)
+        if q and not q["stale"]:
+            if spec["usgs"] not in sites:
+                sites.append(spec["usgs"])
+    return sites
+
+
+def _assemble_build(rid):
+    """Build and cache one region's payload. Per-source waits are bounded; nothing is invented."""
+    r = regions()[rid]
     now = datetime.now(timezone.utc)
     et_today = (now - timedelta(hours=5)).date()  # stats are keyed by calendar day; ET is close enough
     lake = r.get("lake")
@@ -404,31 +582,42 @@ def assemble(rid, force=False):
             lake_params.append(lake["waterTemp"])
         if lake.get("rain"):
             lake_params.append(lake["rain"])
-        f_iv7 = _POOL.submit(usgs_iv, [lake["usgs"]], lake_params, "P7D")
+        f_iv7 = _pool().submit(usgs_iv, [lake["usgs"]], lake_params, "P7D")
     wt_cfg = r.get("waterTemp") or {}
     wt_sites = [s for s in (wt_cfg.get("sites") or []) if s]
     iv_params = ["00060", "00065"]
     if wt_sites:
         iv_params.append("00010")
-    f_ivq = _POOL.submit(usgs_iv, sites, iv_params, "P1D") if sites else None
-    f_fc = _POOL.submit(conditions.forecast_block, r["forecast"]) if r.get("forecast") else None
-    f_qpf = _POOL.submit(qpf_block, r["forecast"], now) if lake and r.get("forecast") else None
+    f_ivq = _pool().submit(usgs_iv, sites, iv_params, "P1D") if sites else None
+    f_fc = _pool().submit(conditions.forecast_block, r["forecast"]) if r.get("forecast") else None
+    f_qpf = _pool().submit(qpf_block, r["forecast"], now) if lake and r.get("forecast") else None
     alert_pt = r.get("alertPoint") or [r["anchor"]["lat"], r["anchor"]["lon"]]
-    f_al = _POOL.submit(alerts_point, *alert_pt)
-    f_guide = _POOL.submit(usace_guide_check, lake["guideCurveFt"]) if lake and lake.get("guideCurveFt") is not None else None
+    f_al = _pool().submit(alerts_point, *alert_pt)
+    f_guide = _pool().submit(usace_guide_check, lake["guideCurveFt"]) if lake and lake.get("guideCurveFt") is not None else None
     lids = [s["nwps"] for s in river + ([rel] if rel else []) if s.get("nwps")]
     if lake and lake.get("nwps"):
         lids.append(lake["nwps"])
-    f_nwps = {lid: _POOL.submit(nwps, lid) for lid in lids}
+    f_nwps = {lid: _pool().submit(nwps, lid) for lid in lids}
 
+    wave0 = time.time()
     names = {}
     iv7 = {}
     if f_iv7 is not None:
-        iv7, names = f_iv7.result()
+        got = _wait_from(f_iv7, ({}, {}), wave0)
+        if isinstance(got, tuple) and len(got) == 2:
+            iv7, names = got
     ivq = {}
     if f_ivq is not None:
-        ivq, names2 = f_ivq.result()
-        names.update(names2)
+        got = _wait_from(f_ivq, ({}, {}), wave0)
+        if isinstance(got, tuple) and len(got) == 2:
+            ivq, names2 = got
+            names.update(names2)
+
+    # USGS daily-stats in parallel (Falls can have several). Same lookup as the sequential path.
+    need = _stats_sites(river + inflows + ([rel] if rel else []), ivq, now)
+    f_stats = {site: _pool().submit(usgs_daily_stats, site, et_today) for site in need}
+    wave1 = time.time()
+    stats_lookup = {site: _wait_from(fut, None, wave1) for site, fut in f_stats.items()}
 
     lake_out = None
     water = {"kind": "observed", "status": "unavailable", "c": None, "f": None, "time": None, "stale": None,
@@ -487,12 +676,12 @@ def assemble(rid, force=False):
                             stale=age is not None and age > STALE_H,
                             note="USGS rain gauge at the dam (one point; rain varies across the basin).")
         if f_qpf is not None:
-            rain["qpf"] = f_qpf.result()
+            rain["qpf"] = _wait_from(f_qpf, {"status": "unavailable", "kind": "forecast"}, wave0)
 
-    nw = {lid: f.result() for lid, f in f_nwps.items()}
-    release = _attach_nwps(rel, _flow_station(rel, ivq, now, et_today), nw) if rel else None
-    river_out = [_attach_nwps(s, _flow_station(s, ivq, now, et_today), nw) for s in river]
-    inflow_out = [_flow_station(s, ivq, now, et_today) for s in inflows]
+    nw = {lid: _wait_from(f, {"lid": lid, "status": "unavailable"}, wave0) for lid, f in f_nwps.items()}
+    release = _attach_nwps(rel, _flow_station(rel, ivq, now, et_today, stats_lookup), nw) if rel else None
+    river_out = [_attach_nwps(s, _flow_station(s, ivq, now, et_today, stats_lookup), nw) for s in river]
+    inflow_out = [_flow_station(s, ivq, now, et_today, stats_lookup) for s in inflows]
     if wt_sites and lake_out is None:
         # River pages: only show a water temperature if a current USGS 00010 exists.
         # A discontinued or stale series (Lillington 00010 ended in 2024) is not used.
@@ -516,8 +705,9 @@ def assemble(rid, force=False):
                "region": {k: r.get(k) for k in ("id", "name", "area", "anchor", "waterType", "instrumentSet")},
                "lake": lake_out, "waterTemp": water, "rain": rain, "release": release,
                "inflows": inflow_out, "river": river_out,
-               "forecast": f_fc.result() if f_fc is not None else {"status": "unavailable"},
-               "alerts": f_al.result(), "guideCheck": f_guide.result() if f_guide is not None else None,
+               "forecast": _wait_from(f_fc, {"status": "unavailable"}, wave0) if f_fc is not None else {"status": "unavailable"},
+               "alerts": _wait_from(f_al, {"status": "unavailable", "items": []}, wave0),
+               "guideCheck": _wait_from(f_guide, {"status": "unavailable"}, wave0) if f_guide is not None else None,
                "links": r.get("links") or [], "staleRuleH": STALE_H}
     with _LOCK:
         _ASSEMBLED[rid] = (time.time(), payload)
@@ -525,14 +715,8 @@ def assemble(rid, force=False):
 
 
 def _refresh(rid):
-    try:
-        assemble(rid, force=True)
-    except Exception as e:  # never let a refresh crash the server
-        import sys
-        sys.stderr.write("freshwater refresh %s failed: %s\n" % (rid, e))
-    finally:
-        with _LOCK:
-            _REFRESHING.discard(rid)
+    ev = ensure_refresh(rid)
+    ev.wait()
 
 
 def warm_ids() -> list:
@@ -549,10 +733,10 @@ def start_warmer():
     def loop():
         while True:
             for rid in warm_ids():
-                with _LOCK:
-                    if rid in _REFRESHING:
-                        continue
-                    _REFRESHING.add(rid)
-                _refresh(rid)
+                hit, age = peek_age(rid)
+                if hit is not None and age is not None and age < ASSEMBLED_TTL:
+                    continue
+                ev = ensure_refresh(rid)
+                ev.wait()
             time.sleep(WARM_EVERY)
     threading.Thread(target=loop, name="freshwater-warmer", daemon=True).start()
