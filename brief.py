@@ -1407,7 +1407,6 @@ def page(b: dict, include_fresh: bool = False, public: bool = False, ads_on: boo
 <link rel="preload" href="/fonts/source-sans-3-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/barlow-condensed-600.woff2" as="font" type="font/woff2" crossorigin>
 <script>(function(){try{var q=new URLSearchParams(location.search).get("theme");var t=q||localStorage.getItem("coastalBrief.theme");if(t!=="light"&&t!=="dark")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.setAttribute("data-theme",t)}catch(e){}})();</script>
-<script>(function(){var d=document.documentElement;if(!document.fonts||!document.fonts.ready)return;d.classList.add("mb-fonts-wait");function go(){d.classList.remove("mb-fonts-wait")}document.fonts.ready.then(go);setTimeout(go,600)})();</script>
 <link rel="stylesheet" href="/brief.css">
 </head>
 <body class="mb-page">

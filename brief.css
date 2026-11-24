@@ -6,9 +6,13 @@
 @font-face{font-family:"Fraunces";font-style:italic;font-weight:500;font-display:optional;src:url("/fonts/fraunces-italic-var.woff2") format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
 @font-face{font-family:"Source Sans 3";font-style:normal;font-weight:400 700;font-display:optional;src:url("/fonts/source-sans-3-var.woff2") format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
 
-@font-face{font-family:"Fraunces Fallback";src:local("Georgia"),local("Times New Roman");size-adjust:97.5%;ascent-override:92%;descent-override:22%;line-gap-override:0%;}
-@font-face{font-family:"Source Sans 3 Fallback";src:local("Arial"),local("Helvetica");size-adjust:104.8%;ascent-override:93%;descent-override:24%;line-gap-override:0%;}
-@font-face{font-family:"Barlow Condensed Fallback";src:local("Arial Narrow"),local("Arial");size-adjust:90%;ascent-override:94%;descent-override:22%;line-gap-override:0%;}
+/* Metric-matched fallbacks so late font application does not move the layout.
+   Arial / Arial Narrow / Georgia stay first for user devices; Liberation and
+   Droid faces are metric-compatible stand-ins when those fonts are missing
+   (Linux, many phones). Overrides come from each webfont's typo metrics. */
+@font-face{font-family:"Fraunces Fallback";src:local("Georgia"),local("Times New Roman"),local("Droid Serif");size-adjust:97.5%;ascent-override:100%;descent-override:26%;line-gap-override:0%;}
+@font-face{font-family:"Source Sans 3 Fallback";src:local("Arial"),local("Liberation Sans"),local("Helvetica");size-adjust:89.5%;ascent-override:114%;descent-override:45%;line-gap-override:0%;}
+@font-face{font-family:"Barlow Condensed Fallback";src:local("Arial Narrow"),local("Liberation Sans Narrow"),local("Nimbus Sans Narrow"),local("Arial");size-adjust:89.9%;ascent-override:111%;descent-override:22%;line-gap-override:0%;}
 
 
 :root {
@@ -759,11 +763,6 @@ html[data-concept] header.site[data-identity] .mb-print:focus-visible {
   line-height: 1.25;
 }
 .mb-gc .mb-gs { line-height: 1.25; }
-
-/* t448u: the brief body waits for the preloaded fonts (at most 600 ms) before it is shown, so the
-   hazard rows never reflow on screen when Source Sans arrives (Lighthouse CLS). Header and masthead
-   paint as before. No-JS visitors and browsers without document.fonts never get the class. */
-html.mb-fonts-wait main#brief-body { visibility: hidden; }
 
 /* --- t448u hazard rows: every NWS hazard on the first screen, one compact row each ---
    Severity is carried by text (Warning / Watch / Advisory) and color together, never color alone. */
