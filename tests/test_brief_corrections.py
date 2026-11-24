@@ -44,11 +44,12 @@ def _strip_icon_head(data: bytes) -> bytes:
 
 
 class LiveBriefUntouched(unittest.TestCase):
-    def test_brief_py_intentionally_refined_on_this_branch(self):
-        # t440u (Nov 23): live brief.py is refined on private branch brief-refine-1123.
-        # The origin/main byte lock no longer applies here. validate() must still exist.
-        self.assertNotEqual(_strip_icon_head((ROOT / "brief.py").read_bytes()),
-                            _strip_icon_head(_git_show("brief.py")))
+    def test_brief_py_includes_approved_refinements(self):
+        # t440u / t446u: brief.py carries the approved Morning Brief refinements.
+        # Do not compare the file to origin/main (that lock would fail after deploy).
+        src = (ROOT / "brief.py").read_text()
+        self.assertIn("import brief_astro", src)
+        self.assertIn("import brief_format", src)
         self.assertTrue(callable(brief.validate))
 
     def test_validate_still_the_origin_function(self):
