@@ -1425,6 +1425,7 @@ import showcase  # noqa: E402  (homepage Wind & Radar section; HOME_SHOWCASE fla
 import featured_home  # noqa: E402  (Featured in The Coastal Brief; public when PUBLIC_WHATS_BITING is on)
 import launch_flags  # noqa: E402  (default-off public launch flags; t425u)
 import theme_toggle  # noqa: E402  (homepage day/night toggle; /preview/home-b only for now)
+import nav_v2  # noqa: E402  (t453u masthead + nav v2; NAV_V2 env or preview cookie, default off)
 import whats_biting  # noqa: E402  (private /reports preview; cookie-gated, not public)
 import ramp_finder  # noqa: E402  (private /preview/ramps data preview; cookie-gated, not public)
 import freshwater  # noqa: E402
@@ -3471,6 +3472,7 @@ class Handler(SimpleHTTPRequestHandler):
         # /preview/home-b stays a separate cookie-gated route.
         if launch_flags.whats_biting_public():
             data = featured_home.inject(data, rid)
+        data = self._nav(data)
         self.send_response(200)
         if sc:
             self.send_header("Cache-Control", "no-store")
@@ -3588,9 +3590,23 @@ class Handler(SimpleHTTPRequestHandler):
             extra=[("Cache-Control", "no-store"), ("Vary", "Cookie")],
         )
 
+    def _nav(self, data, ctype: str = "text/html"):
+        """t453u private preview: shared masthead and section nav. Unchanged unless NAV_V2 is on
+        or this browser holds the preview cookie; any failure serves the original page."""
+        if not isinstance(data, (bytes, bytearray)) or not str(ctype).startswith("text/html"):
+            return data
+        try:
+            if nav_v2.page_key(urlparse(self.path or "/").path) is None or not nav_v2.active(self._preview_ok):
+                return data
+            return nav_v2.apply(bytes(data), self.path or "/")
+        except Exception as e:
+            sys.stderr.write("nav v2 skipped: %s\n" % e)
+            return data
+
     def _send_private(self, path: Path, ctype: str, data: bytes | None = None, status: int = 200, extra=None, robots: str = "noindex, nofollow"):
         if data is None:
             data = path.read_bytes()
+        data = self._nav(data, ctype)
         self.send_response(status)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(data)))
@@ -3745,6 +3761,7 @@ class Handler(SimpleHTTPRequestHandler):
             data = _apply_chrome(path.read_bytes())
         if share:
             data = _apply_share_meta(data, share)
+        data = self._nav(data)
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
@@ -3752,6 +3769,7 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(data)
 
     def _send_bytes(self, data: bytes, ctype: str, cache_s: int = 0):
+        data = self._nav(data, ctype)
         self.send_response(200)
         self.send_header("Content-Type", ctype)
         accept = (self.headers.get("Accept-Encoding") or "").lower()
