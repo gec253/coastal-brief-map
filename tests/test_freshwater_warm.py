@@ -9,12 +9,11 @@ class FreshwaterWarmTest(unittest.TestCase):
     def setUp(self):
         self.rid = next(iter(freshwater.warm_ids()))
         self.saved = dict(freshwater._ASSEMBLED)
+        freshwater.reset_caches()
 
     def tearDown(self):
-        freshwater._ASSEMBLED.clear()
+        freshwater.reset_caches()
         freshwater._ASSEMBLED.update(self.saved)
-        freshwater._REFRESHING.discard(self.rid)
-        freshwater._FLIGHT.pop(self.rid, None)
 
     def test_stale_cache_served_immediately_and_refreshed_in_background(self):
         payload = {"ok": True, "marker": "old"}
