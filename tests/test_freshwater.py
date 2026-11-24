@@ -399,10 +399,12 @@ class GatingHttp(unittest.TestCase):
             status, _, headers = self._req("/dashboard?region=" + rid)
             self.assertEqual(status, 303, rid)
             self.assertEqual(headers.get("location"), "/lake?region=" + rid)
+        # Launch audit item 7: with the kill switch on, a freshwater region query is
+        # a not-found page, never another region's saltwater data under that URL.
         status, body, _ = self._req("/?region=falls-lake", env={"FRESHWATER_ENABLED": "0"})
-        self.assertEqual(status, 200)
-        self.assertIn(b"The Coastal Brief", body)
-        self.assertIn(b'data-sprint="hybrid" data-water="salt"', body)
+        self.assertEqual(status, 404)
+        self.assertIn(b"Region not found", body)
+        self.assertNotIn(b'data-water="fresh"', body)
 
     def test_api_regions_stays_saltwater(self):
         status, body, _ = self._req("/api/regions")

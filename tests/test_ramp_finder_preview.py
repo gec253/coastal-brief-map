@@ -267,9 +267,11 @@ class Gating(unittest.TestCase):
     def test_public_pages_not_changed_on_disk(self):
         import subprocess
         # t440u: brief.py is refined on brief-refine-1123; other public pages stay locked.
-        # t449u: conditions.py and freshwater.py carry the approved duplicate-alert safety fix
-        # (c610f2f); they are pinned to that commit instead. Every other public page stays on PROD.
-        t449u = {"conditions.py": "c610f2f", "freshwater.py": "c610f2f"}
+        # t449u: conditions.py stays pinned at the approved duplicate-alert safety fix (c610f2f).
+        # t455u: freshwater.py is pinned to this repair (first-paint, single-flight, bounded fetch).
+        # Alert-merge rules in alerts_point are unchanged; see tests/test_freshwater_first_paint.py.
+        # Every other public page stays on PROD.
+        t449u = {"conditions.py": "c610f2f", "freshwater.py": "HEAD"}
         for rel in PROTECTED_PUBLIC_PATHS:
             if rel in ("brief.py", "brief.css"):
                 continue
