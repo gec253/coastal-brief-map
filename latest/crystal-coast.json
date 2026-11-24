@@ -1,23 +1,43 @@
 {
- "forecastUpdated": "2026-11-23T06:17:38+00:00",
+ "astro": {
+  "date": "2026-11-24",
+  "label": "Beaufort Inlet",
+  "lat": 34.695,
+  "lon": -76.668,
+  "moon": {
+   "fraction": 0.9998,
+   "illuminationPct": 100,
+   "name": "Full Moon",
+   "waxing": false
+  },
+  "regionId": "crystal-coast",
+  "source": "Computed locally from the NOAA Solar Calculator equations and Meeus (Astronomical Algorithms, ch. 48). Not a live USNO fetch.",
+  "status": "ok",
+  "sunrise": "2026-11-24T06:49:12.227745-05:00",
+  "sunriseEt": "6:49 AM",
+  "sunset": "2026-11-24T16:57:19.559695-05:00",
+  "sunsetEt": "4:57 PM",
+  "tz": "America/New_York"
+ },
+ "forecastUpdated": "2026-11-24T09:24:31+00:00",
  "freshness": [
   {
    "label": "Wind",
    "stale": false,
    "station": "CLKN7",
-   "time": "4:40 AM ET"
+   "time": "4:30 AM ET"
   },
   {
    "label": "Seas",
    "stale": false,
    "station": "41159",
-   "time": "3:56 AM ET"
+   "time": "4:56 AM ET"
   },
   {
    "label": "Swell",
    "stale": false,
    "station": "41159",
-   "time": "3:56 AM ET"
+   "time": "4:56 AM ET"
   },
   {
    "label": "Barometer",
@@ -38,51 +58,99 @@
    "time": "5:00 AM ET"
   }
  ],
- "issueDate": "2026-11-23",
- "issuedAt": "2026-11-23T10:15:00.272386+00:00",
- "issuedEt": "Mon Nov 23, 5:15 AM ET",
+ "hazards": {
+  "current": [],
+  "line": "UPCOMING: Gale Warning begins Tue 6:00 AM ET until Thu 9:00 AM ET — S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM. Coastal Flood Watch begins Wed 7:00 PM ET until Thu 4:00 PM ET — Beaufort; Pamlico; Southern Craven; East Carteret. Gale Watch begins Tue 6:00 AM ET until Wed 4:00 AM ET — S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM.",
+  "status": "active",
+  "upcoming": [
+   {
+    "areas": "S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM",
+    "ends": "2026-11-26T09:00:00-05:00",
+    "event": "Gale Warning",
+    "onset": "2026-11-24T06:00:00-05:00",
+    "status": "upcoming",
+    "text": "Gale Warning begins Tue 6:00 AM ET until Thu 9:00 AM ET — S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM."
+   },
+   {
+    "areas": "Beaufort; Pamlico; Southern Craven; East Carteret",
+    "ends": "2026-11-26T16:00:00-05:00",
+    "event": "Coastal Flood Watch",
+    "onset": "2026-11-25T19:00:00-05:00",
+    "status": "upcoming",
+    "text": "Coastal Flood Watch begins Wed 7:00 PM ET until Thu 4:00 PM ET — Beaufort; Pamlico; Southern Craven; East Carteret."
+   },
+   {
+    "areas": "S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM",
+    "ends": "2026-11-25T04:00:00-05:00",
+    "event": "Gale Watch",
+    "onset": "2026-11-24T06:00:00-05:00",
+    "status": "upcoming",
+    "text": "Gale Watch begins Tue 6:00 AM ET until Wed 4:00 AM ET — S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM."
+   }
+  ]
+ },
+ "issueDate": "2026-11-24",
+ "issuedAt": "2026-11-24T10:15:00.179587+00:00",
+ "issuedEt": "Tue Nov 24, 5:15 AM ET",
  "items": [
   [
    "Advisories",
-   "Gale Watch until Wed 4:00 AM ET; Small Craft Advisory until 6:00 AM ET."
+   "UPCOMING: Gale Warning begins Tue 6:00 AM ET until Thu 9:00 AM ET — S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM. Coastal Flood Watch begins Wed 7:00 PM ET until Thu 4:00 PM ET — Beaufort; Pamlico; Southern Craven; East Carteret. Gale Watch begins Tue 6:00 AM ET until Wed 4:00 AM ET — S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM."
   ],
   [
    "Wind",
-   "5 kt from the N, gusting 8, at Cape Lookout; about steady from 4 kt 10 h earlier."
+   "12 kt from the N, gusting 19, at Cape Lookout; up from 2 kt 10 h earlier."
   ],
   [
    "Seas",
-   "5.6 ft every 10 s from the ESE at Onslow Bay Outer (CDIP 217); easing from 6.6 ft 10 h earlier."
+   "3.6 ft every 9 s from the ESE at Onslow Bay Outer (CDIP 217); little changed from 3.9 ft 10 h earlier. Offshore buoy observation, not a beach surf height."
   ],
   [
    "Swell",
-   "1.6 ft at 11 s from the ESE (split from the buoy spectrum)."
+   "0.7 ft at 10 s from the ESE (split from the buoy spectrum). Offshore buoy observation, not a beach surf height."
   ],
   [
    "Pressure",
-   "29.91 inHg, steady."
+   "30.10 inHg, rising."
   ],
   [
    "Marine forecast",
-   "Today: N winds 5 to 10 kt, diminishing to around 5 kt late. (NWS AMZ158)"
+   "Today: NE winds 25 to 30 kt with gusts up to 35 kt. (NWS AMZ158)"
+  ],
+  [
+   "Outlook",
+   "Tonight: NE winds 25 to 30 kt with gusts up to 35 kt. Seas 7 to 10 ft, except 4 to 6 ft near shore. Wed: NE winds 25 to 35 kt. Gusts up to 35 kt, increasing to 45 kt in the afternoon. (NWS AMZ158, issued Tue 4:23 AM ET)."
   ],
   [
    "Rain",
-   "6% chance through tonight; mostly cloudy, high 58°F."
+   "8% chance through tonight; mostly cloudy, high 59°F."
   ],
   [
    "Tides",
-   "high 6:09 AM ET (4.1 ft), low 12:37 PM ET (0.1 ft), high 6:25 PM ET (3.1 ft) at Beaufort, Duke Marine Lab, MLLW."
+   "low 12:24 AM ET (-0.3 ft), high 6:59 AM ET (4.2 ft), low 1:30 PM ET (0.0 ft), high 7:16 PM ET (3.1 ft) at Beaufort, Duke Marine Lab, MLLW."
   ],
   [
    "Water temp",
-   "62°F inshore (Beaufort, Duke Marine Lab), 74°F offshore (buoy 41159)."
+   "64°F inshore (Beaufort, Duke Marine Lab), 69°F offshore (buoy 41159)."
   ]
  ],
- "marineUpdated": "2026-11-23T04:14:00-05:00",
+ "marineUpdated": "2026-11-24T04:23:00-05:00",
  "marineZone": "AMZ158",
  "missing": [],
  "ok": true,
+ "outlookPeriods": {
+  "periods": [
+   {
+    "name": "Tonight",
+    "text": "NE winds 25 to 30 kt with gusts up to 35 kt. Seas 7 to 10 ft, except 4 to 6 ft near shore."
+   },
+   {
+    "name": "Wed",
+    "text": "NE winds 25 to 35 kt. Gusts up to 35 kt, increasing to 45 kt in the afternoon."
+   }
+  ],
+  "source": "NWS AMZ158, issued Tue 4:23 AM ET"
+ },
  "reason": "scheduled",
  "region": {
   "anchor": {
@@ -104,12 +172,13 @@
  "regionId": "crystal-coast",
  "sources": "NOAA NDBC, NOAA CO-OPS, NWS (api.weather.gov)",
  "take": [
-  "A Gale Watch is in effect until Wed 4:00 AM ET.",
-  "The NWS marine forecast has wind or seas easing later today.",
-  "Offshore water is 11°F warmer than inshore."
+  "Gale Warning begins Tue 6:00 AM ET until Thu 9:00 AM ET — S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM.",
+  "Wind has built 10 kt over the past 10 h.",
+  "The NWS marine forecast has wind or seas building later today.",
+  "Offshore water is 6°F warmer than inshore."
  ],
  "validation": {
-  "checkedAt": "2026-11-23T10:15:00.272386+00:00",
+  "checkedAt": "2026-11-24T10:15:00.179587+00:00",
   "checks": [
    "region",
    "location",
@@ -123,5 +192,5 @@
   "status": "ok"
  },
  "waterType": "saltwater",
- "words": 155
+ "words": 390
 }

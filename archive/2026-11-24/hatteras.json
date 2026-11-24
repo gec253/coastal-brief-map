@@ -1,0 +1,226 @@
+{
+ "astro": {
+  "date": "2026-11-24",
+  "label": "Cape Hatteras",
+  "lat": 35.2515,
+  "lon": -75.5288,
+  "moon": {
+   "fraction": 0.9998,
+   "illuminationPct": 100,
+   "name": "Full Moon",
+   "waxing": false
+  },
+  "regionId": "hatteras",
+  "source": "Computed locally from the NOAA Solar Calculator equations and Meeus (Astronomical Algorithms, ch. 48). Not a live USNO fetch.",
+  "status": "ok",
+  "sunrise": "2026-11-24T06:45:53.968130-05:00",
+  "sunriseEt": "6:45 AM",
+  "sunset": "2026-11-24T16:51:30.592053-05:00",
+  "sunsetEt": "4:51 PM",
+  "tz": "America/New_York"
+ },
+ "forecastUpdated": "2026-11-24T09:24:31+00:00",
+ "freshness": [
+  {
+   "label": "Wind",
+   "stale": false,
+   "station": "41025",
+   "time": "4:30 AM ET"
+  },
+  {
+   "label": "Seas",
+   "stale": false,
+   "station": "41120",
+   "time": "4:26 AM ET"
+  },
+  {
+   "label": "Swell",
+   "stale": false,
+   "station": "41120",
+   "time": "4:26 AM ET"
+  },
+  {
+   "label": "Barometer",
+   "stale": false,
+   "station": "8654467",
+   "time": "5:06 AM ET"
+  },
+  {
+   "label": "Water level",
+   "stale": false,
+   "station": "8654467",
+   "time": "5:06 AM ET"
+  },
+  {
+   "label": "Water temp",
+   "stale": false,
+   "station": "8654467",
+   "time": "5:06 AM ET"
+  }
+ ],
+ "hazards": {
+  "current": [
+   {
+    "areas": "S of Currituck Beach Light NC to Oregon Inlet NC out to 20 NM; S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM",
+    "ends": "2026-11-25T16:00:00-05:00",
+    "event": "Small Craft Advisory",
+    "onset": "2026-11-24T04:22:00-05:00",
+    "status": "current",
+    "text": "Small Craft Advisory now in effect until Wed 4:00 PM ET — S of Currituck Beach Light NC to Oregon Inlet NC out to 20 NM; S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM."
+   }
+  ],
+  "line": "CURRENT: Small Craft Advisory now in effect until Wed 4:00 PM ET — S of Currituck Beach Light NC to Oregon Inlet NC out to 20 NM; S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM. UPCOMING: Gale Warning begins Tue 6:00 AM ET until Thu 9:00 AM ET — S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM. Gale Watch begins Wed 4:00 PM ET until Thu 11:00 AM ET — S of Currituck Beach Light NC to Oregon Inlet NC out to 20 NM; S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM. Gale Watch begins Wed 4:00 PM ET until Thu 9:00 AM ET — Pamlico Sound. Coastal Flood Watch begins Wed 7:00 PM ET until Fri 10:00 AM ET — Ocracoke Island; Hatteras Island. Gale Watch begins Tue 6:00 AM ET until Wed 4:00 AM ET — S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM.",
+  "status": "active",
+  "upcoming": [
+   {
+    "areas": "S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM",
+    "ends": "2026-11-26T09:00:00-05:00",
+    "event": "Gale Warning",
+    "onset": "2026-11-24T06:00:00-05:00",
+    "status": "upcoming",
+    "text": "Gale Warning begins Tue 6:00 AM ET until Thu 9:00 AM ET — S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM."
+   },
+   {
+    "areas": "S of Currituck Beach Light NC to Oregon Inlet NC out to 20 NM; S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM",
+    "ends": "2026-11-26T11:00:00-05:00",
+    "event": "Gale Watch",
+    "onset": "2026-11-25T16:00:00-05:00",
+    "status": "upcoming",
+    "text": "Gale Watch begins Wed 4:00 PM ET until Thu 11:00 AM ET — S of Currituck Beach Light NC to Oregon Inlet NC out to 20 NM; S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM."
+   },
+   {
+    "areas": "Pamlico Sound",
+    "ends": "2026-11-26T09:00:00-05:00",
+    "event": "Gale Watch",
+    "onset": "2026-11-25T16:00:00-05:00",
+    "status": "upcoming",
+    "text": "Gale Watch begins Wed 4:00 PM ET until Thu 9:00 AM ET — Pamlico Sound."
+   },
+   {
+    "areas": "Ocracoke Island; Hatteras Island",
+    "ends": "2026-11-27T10:00:00-05:00",
+    "event": "Coastal Flood Watch",
+    "onset": "2026-11-25T19:00:00-05:00",
+    "status": "upcoming",
+    "text": "Coastal Flood Watch begins Wed 7:00 PM ET until Fri 10:00 AM ET — Ocracoke Island; Hatteras Island."
+   },
+   {
+    "areas": "S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM",
+    "ends": "2026-11-25T04:00:00-05:00",
+    "event": "Gale Watch",
+    "onset": "2026-11-24T06:00:00-05:00",
+    "status": "upcoming",
+    "text": "Gale Watch begins Tue 6:00 AM ET until Wed 4:00 AM ET — S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM."
+   }
+  ]
+ },
+ "issueDate": "2026-11-24",
+ "issuedAt": "2026-11-24T10:15:00.187033+00:00",
+ "issuedEt": "Tue Nov 24, 5:15 AM ET",
+ "items": [
+  [
+   "Advisories",
+   "CURRENT: Small Craft Advisory now in effect until Wed 4:00 PM ET — S of Currituck Beach Light NC to Oregon Inlet NC out to 20 NM; S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM. UPCOMING: Gale Warning begins Tue 6:00 AM ET until Thu 9:00 AM ET — S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM. Gale Watch begins Wed 4:00 PM ET until Thu 11:00 AM ET — S of Currituck Beach Light NC to Oregon Inlet NC out to 20 NM; S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM. Gale Watch begins Wed 4:00 PM ET until Thu 9:00 AM ET — Pamlico Sound. Coastal Flood Watch begins Wed 7:00 PM ET until Fri 10:00 AM ET — Ocracoke Island; Hatteras Island. Gale Watch begins Tue 6:00 AM ET until Wed 4:00 AM ET — S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM."
+  ],
+  [
+   "Wind",
+   "27 kt from the N, gusting 33, at Diamond Shoals (offshore buoy 41025, observed 4:30 AM ET); up from 10 kt 10 h earlier."
+  ],
+  [
+   "Seas",
+   "4.6 ft every 9 s from the E at Cape Hatteras East (CDIP 250); little changed from 4.6 ft 10 h earlier. Offshore buoy observation, not a beach surf height."
+  ],
+  [
+   "Swell",
+   "1.0 ft at 10 s from the ENE (split from the buoy spectrum). Offshore buoy observation, not a beach surf height."
+  ],
+  [
+   "Pressure",
+   "30.11 inHg, rising."
+  ],
+  [
+   "Marine forecast",
+   "Today: N winds 25 to 30 kt with gusts up to 35 kt. (NWS AMZ154)"
+  ],
+  [
+   "Outlook",
+   "Tonight: NE winds 20 to 25 kt with gusts up to 30 kt. Seas 7 to 10 ft. Wed: NE winds 20 to 25 kt with gusts up to 30 kt, becoming E 25 to 30 kt with gusts up to 40 kt in the afternoon. Seas 7 to 10 ft, building to 9 to 12 ft in the afternoon. (NWS AMZ154, issued Tue 4:23 AM ET)."
+  ],
+  [
+   "Rain",
+   "5% chance through tonight; mostly cloudy, high 60°F."
+  ],
+  [
+   "Tides",
+   "low 2:09 AM ET (0.2 ft), high 8:02 AM ET (0.7 ft), low 3:14 PM ET (0.2 ft), high 8:20 PM ET (0.5 ft) at USCG Station Hatteras, MLLW."
+  ],
+  [
+   "Water temp",
+   "63°F inshore (USCG Station Hatteras), 62°F offshore (buoy 41120)."
+  ]
+ ],
+ "marineUpdated": "2026-11-24T04:23:00-05:00",
+ "marineZone": "AMZ154",
+ "missing": [],
+ "ok": true,
+ "outlookPeriods": {
+  "periods": [
+   {
+    "name": "Tonight",
+    "text": "NE winds 20 to 25 kt with gusts up to 30 kt. Seas 7 to 10 ft."
+   },
+   {
+    "name": "Wed",
+    "text": "NE winds 20 to 25 kt with gusts up to 30 kt, becoming E 25 to 30 kt with gusts up to 40 kt in the afternoon. Seas 7 to 10 ft, building to 9 to 12 ft in the afternoon."
+   }
+  ],
+  "source": "NWS AMZ154, issued Tue 4:23 AM ET"
+ },
+ "reason": "scheduled",
+ "region": {
+  "anchor": {
+   "label": "Cape Hatteras",
+   "lat": 35.2515,
+   "lon": -75.5288
+  },
+  "area": "Cape Hatteras, Outer Banks",
+  "id": "hatteras",
+  "map": {
+   "center": [
+    35.2,
+    -75.6
+   ],
+   "zoom": 8
+  },
+  "name": "Hatteras Island"
+ },
+ "regionId": "hatteras",
+ "sources": "NOAA NDBC, NOAA CO-OPS, NWS (api.weather.gov)",
+ "take": [
+  "Gale Warning begins Tue 6:00 AM ET until Thu 9:00 AM ET — S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM.",
+  "Wind has built 17 kt over the past 10 h."
+ ],
+ "validation": {
+  "checkedAt": "2026-11-24T10:15:00.187033+00:00",
+  "checks": [
+   "region",
+   "location",
+   "issue date",
+   "timestamp",
+   "marine zone",
+   "forecast age",
+   "core readings"
+  ],
+  "missingCore": [],
+  "status": "ok"
+ },
+ "waterType": "saltwater",
+ "windSource": {
+  "name": "Diamond Shoals",
+  "observed": "2026-11-24T09:30:00Z",
+  "role": "primary",
+  "station": "41025",
+  "type": "offshore"
+ },
+ "words": 486
+}
