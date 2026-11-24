@@ -814,3 +814,127 @@ class StageBPresentation(unittest.TestCase):
         glen = ramp_finder.by_id("local-newbern-glenburnie", self.data)
         vis, _ = ramp_finder.official_summary_for_visitors(glen["hours"]["summary"])
         self.assertEqual(vis, "not stated on the official map or parks list checked Nov 22, 2026")
+
+
+class StageBPublicLaunchT451u(unittest.TestCase):
+    """t451u: public surface hides needs-review records and /ramps.json."""
+
+    HIDDEN = (
+        "local-atlantic-beach-west-bogue-sound",
+        "parks-falls-holly-point-campers",
+        "parks-jordan-poplar-point-campers",
+        "parks-jordan-vista-point-sailboat",
+    )
+    LIMITED = (
+        "local-morehead-south-10th",
+        "parks-falls-bw-wells-campers",
+        "parks-falls-beaverdam",
+    )
+
+    @classmethod
+    def setUpClass(cls):
+        cls.data = ramp_finder.load_data()
+
+    def test_inventory_and_default_count_unchanged(self):
+        self.assertEqual(
+            ramp_finder.inventory_facts_digest(self.data),
+            "8bccf90797ec5c7593da6b009dd93928bc8acf41ad4e63db8d3d47b4406a877c",
+        )
+        public = ramp_finder.public_records(self.data)
+        self.assertEqual(len(public), 51)
+        self.assertEqual({r["id"] for r in self.data["records"] if r["listing_class"] == "needs_review"}, set(self.HIDDEN))
+        g, limited, review = ramp_finder.visible_sets(self.data, ramp_finder.parse_filters({}), public=True)
+        self.assertEqual(len(g), 48)
+        self.assertEqual(limited, [])
+        self.assertEqual(review, [])
+        # The default 48 were already general-only; hiding needs-review does not change it.
+        g2, _, _ = ramp_finder.visible_sets(self.data, ramp_finder.parse_filters({}), public=False)
+        self.assertEqual([r["id"] for r in g], [r["id"] for r in g2])
+
+    def test_public_needs_review_details_and_json_are_404(self):
+        self.assertEqual(ramp_finder.resolve_request("/ramps.json", {}, public=True)[0], 404)
+        for rid in self.HIDDEN:
+            self.assertEqual(ramp_finder.resolve_request(f"/ramps/{rid}", {}, public=True)[0], 404, rid)
+        # Query flag cannot leak them on the public list.
+        status, _, html = ramp_finder.resolve_request("/ramps", {"needs_review": ["1"]}, public=True)
+        self.assertEqual(status, 200)
+        for rid in self.HIDDEN:
+            self.assertNotIn(rid, html)
+        self.assertNotIn("needs-review", html)
+        self.assertNotIn('name="needs_review"', html)
+
+    def test_preview_still_serves_all_55_and_json(self):
+        status, _, body = ramp_finder.resolve_request("/preview/ramps.json", {}, public=False)
+        self.assertEqual(status, 200)
+        payload = json.loads(body)
+        self.assertEqual(len(payload["records"]), 55)
+        for rid in self.HIDDEN:
+            self.assertEqual(ramp_finder.resolve_request(f"/preview/ramps/{rid}", {}, public=False)[0], 200, rid)
+        status, _, html = ramp_finder.resolve_request(
+            "/preview/ramps", {"needs_review": ["1"]}, public=False
+        )
+        self.assertEqual(status, 200)
+        for rid in self.HIDDEN:
+            self.assertIn(rid, html)
+
+    def test_limited_ramps_stay_public_and_labeled(self):
+        for rid in self.LIMITED:
+            status, _, html = ramp_finder.resolve_request(f"/ramps/{rid}", {}, public=True)
+            self.assertEqual(status, 200, rid)
+            self.assertIn("Limited access", html)
+        status, _, html = ramp_finder.resolve_request("/ramps", {"limited": ["1"]}, public=True)
+        self.assertEqual(status, 200)
+        for rid in self.LIMITED:
+            self.assertIn(rid, html)
+        self.assertIn("Limited access", html)
+
+    def test_public_map_payload_and_html_omit_needs_review(self):
+        payload = ramp_finder.map_payload(self.data, public=True)
+        ids = {r["id"] for r in payload["records"]}
+        self.assertEqual(len(ids), 51)
+        self.assertTrue(set(self.HIDDEN).isdisjoint(ids))
+        self.assertEqual(payload["counts"]["by_class"]["needs_review"], {"pin": 0, "address": 0})
+        status, _, html = ramp_finder.resolve_request(
+            "/ramps/map", {"needs_review": ["1"]}, public=True
+        )
+        self.assertEqual(status, 200)
+        for rid in self.HIDDEN:
+            self.assertNotIn(rid, html)
+        self.assertNotIn('name="needs_review"', html)
+
+    def test_public_index_has_accurate_meta_description(self):
+        meta = ramp_finder.public_index_meta_description(self.data)
+        self.assertIn("51 verified public boat ramps", meta)
+        self.assertIn("Crystal Coast", meta)
+        self.assertIn("Falls Lake", meta)
+        self.assertIn("Jordan Lake", meta)
+        self.assertIn("Neuse River", meta)
+        status, _, html = ramp_finder.resolve_request("/ramps", {}, public=True)
+        self.assertEqual(status, 200)
+        self.assertIn(f'<meta name="description" content="{meta}">', html)
+
+    def test_folio_find_a_ramp_coverage_notes(self):
+        import folio_entry
+        import launch_flags
+        os.environ[launch_flags.PUBLIC_RAMPS] = "1"
+        self.addCleanup(lambda: os.environ.pop(launch_flags.PUBLIC_RAMPS, None))
+        for rid in ("crystal-coast", "falls-lake", "jordan-lake", "neuse-river"):
+            href, label, note = folio_entry.ramps_entry(rid)
+            self.assertEqual(label, "Find a Ramp")
+            self.assertEqual(href, f"/ramps?region={rid}")
+            self.assertEqual(note, "")
+            html = folio_entry.guides_html(rid, public_page=True)
+            self.assertIn("Find a Ramp", html)
+            self.assertIn(f'href="{href}"', html)
+            self.assertNotIn("not yet listed", html)
+        for rid in ("hatteras", "emerald-isle", "nags-head", "topsail", "wilmington"):
+            href, label, note = folio_entry.ramps_entry(rid)
+            self.assertEqual(href, "/ramps")
+            self.assertEqual(note, "Ramps are not yet listed for this area")
+            html = folio_entry.guides_html(rid, public_page=True)
+            self.assertIn("Find a Ramp", html)
+            self.assertIn('href="/ramps"', html)
+            self.assertIn("Ramps are not yet listed for this area", html)
+            self.assertNotIn(f"/ramps?region={rid}", html)
+        os.environ.pop(launch_flags.PUBLIC_RAMPS, None)
+        self.assertEqual(folio_entry.guides_html("hatteras", public_page=True), "")
