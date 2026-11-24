@@ -3182,8 +3182,7 @@ class Handler(SimpleHTTPRequestHandler):
             if parsed.path == "/fresh-home.js":
                 return self._send_private(ROOT / "fresh-home.js", "text/javascript; charset=utf-8", robots=robots)
             if parsed.path == "/api/fresh-home":
-                force = (parse_qs(parsed.query or "").get("retry") or ["0"])[0] == "1"
-                status, payload = freshwater.assemble(q_rid, force=force)
+                status, payload = freshwater.assemble(q_rid)
                 if status != 200 or not (payload or {}).get("ok"):
                     if preview_fw:
                         return self._json_private(payload, status)
@@ -3193,8 +3192,6 @@ class Handler(SimpleHTTPRequestHandler):
                     sprint_home.fresh_model(payload), variant="hybrid", public=public_html)
                 body = {"ok": True, "region": payload.get("region"), "html": section,
                         "partial": bool(payload.get("partial"))}
-                if payload.get("retryAfterS"):
-                    body["retryAfterS"] = payload["retryAfterS"]
                 if preview_fw:
                     return self._json_private(body, 200)
                 return self._send_json(body, cache_s=0, status=200)

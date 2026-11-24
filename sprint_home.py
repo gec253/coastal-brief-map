@@ -478,12 +478,10 @@ def fresh_model(payload: dict) -> dict:
     forecast = ({"name": per[0].get("name") or "", "text": per[0].get("detail") or per[0].get("short") or "",
                  "src": fc.get("office") or "NWS", "when": et_time(fc.get("updated")), "url": ""}
                 if fc.get("status") == "ok" and per else {"off": FRESH_POINT_OFF})
-    import freshwater
     return {
         "water": "fresh", "region": reg, "tiles": tiles, "more": more,
         "alerts": _alerts(payload.get("alerts")), "alerts_raw": payload.get("alerts"), "forecast": forecast,
         "updated": et_time(payload.get("generatedAt")), "ok": True,
-        "canRetry": freshwater.missing_expected(payload),
     }
 
 
@@ -1054,20 +1052,7 @@ def _fresh_section_attrs(m: dict, rid: str, public: bool) -> str:
         attrs += ' data-fresh-public="1"'
     if m.get("pending"):
         attrs += ' data-fresh-pending="1" aria-busy="true"'
-    if m.get("canRetry") and not m.get("pending"):
-        attrs += ' data-fresh-retry="1"'
     return attrs
-
-
-def _retry_html(m: dict, pending: bool) -> str:
-    if pending or m.get("water") != "fresh" or not m.get("canRetry"):
-        return ""
-    return (
-        '<div class="cg-retry-box">'
-        '<button type="button" class="cg-retry" id="fresh-retry">Retry readings</button>'
-        '<p class="cg-retry-status" role="status" aria-live="polite"></p>'
-        "</div>"
-    )
 
 
 def conditions_html(m: dict, *, variant: str, public: bool = False) -> str:
@@ -1117,14 +1102,14 @@ def conditions_html(m: dict, *, variant: str, public: bool = False) -> str:
             '<header class="cg-head"><h2 id="cg-h">Conditions at a Glance</h2>'
             '<p class="cg-where">%s</p>'
             '<p class="cg-upd">%s</p></header>'
-            "%s%s%s%s%s"
+            "%s%s%s%s"
             '<div class="cg-foot">%s%s</div>'
             "</section>"
         ) % (
             variant, _fresh_section_attrs(m, rid, public),
             _esc(reg.get("name") or ""),
             ("Updated %s" % _esc(m["updated"])) if m.get("updated") else "",
-            body, tiles, *_extras(m, more, variant), _retry_html(m, pending),
+            body, tiles, *_extras(m, more, variant),
             region_rail(rid, public=public), tools_html(dash, m.get("water") == "fresh", brief_link),
         )
     return (
@@ -1132,7 +1117,7 @@ def conditions_html(m: dict, *, variant: str, public: bool = False) -> str:
         '<header class="cg-head"><h2 id="cg-h">Conditions at a Glance</h2>'
         '<p class="cg-where">%s</p>'
         '<p class="cg-upd">%s</p></header>'
-        "%s%s%s%s%s"
+        "%s%s%s%s"
         '<div class="cg-foot">%s'
         '<a class="cg-link" href="%s">Full dashboard</a>%s</div>'
         "</section>"
@@ -1140,7 +1125,7 @@ def conditions_html(m: dict, *, variant: str, public: bool = False) -> str:
         variant, _fresh_section_attrs(m, rid, public),
         _esc(reg.get("name") or ""),
         ("Updated %s" % _esc(m["updated"])) if m.get("updated") else "",
-        body, tiles, *_extras(m, more, variant), _retry_html(m, pending),
+        body, tiles, *_extras(m, more, variant),
         '<details class="cg-region"><summary>Change water</summary><nav aria-label="Regions">%s</nav></details>' % "".join(links),
         _esc(dash, True), brief_link,
     )
@@ -1471,7 +1456,7 @@ def _shell(variant: str, main: str, shot: bool, water: str = "salt", public: boo
         "fb": _feedback_embed(),
         "nboot": _night_boot(water),
     }
-    if 'data-fresh-pending="1"' in main or 'data-fresh-retry="1"' in main:
+    if 'data-fresh-pending="1"' in main:
         page = page.replace("</body>", '<script src="/fresh-home.js" defer></script>\n</body>', 1)
     return page.encode("utf-8")
 
