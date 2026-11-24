@@ -23,7 +23,8 @@ WB_REGIONS = {
 WB_ALIASES = {
     "emerald-isle": "crystal-coast",
 }
-# Find a Ramp only where the inventory has coverage (audit / t425u).
+# Areas with verified ramps in the inventory (t451u). Other public homepage
+# regions still get a Find a Ramp link to the full finder, with a coverage note.
 RAMP_REGIONS = ("crystal-coast", "falls-lake", "jordan-lake", "neuse-river")
 
 
@@ -45,13 +46,16 @@ def whats_biting_entry(region_id: str | None) -> tuple[str, str, str]:
     return "/reports", "What’s Biting?", "Regional reports index"
 
 
-def ramps_entry(region_id: str | None) -> tuple[str, str] | None:
+def ramps_entry(region_id: str | None) -> tuple[str, str, str]:
+    """Return (href, label, coverage note).
+
+    Covered inventory areas link to the regional list. Other homepage regions
+    link to the full finder and say ramps are not yet listed for that area.
+    """
     rid = _rid(region_id)
-    if rid not in RAMP_REGIONS:
-        return None
-    if rid == "crystal-coast":
-        return "/ramps?region=crystal-coast", "Find a Ramp"
-    return f"/ramps?region={rid}", "Find a Ramp"
+    if rid in RAMP_REGIONS:
+        return f"/ramps?region={rid}", "Find a Ramp", ""
+    return "/ramps", "Find a Ramp", "Ramps are not yet listed for this area"
 
 
 def guides_html(region_id: str | None, *, public_page: bool) -> str:
@@ -66,10 +70,11 @@ def guides_html(region_id: str | None, *, public_page: bool) -> str:
             f'<a href="{html.escape(href, quote=True)}">{esc(label)}{note_html}</a>'
         )
     if launch_flags.ramps_public():
-        entry = ramps_entry(region_id)
-        if entry:
-            href, label = entry
-            links.append(f'<a href="{html.escape(href, quote=True)}">{esc(label)}</a>')
+        href, label, note = ramps_entry(region_id)
+        note_html = f'<span class="folio-guides-note">{esc(note)}</span>' if note else ""
+        links.append(
+            f'<a href="{html.escape(href, quote=True)}">{esc(label)}{note_html}</a>'
+        )
     if not links:
         return ""
     return (

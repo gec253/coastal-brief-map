@@ -109,6 +109,28 @@ def records(data=None) -> list:
     return (data or load_data())["records"]
 
 
+NEEDS_REVIEW_CLASS = "needs_review"
+
+
+def is_public_record(rec) -> bool:
+    """Verified general and limited-access ramps are public; needs-review is not."""
+    return (rec or {}).get("listing_class") != NEEDS_REVIEW_CLASS
+
+
+def public_records(data=None) -> list:
+    return [rec for rec in records(data) if is_public_record(rec)]
+
+
+def public_index_meta_description(data=None) -> str:
+    """Index meta description from verified public counts and covered areas only."""
+    n = len(public_records(data))
+    return (
+        f"Find {n} verified public boat ramps on the Crystal Coast, Falls Lake, "
+        "Jordan Lake, and the Neuse River. Official sources only, checked Nov 22, 2026. "
+        "Not a live open/closed board."
+    )
+
+
 def by_id(rid: str, data=None):
     for rec in records(data):
         if rec["id"] == rid:
@@ -221,11 +243,13 @@ def matches_search(rec, term: str) -> bool:
     return term.lower() in hay
 
 
-def visible_sets(data, filters: dict):
+def visible_sets(data, filters: dict, *, public: bool = False):
     term = filters.get("q") or ""
     region = filters.get("region") or ""
     general, limited, review = [], [], []
     for rec in records(data):
+        if public and not is_public_record(rec):
+            continue
         if region and rec["area"] != region:
             continue
         if not matches_search(rec, term):
@@ -244,15 +268,17 @@ def visible_sets(data, filters: dict):
     return general, limited, review
 
 
-def hidden_counts(data, filters: dict):
+def hidden_counts(data, filters: dict, *, public: bool = False):
     """How many limited / needs-review records match search+region but are hidden by filters."""
     term = filters.get("q") or ""
     region = filters.get("region") or ""
     hid_lim = hid_rev = 0
-    shown_g, shown_l, shown_r = visible_sets(data, filters)
+    shown_g, shown_l, shown_r = visible_sets(data, filters, public=public)
     shown_ids = {r["id"] for r in shown_g + shown_l + shown_r}
     for rec in records(data):
         if rec["id"] in shown_ids:
+            continue
+        if public and not is_public_record(rec):
             continue
         if region and rec["area"] != region:
             continue
@@ -265,7 +291,7 @@ def hidden_counts(data, filters: dict):
     return hid_lim, hid_rev
 
 
-def _shell(title: str, body: str, skip: str = "Skip to the ramp list", *, current: str = "list", extra_head: str = "", extra_script: str = "", main_class: str = "", public: bool = False, canonical: str | None = None) -> str:
+def _shell(title: str, body: str, skip: str = "Skip to the ramp list", *, current: str = "list", extra_head: str = "", extra_script: str = "", main_class: str = "", public: bool = False, canonical: str | None = None, description: str | None = None) -> str:
     import launch_flags
     css_text = css_bytes().decode("utf-8")
     if public and not launch_flags.ramp_map_public():
@@ -279,7 +305,7 @@ def _shell(title: str, body: str, skip: str = "Skip to the ramp list", *, curren
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="{"index, follow" if public else "noindex, nofollow"}">
-{f'<link rel="canonical" href="{esc(canonical)}">\n' if (public and canonical) else ""}<meta name="theme-color" content="#071C29">
+{f'<link rel="canonical" href="{esc(canonical)}">\n' if (public and canonical) else ""}{f'<meta name="description" content="{esc(description)}">\n' if description else ""}<meta name="theme-color" content="#071C29">
 <title>{esc(title)}</title>
 <link rel="icon" href="/favicon.ico?v=20261121" sizes="48x48">
 <link rel="icon" href="/branding/favicon.svg?v=20261121" type="image/svg+xml">
@@ -654,8 +680,8 @@ def lake_context_html(data, area: str) -> str:
 
 
 def render_list(data, filters: dict, *, public: bool = False) -> str:
-    general, limited, review = visible_sets(data, filters)
-    hid_lim, hid_rev = hidden_counts(data, filters)
+    general, limited, review = visible_sets(data, filters, public=public)
+    hid_lim, hid_rev = hidden_counts(data, filters, public=public)
     q = filters.get("q") or ""
     region = filters.get("region") or ""
 
@@ -666,14 +692,21 @@ def render_list(data, filters: dict, *, public: bool = False) -> str:
         hidden.append(f"{hid_rev} needs-review")
     hidden_note = ""
     if hidden:
+        if public:
+            hint = "Use the optional filters to show camper-only, non-gas, size-limited, or no-parking sites."
+        else:
+            hint = "Use the optional filters to show camper-only, non-gas, size-limited, no-parking, or needs-review sites."
         hidden_note = (
             f'<p class="hidden-note">{esc(" and ".join(hidden))} '
             f'{"entry is" if (hid_lim + hid_rev) == 1 else "entries are"} hidden. '
-            f'Use the optional filters to show camper-only, non-gas, size-limited, no-parking, or needs-review sites.</p>'
+            f'{esc(hint)}</p>'
         )
 
     chips = []
-    base = {k: filters[k] for k in ("q", "limited", "camper_only", "non_gas_only", "size_limited", "no_parking", "needs_review") if filters.get(k)}
+    filter_keys = ("q", "limited", "camper_only", "non_gas_only", "size_limited", "no_parking")
+    if not public:
+        filter_keys += ("needs_review",)
+    base = {k: filters[k] for k in filter_keys if filters.get(k)}
     for slug, label in AREAS:
         p = dict(base)
         if slug:
@@ -683,6 +716,8 @@ def render_list(data, filters: dict, *, public: bool = False) -> str:
 
     checks = []
     for key, label in FLAG_FILTERS:
+        if public and key == "needs_review":
+            continue
         on = " checked" if filters.get(key) else ""
         checks.append(
             f'<label><input type="checkbox" name="{esc(key)}" value="1"{on}> {esc(label)}</label>'
@@ -721,12 +756,13 @@ def render_list(data, filters: dict, *, public: bool = False) -> str:
         limited,
         "limited",
     ))
-    body_sections.append(section(
-        "Needs review",
-        "Official sources are incomplete, conflicting, or do not confirm a general public trailer ramp. Hidden from the default view.",
-        review,
-        "needs_review",
-    ))
+    if not public:
+        body_sections.append(section(
+            "Needs review",
+            "Official sources are incomplete, conflicting, or do not confirm a general public trailer ramp. Hidden from the default view.",
+            review,
+            "needs_review",
+        ))
     if not (general or limited or review):
         body_sections.append('<p class="empty" data-empty="ramps">No ramps match those filters.</p>')
 
@@ -734,6 +770,7 @@ def render_list(data, filters: dict, *, public: bool = False) -> str:
     title = "Ramp Finder" if public else "Ramp Finder — private preview"
     kicker = "Boat ramps" if public else "Private data preview"
     base = list_base(public)
+    meta = public_index_meta_description(data) if public else None
     return _shell(title, f"""
 <p class="kicker">{kicker}</p>
 <h1>Ramp Finder</h1>
@@ -756,7 +793,7 @@ def render_list(data, filters: dict, *, public: bool = False) -> str:
 {hidden_note}
 {ctx}
 {''.join(body_sections)}
-""", public=public, canonical=(SITE_ORIGIN + _list_url({"region": region} if region else {}, public=True)) if public else None)
+""", public=public, canonical=(SITE_ORIGIN + _list_url({"region": region} if region else {}, public=True)) if public else None, description=meta)
 
 
 def fees_html(rec) -> str:
@@ -1110,13 +1147,14 @@ def has_official_pin(rec) -> bool:
     return official_coordinates(rec) is not None
 
 
-def pin_inventory_counts(data=None) -> dict:
+def pin_inventory_counts(data=None, recs=None) -> dict:
     """How many records have official pins vs address-only directions."""
     data = data or load_data()
+    src = list(recs) if recs is not None else records(data)
     pins = addr = 0
     by_class = {"general": {"pin": 0, "address": 0}, "limited": {"pin": 0, "address": 0}, "needs_review": {"pin": 0, "address": 0}}
     by_area = {}
-    for rec in records(data):
+    for rec in src:
         cls = rec["listing_class"]
         area = rec["area"]
         by_area.setdefault(area, {"pin": 0, "address": 0})
@@ -1178,8 +1216,9 @@ def map_record(rec, *, public: bool = False) -> dict:
 
 def map_payload(data=None, *, public: bool = False) -> dict:
     data = data or load_data()
-    recs = [map_record(rec, public=public) for rec in records(data)]
-    counts = pin_inventory_counts(data)
+    src = public_records(data) if public else records(data)
+    recs = [map_record(rec, public=public) for rec in src]
+    counts = pin_inventory_counts(data, recs=src)
     return {
         "disclaimer": PAGE_DISCLAIMER,
         "counts": counts,
@@ -1232,8 +1271,8 @@ def _map_list_item(rec, payload_rec) -> str:
 
 
 def render_map(data, filters: dict, *, public: bool = False) -> str:
-    general, limited, review = visible_sets(data, filters)
-    hid_lim, hid_rev = hidden_counts(data, filters)
+    general, limited, review = visible_sets(data, filters, public=public)
+    hid_lim, hid_rev = hidden_counts(data, filters, public=public)
     region = filters.get("region") or ""
     payload = map_payload(data, public=public)
     by_id_payload = {r["id"]: r for r in payload["records"]}
@@ -1273,7 +1312,10 @@ def render_map(data, filters: dict, *, public: bool = False) -> str:
             chips.append(f'<a href="{esc(url)}">{esc(label)}</a>')
 
     checks = []
-    for key, label in (("limited", "Show limited-access launches"), ("needs_review", "Show needs-review entries")):
+    map_flags = (("limited", "Show limited-access launches"),)
+    if not public:
+        map_flags += (("needs_review", "Show needs-review entries"),)
+    for key, label in map_flags:
         on = " checked" if filters.get(key) else ""
         checks.append(
             f'<label class="flag"><input type="checkbox" name="{esc(key)}" value="1"{on}> {esc(label)}</label>'
@@ -1390,6 +1432,8 @@ def resolve_request(path: str, query: dict, *, public: bool = False):
         return 200, "text/javascript; charset=utf-8", map_js_bytes()
     data = load_data()
     if raw in ("/preview/ramps.json",):
+        if public:
+            return 404, "text/plain", "not found"
         return 200, "application/json; charset=utf-8", json.dumps(data, ensure_ascii=False)
     if raw in ("/preview/ramps/map.json",):
         return 200, "application/json; charset=utf-8", json.dumps(map_payload(data, public=public), ensure_ascii=False)
@@ -1403,7 +1447,7 @@ def resolve_request(path: str, query: dict, *, public: bool = False):
         if rid in MAP_ASSET_SLUGS:
             return 404, "text/plain", "not found"
         rec = by_id(rid, data)
-        if not rec:
+        if not rec or (public and not is_public_record(rec)):
             return 404, "text/plain", "not found"
         return 200, "text/html; charset=utf-8", render_detail(data, rec, public=public)
     return 404, "text/plain", "not found"
