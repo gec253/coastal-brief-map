@@ -2836,9 +2836,14 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 
 conditions.install(cache_get, cache_get_any, cache_put_ttl, lambda url: fetch_url(url, tries=2))
 
-def _freshwater_fetch(url, timeout=12, tries=2):
-    # Freshwater-only bound: 12s, two tries, 0.5s pause. Saltwater still uses tries=2 at 45s.
-    return fetch_url(url, tries=tries, timeout=timeout, backoff=0.5)
+def _freshwater_fetch(url, timeout=None, tries=None):
+    # Freshwater-only bound from freshwater.FETCH_*. Saltwater still uses default fetch_url (45s / 4 or 2).
+    return fetch_url(
+        url,
+        tries=tries if tries is not None else freshwater.FETCH_TRIES,
+        timeout=timeout if timeout is not None else freshwater.FETCH_TIMEOUT,
+        backoff=0.5,
+    )
 
 freshwater.install_fetch(_freshwater_fetch)
 
@@ -3182,17 +3187,31 @@ class Handler(SimpleHTTPRequestHandler):
             if parsed.path == "/fresh-home.js":
                 return self._send_private(ROOT / "fresh-home.js", "text/javascript; charset=utf-8", robots=robots)
             if parsed.path == "/api/fresh-home":
-                force = (parse_qs(parsed.query or "").get("retry") or ["0"])[0] == "1"
-                status, payload = freshwater.assemble(q_rid, force=force)
+                qs = parse_qs(parsed.query or "")
+                force = (qs.get("retry") or ["0"])[0] == "1"
+                poll = (qs.get("poll") or ["0"])[0] == "1"
+                # Polls must not hold the flight: a short or zero wait never cancels USGS work.
+                wait = 0 if poll else freshwater.USER_DEADLINE
+                status, payload = freshwater.assemble(q_rid, force=force, wait=wait)
                 if status != 200 or not (payload or {}).get("ok"):
                     if preview_fw:
                         return self._json_private(payload, status)
                     return self._send_json(payload, cache_s=0, status=status)
-                public_html = (parse_qs(parsed.query or "").get("public") or ["1"])[0] != "0"
-                section = sprint_home.conditions_html(
-                    sprint_home.fresh_model(payload), variant="hybrid", public=public_html)
+                public_html = (qs.get("public") or ["1"])[0] != "0"
+                pending = bool(payload.get("pending"))
+                complete = bool(payload.get("complete"))
+                # While the official fetch is still in flight and no USGS reading has
+                # landed, keep the loading shell. Do not flash Unavailable tiles.
+                if pending and not freshwater.has_verified_usgs(payload):
+                    model = sprint_home.fresh_loading_model(q_rid)
+                else:
+                    model = sprint_home.fresh_model(payload)
+                    if pending:
+                        model["canRetry"] = False
+                section = sprint_home.conditions_html(model, variant="hybrid", public=public_html)
                 body = {"ok": True, "region": payload.get("region"), "html": section,
-                        "partial": bool(payload.get("partial"))}
+                        "partial": bool(payload.get("partial")),
+                        "pending": pending, "complete": complete}
                 if payload.get("retryAfterS"):
                     body["retryAfterS"] = payload["retryAfterS"]
                 if preview_fw:

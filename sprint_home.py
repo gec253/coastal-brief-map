@@ -811,6 +811,15 @@ OFFSHORE_ICON = (
 )
 
 
+
+def _off_chip_label(t: dict) -> str:
+    """Neutral label for an unavailable reading. Never 'Observed'."""
+    text = "%s %s" % (t.get("off") or "", t.get("sub") or "")
+    if "not reporting" in text.lower():
+        return "Not reporting"
+    return "Unavailable"
+
+
 def tile_html(t: dict, big: bool = False) -> str:
     st = t["state"]
     cls = "t t-%s%s%s%s" % (t["id"], " is-stale" if st == "stale" else "", " is-off" if st == "off" else "",
@@ -818,7 +827,10 @@ def tile_html(t: dict, big: bool = False) -> str:
     kind_cls = {"Observed": "k-obs", "Predicted": "k-pred", "Forecast": "k-fc"}.get(t["kind"], "k-obs")
     hid = "t-%s-n" % t["id"]
     if st == "stale":
-        chip = '<span class="t-chip c-stale" title="Older than this station\'s normal reporting gap">Stale · %s</span>' % _esc(t["when"])
+        chip = '<span class="t-chip c-stale" title="Older than this station\'s normal reporting gap">as of %s</span>' % _esc(t["when"])
+    elif st == "off" and t.get("kind"):
+        # Never use the green Observed badge on an unavailable or Not reporting value.
+        chip = '<span class="t-kind k-off">%s</span>' % _esc(_off_chip_label(t))
     elif t.get("kind"):
         chip = '<span class="t-kind %s">%s</span>' % (kind_cls, _esc(t["kind"]))
     else:
@@ -1037,8 +1049,14 @@ def strip_item(t: dict) -> str:
             _esc(t["num"]) if t["num"] else "—",
             (' <span class="sx-u">%s</span>' % _esc(t["unit"])) if t["unit"] else "")
         sub = " · ".join(_esc(x) for x in (t.get("note"), t["sub"]) if x)
-    chip = ('<span class="t-chip c-stale" title="Older than this station\'s normal reporting gap">Stale · %s</span>' % _esc(t["when"])
-            if st == "stale" else '<span class="sx-kind">%s</span>' % _esc(t["kind"]))
+    if st == "stale":
+        chip = '<span class="t-chip c-stale" title="Older than this station\'s normal reporting gap">as of %s</span>' % _esc(t["when"])
+    elif st == "off" and t.get("kind"):
+        chip = '<span class="sx-kind k-off">%s</span>' % _esc(_off_chip_label(t))
+    elif t.get("kind"):
+        chip = '<span class="sx-kind">%s</span>' % _esc(t["kind"])
+    else:
+        chip = ""
     fc = ('<span class="sx-fc"><span class="t-chip k-fc">Forecast</span> %s</span>' % _esc(t["fc"].replace("Forecast ", ""))) if t.get("fc") else ""
     src = " ".join(x for x in (_esc(t["src"]) if t["src"] else "", _esc(t["when"]) if t["when"] and st != "stale" else "") if x)
     return ('<div class="sx sx-%s%s" role="group" aria-label="%s"><p class="sx-h"><span class="sx-k">%s</span>%s</p>%s'

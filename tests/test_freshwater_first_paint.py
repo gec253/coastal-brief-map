@@ -230,7 +230,10 @@ class AssembleBehavior(unittest.TestCase):
             status, body = freshwater.assemble("jordan-lake", wait=freshwater.USER_DEADLINE)
         elapsed = time.time() - t0
         self.assertEqual(status, 200)
-        self.assertLess(elapsed, 16, "API cap ~20s, first-wave bound 12s, got %.2fs" % elapsed)
+        self.assertLess(elapsed, freshwater.USER_DEADLINE + 3,
+                         "visitor wait is USER_DEADLINE, got %.2fs" % elapsed)
+        # The in-flight USGS work must still be running after the visitor wait returns.
+        self.assertTrue(freshwater._in_flight("jordan-lake") or freshwater.peek("jordan-lake") is not None)
         # No invented lake elevation
         el = (body.get("lake") or {}).get("elevation")
         self.assertTrue(el is None or el.get("value") is None)
@@ -323,6 +326,7 @@ class StaleJs(unittest.TestCase):
         self.assertIn("replaceWith", js)
         self.assertIn("pagehide", js)
         self.assertIn("retry=1", js)
+        self.assertIn("poll=1", js)
         self.assertIn("Retry readings", js)
         src = js + """
         const elFalls = { getAttribute: (k) => k === "data-fresh-region" ? "falls-lake" : null };
@@ -579,6 +583,10 @@ class NegativeCache(unittest.TestCase):
         self.assertEqual(hit["lake"]["elevation"]["value"], 250.12)
         self.assertTrue(freshwater.has_verified_data(hit))
         self.assertTrue(freshwater.missing_expected(hit))
+        self.assertTrue(freshwater.missing_expected_usgs(hit))
+        self.assertFalse(freshwater.usgs_refresh_complete(hit))
+        self.assertFalse(freshwater._is_complete("falls-lake"))
+        self.assertIn("falls-lake", freshwater._PARTIAL)
         self.assertNotIn("falls-lake", freshwater._FAILED)
 
     def test_complete_failure_does_not_drop_or_restamp_valid_cache(self):
@@ -595,7 +603,13 @@ class NegativeCache(unittest.TestCase):
         self.assertEqual(hit["lake"]["elevation"]["value"], 250.12)
         # Original success timestamp is preserved (not rewritten as a new 5-min TTL).
         self.assertAlmostEqual(freshwater._ASSEMBLED["falls-lake"][0], stamp, places=2)
-        self.assertIn("falls-lake", freshwater._FAILED)
+        # A failed refresh must not earn a new 5-minute success stamp. The
+        # official readings and their original times stay in cache; a short
+        # backoff (partial or complete) prevents hammering upstreams.
+        self.assertFalse(freshwater._is_complete("falls-lake"))
+        self.assertTrue(
+            "falls-lake" in freshwater._FAILED or "falls-lake" in freshwater._PARTIAL
+        )
 
 
 class MergeAndRetry(unittest.TestCase):
@@ -805,6 +819,303 @@ class RetryHttp(unittest.TestCase):
         self.assertIn("212.23", payload["html"])
         self.assertNotIn("250.12", payload["html"])
 
+
+
+# Scaled so a full 5/11/15/25/30 s matrix finishes in a few seconds: 1 s of
+# upstream time is 0.05 s in the test, and the production timeout ratios
+# (USER_DEADLINE 8 / FETCH_TIMEOUT 30 / RESULT_TIMEOUT 35) are preserved.
+_SCALE = 0.05
+
+
+class V3LatencyAndCache(unittest.TestCase):
+    def setUp(self):
+        _clear()
+        self._timeouts = (
+            patch.object(freshwater, "USER_DEADLINE", 8 * _SCALE),
+            patch.object(freshwater, "FETCH_TIMEOUT", 30 * _SCALE),
+            patch.object(freshwater, "RESULT_TIMEOUT", 35 * _SCALE),
+            patch.object(freshwater, "FAIL_BACKOFF", 45 * _SCALE),
+            patch.object(freshwater, "PARTIAL_BACKOFF", 45 * _SCALE),
+        )
+        for p in self._timeouts:
+            p.start()
+
+    def tearDown(self):
+        for p in self._timeouts:
+            p.stop()
+        _clear()
+
+    def _nws_ok_usgs_sleep(self, seconds, iv=None):
+        def fake_iv(*a, **k):
+            time.sleep(seconds)
+            return iv or ({}, {})
+
+        return (
+            patch("freshwater.usgs_iv", side_effect=fake_iv),
+            patch("freshwater.usgs_daily_stats", return_value=None),
+            patch("freshwater.nwps", return_value={"status": "unavailable"}),
+            patch("freshwater.qpf_block", return_value={"status": "unavailable", "kind": "forecast"}),
+            patch("freshwater.alerts_point", return_value={"status": "ok", "items": []}),
+            patch("freshwater.usace_guide_check", return_value={"status": "unavailable"}),
+            patch("conditions.forecast_block", return_value={
+                "status": "ok", "updated": NOW.isoformat(),
+                "periods": [{"name": "This Afternoon", "tempF": 68, "short": "Sunny",
+                             "windDir": "SW", "windMph": "5 mph"}] * 4,
+                "sourceUrl": "https://forecast.weather.gov/",
+            }),
+        )
+
+    def _iv_falls(self):
+        t = _pt(0.4, 250.12)
+        iv7 = {("02087182", "62614"): [t], ("02087182", "62615"): [_pt(0.4, 249.5)]}
+        return iv7, {"02087182": "FALLS LAKE"}
+
+    def test_source_latencies_5_11_15_25_30s(self):
+        # 5s (under visitor wait), 11s and 15s (over visitor wait, under result),
+        # 25s and 30s (still one full try under a 35s result timeout).
+        cases = [5, 11, 15, 25, 30]
+        for src_s in cases:
+            with self.subTest(src_s=src_s):
+                _clear()
+                sleep_s = src_s * _SCALE
+                iv7, names = self._iv_falls()
+
+                def fake_iv(sites, params, period="P1D"):
+                    time.sleep(sleep_s)
+                    if period == "P7D":
+                        return iv7, names
+                    return {}, {}
+
+                patches = self._nws_ok_usgs_sleep(sleep_s)
+                # replace iv patch
+                patches = (patch("freshwater.usgs_iv", side_effect=fake_iv),) + patches[1:]
+                t0 = time.time()
+                with patches[0], patches[1], patches[2], patches[3], patches[4], patches[5], patches[6]:
+                    status, body = freshwater.assemble("falls-lake", wait=freshwater.USER_DEADLINE)
+                    visitor_elapsed = time.time() - t0
+                    self.assertEqual(status, 200)
+                    if src_s * _SCALE <= freshwater.USER_DEADLINE + 0.05:
+                        el = (body.get("lake") or {}).get("elevation") or {}
+                        self.assertEqual(el.get("value"), 250.12, "5s-class source should land in the visitor wait")
+                    else:
+                        self.assertLess(visitor_elapsed, freshwater.USER_DEADLINE + 0.4)
+                        # Flight must keep running; a later peek should receive official data.
+                        self.assertTrue(freshwater._in_flight("falls-lake") or freshwater.peek("falls-lake"))
+                        deadline = time.time() + freshwater.RESULT_TIMEOUT + 1.0
+                        hit = freshwater.peek("falls-lake")
+                        while hit is None and time.time() < deadline:
+                            time.sleep(0.05)
+                            hit = freshwater.peek("falls-lake")
+                        self.assertIsNotNone(hit, "background flight must finish and cache after %ss source" % src_s)
+                        self.assertEqual(hit["lake"]["elevation"]["value"], 250.12)
+
+    def test_nws_only_partial_is_not_five_minute_success(self):
+        # USGS sleeps past the result timeout; NWS forecast/alerts succeed quickly.
+        sleep_s = 40 * _SCALE  # 40s > RESULT_TIMEOUT 35s
+        patches = self._nws_ok_usgs_sleep(sleep_s)
+        with patches[0], patches[1], patches[2], patches[3], patches[4], patches[5], patches[6]:
+            status, body = freshwater.assemble("falls-lake", wait=freshwater.RESULT_TIMEOUT + 0.5)
+        self.assertEqual(status, 200)
+        self.assertEqual(body["forecast"]["status"], "ok")
+        self.assertEqual(body["alerts"]["status"], "ok")
+        el = (body.get("lake") or {}).get("elevation")
+        self.assertTrue(el is None or el.get("value") is None)
+        self.assertTrue(freshwater.has_verified_data(body))
+        self.assertFalse(freshwater.has_verified_usgs(body))
+        self.assertFalse(freshwater.usgs_refresh_complete(body))
+        self.assertFalse(freshwater._is_complete("falls-lake"))
+        self.assertIn("falls-lake", freshwater._PARTIAL)
+        self.assertNotIn("falls-lake", freshwater._FAILED)
+        hit = freshwater.peek("falls-lake")
+        self.assertIsNotNone(hit)
+        # A second assemble within the short backoff must not start another USGS attempt.
+        calls = {"n": 0}
+
+        def boom(*a, **k):
+            calls["n"] += 1
+            raise RuntimeError("should not be called")
+
+        with patch("freshwater.usgs_iv", side_effect=boom),                 patch("freshwater.usgs_daily_stats", side_effect=boom),                 patch("conditions.forecast_block", side_effect=boom),                 patch("freshwater.alerts_point", side_effect=boom):
+            status2, body2 = freshwater.assemble("falls-lake", wait=0)
+        self.assertEqual(status2, 200)
+        self.assertEqual(calls["n"], 0)
+        self.assertEqual(body2["forecast"]["status"], "ok")
+        self.assertFalse(body2.get("complete"))
+
+    def test_complete_failure_uses_short_backoff(self):
+        p0, p1, p2, p3, p4, p5, p6 = _fail_all_patches()
+        with p0, p1, p2, p3, p4, p5, p6:
+            status, body = freshwater.assemble("falls-lake", wait=2)
+        self.assertEqual(status, 200)
+        self.assertIsNone(freshwater.peek("falls-lake"))
+        self.assertIn("falls-lake", freshwater._FAILED)
+        self.assertGreater(body.get("retryAfterS") or 0, 0)
+
+    def test_stale_preservation_keeps_original_timestamps(self):
+        payload = _payload_falls()
+        stamp = time.time() - 40
+        original = payload["lake"]["elevation"]["time"]
+        freshwater._ASSEMBLED["falls-lake"] = (stamp, payload)
+        freshwater._COMPLETE["falls-lake"] = True
+        p0, p1, p2, p3, p4, p5, p6 = _fail_all_patches()
+        with p0, p1, p2, p3, p4, p5, p6:
+            status, body = freshwater.assemble("falls-lake", force=True, wait=2)
+        self.assertEqual(status, 200)
+        self.assertEqual(body["lake"]["elevation"]["value"], 250.12)
+        self.assertEqual(body["lake"]["elevation"]["time"], original)
+        self.assertAlmostEqual(freshwater._ASSEMBLED["falls-lake"][0], stamp, places=2)
+        # A later failed fetch must not rewrite generatedAt as a new "current" reading time.
+        self.assertEqual(body["lake"]["elevation"]["time"], original)
+
+    def test_single_flight_under_scaled_latency(self):
+        calls = {"n": 0}
+        gate = threading.Event()
+
+        def fake_iv(*a, **k):
+            calls["n"] += 1
+            gate.wait(timeout=2)
+            return {}, {}
+
+        with patch("freshwater.usgs_iv", side_effect=fake_iv),                 patch("freshwater.usgs_daily_stats", return_value=None),                 patch("freshwater.nwps", return_value={"status": "unavailable"}),                 patch("freshwater.qpf_block", return_value={"status": "unavailable"}),                 patch("freshwater.alerts_point", return_value={"status": "ok", "items": []}),                 patch("freshwater.usace_guide_check", return_value={"status": "unavailable"}),                 patch("conditions.forecast_block", return_value={"status": "unavailable"}):
+            results = []
+
+            def run():
+                results.append(freshwater.assemble("falls-lake", wait=1))
+
+            threads = [threading.Thread(target=run) for _ in range(6)]
+            for th in threads:
+                th.start()
+            time.sleep(0.15)
+            started = calls["n"]
+            gate.set()
+            for th in threads:
+                th.join(timeout=3)
+        self.assertTrue(all(st == 200 for st, _ in results))
+        self.assertLessEqual(started, 2)
+        self.assertLessEqual(calls["n"], 2)
+
+
+class QpfMerge(unittest.TestCase):
+    def test_qpf_is_kept_when_last24_is_missing(self):
+        qpf = {"status": "ok", "kind": "forecast", "next24In": 0.08, "office": "RAH"}
+        old = {"status": "unavailable", "last24In": None, "qpf": qpf}
+        new = {"status": "unavailable", "last24In": None, "qpf": {"status": "unavailable"}}
+        merged = freshwater._merge_rain(old, new)
+        self.assertEqual(merged["qpf"]["next24In"], 0.08)
+        self.assertEqual(merged["qpf"]["status"], "ok")
+
+    def test_new_last24_does_not_drop_verified_qpf(self):
+        t = NOW.isoformat()
+        old = {"status": "unavailable", "last24In": None, "qpf": {"status": "ok", "next24In": 0.08}}
+        new = {"status": "ok", "last24In": 0.03, "time": t, "qpf": {"status": "unavailable"}}
+        merged = freshwater._merge_rain(old, new)
+        self.assertEqual(merged["last24In"], 0.03)
+        self.assertEqual(merged["qpf"]["next24In"], 0.08)
+
+    def test_merge_verified_keeps_qpf_on_full_payload(self):
+        old = _payload_falls()
+        old["rain"] = {"status": "unavailable", "last24In": None,
+                       "qpf": {"status": "ok", "next24In": 0.08, "office": "RAH"}}
+        new = freshwater.empty_payload("falls-lake")
+        new["rain"] = {"status": "unavailable", "last24In": None}
+        merged = freshwater.merge_verified(old, new)
+        self.assertEqual(merged["rain"]["qpf"]["next24In"], 0.08)
+
+
+class UnavailableBadge(unittest.TestCase):
+    def test_off_tile_uses_neutral_chip_not_observed(self):
+        m = sprint_home.fresh_model(freshwater.empty_payload("falls-lake"))
+        html = sprint_home.conditions_html(m, variant="hybrid", public=True)
+        self.assertNotIn("k-obs", html)
+        self.assertNotIn(">Observed<", html)
+        self.assertIn("k-off", html)
+        self.assertTrue("Unavailable" in html or "Not reporting" in html)
+
+    def test_loading_shell_has_no_observed_or_unavailable_chip(self):
+        m = sprint_home.fresh_loading_model("falls-lake")
+        html = sprint_home.conditions_html(m, variant="hybrid", public=True)
+        self.assertNotIn(">Observed<", html)
+        self.assertNotIn("k-obs", html)
+        self.assertNotIn("k-off", html)
+        self.assertIn("Loading official readings…", html)
+
+    def test_stale_tile_uses_as_of_label(self):
+        payload = _payload_falls()
+        payload["lake"]["elevation"]["stale"] = True
+        payload["lake"]["elevation"]["time"] = "2026-11-24T12:00:00-05:00"
+        m = sprint_home.fresh_model(payload)
+        html = sprint_home.conditions_html(m, variant="hybrid", public=True)
+        self.assertIn("as of", html)
+        self.assertNotIn("Stale ·", html)
+        lake = [t for t in m["tiles"] if t["id"] == "lake"][0]
+        self.assertEqual(lake["state"], "stale")
+
+    def test_water_not_reporting_chip(self):
+        payload = _payload_falls()
+        payload["waterTemp"] = {"status": "unavailable"}
+        m = sprint_home.fresh_model(payload)
+        html = sprint_home.conditions_html(m, variant="hybrid", public=True)
+        # Water tile is off; chip must be Not reporting, not Observed.
+        self.assertIn("Not reporting", html)
+        self.assertIn("k-off", html)
+
+
+class UpstreamLogging(unittest.TestCase):
+    def test_get_body_logs_timeout_without_secrets(self):
+        import io
+        from contextlib import redirect_stderr
+
+        def boom(url, timeout=None, tries=None):
+            raise TimeoutError("simulated")
+
+        buf = io.StringIO()
+        freshwater.install_fetch(boom)
+        try:
+            with redirect_stderr(buf):
+                freshwater._get_body("https://waterservices.usgs.gov/nwis/iv/?sites=02087182&parameterCd=00060", 60)
+            text = buf.getvalue()
+        finally:
+            freshwater.install_fetch(None)
+        self.assertIn("freshwater upstream", text)
+        self.assertIn("usgs_iv", text)
+        self.assertIn("error", text)
+        self.assertIn("TimeoutError", text)
+        self.assertNotIn("02087182", text)
+        self.assertNotIn("waterservices", text)
+        self.assertNotIn("parameterCd", text)
+        self.assertNotIn("api_key", text.lower())
+        self.assertNotIn("secret", text.lower())
+
+    def test_cache_tuple_is_unwrapped_to_bytes(self):
+        sample = b'{"value": {"timeSeries": []}}'
+        hooks = {"cache_get": lambda url: (200, "application/json", sample)}
+        prev = freshwater._FETCH
+        freshwater.install_fetch(lambda *a, **k: (500, "text/plain", b"nope"))
+        try:
+            with patch.object(freshwater.conditions, "_hooks", hooks):
+                body = freshwater._get_body("https://waterservices.usgs.gov/nwis/iv/?sites=02087182", 60)
+                parsed = freshwater._get_json("https://waterservices.usgs.gov/nwis/iv/?sites=02087182", 60)
+        finally:
+            freshwater.install_fetch(prev)
+        self.assertEqual(body, sample)
+        self.assertEqual(parsed, {"value": {"timeSeries": []}})
+
+
+
+class RegionSwitchV3(unittest.TestCase):
+    def setUp(self):
+        _clear()
+
+    def tearDown(self):
+        _clear()
+
+    def test_jordan_pending_does_not_show_falls_cache(self):
+        freshwater._ASSEMBLED["falls-lake"] = (time.time(), _payload_falls())
+        freshwater._COMPLETE["falls-lake"] = True
+        m = sprint_home.model("jordan-lake")
+        self.assertEqual(m["region"]["id"], "jordan-lake")
+        self.assertNotIn("250.12", json.dumps(m))
+        self.assertTrue(m.get("pending"))
 
 
 if __name__ == "__main__":

@@ -39,28 +39,36 @@ ASSEMBLED_TTL = 300
 ASSEMBLED_SERVE_MAX = 1200
 WARM_EVERY = 240
 # Freshwater-only fetch bound (installed from server.py). Saltwater fetch_url stays 45s / 4 tries.
-FETCH_TIMEOUT = 12
-FETCH_TRIES = 2
+# Chosen from measured official-source latency (see coldstart-1124/latency-box.json):
+# box USGS IV p50 ~8–10s, p90 ~11s, samples up to ~12s; NWS is sub-second.
+# Ed's Render-side IV is ~10–12s; this host is not Render, so the wait covers one
+# full try at 30s (about 2.5× the observed p90) plus a little pool slack.
+FETCH_TIMEOUT = 30
+FETCH_TRIES = 1
 FETCH_BACKOFF = 0.5
-RESULT_TIMEOUT = 12
-USER_DEADLINE = 20
+RESULT_TIMEOUT = 35
+# Visitor-facing API wait. The in-flight assemble is not cancelled when this expires.
+USER_DEADLINE = 8
 # Complete upstream failure is not stored in the 5-minute success cache.
 # A short backoff avoids hammering USGS/NWS; a later retry still joins an in-flight assemble.
 FAIL_BACKOFF = 45
+PARTIAL_BACKOFF = 45  # NWS-only / timed-out USGS: displayable, not a 5-minute success
 
-_POOL = ThreadPoolExecutor(max_workers=8)
+_POOL = ThreadPoolExecutor(max_workers=16)
 
 
 def _pool():
     global _POOL
     if _POOL is None or getattr(_POOL, "_shutdown", False):
-        _POOL = ThreadPoolExecutor(max_workers=8)
+        _POOL = ThreadPoolExecutor(max_workers=16)
     return _POOL
 _LOCK = threading.Lock()
 _ASSEMBLED: dict[str, tuple[float, dict]] = {}
 _REFRESHING: set = set()
 _FLIGHT: dict[str, threading.Event] = {}
 _FAILED: dict[str, float] = {}  # rid -> time of last complete upstream failure
+_PARTIAL: dict[str, float] = {}  # rid -> time of last incomplete (USGS missing/timed out) refresh
+_COMPLETE: dict[str, bool] = {}  # rid -> last cached assemble was a complete USGS refresh
 _EPOCH = 0  # bumped on test reset so a late in-flight build cannot write into the next run
 _FETCH = None  # optional (url, timeout=, tries=) -> (status, ctype, raw)
 
@@ -95,6 +103,49 @@ def install_fetch(fn):
     _FETCH = fn
 
 
+def _source_label(url: str) -> str:
+    """Short source name for logs. Never returns a URL, query string, or credential."""
+    u = url or ""
+    if "waterservices.usgs.gov/nwis/iv" in u:
+        return "usgs_iv"
+    if "waterservices.usgs.gov/nwis/stat" in u:
+        return "usgs_stat"
+    if "api.weather.gov/gridpoints" in u:
+        return "nws_forecast"
+    if "api.weather.gov/alerts" in u:
+        return "nws_alerts"
+    if "api.weather.gov" in u:
+        return "nws"
+    if "water.noaa.gov" in u or "/nwps/" in u:
+        return "nwps"
+    if "usace.army.mil" in u:
+        return "usace"
+    return "upstream"
+
+
+def _log_upstream(source, duration, outcome, detail=""):
+    """Log one upstream attempt. No URLs, secrets, or keys."""
+    import sys
+    line = "freshwater upstream %s %.3fs %s" % (source, duration, outcome)
+    if detail:
+        line += " %s" % detail
+    sys.stderr.write(line + "\n")
+
+
+def _cached_body(cached):
+    """Unwrap a cache hook value into raw bytes. hooks.cache_get returns (status, ctype, body)."""
+    if cached is None:
+        return None
+    if isinstance(cached, (bytes, bytearray)):
+        return bytes(cached)
+    if isinstance(cached, tuple) and len(cached) >= 3:
+        status, raw = cached[0], cached[2]
+        if status == 200 and raw:
+            return raw if isinstance(raw, (bytes, bytearray)) else None
+        return None
+    return None
+
+
 def _get_body(url, ttl, accept="application/json"):
     """Cache then fetch. Uses the bounded freshwater fetch when installed, else conditions.get_json."""
     if _FETCH is None:
@@ -102,13 +153,29 @@ def _get_body(url, ttl, accept="application/json"):
     hooks = conditions._hooks
     cg = hooks.get("cache_get")
     if cg:
-        cached = cg(url)
-        if cached is not None:
-            return cached
+        raw = _cached_body(cg(url))
+        if raw is not None:
+            return raw
+    source = _source_label(url)
+    t0 = time.time()
+    status, raw, err_name = 0, None, ""
     try:
         status, _ct, raw = _FETCH(url, timeout=FETCH_TIMEOUT, tries=FETCH_TRIES)
-    except Exception:
-        status, raw = 0, None
+    except Exception as e:
+        status, raw, err_name = 0, None, type(e).__name__
+        _log_upstream(source, time.time() - t0, "error", err_name)
+    else:
+        dur = time.time() - t0
+        if status == 200 and raw:
+            _log_upstream(source, dur, "ok")
+        else:
+            kind = "timeout" if (err_name == "TimeoutError" or (raw and b"timed out" in raw[:80])) else "fail"
+            detail = err_name or ("HTTP %s" % status)
+            if raw and not isinstance(raw, (bytes, bytearray)):
+                raw = None
+            elif raw and isinstance(raw, (bytes, bytearray)) and b"timed out" in raw[:80]:
+                kind = "timeout"
+            _log_upstream(source, dur, kind, detail)
     if status == 200 and raw:
         put = hooks.get("cache_put_ttl")
         if put:
@@ -116,7 +183,7 @@ def _get_body(url, ttl, accept="application/json"):
         return raw
     anyg = hooks.get("cache_get_any")
     if anyg:
-        return anyg(url)
+        return _cached_body(anyg(url))
     return None
 
 
@@ -518,6 +585,67 @@ def has_verified_data(payload) -> bool:
     return False
 
 
+def has_verified_usgs(payload) -> bool:
+    """True if at least one official USGS observation is present. NWS-only is not USGS success."""
+    if not payload:
+        return False
+    lake = payload.get("lake") or {}
+    if _point_ok(lake.get("elevation")) or _point_ok(lake.get("navd88")):
+        return True
+    wt = payload.get("waterTemp") or {}
+    if wt.get("status") == "ok" and wt.get("f") is not None:
+        return True
+    rain = payload.get("rain") or {}
+    if rain.get("status") == "ok" and rain.get("last24In") is not None:
+        return True
+    for block in [payload.get("release")] + list(payload.get("inflows") or []) + list(payload.get("river") or []):
+        if not block:
+            continue
+        if _point_ok(block.get("flowCfs")) or _point_ok(block.get("stageFt")):
+            return True
+    return False
+
+
+def missing_expected_usgs(payload) -> bool:
+    """True when a configured USGS source did not return a usable result."""
+    rid = (payload.get("region") or {}).get("id")
+    r = regions().get(rid) or {}
+    if r.get("lake"):
+        if not _point_ok((payload.get("lake") or {}).get("elevation")):
+            return True
+        if r["lake"].get("waterTemp"):
+            wt = payload.get("waterTemp") or {}
+            if wt.get("status") != "ok" or wt.get("f") is None:
+                return True
+        if r["lake"].get("rain"):
+            rain = payload.get("rain") or {}
+            if rain.get("status") != "ok" or rain.get("last24In") is None:
+                return True
+        if r.get("release"):
+            rel = payload.get("release") or {}
+            if not _point_ok(rel.get("flowCfs")) and not _point_ok(rel.get("stageFt")):
+                return True
+        got_in = {s.get("usgs"): s for s in (payload.get("inflows") or []) if s}
+        for spec in r.get("inflows") or []:
+            block = got_in.get(spec.get("usgs")) or {}
+            if not _point_ok(block.get("flowCfs")) and not _point_ok(block.get("stageFt")):
+                return True
+    got_rv = {s.get("usgs"): s for s in (payload.get("river") or []) if s}
+    for spec in r.get("river") or []:
+        block = got_rv.get(spec.get("usgs")) or {}
+        if spec.get("flow") is False:
+            if not _point_ok(block.get("stageFt")):
+                return True
+        elif not _point_ok(block.get("flowCfs")) and not _point_ok(block.get("stageFt")):
+            return True
+    return False
+
+
+def usgs_refresh_complete(payload) -> bool:
+    """True when every configured USGS source in this payload returned a usable result."""
+    return bool(payload) and not missing_expected_usgs(payload)
+
+
 def missing_expected(payload) -> bool:
     """True when a configured official source did not return a usable result (retry is appropriate)."""
     rid = (payload.get("region") or {}).get("id")
@@ -582,6 +710,36 @@ def _merge_block(old, new, ok):
     return new if new is not None else old
 
 
+def _qpf_ok(w):
+    q = (w or {}).get("qpf") or {}
+    return q.get("status") == "ok" and q.get("next24In") is not None
+
+
+def _merge_rain(old, new):
+    """Merge 24h rain and the NWS QPF subfield independently.
+
+    A verified QPF is kept when last24In is missing, and a new official 24h
+    total does not drop a previously verified QPF if the new block omitted it.
+    """
+    if not old:
+        return new
+    if not new:
+        return old
+    new_obs = new.get("status") == "ok" and new.get("last24In") is not None
+    old_obs = old.get("status") == "ok" and old.get("last24In") is not None
+    if new_obs:
+        out = dict(new)
+    elif old_obs:
+        out = dict(old)
+    else:
+        out = dict(new)
+    if _qpf_ok(new):
+        out["qpf"] = new["qpf"]
+    elif _qpf_ok(old):
+        out["qpf"] = old["qpf"]
+    return out
+
+
 def merge_verified(old, new):
     """Keep previously verified official readings when a later fetch is missing or older.
 
@@ -611,10 +769,6 @@ def merge_verified(old, new):
         w = w or {}
         return w.get("status") == "ok" and w.get("f") is not None
 
-    def rain_ok(w):
-        w = w or {}
-        return w.get("status") == "ok" and w.get("last24In") is not None
-
     def fc_ok(w):
         w = w or {}
         return w.get("status") == "ok" and bool(w.get("periods"))
@@ -624,7 +778,7 @@ def merge_verified(old, new):
 
     out["waterTemp"] = _merge_block(old.get("waterTemp"), new.get("waterTemp"), wt_ok)
     if old.get("rain") or new.get("rain"):
-        out["rain"] = _merge_block(old.get("rain"), new.get("rain"), rain_ok)
+        out["rain"] = _merge_rain(old.get("rain"), new.get("rain"))
     if old.get("release") or new.get("release"):
         out["release"] = _merge_station(old.get("release"), new.get("release"))
     old_in = {s.get("usgs"): s for s in (old.get("inflows") or []) if s}
@@ -661,12 +815,24 @@ def merge_verified(old, new):
 
 
 def backoff_remaining(rid) -> float:
+    now = time.time()
+    left = 0.0
     with _LOCK:
-        t = _FAILED.get(rid)
-    if t is None:
-        return 0.0
-    left = FAIL_BACKOFF - (time.time() - t)
+        fail = _FAILED.get(rid)
+        part = _PARTIAL.get(rid)
+    if fail is not None:
+        left = max(left, FAIL_BACKOFF - (now - fail))
+    if part is not None:
+        left = max(left, PARTIAL_BACKOFF - (now - part))
     return left if left > 0 else 0.0
+
+
+def _is_complete(rid) -> bool:
+    """True when the cached payload was a complete USGS refresh, or was seeded without a flag."""
+    with _LOCK:
+        if rid in _COMPLETE:
+            return bool(_COMPLETE[rid])
+        return rid in _ASSEMBLED
 
 
 def reset_caches():
@@ -681,6 +847,8 @@ def reset_caches():
         evs = list(_FLIGHT.values())
         _ASSEMBLED.clear()
         _FAILED.clear()
+        _PARTIAL.clear()
+        _COMPLETE.clear()
         _FLIGHT.clear()
         _REFRESHING.clear()
     for ev in evs:
@@ -723,6 +891,22 @@ def _end_flight(rid, ev):
     ev.set()
 
 
+def _in_flight(rid) -> bool:
+    with _LOCK:
+        return rid in _FLIGHT
+
+
+def _view(rid, body):
+    """Copy of a payload with pending/complete flags for callers. Does not mutate the cache."""
+    out = dict(body or {})
+    out["complete"] = _is_complete(rid) and bool(body)
+    out["pending"] = _in_flight(rid)
+    left = backoff_remaining(rid)
+    if left > 0 and not out.get("retryAfterS"):
+        out["retryAfterS"] = int(left + 0.999)
+    return out
+
+
 def ensure_refresh(rid):
     """Start or join a single in-flight assemble for this region. Returns the Event.
 
@@ -741,7 +925,7 @@ def ensure_refresh(rid):
             _assemble_build(rid)
         except Exception as e:  # never let a refresh crash the server
             import sys
-            sys.stderr.write("freshwater refresh %s failed: %s\n" % (rid, e))
+            sys.stderr.write("freshwater refresh %s failed: %s\n" % (rid, type(e).__name__))
         finally:
             _end_flight(rid, ev)
 
@@ -766,15 +950,23 @@ def assemble(rid, force=False, wait=USER_DEADLINE):
         return 404, {"ok": False, "error": "This freshwater view is not built yet."}
     if not force:
         hit, age = peek_age(rid)
-        if hit is not None and age is not None and age < ASSEMBLED_TTL:
-            return 200, hit
-        if hit is not None and age is not None and age < ASSEMBLED_SERVE_MAX:
+        complete = _is_complete(rid)
+        if hit is not None and complete and age is not None and age < ASSEMBLED_TTL:
+            return 200, _view(rid, hit)
+        if hit is not None and complete and age is not None and age < ASSEMBLED_SERVE_MAX:
             if backoff_remaining(rid) <= 0:
                 ensure_refresh(rid)
-            return 200, hit
+            return 200, _view(rid, hit)
+        if hit is not None and not complete:
+            if backoff_remaining(rid) <= 0:
+                ev = ensure_refresh(rid)
+                if wait:
+                    ev.wait(timeout=wait)
+                    hit, _age = peek_age(rid)
+            return 200, _view(rid, hit or empty_payload(rid))
         if backoff_remaining(rid) > 0:
-            body = dict(empty_payload(rid), retryAfterS=int(backoff_remaining(rid) + 0.999))
-            return 200, body
+            body = empty_payload(rid)
+            return 200, _view(rid, body)
     elif backoff_remaining(rid) > 0:
         # Retry during backoff: do not start a new upstream attempt unless one is already in flight.
         ev = _FLIGHT.get(rid)
@@ -782,20 +974,15 @@ def assemble(rid, force=False, wait=USER_DEADLINE):
             ev.wait(timeout=None if wait is None else wait)
             hit, _age = peek_age(rid)
             if hit is not None:
-                return 200, hit
+                return 200, _view(rid, hit)
         hit, _age = peek_age(rid)
-        body = dict(hit or empty_payload(rid), retryAfterS=int(backoff_remaining(rid) + 0.999))
-        return 200, body
+        return 200, _view(rid, hit or empty_payload(rid))
     ev = ensure_refresh(rid)
     ev.wait(timeout=None if wait is None else wait)
     hit, _age = peek_age(rid)
     if hit is not None:
-        return 200, hit
-    body = empty_payload(rid)
-    left = backoff_remaining(rid)
-    if left > 0:
-        body = dict(body, retryAfterS=int(left + 0.999))
-    return 200, body
+        return 200, _view(rid, hit)
+    return 200, _view(rid, empty_payload(rid))
 
 
 def _stats_sites(specs, iv, now):
@@ -959,19 +1146,40 @@ def _assemble_build(rid):
                "alerts": _wait_from(f_al, {"status": "unavailable", "items": []}, wave0),
                "guideCheck": _wait_from(f_guide, {"status": "unavailable"}, wave0) if f_guide is not None else None,
                "links": r.get("links") or [], "staleRuleH": STALE_H}
-    old, _age = peek_age(rid)
+    old, old_age = peek_age(rid)
     payload = merge_verified(old, fresh) if old else fresh
+    usgs_ok = usgs_refresh_complete(fresh)
     own = has_verified_data(fresh)
     with _LOCK:
         if epoch != _EPOCH:
             return 200, payload
-        if own:
+        if usgs_ok:
+            # A complete official USGS refresh earns the 5-minute success TTL.
             _ASSEMBLED[rid] = (time.time(), payload)
+            _COMPLETE[rid] = True
+            _FAILED.pop(rid, None)
+            _PARTIAL.pop(rid, None)
+        elif own or old:
+            # NWS-only or partial USGS: show what we have, keep previously
+            # verified observations with their original timestamps, but do not
+            # treat this as a 5-minute success. Short backoff before the next
+            # full upstream attempt.
+            prev = _ASSEMBLED.get(rid)
+            if prev:
+                # Keep the original cache stamp so we do not relabel older
+                # observations as a fresh successful refresh.
+                _ASSEMBLED[rid] = (prev[0], payload)
+            else:
+                _ASSEMBLED[rid] = (time.time(), payload)
+            # A partial or NWS-only refresh does not earn a 5-minute success stamp.
+            _COMPLETE[rid] = False
+            _PARTIAL[rid] = time.time()
             _FAILED.pop(rid, None)
         else:
             # Complete failure: do not write a 5-minute success cache. Keep any
             # previously verified payload and its original timestamp.
             _FAILED[rid] = time.time()
+            _PARTIAL.pop(rid, None)
     return 200, payload
 
 
@@ -995,7 +1203,7 @@ def start_warmer():
         while True:
             for rid in warm_ids():
                 hit, age = peek_age(rid)
-                if hit is not None and age is not None and age < ASSEMBLED_TTL:
+                if hit is not None and _is_complete(rid) and age is not None and age < ASSEMBLED_TTL:
                     continue
                 if backoff_remaining(rid) > 0:
                     continue

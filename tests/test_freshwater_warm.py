@@ -24,7 +24,7 @@ class FreshwaterWarmTest(unittest.TestCase):
             self.assertLess(time.time() - t0, 0.5)
             time.sleep(0.1)
         self.assertEqual(status, 200)
-        self.assertIs(got, payload)
+        self.assertEqual(got.get("marker"), "old")
         ref.assert_called_once_with(self.rid)
 
     def test_very_old_cache_is_not_served(self):

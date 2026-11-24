@@ -580,6 +580,9 @@ html[data-mastchart] .mh-hybrid .mh-plate::before{content:"";position:absolute;l
 .cg-hybrid .cg-retry:disabled{opacity:.6;cursor:default}
 .cg-hybrid .cg-retry-status{min-height:1.3em;margin:6px 0 0;font:500 .9rem/1.3 var(--f-ui);color:var(--ink-2)}
 
+/* Unavailable / Not reporting: neutral chip, never the green Observed color. */
+.cg-hybrid .t-kind.k-off, .cg-hybrid .sx-kind.k-off{color:var(--ink-2);background:transparent;font-weight:600}
+
 /* Night only: one continuous wash above both photo halves.
    Same natural-color assets, box dimensions and daytime presentation. */
 @media (prefers-color-scheme:dark){
