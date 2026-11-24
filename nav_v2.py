@@ -21,6 +21,7 @@ from urllib.parse import parse_qs, urlparse
 
 import folio_entry
 import launch_flags
+from theme_toggle import _blocks, _split_sel
 
 ENV = "NAV_V2"
 _TRUE = ("1", "true", "on", "yes")
@@ -291,8 +292,32 @@ _FONT = ('@font-face{font-family:"Fraunces";font-style:normal;font-weight:400 70
          'src:url("/fonts/fraunces-var.woff2") format("woff2")}')
 
 
-def style_tag(need_font: bool) -> bytes:
-    css = re.sub(r"\n", "", CSS)
+def _keep(sel: str, home: bool) -> bool:
+    """Homepage keeps nav + Guides rules; secondary pages keep masthead + nav rules."""
+    if home:
+        return ".cbn" in sel or ".cbg" in sel or ".mh-hybrid" in sel
+    return ".cbm" in sel or ".cbn" in sel
+
+
+def _min(css: str, home: bool) -> str:
+    out = []
+    for pre, body in _blocks(css):
+        p = pre.strip()
+        if body is None:
+            continue
+        if p.startswith("@media"):
+            inner = _min(body, home)
+            if inner:
+                out.append("%s{%s}" % (re.sub(r"\s+", " ", p), inner))
+            continue
+        sels = [x.strip() for x in _split_sel(p) if _keep(x, home)]
+        if sels:
+            out.append("%s{%s}" % (",".join(sels), re.sub(r";?\s*$", "", re.sub(r"\n", "", body.strip()))))
+    return "".join(out)
+
+
+def style_tag(need_font: bool, home: bool = False) -> bytes:
+    css = _min(CSS, home)
     return ('<style id="cb-nav-v2">%s%s</style>' % (_FONT if need_font else "", css)).encode("utf-8")
 
 
@@ -332,9 +357,9 @@ def _tools(block: bytes) -> bytes:
     return out
 
 
-def _inject_css(data: bytes) -> bytes:
+def _inject_css(data: bytes, home: bool = False) -> bytes:
     need_font = b'font-family:"Fraunces"' not in data and b"fraunces-var.woff2" not in data
-    tag = style_tag(need_font)
+    tag = style_tag(need_font, home)
     i = data.find(b"</head>")
     if i < 0:
         raise ValueError("no </head>")
@@ -403,4 +428,4 @@ def apply(data: bytes, request_path: str) -> bytes:
         out = _apply_simple(data, cur, rid, b'<header class="mh">')
     else:
         return data
-    return _inject_css(out)
+    return _inject_css(out, home=b'<header class="mh mh-hybrid">' in data)
