@@ -386,19 +386,14 @@ def _prune_cache(force: bool = False) -> None:
             break
 
 
-def fetch_url(url: str, tries: int = 4, timeout: float = 45, backoff: float | None = None) -> tuple[int, str, bytes]:
-    """GET with backoff. Retries 502/503 and network errors. Does not change the URL.
-
-    timeout and backoff are optional. Saltwater callers keep the historic 45s
-    timeout and exponential 0.8 * 2**attempt pause. Freshwater installs a
-    tighter wrapper (12s, two tries, 0.5s pause) and does not change these defaults.
-    """
+def fetch_url(url: str, tries: int = 4) -> tuple[int, str, bytes]:
+    """GET with backoff. Retries 502/503 and network errors. Does not change the URL."""
     headers = {"User-Agent": UA, "Accept": "*/*"}
     last_status, last_ctype, last_body = 502, "text/plain; charset=utf-8", b"upstream error"
     for attempt in range(tries):
         try:
             req = Request(url, headers=headers)
-            with urlopen(req, timeout=timeout) as resp:
+            with urlopen(req, timeout=45) as resp:
                 body = resp.read()
                 status = getattr(resp, "status", 200)
                 ctype = resp.headers.get("Content-Type", "application/octet-stream")
@@ -408,13 +403,13 @@ def fetch_url(url: str, tries: int = 4, timeout: float = 45, backoff: float | No
             last_status = e.code
             last_ctype = e.headers.get("Content-Type", "text/plain") if e.headers else "text/plain"
             if last_status in (502, 503, 504) and attempt < tries - 1:
-                time.sleep(backoff if backoff is not None else 0.8 * (2 ** attempt))
+                time.sleep(0.8 * (2 ** attempt))
                 continue
             return last_status, last_ctype, last_body
         except (URLError, TimeoutError, OSError) as e:
             last_status, last_ctype, last_body = 502, "text/plain; charset=utf-8", ("upstream error: %s" % e).encode()
             if attempt < tries - 1:
-                time.sleep(backoff if backoff is not None else 0.8 * (2 ** attempt))
+                time.sleep(0.8 * (2 ** attempt))
                 continue
             return last_status, last_ctype, last_body
     return last_status, last_ctype, last_body
@@ -2836,12 +2831,6 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 
 conditions.install(cache_get, cache_get_any, cache_put_ttl, lambda url: fetch_url(url, tries=2))
 
-def _freshwater_fetch(url, timeout=12, tries=2):
-    # Freshwater-only bound: 12s, two tries, 0.5s pause. Saltwater still uses tries=2 at 45s.
-    return fetch_url(url, tries=tries, timeout=timeout, backoff=0.5)
-
-freshwater.install_fetch(_freshwater_fetch)
-
 
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -3157,7 +3146,7 @@ class Handler(SimpleHTTPRequestHandler):
             return self._admin_get(parsed)
         if parsed.path.startswith("/fake-storage/approved/"):
             return self._fake_storage(parsed)
-        if parsed.path in ("/lake", "/lake.js", "/fresh-home.js", "/api/freshwater", "/api/fresh-home"):
+        if parsed.path in ("/lake", "/lake.js", "/api/freshwater"):
             # Freshwater pages are on by default. FRESHWATER_ENABLED=0/false/off is the kill switch.
             # Cape Fear River is a cookie-gated preview: public requests 404 even when the flag is on.
             public = freshwater.flag_on()
@@ -3179,22 +3168,6 @@ class Handler(SimpleHTTPRequestHandler):
                 return self._send_private(ROOT / "lake.html", "text/html; charset=utf-8", data, robots=robots)
             if parsed.path == "/lake.js":
                 return self._send_private(ROOT / "lake.js", "text/javascript; charset=utf-8", robots=robots)
-            if parsed.path == "/fresh-home.js":
-                return self._send_private(ROOT / "fresh-home.js", "text/javascript; charset=utf-8", robots=robots)
-            if parsed.path == "/api/fresh-home":
-                status, payload = freshwater.assemble(q_rid)
-                if status != 200 or not (payload or {}).get("ok"):
-                    if preview_fw:
-                        return self._json_private(payload, status)
-                    return self._send_json(payload, cache_s=0, status=status)
-                public_html = (parse_qs(parsed.query or "").get("public") or ["1"])[0] != "0"
-                section = sprint_home.conditions_html(
-                    sprint_home.fresh_model(payload), variant="hybrid", public=public_html)
-                body = {"ok": True, "region": payload.get("region"), "html": section,
-                        "partial": bool(payload.get("partial"))}
-                if preview_fw:
-                    return self._json_private(body, 200)
-                return self._send_json(body, cache_s=0, status=200)
             status, payload = freshwater.assemble(q_rid)
             if preview_fw:
                 return self._json_private(payload, status)

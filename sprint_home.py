@@ -83,7 +83,6 @@ FRESH_POINT_OFF = "NWS forecast unavailable."
 ALERTS_OFF = ("Alerts unavailable", "Could not check NWS alerts. See weather.gov before heading out.")
 PAYLOAD_OFF = "Readings unavailable"
 LAKE_OFF = "USGS lake elevation is not available right now."
-LOADING_OFF = "Loading official readings…"
 RELEASE_OFF = "USGS flow below the dam is not available right now."
 RAIN_OFF = "USGS rain gauge at the dam is not reporting."
 STAGE_OFF = "Stage is not available from USGS right now."
@@ -493,68 +492,15 @@ def _freshwater_ids() -> set:
         return set()
 
 
-def fresh_loading_model(rid: str) -> dict:
-    """Reserved freshwater slots with honest loading copy. No numerals, no substitute readings."""
-    import freshwater
-    r = freshwater.regions().get(rid) or {"id": rid, "name": rid}
-
-    def load_tile(**kw):
-        return _tile(kind="", state="off", off=LOADING_OFF, **kw)
-
-    tiles, more = [], []
-    if r.get("instrumentSet") == "freshwater-lake" and r.get("lake"):
-        tiles.append(load_tile(id="lake", name="Lake level",
-                               src="USGS %s" % ((r.get("lake") or {}).get("usgs") or "")))
-        rel = r.get("release") or {}
-        tiles.append(load_tile(id="release", name=rel.get("tileTitle") or "Release",
-                               src="%s · USGS %s" % (rel.get("label") or "", rel.get("usgs") or "")))
-        if r.get("inflows"):
-            inf = r["inflows"][0]
-            tiles.append(load_tile(id="inflow", name="Inflow",
-                                   src="%s · USGS %s" % (inf.get("label") or "", inf.get("usgs") or "")))
-    else:
-        for i, rv in enumerate((r.get("river") or [])[:4]):
-            tiles.append(load_tile(id="river-%d" % i, name=rv.get("label") or "River gauge",
-                                   src="%s · USGS %s" % (rv.get("label") or "", rv.get("usgs") or "")))
-    tiles.append(load_tile(id="water", name="Water"))
-    if (r.get("lake") or {}).get("rain"):
-        more.append(load_tile(id="rain", name="Rain, 24 h", src="USGS gauge at the dam"))
-    return {
-        "water": "fresh",
-        "region": {k: r.get(k) for k in ("id", "name", "area", "anchor", "waterType", "instrumentSet")},
-        "tiles": tiles, "more": more,
-        "alerts": {"state": "unknown", "items": []},
-        "alerts_raw": {"status": "pending", "items": []},
-        "forecast": {"off": LOADING_OFF},
-        "updated": "", "ok": True, "pending": True,
-    }
-
-
 def model(region_id: str | None = None) -> dict:
-    """Live conditions through the existing assemble() calls. Never raises.
-
-    Freshwater cache misses return a loading shell immediately and refresh in the
-    background. The page is filled from /api/fresh-home. Saltwater still waits on assemble().
-    """
+    """Live conditions through the existing assemble() calls. Never raises."""
     rid = (region_id or "").strip() or None
     try:
         if rid and rid in _freshwater_ids():
             import freshwater
-            from unittest.mock import Mock
-            # Tests that patch assemble() still get a loaded fixture immediately.
-            # Production assemble is never a Mock; visitors peek or see the loading shell.
-            if isinstance(freshwater.assemble, Mock):
-                status, payload = freshwater.assemble(rid)
-                if status == 200 and payload and payload.get("ok"):
-                    return dict(fresh_model(payload), test=bool(payload.get("testData")))
-            payload = freshwater.peek(rid)
-            if payload and payload.get("ok"):
-                _hit, age = freshwater.peek_age(rid)
-                if age is not None and age >= freshwater.ASSEMBLED_TTL:
-                    freshwater.ensure_refresh(rid)
+            status, payload = freshwater.assemble(rid)
+            if status == 200 and (payload or {}).get("ok"):
                 return dict(fresh_model(payload), test=bool(payload.get("testData")))
-            freshwater.ensure_refresh(rid)
-            return fresh_loading_model(rid)
         else:
             status, payload = conditions.assemble(rid)
             if status == 200 and (payload or {}).get("ok"):
@@ -817,11 +763,8 @@ def tile_html(t: dict, big: bool = False) -> str:
     hid = "t-%s-n" % t["id"]
     if st == "stale":
         chip = '<span class="t-chip c-stale" title="Older than this station\'s normal reporting gap">Stale · %s</span>' % _esc(t["when"])
-    elif t.get("kind"):
-        chip = '<span class="t-kind %s">%s</span>' % (kind_cls, _esc(t["kind"]))
     else:
-        chip = ""  # loading slot: do not imply an Observed value
-
+        chip = '<span class="t-kind %s">%s</span>' % (kind_cls, _esc(t["kind"]))
     out = ['<div class="%s" role="group" aria-labelledby="%s">' % (cls, hid)]
     out.append('<div class="t-head"><h3 class="t-name" id="%s">%s</h3>%s</div>' % (hid, _esc(t["name"]), chip))
     if t.get("offshore") and st != "off":
@@ -1044,32 +987,13 @@ def strip_item(t: dict) -> str:
         _esc(t["id"], True), " is-off" if st == "off" else "", _esc(t["name"], True), _esc(t["name"]), chip, val, sub, fc, src)
 
 
-def _fresh_section_attrs(m: dict, rid: str, public: bool) -> str:
-    if m.get("water") != "fresh" or not rid:
-        return ""
-    attrs = ' data-fresh-region="%s"' % _esc(rid, True)
-    if public:
-        attrs += ' data-fresh-public="1"'
-    if m.get("pending"):
-        attrs += ' data-fresh-pending="1" aria-busy="true"'
-    return attrs
-
-
 def conditions_html(m: dict, *, variant: str, public: bool = False) -> str:
     reg = m.get("region") or {}
     rid = reg.get("id") or ""
-    pending = bool(m.get("pending"))
     if not m.get("ok"):
         body = '<p class="cg-off">%s</p>' % PAYLOAD_OFF
         tiles = ""
         more = ""
-    elif pending:
-        body = '<p class="cg-load" role="status" aria-live="polite">%s</p>' % LOADING_OFF
-        tiles = '<div class="cg-grid">%s</div>' % "".join(tile_html(t) for t in m["tiles"])
-        if variant == "hybrid":
-            more = ('<div class="cg-strip" role="group" aria-label="Also observed"><p class="cg-more-k">Also observed</p>%s</div>' % "".join(strip_item(t) for t in m["more"])) if m["more"] else ""
-        else:
-            more = ('<div class="cg-more" role="group" aria-label="Also observed"><p class="cg-more-k">Also observed</p>%s</div>' % "".join(tile_html(t) for t in m["more"])) if m["more"] else ""
     else:
         body = alerts_html(m["alerts"], pennants=variant in ("heritage", "hybrid"), raw=m.get("alerts_raw"))
         tiles = '<div class="cg-grid">%s</div>' % "".join(tile_html(t) for t in m["tiles"])
@@ -1098,7 +1022,7 @@ def conditions_html(m: dict, *, variant: str, public: bool = False) -> str:
         dash = "/dashboard?region=%s" % rid if rid else "/dashboard"
     if variant == "hybrid":
         return (
-            '<section class="cg cg-%s" id="conditions" aria-labelledby="cg-h" data-conditions%s>'
+            '<section class="cg cg-%s" id="conditions" aria-labelledby="cg-h" data-conditions>'
             '<header class="cg-head"><h2 id="cg-h">Conditions at a Glance</h2>'
             '<p class="cg-where">%s</p>'
             '<p class="cg-upd">%s</p></header>'
@@ -1106,14 +1030,13 @@ def conditions_html(m: dict, *, variant: str, public: bool = False) -> str:
             '<div class="cg-foot">%s%s</div>'
             "</section>"
         ) % (
-            variant, _fresh_section_attrs(m, rid, public),
-            _esc(reg.get("name") or ""),
+            variant, _esc(reg.get("name") or ""),
             ("Updated %s" % _esc(m["updated"])) if m.get("updated") else "",
             body, tiles, *_extras(m, more, variant),
             region_rail(rid, public=public), tools_html(dash, m.get("water") == "fresh", brief_link),
         )
     return (
-        '<section class="cg cg-%s" id="conditions" aria-labelledby="cg-h" data-conditions%s>'
+        '<section class="cg cg-%s" id="conditions" aria-labelledby="cg-h" data-conditions>'
         '<header class="cg-head"><h2 id="cg-h">Conditions at a Glance</h2>'
         '<p class="cg-where">%s</p>'
         '<p class="cg-upd">%s</p></header>'
@@ -1122,8 +1045,7 @@ def conditions_html(m: dict, *, variant: str, public: bool = False) -> str:
         '<a class="cg-link" href="%s">Full dashboard</a>%s</div>'
         "</section>"
     ) % (
-        variant, _fresh_section_attrs(m, rid, public),
-        _esc(reg.get("name") or ""),
+        variant, _esc(reg.get("name") or ""),
         ("Updated %s" % _esc(m["updated"])) if m.get("updated") else "",
         body, tiles, *_extras(m, more, variant),
         '<details class="cg-region"><summary>Change water</summary><nav aria-label="Regions">%s</nav></details>' % "".join(links),
@@ -1456,8 +1378,6 @@ def _shell(variant: str, main: str, shot: bool, water: str = "salt", public: boo
         "fb": _feedback_embed(),
         "nboot": _night_boot(water),
     }
-    if 'data-fresh-pending="1"' in main:
-        page = page.replace("</body>", '<script src="/fresh-home.js" defer></script>\n</body>', 1)
     return page.encode("utf-8")
 
 
