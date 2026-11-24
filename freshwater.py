@@ -44,6 +44,9 @@ FETCH_TRIES = 2
 FETCH_BACKOFF = 0.5
 RESULT_TIMEOUT = 12
 USER_DEADLINE = 20
+# Complete upstream failure is not stored in the 5-minute success cache.
+# A short backoff avoids hammering USGS/NWS; a later retry still joins an in-flight assemble.
+FAIL_BACKOFF = 45
 
 _POOL = ThreadPoolExecutor(max_workers=8)
 
@@ -57,6 +60,8 @@ _LOCK = threading.Lock()
 _ASSEMBLED: dict[str, tuple[float, dict]] = {}
 _REFRESHING: set = set()
 _FLIGHT: dict[str, threading.Event] = {}
+_FAILED: dict[str, float] = {}  # rid -> time of last complete upstream failure
+_EPOCH = 0  # bumped on test reset so a late in-flight build cannot write into the next run
 _FETCH = None  # optional (url, timeout=, tries=) -> (status, ctype, raw)
 
 
@@ -464,6 +469,224 @@ def empty_payload(rid):
             "links": r.get("links") or [], "staleRuleH": STALE_H}
 
 
+def _point_ok(pt):
+    return isinstance(pt, dict) and pt.get("value") is not None
+
+
+def _iso(pt):
+    if isinstance(pt, dict):
+        return pt.get("time") or ""
+    return ""
+
+
+def _newer_point(new, old):
+    """True when new is a verified point that should replace old (not older than the one we have)."""
+    if not _point_ok(new):
+        return False
+    if not _point_ok(old):
+        return True
+    nt, ot = _iso(new), _iso(old)
+    if not nt or not ot:
+        return True
+    return nt >= ot
+
+
+def has_verified_data(payload) -> bool:
+    """True if at least one official source returned a usable result. Never treats empty as success."""
+    if not payload:
+        return False
+    lake = payload.get("lake") or {}
+    if _point_ok(lake.get("elevation")) or _point_ok(lake.get("navd88")):
+        return True
+    wt = payload.get("waterTemp") or {}
+    if wt.get("status") == "ok" and wt.get("f") is not None:
+        return True
+    rain = payload.get("rain") or {}
+    if rain.get("status") == "ok" and rain.get("last24In") is not None:
+        return True
+    for block in [payload.get("release")] + list(payload.get("inflows") or []) + list(payload.get("river") or []):
+        if not block:
+            continue
+        if _point_ok(block.get("flowCfs")) or _point_ok(block.get("stageFt")):
+            return True
+    fc = payload.get("forecast") or {}
+    if fc.get("status") == "ok" and (fc.get("periods") or []):
+        return True
+    al = payload.get("alerts") or {}
+    if al.get("status") == "ok":
+        return True
+    return False
+
+
+def missing_expected(payload) -> bool:
+    """True when a configured official source did not return a usable result (retry is appropriate)."""
+    rid = (payload.get("region") or {}).get("id")
+    r = regions().get(rid) or {}
+    if r.get("lake"):
+        if not _point_ok((payload.get("lake") or {}).get("elevation")):
+            return True
+        if r["lake"].get("waterTemp"):
+            wt = payload.get("waterTemp") or {}
+            if wt.get("status") != "ok" or wt.get("f") is None:
+                return True
+        if r["lake"].get("rain"):
+            rain = payload.get("rain") or {}
+            if rain.get("status") != "ok" or rain.get("last24In") is None:
+                return True
+        if r.get("release"):
+            rel = payload.get("release") or {}
+            if not _point_ok(rel.get("flowCfs")) and not _point_ok(rel.get("stageFt")):
+                return True
+        got_in = {s.get("usgs"): s for s in (payload.get("inflows") or []) if s}
+        for spec in r.get("inflows") or []:
+            block = got_in.get(spec.get("usgs")) or {}
+            if not _point_ok(block.get("flowCfs")) and not _point_ok(block.get("stageFt")):
+                return True
+    got_rv = {s.get("usgs"): s for s in (payload.get("river") or []) if s}
+    for spec in r.get("river") or []:
+        block = got_rv.get(spec.get("usgs")) or {}
+        if spec.get("flow") is False:
+            if not _point_ok(block.get("stageFt")):
+                return True
+        elif not _point_ok(block.get("flowCfs")) and not _point_ok(block.get("stageFt")):
+            return True
+    if r.get("forecast"):
+        fc = payload.get("forecast") or {}
+        if fc.get("status") != "ok" or not (fc.get("periods") or []):
+            return True
+    al = payload.get("alerts") or {}
+    if al.get("status") != "ok":
+        return True
+    return False
+
+
+def _merge_station(old, new):
+    if not old:
+        return new
+    if not new:
+        return old
+    out = dict(new)
+    if not _newer_point(new.get("flowCfs"), old.get("flowCfs")) and _point_ok(old.get("flowCfs")):
+        out["flowCfs"] = old["flowCfs"]
+        for k in ("stats", "band"):
+            if k in old:
+                out[k] = old[k]
+    if not _newer_point(new.get("stageFt"), old.get("stageFt")) and _point_ok(old.get("stageFt")):
+        out["stageFt"] = old["stageFt"]
+    return out
+
+
+def _merge_block(old, new, ok):
+    if ok(old) and not ok(new):
+        return old
+    return new if new is not None else old
+
+
+def merge_verified(old, new):
+    """Keep previously verified official readings when a later fetch is missing or older.
+
+    Never introduces numerals that were not in either official payload. Does not
+    replace a valid reading with an unavailable placeholder, and does not replace
+    a newer official timestamp with an older one. Alerts: a failed re-check never
+    drops official warnings we already have; a successful re-check (including
+    'no alerts') replaces the previous official set.
+    """
+    if not old:
+        return new
+    if not new:
+        return old
+    out = dict(new)
+    old_lake, new_lake = old.get("lake") or {}, new.get("lake") or {}
+    if old_lake or new_lake:
+        lake = dict(new_lake or old_lake)
+        take_new_el = _newer_point(new_lake.get("elevation"), old_lake.get("elevation"))
+        if not take_new_el and _point_ok(old_lake.get("elevation")):
+            for k in ("elevation", "navd88", "vsGuideFt", "change24hFt", "change7dFt",
+                      "series7d", "datumOffsetFt"):
+                if k in old_lake:
+                    lake[k] = old_lake[k]
+        out["lake"] = lake
+
+    def wt_ok(w):
+        w = w or {}
+        return w.get("status") == "ok" and w.get("f") is not None
+
+    def rain_ok(w):
+        w = w or {}
+        return w.get("status") == "ok" and w.get("last24In") is not None
+
+    def fc_ok(w):
+        w = w or {}
+        return w.get("status") == "ok" and bool(w.get("periods"))
+
+    def al_ok(w):
+        return (w or {}).get("status") == "ok"
+
+    out["waterTemp"] = _merge_block(old.get("waterTemp"), new.get("waterTemp"), wt_ok)
+    if old.get("rain") or new.get("rain"):
+        out["rain"] = _merge_block(old.get("rain"), new.get("rain"), rain_ok)
+    if old.get("release") or new.get("release"):
+        out["release"] = _merge_station(old.get("release"), new.get("release"))
+    old_in = {s.get("usgs"): s for s in (old.get("inflows") or []) if s}
+    new_in = list(new.get("inflows") or [])
+    if new_in or old_in:
+        merged_in = []
+        seen = set()
+        for block in new_in:
+            uid = block.get("usgs")
+            merged_in.append(_merge_station(old_in.get(uid), block))
+            seen.add(uid)
+        for uid, block in old_in.items():
+            if uid not in seen:
+                merged_in.append(block)
+        out["inflows"] = merged_in
+    old_rv = {s.get("usgs"): s for s in (old.get("river") or []) if s}
+    new_rv = list(new.get("river") or [])
+    if new_rv or old_rv:
+        merged_rv = []
+        seen = set()
+        for block in new_rv:
+            uid = block.get("usgs")
+            merged_rv.append(_merge_station(old_rv.get(uid), block))
+            seen.add(uid)
+        for uid, block in old_rv.items():
+            if uid not in seen:
+                merged_rv.append(block)
+        out["river"] = merged_rv
+    out["forecast"] = _merge_block(old.get("forecast"), new.get("forecast"), fc_ok)
+    out["alerts"] = _merge_block(old.get("alerts"), new.get("alerts"), al_ok)
+    if old.get("guideCheck") and (new.get("guideCheck") or {}).get("status") != "ok":
+        out["guideCheck"] = old["guideCheck"]
+    return out
+
+
+def backoff_remaining(rid) -> float:
+    with _LOCK:
+        t = _FAILED.get(rid)
+    if t is None:
+        return 0.0
+    left = FAIL_BACKOFF - (time.time() - t)
+    return left if left > 0 else 0.0
+
+
+def reset_caches():
+    """Drop assembled cache, failure backoff, and in-flight bookkeeping.
+
+    Increments _EPOCH so a build that started before the reset cannot write
+    a payload into the next caller's cache.
+    """
+    global _EPOCH
+    with _LOCK:
+        _EPOCH += 1
+        evs = list(_FLIGHT.values())
+        _ASSEMBLED.clear()
+        _FAILED.clear()
+        _FLIGHT.clear()
+        _REFRESHING.clear()
+    for ev in evs:
+        ev.set()
+
+
 def peek_age(rid):
     """Return (payload, age_s) when a cached assemble is still servable, else (None, age or None)."""
     with _LOCK:
@@ -501,9 +724,16 @@ def _end_flight(rid, ev):
 
 
 def ensure_refresh(rid):
-    """Start or join a single in-flight assemble for this region. Returns the Event."""
+    """Start or join a single in-flight assemble for this region. Returns the Event.
+
+    A complete upstream failure starts a short backoff: a later caller joins an
+    in-flight assemble if one exists, otherwise it does not start a new fetch.
+    """
     ev, lead = _begin_flight(rid)
     if not lead:
+        return ev
+    if backoff_remaining(rid) > 0:
+        _end_flight(rid, ev)
         return ev
 
     def run():
@@ -517,7 +747,6 @@ def ensure_refresh(rid):
 
     threading.Thread(target=run, daemon=True, name="fw-refresh-%s" % rid).start()
     return ev
-
 
 def assemble(rid, force=False, wait=USER_DEADLINE):
     regs = regions()
@@ -540,14 +769,33 @@ def assemble(rid, force=False, wait=USER_DEADLINE):
         if hit is not None and age is not None and age < ASSEMBLED_TTL:
             return 200, hit
         if hit is not None and age is not None and age < ASSEMBLED_SERVE_MAX:
-            ensure_refresh(rid)
+            if backoff_remaining(rid) <= 0:
+                ensure_refresh(rid)
             return 200, hit
+        if backoff_remaining(rid) > 0:
+            body = dict(empty_payload(rid), retryAfterS=int(backoff_remaining(rid) + 0.999))
+            return 200, body
+    elif backoff_remaining(rid) > 0:
+        # Retry during backoff: do not start a new upstream attempt unless one is already in flight.
+        ev = _FLIGHT.get(rid)
+        if ev is not None:
+            ev.wait(timeout=None if wait is None else wait)
+            hit, _age = peek_age(rid)
+            if hit is not None:
+                return 200, hit
+        hit, _age = peek_age(rid)
+        body = dict(hit or empty_payload(rid), retryAfterS=int(backoff_remaining(rid) + 0.999))
+        return 200, body
     ev = ensure_refresh(rid)
     ev.wait(timeout=None if wait is None else wait)
     hit, _age = peek_age(rid)
     if hit is not None:
         return 200, hit
-    return 200, empty_payload(rid)
+    body = empty_payload(rid)
+    left = backoff_remaining(rid)
+    if left > 0:
+        body = dict(body, retryAfterS=int(left + 0.999))
+    return 200, body
 
 
 def _stats_sites(specs, iv, now):
@@ -564,6 +812,8 @@ def _stats_sites(specs, iv, now):
 
 def _assemble_build(rid):
     """Build and cache one region's payload. Per-source waits are bounded; nothing is invented."""
+    with _LOCK:
+        epoch = _EPOCH
     r = regions()[rid]
     now = datetime.now(timezone.utc)
     et_today = (now - timedelta(hours=5)).date()  # stats are keyed by calendar day; ET is close enough
@@ -701,7 +951,7 @@ def _assemble_build(rid):
     if lake_out is not None and lake:
         lake_out = _attach_nwps(lake, lake_out, nw)
 
-    payload = {"ok": True, "generatedAt": now.isoformat(),
+    fresh = {"ok": True, "generatedAt": now.isoformat(),
                "region": {k: r.get(k) for k in ("id", "name", "area", "anchor", "waterType", "instrumentSet")},
                "lake": lake_out, "waterTemp": water, "rain": rain, "release": release,
                "inflows": inflow_out, "river": river_out,
@@ -709,8 +959,19 @@ def _assemble_build(rid):
                "alerts": _wait_from(f_al, {"status": "unavailable", "items": []}, wave0),
                "guideCheck": _wait_from(f_guide, {"status": "unavailable"}, wave0) if f_guide is not None else None,
                "links": r.get("links") or [], "staleRuleH": STALE_H}
+    old, _age = peek_age(rid)
+    payload = merge_verified(old, fresh) if old else fresh
+    own = has_verified_data(fresh)
     with _LOCK:
-        _ASSEMBLED[rid] = (time.time(), payload)
+        if epoch != _EPOCH:
+            return 200, payload
+        if own:
+            _ASSEMBLED[rid] = (time.time(), payload)
+            _FAILED.pop(rid, None)
+        else:
+            # Complete failure: do not write a 5-minute success cache. Keep any
+            # previously verified payload and its original timestamp.
+            _FAILED[rid] = time.time()
     return 200, payload
 
 
@@ -735,6 +996,8 @@ def start_warmer():
             for rid in warm_ids():
                 hit, age = peek_age(rid)
                 if hit is not None and age is not None and age < ASSEMBLED_TTL:
+                    continue
+                if backoff_remaining(rid) > 0:
                     continue
                 ev = ensure_refresh(rid)
                 ev.wait()
