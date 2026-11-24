@@ -759,7 +759,7 @@ class StageBPresentation(unittest.TestCase):
     def test_research_asides_move_to_source_details_and_restrictions_remain(self):
         hwy = ramp_finder.by_id("parks-falls-highway-50", self.data)
         html = ramp_finder.render_detail(self.data, hwy, public=True)
-        lead = '<p class="lead">Falls Lake (main reservoir).</p>'
+        lead = '<p class="lead">Falls Lake (main reservoir)</p>'
         self.assertIn(lead, html)
         body, _, details = html.partition('<details class="source-details">')
         self.assertNotIn("Never present as Jordan Lake", body)
@@ -783,7 +783,34 @@ class StageBPresentation(unittest.TestCase):
             self.data, ramp_finder.by_id("local-newbern-union-point", self.data), public=True
         )
         body, _, details = union.partition('<details class="source-details">')
-        self.assertIn("Neuse River at New Bern (brackish).", body)
+        self.assertIn("Neuse River at New Bern (brackish)", body)
         self.assertNotIn("DCM PRK_FEE", body)
         self.assertIn("DCM PRK_FEE", details)
         self.assertIn(ramp_finder.NOT_LISTED_OFFICIAL, union)
+
+    def test_highway_50_lead_has_no_orphan_period(self):
+        hwy = ramp_finder.by_id("parks-falls-highway-50", self.data)
+        self.assertEqual(ramp_finder.waterbody_lead(hwy), "Falls Lake (main reservoir)")
+        rolling = ramp_finder.by_id("parks-falls-rolling-view", self.data)
+        self.assertEqual(ramp_finder.waterbody_lead(rolling), "Falls Lake (main reservoir)")
+        # Official sentence periods in visitor leads stay.
+        holly = ramp_finder.by_id("parks-falls-holly-point-campers", self.data)
+        self.assertTrue(ramp_finder.waterbody_lead(holly).endswith("Campground."))
+        union = ramp_finder.by_id("local-newbern-union-point", self.data)
+        self.assertEqual(ramp_finder.waterbody_lead(union), "Neuse River at New Bern (brackish)")
+
+    def test_not_listed_only_when_official_sources_are_silent(self):
+        """'Not listed…' is only for genuinely missing hours/fees; official wording stays."""
+        west = ramp_finder.by_id("local-atlantic-beach-west-bogue-sound", self.data)
+        self.assertEqual(west["hours"]["summary"], "not stated")
+        vis, _ = ramp_finder.official_summary_for_visitors(west["hours"]["summary"])
+        self.assertEqual(vis, ramp_finder.NOT_LISTED_OFFICIAL)
+        moonlight = ramp_finder.by_id("local-atlantic-beach-moonlight-drive", self.data)
+        vis, _ = ramp_finder.official_summary_for_visitors(moonlight["hours"]["summary"])
+        self.assertEqual(vis, "not stated on the town boat-ramp list.")
+        holly = ramp_finder.by_id("parks-falls-holly-point-campers", self.data)
+        vis, _ = ramp_finder.official_summary_for_visitors(holly["hours"]["summary"])
+        self.assertTrue(vis.startswith("not stated specifically for the camper ramp"))
+        glen = ramp_finder.by_id("local-newbern-glenburnie", self.data)
+        vis, _ = ramp_finder.official_summary_for_visitors(glen["hours"]["summary"])
+        self.assertEqual(vis, "not stated on the official map or parks list checked Nov 22, 2026")

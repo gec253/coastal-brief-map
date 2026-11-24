@@ -978,6 +978,18 @@ def _waterbody_lead_raw(rec) -> str:
     return f"{water} — {note}"
 
 
+def _strip_orphan_label_period(lead: str) -> str:
+    """Drop a leftover period on a parenthetical identifier after an aside is removed.
+
+    Example: 'Falls Lake (main reservoir).' -> 'Falls Lake (main reservoir)'.
+    Official sentences such as 'Falls Lake. Camper-only launch …' stay intact.
+    """
+    s = (lead or "").strip()
+    if re.search(r"\)\.$", s) and not re.search(r"\.\s+\S", s):
+        return s[:-1]
+    return s
+
+
 def waterbody_lead(rec) -> str:
     """Visitor-facing waterbody line: no duplicated name, no research asides, title case."""
     raw = _waterbody_lead_raw(rec)
@@ -990,7 +1002,7 @@ def waterbody_lead(rec) -> str:
             lead = left
         else:
             lead = f"{left} — {right}"
-    return _title_lead(lead)
+    return _title_lead(_strip_orphan_label_period(lead))
 
 
 def research_asides_for(rec) -> list[str]:
