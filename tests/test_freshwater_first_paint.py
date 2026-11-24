@@ -1,4 +1,4 @@
-"""t455u/t456u freshwater first-paint: immediate HTML, single-flight, backoff, retry button."""
+"""t455u freshwater first-paint: immediate HTML, single-flight, bounded waits, honest states."""
 from __future__ import annotations
 
 import json
@@ -26,7 +26,9 @@ def _pt(age_h, value):
 
 
 def _clear():
-    freshwater.reset_caches()
+    freshwater._ASSEMBLED.clear()
+    freshwater._REFRESHING.clear()
+    freshwater._FLIGHT.clear()
 
 
 def _payload_falls():
@@ -44,20 +46,9 @@ def _payload_falls():
         "rain": {"status": "ok", "last24In": 0.0, "time": t, "stale": False},
         "release": {"usgs": "02087183", "tileTitle": "Release", "kind": "observed",
                     "flowCfs": {"value": 80.0, "time": t, "stale": False}, "stageFt": None},
-        "inflows": [
-            {"usgs": "02085070", "label": "Eno River near Durham", "kind": "observed",
-             "flowCfs": {"value": 40.0, "time": t, "stale": False}},
-            {"usgs": "02085500", "label": "Flat River at Bahama", "kind": "observed",
-             "flowCfs": {"value": 30.0, "time": t, "stale": False}},
-        ],
-        "river": [
-            {"usgs": "02087500", "label": "Neuse River near Clayton", "kind": "observed",
-             "flowCfs": {"value": 90.0, "time": t, "stale": False}},
-            {"usgs": "02087570", "label": "Neuse River at Smithfield", "kind": "observed",
-             "stageOnly": True, "stageFt": {"value": 3.2, "time": t, "stale": False}},
-            {"usgs": "02089000", "label": "Neuse River near Goldsboro", "kind": "observed",
-             "flowCfs": {"value": 120.0, "time": t, "stale": False}},
-        ],
+        "inflows": [{"usgs": "0208715780", "label": "Inflow", "kind": "observed",
+                     "flowCfs": {"value": 40.0, "time": t, "stale": False}}],
+        "river": [],
         "forecast": {"status": "ok", "office": "NWS", "updated": t,
                      "periods": [{"name": "This Afternoon", "short": "Sunny", "detail": "Sunny"}]},
         "alerts": {"status": "ok", "items": []},
@@ -322,8 +313,6 @@ class StaleJs(unittest.TestCase):
         self.assertIn("shouldApply", js)
         self.assertIn("replaceWith", js)
         self.assertIn("pagehide", js)
-        self.assertIn("retry=1", js)
-        self.assertIn("Retry readings", js)
         src = js + """
         const elFalls = { getAttribute: (k) => k === "data-fresh-region" ? "falls-lake" : null };
         const elJordan = { getAttribute: (k) => k === "data-fresh-region" ? "jordan-lake" : null };
@@ -380,20 +369,6 @@ class NavAndWaterSwitch(unittest.TestCase):
         self.assertIn("#conditions", js)
         self.assertNotIn('querySelector(".cbw")', js)
         self.assertIn("must not be replaced", js)
-        # Retry-state page (partial official data) also keeps the switch above #conditions.
-        partial = dict(_payload_falls())
-        partial["release"] = {**(partial["release"] or {}), "flowCfs": None, "stageFt": None}
-        freshwater._ASSEMBLED["falls-lake"] = (time.time(), partial)
-        retry_page = sprint_home.page("hybrid", "falls-lake", public=True)
-        os.environ["NAV_V2"] = "1"
-        on_retry = nav_v2.apply(retry_page, "/?region=falls-lake").decode()
-        self.assertIn('id="fresh-retry"', on_retry)
-        self.assertIn("/fresh-home.js", on_retry)
-        self.assertGreater(on_retry.find('id="conditions"'), on_retry.find('class="cbw"'))
-        os.environ.pop("NAV_V2", None)
-        off_retry = retry_page.decode()
-        self.assertIn('id="fresh-retry"', off_retry)
-        self.assertNotIn('class="cbw"', off_retry)
 
 
 class FirstPaintHttp(unittest.TestCase):
@@ -476,335 +451,6 @@ class FirstPaintHttp(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertNotIn(b'data-fresh-pending="1"', body)
         self.assertNotIn(b"/fresh-home.js", body)
-
-
-def _fail_all_patches():
-    return (
-        patch("freshwater.usgs_iv", side_effect=RuntimeError("usgs down")),
-        patch("freshwater.usgs_daily_stats", side_effect=RuntimeError("stats down")),
-        patch("freshwater.nwps", return_value={"status": "unavailable"}),
-        patch("freshwater.qpf_block", return_value={"status": "unavailable", "kind": "forecast"}),
-        patch("freshwater.alerts_point", side_effect=RuntimeError("alerts down")),
-        patch("freshwater.usace_guide_check", return_value={"status": "unavailable"}),
-        patch("conditions.forecast_block", side_effect=RuntimeError("forecast down")),
-    )
-
-
-def _partial_payload():
-    """Official lake level only; other configured sources unavailable."""
-    body = freshwater.empty_payload("falls-lake")
-    t = (NOW - timedelta(minutes=20)).isoformat()
-    body["generatedAt"] = NOW.isoformat()
-    body["partial"] = True
-    body["lake"] = {
-        "usgs": "02087182", "kind": "observed", "datum": "NGVD29", "guideCurveFt": 251.5,
-        "elevation": {"value": 250.12, "time": t, "stale": False}, "vsGuideFt": -1.38,
-    }
-    body["alerts"] = {"status": "ok", "items": []}
-    return body
-
-
-class NegativeCache(unittest.TestCase):
-    def setUp(self):
-        _clear()
-
-    def tearDown(self):
-        _clear()
-
-    def test_complete_failure_is_not_cached_at_success_ttl(self):
-        calls = {"n": 0}
-
-        def boom(*a, **k):
-            calls["n"] += 1
-            raise RuntimeError("usgs down")
-
-        with patch("freshwater.usgs_iv", side_effect=boom), \
-                patch("freshwater.usgs_daily_stats", side_effect=RuntimeError("stats down")), \
-                patch("freshwater.nwps", return_value={"status": "unavailable"}), \
-                patch("freshwater.qpf_block", return_value={"status": "unavailable"}), \
-                patch("freshwater.alerts_point", side_effect=RuntimeError("alerts down")), \
-                patch("freshwater.usace_guide_check", return_value={"status": "unavailable"}), \
-                patch("conditions.forecast_block", side_effect=RuntimeError("forecast down")):
-            status, body = freshwater.assemble("falls-lake", wait=5)
-            n1 = calls["n"]
-            self.assertEqual(status, 200)
-            self.assertTrue(body.get("ok"))
-            self.assertIsNone(freshwater.peek("falls-lake"))
-            self.assertNotIn("falls-lake", freshwater._ASSEMBLED)
-            self.assertIn("falls-lake", freshwater._FAILED)
-            self.assertGreater(body.get("retryAfterS") or 0, 0)
-            self.assertLessEqual(body["retryAfterS"], freshwater.FAIL_BACKOFF + 1)
-            el = (body.get("lake") or {}).get("elevation")
-            self.assertTrue(el is None or el.get("value") is None)
-
-            # Immediate retry must not start another upstream attempt (backoff).
-            status2, body2 = freshwater.assemble("falls-lake", force=True, wait=5)
-            self.assertEqual(status2, 200)
-            self.assertEqual(calls["n"], n1)
-            self.assertGreater(body2.get("retryAfterS") or 0, 0)
-
-            status3, _body3 = freshwater.assemble("falls-lake", wait=5)
-            self.assertEqual(status3, 200)
-            self.assertEqual(calls["n"], n1)
-
-            # After backoff expires, a new full attempt is allowed.
-            freshwater._FAILED["falls-lake"] = time.time() - freshwater.FAIL_BACKOFF - 1
-            status4, _body4 = freshwater.assemble("falls-lake", force=True, wait=5)
-            self.assertEqual(status4, 200)
-            self.assertGreater(calls["n"], n1)
-            self.assertIsNone(freshwater.peek("falls-lake"))
-
-    def test_partial_success_is_cached_and_keeps_valid_sources(self):
-        t = _pt(0.4, 250.12)
-        iv7 = {("02087182", "62614"): [t], ("02087182", "62615"): [_pt(0.4, 249.5)]}
-
-        def fake_iv(sites, params, period="P1D"):
-            if period == "P7D":
-                return iv7, {"02087182": "FALLS LAKE"}
-            return {}, {}
-
-        with patch("freshwater.usgs_iv", side_effect=fake_iv), \
-                patch("freshwater.usgs_daily_stats", return_value=None), \
-                patch("freshwater.nwps", return_value={"status": "unavailable"}), \
-                patch("freshwater.qpf_block", return_value={"status": "unavailable"}), \
-                patch("freshwater.alerts_point", return_value={"status": "ok", "items": []}), \
-                patch("freshwater.usace_guide_check", return_value={"status": "unavailable"}), \
-                patch("conditions.forecast_block", return_value={"status": "unavailable"}):
-            status, body = freshwater.assemble("falls-lake", wait=8)
-        self.assertEqual(status, 200)
-        self.assertEqual(body["lake"]["elevation"]["value"], 250.12)
-        self.assertEqual(body["alerts"]["status"], "ok")
-        hit = freshwater.peek("falls-lake")
-        self.assertIsNotNone(hit)
-        self.assertEqual(hit["lake"]["elevation"]["value"], 250.12)
-        self.assertTrue(freshwater.has_verified_data(hit))
-        self.assertTrue(freshwater.missing_expected(hit))
-        self.assertNotIn("falls-lake", freshwater._FAILED)
-
-    def test_complete_failure_does_not_drop_or_restamp_valid_cache(self):
-        payload = _payload_falls()
-        stamp = time.time() - 30
-        freshwater._ASSEMBLED["falls-lake"] = (stamp, payload)
-        p0, p1, p2, p3, p4, p5, p6 = _fail_all_patches()
-        with p0, p1, p2, p3, p4, p5, p6:
-            status, body = freshwater.assemble("falls-lake", force=True, wait=5)
-        self.assertEqual(status, 200)
-        self.assertEqual(body["lake"]["elevation"]["value"], 250.12)
-        self.assertEqual(body["alerts"]["status"], "ok")
-        hit, age = freshwater.peek_age("falls-lake")
-        self.assertEqual(hit["lake"]["elevation"]["value"], 250.12)
-        # Original success timestamp is preserved (not rewritten as a new 5-min TTL).
-        self.assertAlmostEqual(freshwater._ASSEMBLED["falls-lake"][0], stamp, places=2)
-        self.assertIn("falls-lake", freshwater._FAILED)
-
-
-class MergeAndRetry(unittest.TestCase):
-    def setUp(self):
-        _clear()
-
-    def tearDown(self):
-        _clear()
-
-    def test_retry_fills_only_missing_and_keeps_newer_verified(self):
-        old = _partial_payload()
-        new = freshwater.empty_payload("falls-lake")
-        older = (NOW - timedelta(hours=3)).isoformat()
-        newer = (NOW - timedelta(minutes=20)).isoformat()
-        new["lake"] = {
-            "usgs": "02087182", "kind": "observed",
-            "elevation": {"value": 249.00, "time": older, "stale": False},  # older, must not win
-        }
-        new["release"] = {
-            "usgs": "02087183", "tileTitle": "Release", "kind": "observed",
-            "flowCfs": {"value": 80.0, "time": newer, "stale": False}, "stageFt": None,
-        }
-        new["alerts"] = {"status": "unavailable", "items": []}
-        merged = freshwater.merge_verified(old, new)
-        self.assertEqual(merged["lake"]["elevation"]["value"], 250.12)
-        self.assertEqual(merged["lake"]["elevation"]["time"], old["lake"]["elevation"]["time"])
-        self.assertEqual(merged["release"]["flowCfs"]["value"], 80.0)
-        # Failed alerts re-check must not drop a prior official "no alerts" result.
-        self.assertEqual(merged["alerts"]["status"], "ok")
-
-    def test_successful_alerts_recheck_replaces_previous_set(self):
-        old = _payload_falls()
-        old["alerts"] = {"status": "ok", "items": [
-            {"event": "Flood Watch", "onset": "2026-11-24T12:00:00-05:00",
-             "ends": "2026-11-25T00:00:00-05:00", "areas": "Wake", "severity": "Moderate"},
-        ]}
-        new = dict(old)
-        new["alerts"] = {"status": "ok", "items": []}
-        merged = freshwater.merge_verified(old, new)
-        self.assertEqual(merged["alerts"]["status"], "ok")
-        self.assertEqual(merged["alerts"]["items"], [])
-
-    def test_jordan_missing_water_temp_sensor_is_not_retryable(self):
-        body = freshwater.empty_payload("jordan-lake")
-        t = NOW.isoformat()
-        body["generatedAt"] = t
-        body["lake"] = {"usgs": "02098197", "kind": "observed", "guideCurveFt": 216.0,
-                        "elevation": {"value": 212.23, "time": t, "stale": False}}
-        body["rain"] = {"status": "ok", "last24In": 0.0, "time": t, "stale": False}
-        body["release"] = {"usgs": "02098198", "kind": "observed",
-                           "flowCfs": {"value": 10.0, "time": t, "stale": False}}
-        r = freshwater.regions()["jordan-lake"]
-        body["inflows"] = [{
-            "usgs": r["inflows"][0]["usgs"], "label": r["inflows"][0]["label"], "kind": "observed",
-            "flowCfs": {"value": 5.0, "time": t, "stale": False},
-        }]
-        body["forecast"] = {"status": "ok", "periods": [{"name": "Today", "short": "Sunny"}]}
-        body["alerts"] = {"status": "ok", "items": []}
-        self.assertFalse(freshwater.missing_expected(body))
-
-    def test_retry_button_on_unavailable_slots_not_on_loading_or_complete(self):
-        pending = sprint_home.fresh_loading_model("falls-lake")
-        html_pending = sprint_home.conditions_html(pending, variant="hybrid", public=True)
-        self.assertNotIn("fresh-retry", html_pending)
-        self.assertNotIn("Retry readings", html_pending)
-
-        complete = sprint_home.fresh_model(_payload_falls())
-        self.assertFalse(complete.get("canRetry"))
-        html_ok = sprint_home.conditions_html(complete, variant="hybrid", public=True)
-        self.assertNotIn("fresh-retry", html_ok)
-
-        partial = sprint_home.fresh_model(_partial_payload())
-        self.assertTrue(partial.get("canRetry"))
-        html = sprint_home.conditions_html(partial, variant="hybrid", public=True)
-        self.assertIn('id="fresh-retry"', html)
-        self.assertIn('type="button"', html)
-        self.assertIn("Retry readings", html)
-        self.assertIn('aria-live="polite"', html)
-        self.assertIn("cg-retry-status", html)
-        self.assertIn('data-fresh-retry="1"', html)
-        page = sprint_home.page("hybrid", "falls-lake", public=True)
-        # page() peeks cache; seed it
-        freshwater._ASSEMBLED["falls-lake"] = (time.time(), _partial_payload())
-        page = sprint_home.page("hybrid", "falls-lake", public=True).decode()
-        self.assertIn('id="fresh-retry"', page)
-        self.assertIn("/fresh-home.js", page)
-        self.assertNotIn("data-fresh-pending=", page)
-
-    def test_retry_css_is_44px_and_before_night_wash(self):
-        css = (ROOT / "preview/sprint-home/hybrid.css").read_text()
-        night = css.index("/* Night only: one continuous wash")
-        self.assertLess(css.index(".cg-retry"), night)
-        self.assertIn("min-height:44px", css)
-        self.assertIn("min-width:44px", css)
-        # Night-strip rule must not gain height declarations (existing contract).
-        self.assertNotIn("height:", css[night:])
-
-    def test_rapid_retries_share_one_upstream_fetch(self):
-        calls = {"n": 0}
-        gate = threading.Event()
-        t = _pt(0.4, 250.12)
-        iv7 = {("02087182", "62614"): [t]}
-
-        def fake_iv(sites, params, period="P1D"):
-            calls["n"] += 1
-            gate.wait(timeout=2)
-            if period == "P7D":
-                return iv7, {}
-            return {}, {}
-
-        freshwater._ASSEMBLED["falls-lake"] = (time.time(), _partial_payload())
-        with patch("freshwater.usgs_iv", side_effect=fake_iv), \
-                patch("freshwater.usgs_daily_stats", return_value=None), \
-                patch("freshwater.nwps", return_value={"status": "unavailable"}), \
-                patch("freshwater.qpf_block", return_value={"status": "unavailable"}), \
-                patch("freshwater.alerts_point", return_value={"status": "ok", "items": []}), \
-                patch("freshwater.usace_guide_check", return_value={"status": "unavailable"}), \
-                patch("conditions.forecast_block", return_value={"status": "unavailable"}):
-            results = []
-
-            def run():
-                results.append(freshwater.assemble("falls-lake", force=True, wait=5))
-
-            threads = [threading.Thread(target=run) for _ in range(5)]
-            for th in threads:
-                th.start()
-            time.sleep(0.2)
-            started = calls["n"]
-            gate.set()
-            for th in threads:
-                th.join(timeout=6)
-        self.assertTrue(all(st == 200 for st, _ in results))
-        self.assertLessEqual(started, 2)
-        self.assertLessEqual(calls["n"], 2)
-        # Verified lake level is still present; retry did not invent release if IV P1D was empty.
-        for _st, body in results:
-            self.assertEqual(body["lake"]["elevation"]["value"], 250.12)
-
-
-class RetryHttp(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        import server
-        cls.httpd = server.ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
-        cls.thread = threading.Thread(target=cls.httpd.serve_forever, daemon=True)
-        cls.thread.start()
-        cls.host, cls.port = cls.httpd.server_address
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.httpd.shutdown()
-        cls.httpd.server_close()
-
-    def setUp(self):
-        _clear()
-
-    def tearDown(self):
-        _clear()
-
-    def _req(self, path, timeout=5):
-        conn = HTTPConnection("127.0.0.1", self.port, timeout=timeout)
-        conn.request("GET", path)
-        resp = conn.getresponse()
-        body = resp.read()
-        conn.close()
-        return resp.status, body
-
-    def test_retry_query_bypasses_success_ttl_and_merges(self):
-        freshwater._ASSEMBLED["falls-lake"] = (time.time(), _partial_payload())
-        t = _pt(0.1, 80.0)
-
-        def fake_iv(sites, params, period="P1D"):
-            # P1D current conditions include the release gauge only (no lake, so lake stays from cache).
-            if period == "P7D":
-                return {}, {}
-            return {("02087183", "00060"): [t]}, {}
-
-        with patch("freshwater.usgs_iv", side_effect=fake_iv), \
-                patch("freshwater.usgs_daily_stats", return_value=None), \
-                patch("freshwater.nwps", return_value={"status": "unavailable"}), \
-                patch("freshwater.qpf_block", return_value={"status": "unavailable"}), \
-                patch("freshwater.alerts_point", return_value={"status": "ok", "items": []}), \
-                patch("freshwater.usace_guide_check", return_value={"status": "unavailable"}), \
-                patch("conditions.forecast_block", return_value={"status": "unavailable"}):
-            status, body = self._req("/api/fresh-home?region=falls-lake&retry=1&public=1")
-        self.assertEqual(status, 200)
-        payload = json.loads(body)
-        self.assertTrue(payload["ok"])
-        self.assertEqual(payload["region"]["id"], "falls-lake")
-        self.assertIn("250.12", payload["html"])
-        self.assertIn("80", payload["html"])
-        # Region switching: a Jordan request must not return Falls HTML,
-        # including when a retry is requested (stale/other-region data is dropped).
-        freshwater._ASSEMBLED["jordan-lake"] = (time.time(), {
-            **_payload_falls(),
-            "region": {"id": "jordan-lake", "name": "Jordan Lake", "waterType": "freshwater",
-                       "instrumentSet": "freshwater-lake"},
-            "lake": {"usgs": "02098197", "kind": "observed", "guideCurveFt": 216.0,
-                     "elevation": {"value": 212.23, "time": NOW.isoformat(), "stale": False}},
-        })
-        p0, p1, p2, p3, p4, p5, p6 = _fail_all_patches()
-        with p0, p1, p2, p3, p4, p5, p6:
-            status, body = self._req("/api/fresh-home?region=jordan-lake&retry=1&public=1")
-        payload = json.loads(body)
-        self.assertEqual(status, 200)
-        self.assertEqual(payload["region"]["id"], "jordan-lake")
-        self.assertIn("212.23", payload["html"])
-        self.assertNotIn("250.12", payload["html"])
-
 
 
 if __name__ == "__main__":
