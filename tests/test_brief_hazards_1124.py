@@ -60,13 +60,12 @@ def _rows(hz):
 
 
 class AlertSource(unittest.TestCase):
-    def test_shared_block_still_collapses_root_cause_documented(self):
-        # Documents the root cause in the protected shared fetcher (left unchanged on this branch).
+    def test_shared_block_keeps_distinct_products_after_t449u(self):
+        # t449u fixed the root cause in the shared fetcher: same event+end products are no longer dropped.
         sca = [a for a in _shared_block("hatteras")["items"] if a["event"] == "Small Craft Advisory"]
-        self.assertEqual(len(sca), 1)
+        self.assertTrue(sca and any("Pamlico Sound" in a["areas"] for a in sca))
         cfw = [a for a in _shared_block("crystal-coast")["items"] if a["event"] == "Coastal Flood Watch"]
-        self.assertEqual(len(cfw), 1)
-        self.assertNotIn("West Carteret", cfw[0]["areas"])
+        self.assertTrue(cfw and any("West Carteret" in a["areas"] for a in cfw))
 
     def test_raw_feed_unavailable_falls_back_to_shared_block(self):
         shared = _shared_block("hatteras")
