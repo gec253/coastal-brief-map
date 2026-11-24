@@ -269,8 +269,10 @@ class AssembleBehavior(unittest.TestCase):
                 th.join(timeout=6)
         self.assertTrue(all(st == 200 for st, _ in results))
         # One in-flight assemble issues iv twice (P7D + P1D), not once per waiter.
-        self.assertLessEqual(started, 2)
-        self.assertLessEqual(calls["n"], 2)
+        # One Falls assemble submits lake P7D plus two canonical flow IV groups
+        # (shared corridor and Falls-only inflows). Six visitors must still share that one assemble.
+        self.assertLessEqual(started, 3)
+        self.assertLessEqual(calls["n"], 3)
         self.assertGreaterEqual(calls["n"], 1)
 
     def test_changing_region_does_not_reuse_other_cache(self):
@@ -742,8 +744,10 @@ class MergeAndRetry(unittest.TestCase):
             for th in threads:
                 th.join(timeout=6)
         self.assertTrue(all(st == 200 for st, _ in results))
-        self.assertLessEqual(started, 2)
-        self.assertLessEqual(calls["n"], 2)
+        # One Falls assemble submits lake P7D plus two canonical flow IV groups
+        # (shared corridor and Falls-only inflows). Six visitors must still share that one assemble.
+        self.assertLessEqual(started, 3)
+        self.assertLessEqual(calls["n"], 3)
         # Verified lake level is still present; retry did not invent release if IV P1D was empty.
         for _st, body in results:
             self.assertEqual(body["lake"]["elevation"]["value"], 250.12)
@@ -821,9 +825,9 @@ class RetryHttp(unittest.TestCase):
 
 
 
-# Scaled so a full 5/11/15/25/30 s matrix finishes in a few seconds: 1 s of
+# Scaled so a full 5/11/15/25/30/40/45 s matrix finishes in a few seconds: 1 s of
 # upstream time is 0.05 s in the test, and the production timeout ratios
-# (USER_DEADLINE 8 / FETCH_TIMEOUT 30 / RESULT_TIMEOUT 35) are preserved.
+# (USER_DEADLINE 8 / FETCH_TIMEOUT 45 / RESULT_TIMEOUT 50) are preserved.
 _SCALE = 0.05
 
 
@@ -832,8 +836,8 @@ class V3LatencyAndCache(unittest.TestCase):
         _clear()
         self._timeouts = (
             patch.object(freshwater, "USER_DEADLINE", 8 * _SCALE),
-            patch.object(freshwater, "FETCH_TIMEOUT", 30 * _SCALE),
-            patch.object(freshwater, "RESULT_TIMEOUT", 35 * _SCALE),
+            patch.object(freshwater, "FETCH_TIMEOUT", 45 * _SCALE),
+            patch.object(freshwater, "RESULT_TIMEOUT", 50 * _SCALE),
             patch.object(freshwater, "FAIL_BACKOFF", 45 * _SCALE),
             patch.object(freshwater, "PARTIAL_BACKOFF", 45 * _SCALE),
         )
@@ -872,8 +876,9 @@ class V3LatencyAndCache(unittest.TestCase):
 
     def test_source_latencies_5_11_15_25_30s(self):
         # 5s (under visitor wait), 11s and 15s (over visitor wait, under result),
-        # 25s and 30s (still one full try under a 35s result timeout).
-        cases = [5, 11, 15, 25, 30]
+        # 25s, 30s, 40s and 45s (one full try under a 50s result timeout; 45s is
+        # the fetch bound, and still lands because this test patches usgs_iv).
+        cases = [5, 11, 15, 25, 30, 40, 45]
         for src_s in cases:
             with self.subTest(src_s=src_s):
                 _clear()
@@ -911,7 +916,7 @@ class V3LatencyAndCache(unittest.TestCase):
 
     def test_nws_only_partial_is_not_five_minute_success(self):
         # USGS sleeps past the result timeout; NWS forecast/alerts succeed quickly.
-        sleep_s = 40 * _SCALE  # 40s > RESULT_TIMEOUT 35s
+        sleep_s = 55 * _SCALE  # 55s > RESULT_TIMEOUT 50s (40s and 45s now complete)
         patches = self._nws_ok_usgs_sleep(sleep_s)
         with patches[0], patches[1], patches[2], patches[3], patches[4], patches[5], patches[6]:
             status, body = freshwater.assemble("falls-lake", wait=freshwater.RESULT_TIMEOUT + 0.5)
@@ -991,8 +996,10 @@ class V3LatencyAndCache(unittest.TestCase):
             for th in threads:
                 th.join(timeout=3)
         self.assertTrue(all(st == 200 for st, _ in results))
-        self.assertLessEqual(started, 2)
-        self.assertLessEqual(calls["n"], 2)
+        # One Falls assemble submits lake P7D plus two canonical flow IV groups
+        # (shared corridor and Falls-only inflows). Six visitors must still share that one assemble.
+        self.assertLessEqual(started, 3)
+        self.assertLessEqual(calls["n"], 3)
 
 
 class QpfMerge(unittest.TestCase):
