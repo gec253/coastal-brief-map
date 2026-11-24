@@ -39,20 +39,29 @@ ASSEMBLED_TTL = 300
 ASSEMBLED_SERVE_MAX = 1200
 WARM_EVERY = 240
 # Freshwater-only fetch bound (installed from server.py). Saltwater fetch_url stays 45s / 4 tries.
-# Chosen from measured official-source latency (see coldstart-1124/latency-box.json):
-# box USGS IV p50 ~8–10s, p90 ~11s, samples up to ~12s; NWS is sub-second.
-# Ed's Render-side IV is ~10–12s; this host is not Render, so the wait covers one
-# full try at 30s (about 2.5× the observed p90) plus a little pool slack.
-FETCH_TIMEOUT = 30
+# Chosen from the t460u Render-host distribution (cb-fw-v3-test-37227f, 24 Nov 2026):
+#   usgs_iv   p50 11.5s, p90 30.1s, max 31.0s (n=24, all ok)
+#   usgs_stat p50 8.5s,  p90 20.8s, max 42.4s (n=43, 4 HTTP 502 in ~4s)
+# FETCH 45s covers the observed IV max with ~14s of margin and the observed stats max.
+# RESULT 50s covers one full 45s try plus a little pool slack. The visitor-facing
+# wait stays 8s and never cancels an in-flight request. Daily-stats are not on
+# the result-budget critical path: readings publish without waiting on percentiles.
+FETCH_TIMEOUT = 45
 FETCH_TRIES = 1
 FETCH_BACKOFF = 0.5
-RESULT_TIMEOUT = 35
+RESULT_TIMEOUT = 50
 # Visitor-facing API wait. The in-flight assemble is not cancelled when this expires.
 USER_DEADLINE = 8
 # Complete upstream failure is not stored in the 5-minute success cache.
 # A short backoff avoids hammering USGS/NWS; a later retry still joins an in-flight assemble.
 FAIL_BACKOFF = 45
 PARTIAL_BACKOFF = 45  # NWS-only / timed-out USGS: displayable, not a 5-minute success
+# Cap concurrent USGS HTTP calls so a 0.15 CPU instance is not thrashed when
+# several regions assemble at once. NWS/NWPS/USACE are not under this cap.
+USGS_CONCURRENCY = 4
+# One immediate retry for USGS daily-stats HTTP 502/503 only (those failed in ~4s on Render).
+STAT_RETRY_STATUS = frozenset({502, 503})
+STAT_EXTRA_TRIES = 1
 
 _POOL = ThreadPoolExecutor(max_workers=16)
 
@@ -63,6 +72,11 @@ def _pool():
         _POOL = ThreadPoolExecutor(max_workers=16)
     return _POOL
 _LOCK = threading.Lock()
+_USGS_SEM = threading.Semaphore(USGS_CONCURRENCY)
+_USGS_INFLIGHT = 0
+_USGS_INFLIGHT_PEAK = 0
+_KEY_FLIGHT: dict = {}  # key -> (Event, [result, error])
+_FETCH_COUNTS: dict[str, int] = {}
 _ASSEMBLED: dict[str, tuple[float, dict]] = {}
 _REFRESHING: set = set()
 _FLIGHT: dict[str, threading.Event] = {}
@@ -146,45 +160,162 @@ def _cached_body(cached):
     return None
 
 
-def _get_body(url, ttl, accept="application/json"):
-    """Cache then fetch. Uses the bounded freshwater fetch when installed, else conditions.get_json."""
-    if _FETCH is None:
-        return conditions.get_json(url, ttl, accept=accept)
-    hooks = conditions._hooks
-    cg = hooks.get("cache_get")
-    if cg:
-        raw = _cached_body(cg(url))
-        if raw is not None:
-            return raw
-    source = _source_label(url)
-    t0 = time.time()
-    status, raw, err_name = 0, None, ""
-    try:
-        status, _ct, raw = _FETCH(url, timeout=FETCH_TIMEOUT, tries=FETCH_TRIES)
-    except Exception as e:
-        status, raw, err_name = 0, None, type(e).__name__
-        _log_upstream(source, time.time() - t0, "error", err_name)
-    else:
-        dur = time.time() - t0
-        if status == 200 and raw:
-            _log_upstream(source, dur, "ok")
+def _count_fetch(source, outcome):
+    with _LOCK:
+        _FETCH_COUNTS[source] = _FETCH_COUNTS.get(source, 0) + 1
+        key = "%s:%s" % (source, outcome)
+        _FETCH_COUNTS[key] = _FETCH_COUNTS.get(key, 0) + 1
+        _FETCH_COUNTS["http"] = _FETCH_COUNTS.get("http", 0) + 1
+
+
+def fetch_counts():
+    """Snapshot of actual upstream HTTP attempts (leaders only; not cache or joined flights)."""
+    with _LOCK:
+        return dict(_FETCH_COUNTS), _USGS_INFLIGHT_PEAK
+
+
+def _usgs_acquire():
+    global _USGS_INFLIGHT, _USGS_INFLIGHT_PEAK
+    _USGS_SEM.acquire()
+    with _LOCK:
+        _USGS_INFLIGHT += 1
+        if _USGS_INFLIGHT > _USGS_INFLIGHT_PEAK:
+            _USGS_INFLIGHT_PEAK = _USGS_INFLIGHT
+
+
+def _usgs_release():
+    global _USGS_INFLIGHT
+    with _LOCK:
+        _USGS_INFLIGHT = max(0, _USGS_INFLIGHT - 1)
+    _USGS_SEM.release()
+
+
+def _is_usgs_url(url):
+    u = url or ""
+    return "waterservices.usgs.gov" in u
+
+
+def _is_usgs_stat_url(url):
+    u = url or ""
+    return "waterservices.usgs.gov" in u and "/nwis/stat" in u
+
+
+def _keyed_single_flight(key, fn, wait_s=None):
+    """Run fn once for key; concurrent callers share the result or error."""
+    if wait_s is None:
+        wait_s = FETCH_TIMEOUT + 5
+    with _LOCK:
+        slot = _KEY_FLIGHT.get(key)
+        if slot is None:
+            ev, box = threading.Event(), [None, None]
+            _KEY_FLIGHT[key] = (ev, box)
+            lead = True
         else:
-            kind = "timeout" if (err_name == "TimeoutError" or (raw and b"timed out" in raw[:80])) else "fail"
-            detail = err_name or ("HTTP %s" % status)
-            if raw and not isinstance(raw, (bytes, bytearray)):
-                raw = None
-            elif raw and isinstance(raw, (bytes, bytearray)) and b"timed out" in raw[:80]:
-                kind = "timeout"
-            _log_upstream(source, dur, kind, detail)
-    if status == 200 and raw:
-        put = hooks.get("cache_put_ttl")
-        if put:
-            put(url, ttl, raw)
-        return raw
-    anyg = hooks.get("cache_get_any")
-    if anyg:
-        return _cached_body(anyg(url))
-    return None
+            ev, box = slot
+            lead = False
+    if not lead:
+        ev.wait(timeout=wait_s)
+        if box[1] is not None:
+            raise box[1]
+        return box[0]
+    try:
+        box[0] = fn()
+        return box[0]
+    except Exception as e:
+        box[1] = e
+        raise
+    finally:
+        ev.set()
+        with _LOCK:
+            cur = _KEY_FLIGHT.get(key)
+            if cur is not None and cur[0] is ev:
+                _KEY_FLIGHT.pop(key, None)
+
+
+def _get_body(url, ttl, accept="application/json"):
+    """Cache then fetch. Uses the bounded freshwater fetch when installed, else conditions.get_json.
+
+    Concurrent callers for the same URL share one in-flight request. USGS IV and
+    daily-stats calls also take a concurrency slot (USGS_CONCURRENCY).
+    """
+    if _FETCH is None:
+        def _via_conditions():
+            source = _source_label(url)
+            use_sem = _is_usgs_url(url)
+            if use_sem:
+                _usgs_acquire()
+            t0 = time.time()
+            try:
+                body = conditions.get_json(url, ttl, accept=accept)
+            except Exception as e:
+                _count_fetch(source, "error")
+                _log_upstream(source, time.time() - t0, "error", type(e).__name__)
+                return None
+            finally:
+                if use_sem:
+                    _usgs_release()
+            _count_fetch(source, "ok" if body else "fail")
+            _log_upstream(source, time.time() - t0, "ok" if body else "fail")
+            return body
+        return _keyed_single_flight(("get", url, ttl, accept), _via_conditions)
+
+    hooks = conditions._hooks
+
+    def _do():
+        cg = hooks.get("cache_get")
+        if cg:
+            raw = _cached_body(cg(url))
+            if raw is not None:
+                return raw
+        source = _source_label(url)
+        use_sem = _is_usgs_url(url)
+        attempts = 1 + (STAT_EXTRA_TRIES if _is_usgs_stat_url(url) else 0)
+        status, raw, err_name = 0, None, ""
+        for attempt in range(attempts):
+            if use_sem:
+                _usgs_acquire()
+            t0 = time.time()
+            try:
+                status, _ct, raw = _FETCH(url, timeout=FETCH_TIMEOUT, tries=FETCH_TRIES)
+            except Exception as e:
+                status, raw, err_name = 0, None, type(e).__name__
+                _count_fetch(source, "error")
+                _log_upstream(source, time.time() - t0, "error", err_name)
+            else:
+                dur = time.time() - t0
+                if status == 200 and raw:
+                    _count_fetch(source, "ok")
+                    _log_upstream(source, dur, "ok")
+                else:
+                    kind = "timeout" if (err_name == "TimeoutError" or (raw and b"timed out" in raw[:80])) else "fail"
+                    detail = err_name or ("HTTP %s" % status)
+                    if raw and not isinstance(raw, (bytes, bytearray)):
+                        raw = None
+                    elif raw and isinstance(raw, (bytes, bytearray)) and b"timed out" in raw[:80]:
+                        kind = "timeout"
+                    _count_fetch(source, kind)
+                    _log_upstream(source, dur, kind, detail)
+                    if kind == "timeout":
+                        # A timeout is not a brief 502; do not retry it.
+                        attempts = attempt + 1
+            finally:
+                if use_sem:
+                    _usgs_release()
+            if status == 200 and raw:
+                break
+            if not (_is_usgs_stat_url(url) and status in STAT_RETRY_STATUS and attempt + 1 < attempts):
+                break
+        if status == 200 and raw:
+            put = hooks.get("cache_put_ttl")
+            if put:
+                put(url, ttl, raw)
+            return raw
+        anyg = hooks.get("cache_get_any")
+        if anyg:
+            return _cached_body(anyg(url))
+        return None
+
+    return _keyed_single_flight(("get", url, ttl, accept), _do)
 
 
 def _get_json(url, ttl):
@@ -230,8 +361,48 @@ def _age_h(t, now):
 
 # ---------- USGS instantaneous values ----------
 
+def _shared_corridor_sites():
+    """USGS site ids that appear on both Falls (release/river) and the Neuse page."""
+    regs = regions()
+    falls, neuse = set(), set()
+    fr = regs.get("falls-lake") or {}
+    for s in list(fr.get("river") or []) + ([fr["release"]] if fr.get("release") else []):
+        if s and s.get("usgs"):
+            falls.add(s["usgs"])
+    nr = regs.get("neuse-river") or {}
+    for s in list(nr.get("river") or []) + ([nr["release"]] if nr.get("release") else []):
+        if s and s.get("usgs"):
+            neuse.add(s["usgs"])
+    return falls & neuse
+
+
+def _iv_flow_groups(sites, params, period="P1D"):
+    """Split a region's flow/stage site list into reusable canonical groups.
+
+    Falls and Neuse share the lower-Neuse corridor gauges; giving them the
+    same (sites, params, period) means one in-flight IV request is reused.
+    """
+    shared = _shared_corridor_sites()
+    sites = [s for s in sites if s]
+    corridor = sorted(set(s for s in sites if s in shared))
+    rest = sorted(set(s for s in sites if s not in shared))
+    params = list(sorted(set(params)))
+    groups = []
+    if corridor:
+        groups.append((corridor, params, period))
+    if rest:
+        groups.append((rest, params, period))
+    return groups
+
+
 def usgs_iv(sites, params, period="P1D"):
     """{(site, param): [(datetime, value), ...]} for the period, oldest first."""
+    key = ("iv", tuple(sorted(set(sites or []))), tuple(sorted(set(params or []))), period)
+    return _keyed_single_flight(key, lambda: _usgs_iv_fetch(sites, params, period),
+                                wait_s=FETCH_TIMEOUT + 5)
+
+
+def _usgs_iv_fetch(sites, params, period="P1D"):
     q = urlencode({"format": "json", "sites": ",".join(sorted(set(sites))),
                    "parameterCd": ",".join(sorted(set(params))), "period": period, "siteStatus": "all"})
     d = _get_json("https://waterservices.usgs.gov/nwis/iv/?" + q, TTL_IV)
@@ -282,6 +453,12 @@ def change_over(series, hours):
 # ---------- USGS daily statistics (flow percentiles) ----------
 
 def usgs_daily_stats(site, day):
+    key = ("stat", site, str(getattr(day, "month", "")), str(getattr(day, "day", "")))
+    return _keyed_single_flight(key, lambda: _usgs_daily_stats_fetch(site, day),
+                                wait_s=FETCH_TIMEOUT + 5)
+
+
+def _usgs_daily_stats_fetch(site, day):
     q = urlencode({"format": "rdb", "sites": site, "statReportType": "daily", "statTypeCd": "all", "parameterCd": "00060"})
     txt = _get_text("https://waterservices.usgs.gov/nwis/stat/?" + q, TTL_STAT)
     if not txt:
@@ -842,16 +1019,24 @@ def reset_caches():
     a payload into the next caller's cache.
     """
     global _EPOCH
+    global _USGS_INFLIGHT, _USGS_INFLIGHT_PEAK
     with _LOCK:
         _EPOCH += 1
         evs = list(_FLIGHT.values())
+        key_evs = [slot[0] for slot in _KEY_FLIGHT.values()]
         _ASSEMBLED.clear()
         _FAILED.clear()
         _PARTIAL.clear()
         _COMPLETE.clear()
         _FLIGHT.clear()
         _REFRESHING.clear()
+        _KEY_FLIGHT.clear()
+        _FETCH_COUNTS.clear()
+        _USGS_INFLIGHT = 0
+        _USGS_INFLIGHT_PEAK = 0
     for ev in evs:
+        ev.set()
+    for ev in key_evs:
         ev.set()
 
 
@@ -997,6 +1182,24 @@ def _stats_sites(specs, iv, now):
     return sites
 
 
+def _apply_stats(payload, stats_lookup):
+    """Attach daily-stats / flow bands to stations already in payload. Never changes timestamps."""
+    if not payload or not stats_lookup:
+        return payload
+    for block in [payload.get("release")] + list(payload.get("inflows") or []) + list(payload.get("river") or []):
+        if not block:
+            continue
+        q = block.get("flowCfs")
+        if not q or q.get("stale") or q.get("value") is None:
+            continue
+        st = stats_lookup.get(block.get("usgs"))
+        if not st:
+            continue
+        block["stats"] = st
+        block["band"] = flow_band(q["value"], st)
+    return payload
+
+
 def _assemble_build(rid):
     """Build and cache one region's payload. Per-source waits are bounded; nothing is invented."""
     with _LOCK:
@@ -1025,7 +1228,11 @@ def _assemble_build(rid):
     iv_params = ["00060", "00065"]
     if wt_sites:
         iv_params.append("00010")
-    f_ivq = _pool().submit(usgs_iv, sites, iv_params, "P1D") if sites else None
+    # Lake P7D already covers the dam site; flow/stage groups exclude it so the
+    # shared lower-Neuse corridor can be a single in-flight request for Falls and Neuse.
+    flow_sites = [s for s in sites if not (lake and s == lake["usgs"])]
+    f_ivq_parts = [_pool().submit(usgs_iv, gs, gp, gper)
+                   for gs, gp, gper in _iv_flow_groups(flow_sites, iv_params, "P1D")]
     f_fc = _pool().submit(conditions.forecast_block, r["forecast"]) if r.get("forecast") else None
     f_qpf = _pool().submit(qpf_block, r["forecast"], now) if lake and r.get("forecast") else None
     alert_pt = r.get("alertPoint") or [r["anchor"]["lat"], r["anchor"]["lon"]]
@@ -1044,17 +1251,22 @@ def _assemble_build(rid):
         if isinstance(got, tuple) and len(got) == 2:
             iv7, names = got
     ivq = {}
-    if f_ivq is not None:
-        got = _wait_from(f_ivq, ({}, {}), wave0)
+    for fut in f_ivq_parts:
+        got = _wait_from(fut, ({}, {}), wave0)
         if isinstance(got, tuple) and len(got) == 2:
-            ivq, names2 = got
-            names.update(names2)
+            part, names2 = got
+            ivq.update(part or {})
+            names.update(names2 or {})
 
-    # USGS daily-stats in parallel (Falls can have several). Same lookup as the sequential path.
+    # Daily-stats are non-critical percentiles. Submit them now but do not block
+    # publishing official IV readings on their completion.
     need = _stats_sites(river + inflows + ([rel] if rel else []), ivq, now)
     f_stats = {site: _pool().submit(usgs_daily_stats, site, et_today) for site in need}
-    wave1 = time.time()
-    stats_lookup = {site: _wait_from(fut, None, wave1) for site, fut in f_stats.items()}
+    stats_started = time.time()
+    stats_lookup = {}
+    for site, fut in f_stats.items():
+        if fut.done():
+            stats_lookup[site] = _wait(fut, None, timeout=0.05)
 
     lake_out = None
     water = {"kind": "observed", "status": "unavailable", "c": None, "f": None, "time": None, "stale": None,
@@ -1180,6 +1392,25 @@ def _assemble_build(rid):
             # previously verified payload and its original timestamp.
             _FAILED[rid] = time.time()
             _PARTIAL.pop(rid, None)
+    # Official IV (and NWS) are already published. Attach daily-stats if they
+    # arrive, without restamping generatedAt or observation times.
+    if f_stats:
+        more = {}
+        for site, fut in f_stats.items():
+            if stats_lookup.get(site):
+                continue
+            rem = (FETCH_TIMEOUT + 2) - (time.time() - stats_started)
+            got = _wait(fut, None, timeout=max(0.05, rem))
+            if got:
+                more[site] = got
+        if more:
+            with _LOCK:
+                if epoch == _EPOCH:
+                    hit = _ASSEMBLED.get(rid)
+                    target = hit[1] if hit else payload
+                    _apply_stats(target, more)
+                    if target is not payload:
+                        _apply_stats(payload, more)
     return 200, payload
 
 
