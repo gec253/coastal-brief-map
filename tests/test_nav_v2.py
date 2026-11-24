@@ -238,15 +238,7 @@ class Budget(unittest.TestCase):
         proc = subprocess.run(["git", "diff", "--name-only", PROD, "--", "."], cwd=ROOT,
                               capture_output=True, text=True, check=True)
         changed = {x for x in proc.stdout.split() if x != "data/ads.json"}
-        # 15f1fdd landed NAV_V2 on production. This freshwater first-paint repair may also change:
-        repair = {
-            "freshwater.py", "sprint_home.py", "server.py", "fresh-home.js",
-            "preview/sprint-home/hybrid.css",
-            "tests/test_nav_v2.py", "tests/test_freshwater_first_paint.py",
-            "tests/test_freshwater_warm.py", "tests/test_ramp_finder_preview.py",
-            "tests/test_freshwater.py",
-        }
-        self.assertLessEqual(changed, {"nav_v2.py", "server.py", "tests/test_nav_v2.py"} | repair, changed)
+        self.assertLessEqual(changed, {"nav_v2.py", "server.py", "tests/test_nav_v2.py"}, changed)
 
 
 if __name__ == "__main__":
