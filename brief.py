@@ -232,6 +232,27 @@ def _swell_at_seas_time(R: dict) -> dict:
         return sw
 
 
+def _official_alerts(block: dict | None, url: str | None, fetch) -> dict:
+    """The brief's own alert list from the raw NWS feed (t448u).
+
+    conditions/freshwater (protected public files) collapse alerts that share an event name and end
+    time. The brief re-reads the same api.weather.gov URL through the same cached fetcher, so
+    normally no extra request is made, and keeps every distinct alert with its full official text.
+    If the raw feed cannot be read, the shared block is used as before."""
+    block = dict(block or {})
+    if block.get("status") != "ok" or not url:
+        return block
+    try:
+        raw = fetch(url)
+    except Exception:
+        raw = None
+    if not isinstance(raw, dict) or not isinstance(raw.get("features"), list):
+        return block
+    block["items"] = brief_format.nws_alert_items(raw["features"])
+    block["source"] = "nws-raw"
+    return block
+
+
 def build_salt(rid: str, now: datetime) -> dict:
     st, d = conditions.assemble(rid)
     if st != 200 or not d.get("ok"):
@@ -261,7 +282,11 @@ def build_salt(rid: str, now: datetime) -> dict:
 
     # advisories first — current vs upcoming, with start, end, and affected waters
     al = d.get("alerts") or {}
-    hazards = brief_format.format_hazards(al, now)
+    if al.get("zones"):
+        # Same URL conditions.alerts_block used, read through the same cache.
+        al = _official_alerts(al, "https://api.weather.gov/alerts/active?status=actual&zone=" + ",".join(al["zones"]),
+                              lambda u: conditions.nws_json(u, conditions.TTL_ALERTS))
+    hazards = brief_format.format_hazards(al, now, al.get("zones"))
     items.append(("Advisories", hazards["line"]))
     if hazards["status"] == "unknown":
         missing.append("advisories")
@@ -409,7 +434,11 @@ def build_salt(rid: str, now: datetime) -> dict:
     # Upcoming or current official hazards, with start/end/area. Never "is in effect"
     # for a watch whose onset is still in the future.
     if hazards.get("status") == "active":
-        sig = (hazards.get("upcoming") or []) + (hazards.get("current") or [])
+        # Lead with the most serious official hazard (warning > watch > advisory), current first.
+        rank = {"warning": 0, "watch": 1, "advisory": 2, "statement": 3}
+        sig = sorted((hazards.get("current") or []) + (hazards.get("upcoming") or []),
+                     key=lambda r: (rank.get(r.get("kind") or brief_format.hazard_kind(r.get("event") or ""), 9),
+                                    0 if r.get("status") == "current" else 1))
         if sig:
             take.append(sig[0]["text"])
     if wind_tr:
@@ -453,6 +482,12 @@ def build_fresh(rid: str, now: datetime) -> dict:
         raise RuntimeError("freshwater unavailable")
     L = d["lake"]; items, fresh, take, missing = [], [], [], []
     al = d.get("alerts") or {}
+    rcfg = (freshwater.regions() or {}).get(rid) or {}
+    pt = rcfg.get("alertPoint") or [(rcfg.get("anchor") or {}).get("lat"), (rcfg.get("anchor") or {}).get("lon")]
+    if pt and None not in pt:
+        # Same URL freshwater.alerts_point used, read through the same cache.
+        al = _official_alerts(al, "https://api.weather.gov/alerts/active?status=actual&point=%.4f,%.4f" % (pt[0], pt[1]),
+                              lambda u: freshwater._get_json(u, 300))
     hazards = brief_format.format_fresh_alerts(al, now)
     items.append(("Alerts", hazards["line"]))
     if L.get("elevation"):
@@ -1043,11 +1078,89 @@ def _outlook_html(b: dict, esc) -> str:
             '<p class="mb-outlook-k">Outlook</p>%s%s</section>' % ("".join(rows), src))
 
 
-def _hazards_html(b: dict, esc) -> str:
+_KIND_LABEL = {"warning": "Warning", "watch": "Watch", "advisory": "Advisory", "statement": "Statement", "other": "Alert"}
+
+
+def _hz_link(row: dict, b: dict) -> tuple[str, str]:
+    """Official NWS page for the row's first in-region zone (else the brief's marine zone)."""
+    zones = list(row.get("ugc") or [])
+    local = list(row.get("localUgc") or []) or zones
+    z = (local[0] if local else None) or b.get("marineZone")
+    if z and re.fullmatch(r"[A-Z]{2}Z\d{3}", z):
+        if z[:2] in ("AM", "AN", "GM", "PZ", "PK", "PH", "LM", "LE", "LH", "LO", "LS", "LC", "PM", "PS"):
+            return ("https://forecast.weather.gov/showsigwx.php?warnzone=%s&warncounty=marine" % z, "NWS hazard text for %s" % z)
+        return ("https://forecast.weather.gov/MapClick.php?zoneid=%s" % z, "NWS forecast and hazards for %s" % z)
+    return ("https://alerts.weather.gov/", "NWS active alerts")
+
+
+def _nws_text(t: str) -> str:
+    """NWS products hard-wrap lines; join single line breaks, keep blank-line paragraph breaks."""
+    return re.sub(r"[ \t]*(?<!\n)\n(?!\n)[ \t]*", " ", (t or "").strip())
+
+
+def _hz_row_html(row: dict, b: dict, view_now: datetime, esc) -> str:
+    onset = brief_format._parse_iso(row.get("onset"))
+    ends = brief_format._parse_iso(row.get("ends"))
+    if ends is not None and ends <= view_now:
+        st = "ended"
+    elif onset is not None and onset > view_now:
+        st = "upcoming"
+    else:
+        st = "current"
+    kind = row.get("kind") or brief_format.hazard_kind(row.get("event") or "")
+    kind_label = _KIND_LABEL.get(kind, "Alert")
+    start = brief_format.when_et(onset) if onset else ""
+    end = brief_format.when_et(ends) if ends else ""
+    if start and end:
+        when = '%s <span aria-hidden="true">–</span><span class="mb-sr"> to </span> %s' % (esc(start.replace(" ET", "")), esc(end))
+    elif end:
+        when = "until %s" % esc(end)
+    elif start:
+        when = "from %s" % esc(start)
+    else:
+        when = "Times not given by NWS"
+    all_areas = [a for a in re.split(r";\s*", row.get("areas") or "") if a]
+    local = row.get("local") or []
+    if local:
+        extra = len([a for a in all_areas if a not in local])
+        area = esc("; ".join(local)) + ((' <span class="mb-hz-more-n">+%d more</span>' % extra) if extra > 0 else "")
+    else:
+        area = esc("; ".join(all_areas))
+    link, link_label = _hz_link(row, b)
+    prods = []
+    for prod in row.get("products") or []:
+        bits = []
+        if prod.get("headline"):
+            bits.append('<p class="mb-hz-hl">%s</p>' % esc(prod["headline"]))
+        meta = [x for x in (("Severity: " + prod["severity"]) if prod.get("severity") else "",
+                            ("Certainty: " + prod["certainty"]) if prod.get("certainty") else "",
+                            ("Areas: " + prod["areas"]) if prod.get("areas") and len(row.get("products") or []) > 1 else "") if x]
+        if meta:
+            bits.append('<p class="mb-hz-meta">%s</p>' % esc(" · ".join(meta)))
+        if prod.get("description"):
+            bits.append('<p class="mb-hz-desc">%s</p>' % esc(_nws_text(prod["description"])))
+        if prod.get("instruction"):
+            bits.append('<p class="mb-hz-inst"><b>NWS instructions:</b> %s</p>' % esc(_nws_text(prod["instruction"])))
+        if bits:
+            prods.append('<div class="mb-hz-prod">%s</div>' % "".join(bits))
+    if not prods:
+        prods.append('<p class="mb-hz-desc">%s</p>' % esc(row.get("text") or ""))
+    more = ('<div class="mb-hz-body"><p class="mb-hz-meta"><b>All areas:</b> %s</p>%s'
+            '<p class="mb-hz-src"><a href="%s" target="_blank" rel="noopener">%s</a> · issued by NWS; check for updates since this brief.</p></div>'
+            % (esc("; ".join(all_areas) or "Not listed"), "".join(prods), esc(link), esc(link_label)))
+    return ('<li class="mb-hz-row k-%s s-%s"><details><summary>'
+            '<span class="mb-hz-l1"><span class="mb-hz-kind">%s</span> <span class="mb-hz-ev">%s</span></span>'
+            '<span class="mb-hz-l2"><span class="mb-hz-when"><span class="mb-hz-st">%s</span> %s</span><span class="mb-hz-area">%s</span></span>'
+            '</summary>%s</details></li>'
+            % (esc(kind), st, esc(kind_label), esc(row.get("event") or ""), st.upper(), when, area, more))
+
+
+def _hazards_html(b: dict, esc, view_now: datetime | None = None) -> str:
     water = b.get("waterType") or "saltwater"
     label = "Alerts" if water == "freshwater" else "Advisories"
     stored = _item(b, label)
     hz = b.get("hazards")
+    view_now = view_now or datetime.now(timezone.utc)
     if hz and hz.get("status") == "clear":
         return ('<section class="mb-adv is-clear" aria-label="%s"><span class="mb-adv-dot" aria-hidden="true"></span>'
                 '<div><p class="mb-adv-k">%s</p><p class="mb-adv-t">%s</p></div></section>'
@@ -1056,20 +1169,26 @@ def _hazards_html(b: dict, esc) -> str:
         return ('<section class="mb-adv is-unknown" aria-label="%s"><span class="mb-adv-dot" aria-hidden="true"></span>'
                 '<div><p class="mb-adv-k">%s</p><p class="mb-adv-t">%s</p></div></section>'
                 % (esc(label), esc(label), esc(hz.get("line") or stored or "")))
-    groups = []
+    rows = []
     if hz and hz.get("status") == "active":
-        for kind, key in (("Current", "current"), ("Upcoming", "upcoming")):
-            rows = hz.get(key) or []
-            if not rows:
-                continue
-            cls = "mb-adv-k mb-adv-up" if key == "upcoming" else "mb-adv-k"
-            lis = "".join("<li>%s</li>" % esc(r["text"]) for r in rows)
-            groups.append('<p class="%s">%s</p><ul class="mb-adv-list">%s</ul>' % (cls, kind, lis))
-    if groups:
+        rows = list(hz.get("current") or []) + list(hz.get("upcoming") or [])
+    if rows:
+        rank = {"warning": 0, "watch": 1, "advisory": 2, "statement": 3}
+        def key(r):
+            k = r.get("kind") or brief_format.hazard_kind(r.get("event") or "")
+            on = brief_format._parse_iso(r.get("onset"))
+            return (rank.get(k, 9), on.timestamp() if on else 0)
+        rows.sort(key=key)
+        lis = "".join(_hz_row_html(r, b, view_now, esc) for r in rows)
+        n = len(rows)
+        issued = (b.get("issuedEt") or "").split(", ")[-1]
         # Keep the stored snapshot line in the page so archived wording still matches tests.
         hidden = ('<p class="mb-adv-stored">%s</p>' % esc(stored)) if stored else ""
-        return ('<section class="mb-adv is-active" aria-label="%s"><span class="mb-adv-dot" aria-hidden="true"></span>'
-                '<div>%s%s</div></section>' % (esc(label), "".join(groups), hidden))
+        return ('<section class="mb-adv is-active mb-hz" aria-labelledby="mb-hz-h">'
+                '<div class="mb-hz-head"><h2 class="mb-hz-h" id="mb-hz-h">NWS %s <span class="mb-hz-n">%d</span></h2>'
+                '<p class="mb-hz-note">List as issued %s · status now</p></div>'
+                '<ul class="mb-hz-list">%s</ul>%s</section>'
+                % ("alerts" if water == "freshwater" else "hazards", n, esc(issued or "at issue"), lis, hidden))
     # Legacy stored briefs with no hazards object.
     adv = _advisory(b)
     if not adv:
@@ -1218,7 +1337,7 @@ def page(b: dict, include_fresh: bool = False, public: bool = False, ads_on: boo
         fr_bits.append("<li><span class=\"mb-fk\">%s</span> <time>%s</time>%s%s</li>" % (esc(f["label"]), esc(f["time"]), stn, stale))
     fr = "".join(fr_bits) or "<li>No observation times were recorded at issue time.</li>"
     view_now = view_now or datetime.now(timezone.utc)
-    adv_html = _hazards_html(b, esc)
+    adv_html = _hazards_html(b, esc, view_now)
     glance = _glance_html(b, view_now, esc, group="primary")
     glance_rest = _glance_html(b, view_now, esc, group="rest")
     astro_html = _astro_html(b, esc)
@@ -1288,6 +1407,7 @@ def page(b: dict, include_fresh: bool = False, public: bool = False, ads_on: boo
 <link rel="preload" href="/fonts/source-sans-3-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/barlow-condensed-600.woff2" as="font" type="font/woff2" crossorigin>
 <script>(function(){try{var q=new URLSearchParams(location.search).get("theme");var t=q||localStorage.getItem("coastalBrief.theme");if(t!=="light"&&t!=="dark")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.setAttribute("data-theme",t)}catch(e){}})();</script>
+<script>(function(){var d=document.documentElement;if(!document.fonts||!document.fonts.ready)return;d.classList.add("mb-fonts-wait");function go(){d.classList.remove("mb-fonts-wait")}document.fonts.ready.then(go);setTimeout(go,600)})();</script>
 <link rel="stylesheet" href="/brief.css">
 </head>
 <body class="mb-page">

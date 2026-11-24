@@ -95,34 +95,148 @@ def format_alert_line(alert: dict, now: datetime) -> dict | None:
     }
 
 
-def format_hazards(alerts_block: dict, now: datetime) -> dict:
-    """Group official (already status=actual) alerts into current vs upcoming."""
+_REPLACED_RE = re.compile(r"^\s*The .{0,80}? has been (replaced|cancelled|canceled)\b", re.I)
+
+
+def nws_alert_items(features) -> list:
+    """Official NWS alerts as brief items, one per distinct alert (t448u).
+
+    Only status=Actual. Exact duplicate features (same alert id) are dropped. Distinct alerts are
+    never collapsed here, even when they share an event name and end time: the shared
+    conditions.alerts_block key (event, ends) dropped the Pamlico Sound Small Craft Advisory and
+    the West Carteret Coastal Flood Watch from the Nov 24, 2026 5:15 AM briefs. An alert NWS
+    itself marks as replaced or cancelled is skipped; the alert that replaced it is in the feed.
+    """
+    items, seen = [], set()
+    for f in features or []:
+        p = (f or {}).get("properties") or {}
+        if (p.get("status") or "Actual") != "Actual":
+            continue  # skip NWS test/exercise messages
+        if p.get("messageType") == "Cancel" or p.get("replacedBy"):
+            continue
+        if _REPLACED_RE.search(p.get("headline") or "") or _REPLACED_RE.search(p.get("description") or ""):
+            continue
+        aid = p.get("id") or f.get("id") or (p.get("event"), p.get("onset"), p.get("ends") or p.get("expires"), p.get("areaDesc"))
+        if aid in seen:
+            continue
+        seen.add(aid)
+        ugc = [str(z) for z in ((p.get("geocode") or {}).get("UGC") or [])]
+        items.append({"event": p.get("event"), "headline": p.get("headline"), "severity": p.get("severity"),
+                      "areas": p.get("areaDesc"), "onset": p.get("onset") or p.get("effective"),
+                      "ends": p.get("ends") or p.get("expires"), "sender": p.get("senderName"),
+                      "id": p.get("id"), "sent": p.get("sent"), "messageType": p.get("messageType"),
+                      "certainty": p.get("certainty"), "urgency": p.get("urgency"), "ugc": ugc,
+                      "description": p.get("description"), "instruction": p.get("instruction")})
+    return items
+
+
+# Official NWS zone names for the zones the briefs watch (api.weather.gov/zones, checked Nov 24, 2026).
+ZONE_NAMES = {
+    "AMZ135": "Pamlico Sound",
+    "AMZ152": "S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM",
+    "AMZ154": "S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM",
+    "AMZ156": "S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM",
+    "AMZ158": "S of Cape Lookout NC to Surf City NC out to 20 NM",
+    "NCZ195": "West Carteret",
+    "NCZ196": "East Carteret",
+    "NCZ205": "Hatteras Island",
+    "NCZ041": "Wake",
+}
+
+_KIND_RANK = {"warning": 0, "watch": 1, "advisory": 2, "statement": 3, "other": 4}
+
+
+def hazard_kind(event: str) -> str:
+    """NWS product type from the official event name: warning, watch, advisory, statement, other."""
+    ev = (event or "").strip().lower()
+    for k in ("warning", "watch", "advisory", "statement"):
+        if ev.endswith(k) or (" %s " % k) in (" %s " % ev):
+            return k
+    return "other"
+
+
+def _split_areas(area: str) -> list:
+    return [a.strip().rstrip(".") for a in re.split(r";", area or "") if a.strip()]
+
+
+def _zone_names(alert: dict) -> dict:
+    """UGC code -> official name: the fixed table first, else areaDesc when it lines up 1:1 with UGC."""
+    ugc = list(alert.get("ugc") or [])
+    parts = _split_areas(alert.get("areas") or alert.get("areaDesc") or "")
+    out = {}
+    aligned = len(parts) == len(ugc)
+    for i, z in enumerate(ugc):
+        if z in ZONE_NAMES:
+            out[z] = ZONE_NAMES[z]
+        elif aligned:
+            out[z] = parts[i]
+    return out
+
+
+def _product(a: dict) -> dict:
+    return {k: a.get(k) for k in ("id", "headline", "description", "instruction", "severity", "certainty",
+                                  "urgency", "sender", "sent", "areas", "ugc", "messageType") if a.get(k) not in (None, "", [])}
+
+
+def format_hazards(alerts_block: dict, now: datetime, zones: list | None = None) -> dict:
+    """Group official (already status=actual) alerts into current vs upcoming.
+
+    Never drops a distinct alert. Two alerts are joined into one row only when they are the
+    same official event with the same onset and end; the row then lists the union of their
+    areas and keeps every source product's full text. Anything else is its own row.
+    zones: this region's alert zones, used to name the in-region areas first.
+    """
     if (alerts_block or {}).get("status") != "ok":
         return {"status": "unknown", "current": [], "upcoming": [], "line": "NWS advisories were not available at issue time."}
     items = list((alerts_block or {}).get("items") or [])
-    # Dedup by event + onset + ends + area so two zones with the same window can be joined.
-    seen = set()
+    zones = list(zones or (alerts_block or {}).get("zones") or [])
     grouped = {}
     for a in items:
-        onset = a.get("onset") or a.get("effective")
-        ends = a.get("ends") or a.get("expires")
-        area = _short_area(a.get("areas") or a.get("areaDesc") or "")
-        key = (a.get("event"), onset, ends)
-        if key in grouped and area and area not in (grouped[key].get("areas") or ""):
-            prev = grouped[key]["areas"]
-            grouped[key]["areas"] = (prev + "; " + area) if prev else area
+        event = (a.get("event") or "").strip()
+        if not event:
             continue
-        if key in seen:
-            continue
-        seen.add(key)
-        grouped[key] = dict(a)
-        grouped[key]["areas"] = area
+        onset = _parse_iso(a.get("onset") or a.get("effective"))
+        ends = _parse_iso(a.get("ends") or a.get("expires"))
+        key = (event, onset.isoformat() if onset else None, ends.isoformat() if ends else None)
+        names = _zone_names(a)
+        g = grouped.get(key)
+        if g is None:
+            g = grouped[key] = {"event": event, "onset": a.get("onset") or a.get("effective"),
+                                "ends": a.get("ends") or a.get("expires"), "areaList": [], "ugc": [],
+                                "names": {}, "severity": a.get("severity"), "products": []}
+        for part in _split_areas(a.get("areas") or a.get("areaDesc") or ""):
+            if part not in g["areaList"]:
+                g["areaList"].append(part)
+        for z in a.get("ugc") or []:
+            if z not in g["ugc"]:
+                g["ugc"].append(z)
+        g["names"].update(names)
+        prod = _product(a)
+        if prod and prod not in g["products"]:
+            g["products"].append(prod)
     current, upcoming = [], []
-    for a in grouped.values():
+    for g in grouped.values():
+        a = {"event": g["event"], "onset": g["onset"], "ends": g["ends"], "areas": "; ".join(g["areaList"])}
         row = format_alert_line(a, now)
         if not row:
             continue
+        row["kind"] = hazard_kind(g["event"])
+        if g.get("severity"):
+            row["severity"] = g["severity"]
+        if g["ugc"]:
+            row["ugc"] = g["ugc"]
+            local_ugc = [z for z in g["ugc"] if z in zones]
+            if local_ugc:
+                row["localUgc"] = local_ugc
+                row["local"] = [g["names"].get(z) or z for z in local_ugc]
+        if g["products"]:
+            row["products"] = g["products"]
         (upcoming if row["status"] == "upcoming" else current).append(row)
+
+    def order(r):
+        return (_KIND_RANK.get(r.get("kind"), 9), r.get("onset") and _parse_iso(r["onset"]).timestamp() or 0, r["event"])
+    current.sort(key=order)
+    upcoming.sort(key=order)
     if not current and not upcoming:
         return {"status": "clear", "current": [], "upcoming": [],
                 "line": "No NWS marine advisories for this area."}
@@ -134,9 +248,9 @@ def format_hazards(alerts_block: dict, now: datetime) -> dict:
     return {"status": "active", "current": current, "upcoming": upcoming, "line": " ".join(parts)}
 
 
-def format_fresh_alerts(alerts_block: dict, now: datetime) -> dict:
+def format_fresh_alerts(alerts_block: dict, now: datetime, zones: list | None = None) -> dict:
     """Same grouping for Falls Lake (no marine wording in the empty state)."""
-    base = format_hazards(alerts_block, now)
+    base = format_hazards(alerts_block, now, zones)
     if base["status"] == "clear":
         base["line"] = "No NWS alerts at the dam."
     elif base["status"] == "unknown":
