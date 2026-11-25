@@ -494,6 +494,13 @@ a.skip{position:absolute;left:-999px}
 a.skip:focus{left:12px;top:12px;background:#fff;padding:8px;z-index:10}
 %s
 %s
+@media (prefers-color-scheme:dark){
+  :root{--paper:#0E2433;--page:#071C29;--ink:#F3EEE3;--ink-2:#B9C7CF;--brass:#C4A36A;--line-2:#3B6680}
+  a.skip:focus{background:#0E2433;color:#F3EEE3}
+  .fb-page .fb-f input,.fb-page .fb-f textarea{background:var(--paper)}
+  .fb-page .fb-f [aria-invalid="true"]{border-color:#FFB4AB;box-shadow:0 0 0 1px #FFB4AB}
+  .fb-page .fb-send{background:#C4A36A;border-color:#C4A36A;color:#071C29}
+}
 </style>
 </head>
 <body>

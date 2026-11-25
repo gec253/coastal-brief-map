@@ -203,6 +203,10 @@ CSS = ("<style data-cb-theme>"
        ".mh-ear-in .cbt{margin-left:auto}.mh-ear-in .mh-date:first-child:not(:only-child){margin:0}"
        "@media (max-width:420px){.mh-ear .mh-date{letter-spacing:.06em}}"
        "header.mh>.cbt{float:right;margin:-6px 0 0 8px}"
+       # Dashboard tide-search mini chart (app.js tideCurveSvg) draws with fixed navy presentation
+       # attributes, which vanish on its dark panel; CSS outranks them, so dark mode gets light ink.
+       "html[data-theme=\"dark\"] .tide-curve polyline{stroke:#A9D6CC}html[data-theme=\"dark\"] .tide-curve line{stroke:#3B6680}"
+       "html[data-theme=\"dark\"] .tide-curve circle[fill=\"#0B2A3D\"]{fill:#F3EEE3}"
        "@media print{.cbt{display:none}}"
        "</style>")
 
