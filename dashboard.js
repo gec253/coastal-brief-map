@@ -91,8 +91,23 @@
     const label = kind === "forecast" ? "Forecast" : kind === "predicted" ? "Predicted" : "Observed";
     return '<span class="tag tag-' + esc(kind || "observed") + '">' + label + "</span>";
   }
+  function windSel(d) {
+    return (d && d.windSelection) || {};
+  }
+  function displayWind(d) {
+    const sel = windSel(d);
+    if (sel.reading) return sel.reading;
+    return d && d.readings && d.readings.wind;
+  }
+  function windTitle(r) {
+    if (r && (r.displayName || r.sourceRole === "backup")) return r.displayName || "Wind · coastal backup";
+    return "Wind";
+  }
   function statusChip(r) {
     if (!r) return "";
+    if (r.partial || r.sourceRole === "backup") {
+      return '<span class="chip-stale" title="Primary offshore source is not usable; coastal backup shown">PARTIAL · coastal backup</span>';
+    }
     if (r.status === "stale") return '<span class="chip-stale" title="Older than this station\'s normal reporting gap">Stale · ' + esc(etTime(r.time)) + "</span>";
     if (r.status === "unavailable") return '<span class="chip-off">Not reporting</span>';
     return "";
@@ -185,14 +200,14 @@
     // Whole-m/s buoys (e.g. 41064) come back as whole knots with decimals: 0; never show a false tenth.
     const ktDec = v.decimals === 0 ? 0 : 1;
     if (!el.querySelector(".dial")) {
-      el.innerHTML = head("Wind", r) +
+      el.innerHTML = head(windTitle(r), r) +
         '<div class="wind-body"><div class="dial-wrap">' + windDialSvg() +
         '<div class="dial-center"><div class="wind-speed" id="wind-speed"></div><div class="wind-unit">knots</div><div class="wind-gust" id="wind-gust"></div></div></div>' +
         '<div class="wind-side"><div class="wind-from" id="wind-from"></div><dl class="readouts" id="wind-reads"></dl></div></div>' +
         '<div class="inst-foot" id="wind-src"></div>' +
         '<div class="harbor" id="i-harbor"></div>';
     } else {
-      el.querySelector(".inst-h").outerHTML = head("Wind", r);
+      el.querySelector(".inst-h").outerHTML = head(windTitle(r), r);
     }
     $("wind-speed").innerHTML = has ? numSpan("wspd", Math.round(v.speedKt)) : '<span class="num-off">—</span>';
     $("wind-gust").innerHTML = isNum(v.gustKt) ? "gust <b>" + numSpan("wgst", Math.round(v.gustKt)) + "</b>" : (has ? "gust not reported" : "");
@@ -936,10 +951,11 @@
   // ---------- header bits ----------
   function renderHeaderBits(d) {
     const badge = $("freshness-badge");
-    const w = d.readings && d.readings.wind;
+    const w = displayWind(d);
+    const sel = windSel(d);
     if (badge) {
       badge.textContent = "Updated " + etTime(d.generatedAt);
-      badge.classList.toggle("amber", !!(w && w.status !== "ok"));
+      badge.classList.toggle("amber", (sel.role && sel.role !== "primary") || !!(w && w.status !== "ok"));
     }
     const loc = $("loc-line");
     if (loc) loc.textContent = d.region.name + " · " + (d.region.area || "") + ". Location is not requested from your browser.";
@@ -971,12 +987,17 @@
         '<span class="gs-v">' + esc(off ? "—" : v) + "</span>" +
         '<span class="gs-s">' + esc(off ? "not reporting" : s) + "</span></a>";
     }
-    const w = val(R.wind), se = val(R.seas), wt = val(R.waterTemp);
+    const wr = displayWind(d);
+    const w = val(wr), se = val(R.seas), wt = val(R.waterTemp);
+    const wKey = (windSel(d).role === "backup") ? "Wind · coastal backup" : "Wind";
+    const wSub = (windSel(d).role === "backup")
+      ? ("PARTIAL · " + (isNum(w.gustKt) ? "gust " + Math.round(w.gustKt) + " kt" : "coastal backup"))
+      : (isNum(w.gustKt) ? "gust " + Math.round(w.gustKt) + " kt" : "observed");
     const ev = ((d.tides && d.tides.events) || []).filter(function (e) { return e.t > Date.now(); })[0];
     const tideR = d.tides && d.tides.status === "ok" ? { status: "ok" } : null;
     box.innerHTML =
-      cell("i-wind", "Wind", isNum(w.speedKt) ? (w.dirCompass ? w.dirCompass + " " : "") + Math.round(w.speedKt) + " kt" : "—",
-        isNum(w.gustKt) ? "gust " + Math.round(w.gustKt) + " kt" : "observed", R.wind) +
+      cell("i-wind", wKey, isNum(w.speedKt) ? (w.dirCompass ? w.dirCompass + " " : "") + Math.round(w.speedKt) + " kt" : "—",
+        wSub, wr) +
       cell("i-seas", "Seas", isNum(se.heightFt) ? fmt(se.heightFt, 1) + " ft" : "—",
         isNum(se.dominantPeriodS) ? Math.round(se.dominantPeriodS) + " s" + (se.meanDirCompass ? " · " + se.meanDirCompass : "") : "observed", R.seas) +
       cell("i-water", "Water", isNum(wt.f) ? Math.round(wt.f) + "°F" : "—", "inshore station", R.waterTemp) +
@@ -999,7 +1020,7 @@
 
   function renderInstruments(d) {
     const R = d.readings || {};
-    renderWind(R.wind);
+    renderWind(displayWind(d));
     tweenAll($("i-wind"));
     renderSeas(R.seas);
     renderSwell(R.swell);
@@ -1010,7 +1031,9 @@
     // The harbor line is a second station. When it is the same station as the main wind
     // (Wilmington 8658163, or a fallback that lands on the harbor station) it would only repeat it.
     const hw = R.harborWind, wsid = R.wind && R.wind.station && R.wind.station.id;
-    renderHarbor(hw && !(wsid && hw.station && hw.station.id === wsid) ? hw : null);
+    // When the harbor station is already shown as the main (backup) wind, do not repeat it.
+    const hideHarbor = windSel(d).role === "backup";
+    renderHarbor(!hideHarbor && hw && !(wsid && hw.station && hw.station.id === wsid) ? hw : null);
     tweenAll($("i-wind"));
     renderMarine(d.marine);
     renderForecast(d.forecast, d.region, d.marine);

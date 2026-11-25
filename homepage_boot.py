@@ -131,7 +131,9 @@ def render_glance_html(d: dict) -> str:
             + "</span></a>"
         )
 
-    w, se, wt = _val(R.get("wind")), _val(R.get("seas")), _val(R.get("waterTemp"))
+    sel = conditions.chosen_wind(d)
+    wr = sel.get("reading") if sel else R.get("wind")
+    w, se, wt = _val(wr), _val(R.get("seas")), _val(R.get("waterTemp"))
     evs = [e for e in ((d.get("tides") or {}).get("events") or []) if e.get("t") and e["t"] > _now_ms()]
     ev = evs[0] if evs else None
     tides = d.get("tides") or {}
@@ -153,7 +155,10 @@ def render_glance_html(d: dict) -> str:
     tide_v = _clock(ev["t"]) if ev else "—"
     tide_s = (_fmt(ev["v"], 1) + " ft predicted") if ev and _is_num(ev.get("v")) else "predicted"
     return (
-        cell("i-wind", "Wind", wind_v, wind_s, R.get("wind"))
+        cell("i-wind", "Wind · coastal backup" if (sel or {}).get("role") == "backup" else "Wind",
+             wind_v,
+             ("PARTIAL · " + wind_s) if (sel or {}).get("role") == "backup" else wind_s,
+             wr)
         + cell("i-seas", "Seas", seas_v, seas_s, R.get("seas"))
         + cell("i-water", "Water", water_v, "inshore station", R.get("waterTemp"))
         + cell("i-tide", tide_k, tide_v, tide_s, ev and tide_r)

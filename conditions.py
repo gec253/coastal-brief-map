@@ -937,6 +937,153 @@ def alerts_block(zones):
 
 # ---------- assemble ----------
 
+# Shared with the Morning Brief. The region's configured wind reading stays the
+# primary (Hatteras: Diamond Shoals buoy 41025, offshore). Only when that primary
+# is not "ok" under STALE_MIN / staleAfterMin does the coastal backup
+# (harborWind, USCG Station Hatteras 8654467) get used, and only if it is itself
+# "ok" under its own 45-minute rule. The two are never blended. Regions without
+# an entry keep their primary reading as-is, including a stale one.
+WIND_BACKUP = {
+    "hatteras": {"reading": "harborWind", "station": "8654467", "name": "USCG Station Hatteras",
+                 "setting": "shore station at Hatteras Inlet", "short": "USCG Hatteras (shore)",
+                 "primaryName": "offshore buoy 41025"},
+}
+SHORE_WIND_NOTE = "Shore wind usually reads lighter than offshore."
+
+
+def et_clock(iso_or_dt) -> str:
+    """Observation clock in America/New_York, e.g. '3:10 AM ET' (weekday if not today)."""
+    if not iso_or_dt:
+        return ""
+    if isinstance(iso_or_dt, datetime):
+        d = iso_or_dt
+    else:
+        try:
+            d = datetime.fromisoformat(str(iso_or_dt).replace("Z", "+00:00"))
+        except ValueError:
+            return ""
+    e = d.astimezone(ET)
+    s = e.strftime("%-I:%M %p") + " ET"
+    if e.date() != datetime.now(ET).date():
+        s = e.strftime("%a ") + s
+    return s
+
+
+def unused_primary_state(r: dict | None) -> str:
+    """'stale since 12:30 AM ET' or 'not reporting' for an unusable primary wind reading."""
+    if r and r.get("status") == "stale" and r.get("time"):
+        return "stale since %s" % et_clock(r["time"])
+    if r and r.get("lastReport"):
+        return "stale since %s" % et_clock(r["lastReport"])
+    return "not reporting"
+
+
+def wind_backup_ok(rid: str | None, readings: dict | None):
+    """Configured coastal backup when that reading is fresh, else (cfg or None, None)."""
+    cfg = WIND_BACKUP.get(rid) if rid else None
+    if not cfg:
+        return cfg, None
+    r = (readings or {}).get(cfg["reading"]) or {}
+    if (r.get("status") == "ok" and r.get("time") and (r.get("station") or {}).get("id") == cfg["station"]
+            and (r.get("values") or {}).get("speedKt") is not None and (r.get("values") or {}).get("dirCompass")):
+        return cfg, r
+    return cfg, None
+
+
+def select_wind(rid: str | None, readings: dict | None) -> dict:
+    """Choose the wind reading public conditions surfaces should display.
+
+    Same rule as the Morning Brief: use the configured primary when its status
+    is "ok"; otherwise use the coastal backup only if it is itself "ok". When a
+    backup is configured and both sources are unusable, return an unavailable
+    state and never invent values. Regions without a backup keep the primary
+    reading unchanged (including stale).
+
+    The original readings are not mutated. A display copy may carry labeling
+    fields (sourceRole, partial, displayName, note).
+    """
+    readings = readings or {}
+    prim = readings.get("wind") or {}
+    cfg, bk = wind_backup_ok(rid, readings)
+    if prim.get("status") == "ok":
+        return {
+            "role": "primary",
+            "type": "offshore" if cfg else None,
+            "reading": prim,
+            "partial": False,
+        }
+    if bk:
+        state = unused_primary_state(prim)
+        disp = dict(bk)
+        prim_name = cfg["primaryName"]
+        note = ("Coastal backup, %s (%s), observed %s. %s %s, not used. %s"
+                % (cfg["name"], cfg["setting"], et_clock(bk.get("time")),
+                   prim_name[0].upper() + prim_name[1:], state, SHORE_WIND_NOTE))
+        if disp.get("note"):
+            disp["note"] = str(disp["note"]) + " " + note
+        else:
+            disp["note"] = note
+        disp["sourceRole"] = "backup"
+        disp["sourceType"] = "coastal"
+        disp["partial"] = True
+        disp["displayName"] = "Wind · coastal backup"
+        unused_time = prim.get("time") or prim.get("lastReport")
+        disp["primaryUnused"] = {
+            "station": ((prim.get("station") or {}).get("id")
+                        or (cfg["primaryName"].split()[-1] if cfg else None)),
+            "name": (prim.get("station") or {}).get("name") or "Diamond Shoals",
+            "status": prim.get("status") or "unavailable",
+            "time": unused_time,
+            "state": state,
+        }
+        return {
+            "role": "backup",
+            "type": "coastal",
+            "reading": disp,
+            "partial": True,
+            "primaryUnused": disp["primaryUnused"],
+        }
+    if not cfg:
+        return {
+            "role": "primary",
+            "type": None,
+            "reading": prim,
+            "partial": False,
+        }
+    b_r = readings.get(cfg["reading"]) or {}
+    b_state = unused_primary_state(b_r)
+    p_state = unused_primary_state(prim)
+    note = ("Wind unavailable (%s %s; coastal backup %s %s; neither used)."
+            % (cfg["primaryName"], p_state.replace("stale since", "stale: last report"),
+               cfg["name"], b_state.replace("stale since", "stale: last report")))
+    stub = {
+        "kind": "observed",
+        "status": "unavailable",
+        "sourceRole": "none",
+        "note": note,
+        "lastReport": prim.get("time") or prim.get("lastReport") or b_r.get("time") or b_r.get("lastReport"),
+        "station": (prim.get("station") or b_r.get("station") or {}),
+        "displayName": "Wind",
+    }
+    return {
+        "role": "none",
+        "type": None,
+        "reading": stub,
+        "partial": False,
+        "note": note,
+    }
+
+
+def chosen_wind(payload: dict | None) -> dict:
+    """windSelection for a conditions payload, computing it if the field is absent."""
+    payload = payload or {}
+    sel = payload.get("windSelection")
+    if isinstance(sel, dict) and sel.get("role"):
+        return sel
+    rid = ((payload.get("region") or {}).get("id"))
+    return select_wind(rid, payload.get("readings") or {})
+
+
 def assemble(region_id: str | None, preview: bool = False) -> tuple[int, dict]:
     cfg = load_regions()
     regions = {r["id"]: r for r in cfg.get("regions") or [] if _servable(r, preview=preview)}
@@ -991,6 +1138,7 @@ def assemble(region_id: str | None, preview: bool = False) -> tuple[int, dict]:
         "marine": safe(f_mar, {"status": "unavailable", "kind": "forecast"}),
         "alerts": safe(f_al, {"status": "unavailable", "items": []}),
         "staleRule": "A reading is marked stale when it is older than its station's normal reporting gap (shown per reading). Readings older than %d hours are not shown." % MAX_AGE_H,
+        "windSelection": select_wind(rid, readings),
     }
     with _ASM_LOCK:
         _ASSEMBLED[rid] = (time.time(), payload)

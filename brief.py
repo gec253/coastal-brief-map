@@ -160,24 +160,15 @@ def _dir_word(delta, unit, up="up", down="down", flat="steady", eps=0.0):
 # that reading is itself "ok" under its own rule (45 min). The backup is labeled as a coastal (shore)
 # observation with its station and time, the stale buoy is still named as not used, and the two are
 # never blended. The map's wind tile is unchanged.
-WIND_BACKUP = {
-    "hatteras": {"reading": "harborWind", "station": "8654467", "name": "USCG Station Hatteras",
-                 "setting": "shore station at Hatteras Inlet", "short": "USCG Hatteras (shore)",
-                 "primaryName": "offshore buoy 41025"},
-}
-SHORE_WIND_NOTE = "Shore wind usually reads lighter than offshore."
+# Canonical config and freshness check live in conditions.py so the dashboard
+# and homepage use the same backup-source rule as this brief.
+WIND_BACKUP = conditions.WIND_BACKUP
+SHORE_WIND_NOTE = conditions.SHORE_WIND_NOTE
 
 
 def _wind_backup(rid: str, R: dict):
     """The configured backup wind reading for this region when it is fresh, else None."""
-    cfg = WIND_BACKUP.get(rid)
-    if not cfg:
-        return cfg, None
-    r = R.get(cfg["reading"]) or {}
-    if (r.get("status") == "ok" and r.get("time") and (r.get("station") or {}).get("id") == cfg["station"]
-            and (r.get("values") or {}).get("speedKt") is not None and (r.get("values") or {}).get("dirCompass")):
-        return cfg, r
-    return cfg, None
+    return conditions.wind_backup_ok(rid, R)
 
 
 def _primary_state(r: dict | None) -> str:

@@ -380,7 +380,25 @@ def _marine(m) -> dict | None:
 
 def salt_model(payload: dict) -> dict:
     R = payload.get("readings") or {}
-    tiles = [_wind_tile(R.get("wind")), _seas_tile(R.get("seas")), _water_tile(R), _tide_tile(payload.get("tides"))]
+    sel = conditions.chosen_wind(payload)
+    wr = sel.get("reading") or R.get("wind")
+    wname = "Wind"
+    if sel.get("role") == "backup":
+        wname = "Wind · coastal backup"
+    wt = _wind_tile(wr, name=wname)
+    if sel.get("role") == "backup":
+        wt["badge"] = "PARTIAL"
+        unused = sel.get("primaryUnused") or {}
+        # Stale/missing primary is named with its real observation time; values are not shown.
+        wt["note"] = wr.get("note") or (
+            "Coastal backup at Hatteras Inlet. %s %s, not used. %s"
+            % ((unused.get("name") or "Diamond Shoals"),
+               unused.get("state") or "not reporting",
+               conditions.SHORE_WIND_NOTE)
+        )
+    elif sel.get("role") == "none":
+        wt["note"] = (sel.get("note") or (wr or {}).get("note") or wt.get("note") or "")
+    tiles = [wt, _seas_tile(R.get("seas")), _water_tile(R), _tide_tile(payload.get("tides"))]
     more = [_swell_tile(R.get("swell"))]
     air = R.get("airTemp")
     if _state(air) != "off":
@@ -388,7 +406,11 @@ def salt_model(payload: dict) -> dict:
     more.append(_pressure_tile(R.get("pressure")))
     hw = R.get("harborWind")
     w = R.get("wind") or {}
-    if hw and _state(hw) != "off" and ((hw.get("station") or {}).get("id") != (w.get("station") or {}).get("id")):
+    # When the harbor station is already the main (backup) wind, do not repeat it.
+    if (sel.get("role") != "backup"
+            and hw and _state(hw) != "off"
+            and ((hw.get("station") or {}).get("id") != (w.get("station") or {}).get("id"))
+            and ((hw.get("station") or {}).get("id") != ((wr or {}).get("station") or {}).get("id"))):
         more.append(_wind_tile(hw, name="Harbor wind", tid="harbor"))
     reg = payload.get("region") or {}
     return {
@@ -835,6 +857,9 @@ def tile_html(t: dict, big: bool = False) -> str:
         chip = '<span class="t-kind %s">%s</span>' % (kind_cls, _esc(t["kind"]))
     else:
         chip = ""  # loading slot: do not imply an Observed value
+    if t.get("badge"):
+        chip += ('<span class="t-chip c-stale" title="Primary offshore source is not usable; coastal backup shown">%s</span>'
+                 % _esc(t["badge"]))
 
     out = ['<div class="%s" role="group" aria-labelledby="%s">' % (cls, hid)]
     out.append('<div class="t-head"><h3 class="t-name" id="%s">%s</h3>%s</div>' % (hid, _esc(t["name"]), chip))
