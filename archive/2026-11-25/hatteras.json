@@ -1,0 +1,458 @@
+{
+ "astro": {
+  "date": "2026-11-25",
+  "label": "Cape Hatteras",
+  "lat": 35.2515,
+  "lon": -75.5288,
+  "moon": {
+   "fraction": 0.9817,
+   "illuminationPct": 98,
+   "name": "Waning Gibbous",
+   "waxing": false
+  },
+  "regionId": "hatteras",
+  "source": "Computed locally from the NOAA Solar Calculator equations and Meeus (Astronomical Algorithms, ch. 48). Not a live USNO fetch.",
+  "status": "ok",
+  "sunrise": "2026-11-25T06:46:51.160367-05:00",
+  "sunriseEt": "6:46 AM",
+  "sunset": "2026-11-25T16:51:10.365144-05:00",
+  "sunsetEt": "4:51 PM",
+  "tz": "America/New_York"
+ },
+ "forecastUpdated": "2026-11-25T09:18:23+00:00",
+ "freshness": [
+  {
+   "label": "Wind (coastal backup)",
+   "stale": false,
+   "station": "8654467",
+   "time": "5:06 AM ET"
+  },
+  {
+   "label": "Seas",
+   "stale": false,
+   "station": "41120",
+   "time": "4:56 AM ET"
+  },
+  {
+   "label": "Swell",
+   "stale": false,
+   "station": "41120",
+   "time": "4:56 AM ET"
+  },
+  {
+   "label": "Barometer",
+   "stale": false,
+   "station": "8654467",
+   "time": "5:06 AM ET"
+  },
+  {
+   "label": "Water level",
+   "stale": false,
+   "station": "8654467",
+   "time": "5:06 AM ET"
+  },
+  {
+   "label": "Water temp",
+   "stale": false,
+   "station": "8654467",
+   "time": "5:06 AM ET"
+  }
+ ],
+ "hazards": {
+  "current": [
+   {
+    "areas": "Ocracoke Island; Hatteras Island",
+    "ends": "2026-11-27T15:00:00-05:00",
+    "event": "Coastal Flood Warning",
+    "kind": "warning",
+    "local": [
+     "Hatteras Island"
+    ],
+    "localUgc": [
+     "NCZ205"
+    ],
+    "onset": "2026-11-25T04:59:00-05:00",
+    "products": [
+     {
+      "areas": "Ocracoke Island; Hatteras Island",
+      "certainty": "Likely",
+      "description": "* WHAT...For the Coastal Flood Warning, 2 to 4 feet of\ninundation above ground level expected in low-lying areas near\nshorelines and tidal waterways. For the High Surf Advisory,\nlarge breaking waves of 6 to 11 feet expected in the surf zone.\n\n* WHERE...Ocracoke Island.\n\n* WHEN...For the Coastal Flood Warning, from 4 AM Wednesday to 3\nPM EST Friday. For the High Surf Advisory, from 4 AM Wednesday\nto 10 AM EST Friday.\n\n* IMPACTS...2 to 4 feet of inundation above ground level is\npossible in some areas near shorelines and tidal waterways\nresulting in an elevated threat of property damage. Flooding\nwill extend inland from the waterfront threatening some homes\nand businesses. Numerous road closures and flooding of\nvehicles will be possible. Vulnerable portions of NC-12 may be\ninundated, especially around high tide. Dangerous swimming and\nsurfing conditions and localized beach erosion.\n\n* ADDITIONAL DETAILS...The higher of the high tide cycles will\nbe during the morning hours each day this week. This is\nforecast to bring minor impacts on Wednesday. The worst\nimpacts are currently forecast on Thursday. As winds switch to\na SW direction Thursday afternoon minor water level rises\n(around 1-2 ft) on soundside locations.",
+      "headline": "Coastal Flood Warning issued November 25 at 4:59AM EST until November 27 at 3:00PM EST by NWS Newport/Morehead City NC",
+      "id": "urn:oid:2.49.0.1.840.0.43ea175359bf5cd36f47c6981f0d8536624d33a9.003.1",
+      "instruction": "Take the necessary actions to protect flood-prone property. If\ntravel is required, do not drive around barricades or through\nwater of unknown depth.\n\nInexperienced swimmers should remain out of the water due to\ndangerous surf conditions.",
+      "messageType": "Update",
+      "sender": "NWS Newport/Morehead City NC",
+      "sent": "2026-11-25T04:59:00-05:00",
+      "severity": "Severe",
+      "ugc": [
+       "NCZ204",
+       "NCZ205"
+      ],
+      "urgency": "Expected"
+     }
+    ],
+    "severity": "Severe",
+    "status": "current",
+    "text": "Coastal Flood Warning now in effect until Fri 3:00 PM ET — Ocracoke Island; Hatteras Island.",
+    "ugc": [
+     "NCZ204",
+     "NCZ205"
+    ]
+   },
+   {
+    "areas": "Ocracoke Island; Hatteras Island",
+    "ends": "2026-11-27T10:00:00-05:00",
+    "event": "High Surf Advisory",
+    "kind": "advisory",
+    "local": [
+     "Hatteras Island"
+    ],
+    "localUgc": [
+     "NCZ205"
+    ],
+    "onset": "2026-11-25T04:59:00-05:00",
+    "products": [
+     {
+      "areas": "Ocracoke Island; Hatteras Island",
+      "certainty": "Likely",
+      "description": "* WHAT...For the Coastal Flood Warning, 2 to 4 feet of\ninundation above ground level expected in low-lying areas near\nshorelines and tidal waterways. For the High Surf Advisory,\nlarge breaking waves of 6 to 11 feet expected in the surf zone.\n\n* WHERE...Ocracoke Island.\n\n* WHEN...For the Coastal Flood Warning, from 4 AM Wednesday to 3\nPM EST Friday. For the High Surf Advisory, from 4 AM Wednesday\nto 10 AM EST Friday.\n\n* IMPACTS...2 to 4 feet of inundation above ground level is\npossible in some areas near shorelines and tidal waterways\nresulting in an elevated threat of property damage. Flooding\nwill extend inland from the waterfront threatening some homes\nand businesses. Numerous road closures and flooding of\nvehicles will be possible. Vulnerable portions of NC-12 may be\ninundated, especially around high tide. Dangerous swimming and\nsurfing conditions and localized beach erosion.\n\n* ADDITIONAL DETAILS...The higher of the high tide cycles will\nbe during the morning hours each day this week. This is\nforecast to bring minor impacts on Wednesday. The worst\nimpacts are currently forecast on Thursday. As winds switch to\na SW direction Thursday afternoon minor water level rises\n(around 1-2 ft) on soundside locations.",
+      "headline": "High Surf Advisory issued November 25 at 4:59AM EST until November 27 at 10:00AM EST by NWS Newport/Morehead City NC",
+      "id": "urn:oid:2.49.0.1.840.0.43ea175359bf5cd36f47c6981f0d8536624d33a9.003.2",
+      "instruction": "Take the necessary actions to protect flood-prone property. If\ntravel is required, do not drive around barricades or through\nwater of unknown depth.\n\nInexperienced swimmers should remain out of the water due to\ndangerous surf conditions.",
+      "messageType": "Update",
+      "sender": "NWS Newport/Morehead City NC",
+      "sent": "2026-11-25T04:59:00-05:00",
+      "severity": "Minor",
+      "ugc": [
+       "NCZ204",
+       "NCZ205"
+      ],
+      "urgency": "Expected"
+     }
+    ],
+    "severity": "Minor",
+    "status": "current",
+    "text": "High Surf Advisory now in effect until Fri 10:00 AM ET — Ocracoke Island; Hatteras Island.",
+    "ugc": [
+     "NCZ204",
+     "NCZ205"
+    ]
+   }
+  ],
+  "line": "CURRENT: Coastal Flood Warning now in effect until Fri 3:00 PM ET — Ocracoke Island; Hatteras Island. High Surf Advisory now in effect until Fri 10:00 AM ET — Ocracoke Island; Hatteras Island. UPCOMING: Gale Warning begins Wed 2:00 PM ET until Thu 9:00 AM ET — Pamlico Sound. High Wind Warning begins Wed 4:00 PM ET until Thu 5:00 AM ET — East Carteret; Northern Outer Banks; Ocracoke Island; Hatteras Island. Storm Warning begins Wed 7:00 PM ET until Thu 5:00 AM ET — S of Currituck Beach Light NC to Oregon Inlet NC out to 20 NM; S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM; S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM. Flood Watch begins Wed 4:00 PM ET until Thu 10:00 AM ET — Washington; Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Jones; Pamlico; Northern Craven; Southern Craven; West Carteret; East Carteret; Inland Onslow; Coastal Onslow; Northern Outer Banks; Ocracoke Island; Hatteras Island.",
+  "status": "active",
+  "upcoming": [
+   {
+    "areas": "Pamlico Sound",
+    "ends": "2026-11-26T09:00:00-05:00",
+    "event": "Gale Warning",
+    "kind": "warning",
+    "local": [
+     "Pamlico Sound"
+    ],
+    "localUgc": [
+     "AMZ135"
+    ],
+    "onset": "2026-11-25T14:00:00-05:00",
+    "products": [
+     {
+      "areas": "Pamlico Sound",
+      "certainty": "Likely",
+      "description": "* WHAT...East winds 25 to 35 kt with occasional gusts up to 50 kt\nand extremely rough waters expected.\n\n* WHERE...Pamlico Sound.\n\n* WHEN...From 2 PM this afternoon to 9 AM EST Thursday.\n\n* IMPACTS...Strong winds will cause hazardous seas which could\ncapsize or damage vessels and reduce visibility.",
+      "headline": "Gale Warning issued November 25 at 4:16AM EST until November 26 at 9:00AM EST by NWS Newport/Morehead City NC",
+      "id": "urn:oid:2.49.0.1.840.0.6cd740dab8b73fcf1f22cb5a774e72a38f054104.001.1",
+      "instruction": "Mariners should alter plans to avoid these hazardous conditions.\nRemain in port, seek safe harbor, alter course, and/or secure the\nvessel for hazardous conditions.",
+      "messageType": "Update",
+      "sender": "NWS Newport/Morehead City NC",
+      "sent": "2026-11-25T04:16:00-05:00",
+      "severity": "Moderate",
+      "ugc": [
+       "AMZ135"
+      ],
+      "urgency": "Expected"
+     }
+    ],
+    "severity": "Moderate",
+    "status": "upcoming",
+    "text": "Gale Warning begins Wed 2:00 PM ET until Thu 9:00 AM ET — Pamlico Sound.",
+    "ugc": [
+     "AMZ135"
+    ]
+   },
+   {
+    "areas": "East Carteret; Northern Outer Banks; Ocracoke Island; Hatteras Island",
+    "ends": "2026-11-26T05:00:00-05:00",
+    "event": "High Wind Warning",
+    "kind": "warning",
+    "local": [
+     "Hatteras Island"
+    ],
+    "localUgc": [
+     "NCZ205"
+    ],
+    "onset": "2026-11-25T16:00:00-05:00",
+    "products": [
+     {
+      "areas": "East Carteret; Northern Outer Banks; Ocracoke Island; Hatteras Island",
+      "certainty": "Likely",
+      "description": "* WHAT...East winds 30 to 40 mph with gusts up to 60 mph expected.\n\n* WHERE...East Carteret County, and Hatteras Island, Northern Outer\nBanks, and Ocracoke Island.\n\n* WHEN...From 4 PM this afternoon to 5 AM EST Thursday.\n\n* IMPACTS...Damaging winds will blow down trees and power lines.\nWidespread power outages are expected. Travel will be difficult,\nespecially for high profile vehicles.\n\n* ADDITIONAL DETAILS...A coastal storm will produce strong winds\nacross portions of ENC Wednesday afternoon through early Thursday\nmorning.",
+      "headline": "High Wind Warning issued November 25 at 12:58AM EST until November 26 at 5:00AM EST by NWS Newport/Morehead City NC",
+      "id": "urn:oid:2.49.0.1.840.0.bd5b9d04190a3341f3071eab0a3570eaf3c62758.001.2",
+      "instruction": "People are urged to secure loose objects that could be blown around\nor damaged by the wind.",
+      "messageType": "Alert",
+      "sender": "NWS Newport/Morehead City NC",
+      "sent": "2026-11-25T00:58:00-05:00",
+      "severity": "Severe",
+      "ugc": [
+       "NCZ196",
+       "NCZ203",
+       "NCZ204",
+       "NCZ205"
+      ],
+      "urgency": "Expected"
+     }
+    ],
+    "severity": "Severe",
+    "status": "upcoming",
+    "text": "High Wind Warning begins Wed 4:00 PM ET until Thu 5:00 AM ET — East Carteret; Northern Outer Banks; Ocracoke Island; Hatteras Island.",
+    "ugc": [
+     "NCZ196",
+     "NCZ203",
+     "NCZ204",
+     "NCZ205"
+    ]
+   },
+   {
+    "areas": "S of Currituck Beach Light NC to Oregon Inlet NC out to 20 NM; S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM; S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM",
+    "ends": "2026-11-26T05:00:00-05:00",
+    "event": "Storm Warning",
+    "kind": "warning",
+    "local": [
+     "S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM",
+     "S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM"
+    ],
+    "localUgc": [
+     "AMZ152",
+     "AMZ154"
+    ],
+    "onset": "2026-11-25T19:00:00-05:00",
+    "products": [
+     {
+      "areas": "S of Currituck Beach Light NC to Oregon Inlet NC out to 20 NM; S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM; S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM",
+      "certainty": "Observed",
+      "description": "* WHAT...East winds 30 to 40 kt with gusts up to 50 kt and seas\n15 to 20 ft expected.\n\n* WHERE...The coastal waters from Oregon Inlet to Surf City, and\nthe coastal waters from Duck to Oregon Inlet.\n\n* WHEN...From 7 PM this evening to 5 AM EST Thursday.\n\n* IMPACTS...Storm force winds and hazardous seas will capsize or\ndamage vessels and reduce visibility.",
+      "headline": "Storm Warning issued November 25 at 4:16AM EST until November 26 at 5:00AM EST by NWS Newport/Morehead City NC",
+      "id": "urn:oid:2.49.0.1.840.0.6cd740dab8b73fcf1f22cb5a774e72a38f054104.005.1",
+      "instruction": "Mariners should remain in port, alter course, and/or secure the\nvessel for severe conditions.",
+      "messageType": "Update",
+      "sender": "NWS Newport/Morehead City NC",
+      "sent": "2026-11-25T04:16:00-05:00",
+      "severity": "Severe",
+      "ugc": [
+       "AMZ150",
+       "AMZ152",
+       "AMZ154",
+       "AMZ156",
+       "AMZ158"
+      ],
+      "urgency": "Immediate"
+     }
+    ],
+    "severity": "Severe",
+    "status": "upcoming",
+    "text": "Storm Warning begins Wed 7:00 PM ET until Thu 5:00 AM ET — S of Currituck Beach Light NC to Oregon Inlet NC out to 20 NM; S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM; S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM.",
+    "ugc": [
+     "AMZ150",
+     "AMZ152",
+     "AMZ154",
+     "AMZ156",
+     "AMZ158"
+    ]
+   },
+   {
+    "areas": "Washington; Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Jones; Pamlico; Northern Craven; Southern Craven; West Carteret; East Carteret; Inland Onslow; Coastal Onslow; Northern Outer Banks; Ocracoke Island; Hatteras Island",
+    "ends": "2026-11-26T10:00:00-05:00",
+    "event": "Flood Watch",
+    "kind": "watch",
+    "local": [
+     "Hatteras Island"
+    ],
+    "localUgc": [
+     "NCZ205"
+    ],
+    "onset": "2026-11-25T16:00:00-05:00",
+    "products": [
+     {
+      "areas": "Washington; Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Jones; Pamlico; Northern Craven; Southern Craven; West Carteret; East Carteret; Inland Onslow; Coastal Onslow; Northern Outer Banks; Ocracoke Island; Hatteras Island",
+      "certainty": "Possible",
+      "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...A portion of eastern North Carolina, including the\nfollowing areas, Beaufort, Coastal Onslow, East Carteret, Hatteras\nIsland, Inland Onslow, Jones, Mainland Dare, Mainland Hyde,\nNorthern Craven, Northern Outer Banks, Ocracoke Island, Pamlico,\nSouthern Craven, Tyrrell, Washington and West Carteret.\n\n* WHEN...From Wednesday afternoon through Thursday morning.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas. Storm drains\nand ditches may become clogged with debris.\n\n* ADDITIONAL DETAILS...\n- A coastal storm will combine with anomalously high moisture, weak\ninstability, and strong lift to produce areas of moderate to\nheavy rain across the watch area. Rainfall totals of 4 to 6\ninches are forecast, with locally higher amounts possible.\n- http://www.weather.gov/safety/flood",
+      "headline": "Flood Watch issued November 24 at 11:32PM EST until November 26 at 10:00AM EST by NWS Newport/Morehead City NC",
+      "id": "urn:oid:2.49.0.1.840.0.b179dcfb9f126e8a421e42c46be9861dab8ba070.002.1",
+      "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+      "messageType": "Update",
+      "sender": "NWS Newport/Morehead City NC",
+      "sent": "2026-11-24T23:32:00-05:00",
+      "severity": "Severe",
+      "ugc": [
+       "NCZ045",
+       "NCZ046",
+       "NCZ047",
+       "NCZ080",
+       "NCZ081",
+       "NCZ092",
+       "NCZ094",
+       "NCZ193",
+       "NCZ194",
+       "NCZ195",
+       "NCZ196",
+       "NCZ198",
+       "NCZ199",
+       "NCZ203",
+       "NCZ204",
+       "NCZ205"
+      ],
+      "urgency": "Future"
+     }
+    ],
+    "severity": "Severe",
+    "status": "upcoming",
+    "text": "Flood Watch begins Wed 4:00 PM ET until Thu 10:00 AM ET — Washington; Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Jones; Pamlico; Northern Craven; Southern Craven; West Carteret; East Carteret; Inland Onslow; Coastal Onslow; Northern Outer Banks; Ocracoke Island; Hatteras Island.",
+    "ugc": [
+     "NCZ045",
+     "NCZ046",
+     "NCZ047",
+     "NCZ080",
+     "NCZ081",
+     "NCZ092",
+     "NCZ094",
+     "NCZ193",
+     "NCZ194",
+     "NCZ195",
+     "NCZ196",
+     "NCZ198",
+     "NCZ199",
+     "NCZ203",
+     "NCZ204",
+     "NCZ205"
+    ]
+   }
+  ]
+ },
+ "issueDate": "2026-11-25",
+ "issuedAt": "2026-11-25T10:15:00.657466+00:00",
+ "issuedEt": "Wed Nov 25, 5:15 AM ET",
+ "items": [
+  [
+   "Advisories",
+   "CURRENT: Coastal Flood Warning now in effect until Fri 3:00 PM ET — Ocracoke Island; Hatteras Island. High Surf Advisory now in effect until Fri 10:00 AM ET — Ocracoke Island; Hatteras Island. UPCOMING: Gale Warning begins Wed 2:00 PM ET until Thu 9:00 AM ET — Pamlico Sound. High Wind Warning begins Wed 4:00 PM ET until Thu 5:00 AM ET — East Carteret; Northern Outer Banks; Ocracoke Island; Hatteras Island. Storm Warning begins Wed 7:00 PM ET until Thu 5:00 AM ET — S of Currituck Beach Light NC to Oregon Inlet NC out to 20 NM; S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM; S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM. Flood Watch begins Wed 4:00 PM ET until Thu 10:00 AM ET — Washington; Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Jones; Pamlico; Northern Craven; Southern Craven; West Carteret; East Carteret; Inland Onslow; Coastal Onslow; Northern Outer Banks; Ocracoke Island; Hatteras Island."
+  ],
+  [
+   "Wind",
+   "Coastal backup, USCG Station Hatteras (shore station at Hatteras Inlet), observed 5:06 AM ET: 13 kt from the NE, gusting 19. Offshore buoy 41025 stale since 3:00 AM ET, not used. Shore wind usually reads lighter than offshore."
+  ],
+  [
+   "Seas",
+   "10.2 ft every 10 s from the E at Cape Hatteras East (CDIP 250); little changed from 9.8 ft 10 h earlier. Offshore buoy observation, not a beach surf height."
+  ],
+  [
+   "Swell",
+   "2.0 ft at 11 s from the E (split from the buoy spectrum). Offshore buoy observation, not a beach surf height."
+  ],
+  [
+   "Pressure",
+   "30.32 inHg, steady."
+  ],
+  [
+   "Marine forecast",
+   "Today: NE winds 20 to 25 kt with gusts up to 30 kt, becoming E 30 to 35 kt with gusts up to 45 kt. (NWS AMZ154)"
+  ],
+  [
+   "Outlook",
+   "Tonight: E winds 30 to 40 kt with gusts up to 50 kt. Seas 12 to 16 ft, building to 14 to 19 ft after midnight. Thu: S winds 25 to 30 kt with gusts up to 40 kt, becoming SW 20 to 25 kt with gusts up to 30 kt in the afternoon. Seas 13 to 18 ft, subsiding to 11 to 15 ft in the afternoon. (NWS AMZ154, issued Wed 4:17 AM ET)."
+  ],
+  [
+   "Rain",
+   "97% chance through tonight; rain showers, high 68°F."
+  ],
+  [
+   "Tides",
+   "low 3:02 AM ET (0.2 ft), high 8:49 AM ET (0.7 ft), low 3:55 PM ET (0.2 ft), high 9:10 PM ET (0.5 ft) at USCG Station Hatteras, MLLW."
+  ],
+  [
+   "Water temp",
+   "59°F inshore (USCG Station Hatteras), 62°F offshore (buoy 41120)."
+  ]
+ ],
+ "marineUpdated": "2026-11-25T04:17:00-05:00",
+ "marineZone": "AMZ154",
+ "missing": [
+  "offshore wind, offshore buoy 41025 (stale: last report 3:00 AM ET, not used; coastal backup shown)"
+ ],
+ "ok": true,
+ "outlookPeriods": {
+  "periods": [
+   {
+    "name": "Tonight",
+    "text": "E winds 30 to 40 kt with gusts up to 50 kt. Seas 12 to 16 ft, building to 14 to 19 ft after midnight."
+   },
+   {
+    "name": "Thu",
+    "text": "S winds 25 to 30 kt with gusts up to 40 kt, becoming SW 20 to 25 kt with gusts up to 30 kt in the afternoon. Seas 13 to 18 ft, subsiding to 11 to 15 ft in the afternoon."
+   }
+  ],
+  "source": "NWS AMZ154, issued Wed 4:17 AM ET"
+ },
+ "reason": "scheduled",
+ "region": {
+  "anchor": {
+   "label": "Cape Hatteras",
+   "lat": 35.2515,
+   "lon": -75.5288
+  },
+  "area": "Cape Hatteras, Outer Banks",
+  "id": "hatteras",
+  "map": {
+   "center": [
+    35.2,
+    -75.6
+   ],
+   "zoom": 8
+  },
+  "name": "Hatteras Island"
+ },
+ "regionId": "hatteras",
+ "sources": "NOAA NDBC, NOAA CO-OPS, NWS (api.weather.gov)",
+ "take": [
+  "Coastal Flood Warning now in effect until Fri 3:00 PM ET — Ocracoke Island; Hatteras Island.",
+  "The NWS marine forecast has wind or seas building later today.",
+  "Offshore water is 3°F warmer than inshore."
+ ],
+ "validation": {
+  "checkedAt": "2026-11-25T10:15:00.657466+00:00",
+  "checks": [
+   "region",
+   "location",
+   "issue date",
+   "timestamp",
+   "marine zone",
+   "forecast age",
+   "core readings"
+  ],
+  "missingCore": [],
+  "status": "partial"
+ },
+ "waterType": "saltwater",
+ "windSource": {
+  "name": "USCG Station Hatteras",
+  "observed": "2026-11-25T10:06:00Z",
+  "primary": {
+   "lastReport": "2026-11-25T08:00:00Z",
+   "state": "stale since 3:00 AM ET",
+   "station": "41025"
+  },
+  "role": "backup",
+  "station": "8654467",
+  "type": "coastal"
+ },
+ "words": 466
+}

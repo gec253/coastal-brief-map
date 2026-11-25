@@ -1,22 +1,22 @@
 {
  "astro": {
-  "date": "2026-11-24",
+  "date": "2026-11-25",
   "label": "Falls Lake Dam",
   "lat": 35.9411,
   "lon": -78.5833,
   "moon": {
-   "fraction": 0.9998,
-   "illuminationPct": 100,
-   "name": "Full Moon",
+   "fraction": 0.9817,
+   "illuminationPct": 98,
+   "name": "Waning Gibbous",
    "waxing": false
   },
   "regionId": "falls-lake",
   "source": "Computed locally from the NOAA Solar Calculator equations and Meeus (Astronomical Algorithms, ch. 48). Not a live USNO fetch.",
   "status": "ok",
-  "sunrise": "2026-11-24T06:59:42.452740-05:00",
-  "sunriseEt": "6:59 AM",
-  "sunset": "2026-11-24T17:02:08.203662-05:00",
-  "sunsetEt": "5:02 PM",
+  "sunrise": "2026-11-25T07:00:40.727583-05:00",
+  "sunriseEt": "7:00 AM",
+  "sunset": "2026-11-25T17:01:46.919037-05:00",
+  "sunsetEt": "5:01 PM",
   "tz": "America/New_York"
  },
  "freshness": [
@@ -35,21 +35,182 @@
  ],
  "hazards": {
   "current": [],
-  "line": "No NWS alerts at the dam.",
-  "status": "clear",
-  "upcoming": []
+  "line": "UPCOMING: Flood Watch begins Wed 4:00 PM ET until Thu 10:00 AM ET — Person; Granville; Vance; Warren; Halifax; Alamance; Orange; Durham; Franklin; Nash; Edgecombe; Chatham; Wake; Johnston; Wilson; Lee; Harnett; Wayne; Cumberland; Sampson. Wind Advisory begins Wed 1:00 PM ET until Thu 10:00 AM ET — Person; Granville; Vance; Warren; Halifax; Forsyth; Guilford; Alamance; Orange; Durham; Franklin; Nash; Edgecombe; Davidson; Randolph; Chatham; Wake; Johnston; Wilson; Stanly; Montgomery; Moore; Lee; Harnett; Wayne; Anson; Richmond; Scotland; Hoke; Cumberland; Sampson.",
+  "status": "active",
+  "upcoming": [
+   {
+    "areas": "Person; Granville; Vance; Warren; Halifax; Alamance; Orange; Durham; Franklin; Nash; Edgecombe; Chatham; Wake; Johnston; Wilson; Lee; Harnett; Wayne; Cumberland; Sampson",
+    "ends": "2026-11-26T10:00:00-05:00",
+    "event": "Flood Watch",
+    "kind": "watch",
+    "onset": "2026-11-25T16:00:00-05:00",
+    "products": [
+     {
+      "areas": "Person; Granville; Vance; Warren; Halifax; Alamance; Orange; Durham; Franklin; Nash; Edgecombe; Chatham; Wake; Johnston; Wilson; Lee; Harnett; Wayne; Cumberland; Sampson",
+      "certainty": "Possible",
+      "description": "* WHAT...Flooding caused by excessive rainfall is possible.\n\n* WHERE...A portion of central North Carolina, including the\nfollowing counties, Alamance, Chatham, Cumberland, Durham,\nEdgecombe, Franklin, Granville, Halifax, Harnett, Johnston, Lee,\nNash, Orange, Person, Sampson, Vance, Wake, Warren, Wayne and\nWilson.\n\n* WHEN...From this afternoon through Thursday morning.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas.\n\n* ADDITIONAL DETAILS...\n- A vigorous storm system will combine with anomalous moisture,\ninstability, and strong lift to produce periods of moderate to\nheavy rainfall across the watch area. Rainfall totals of 2 to 5\ninches are expected, with locally higher amounts also possible.\n- http://www.weather.gov/safety/flood",
+      "headline": "Flood Watch issued November 25 at 1:47AM EST until November 26 at 10:00AM EST by NWS Raleigh NC",
+      "id": "urn:oid:2.49.0.1.840.0.0833a33bb4621957301ccd9436808bc29bfbd28c.001.1",
+      "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+      "messageType": "Alert",
+      "sender": "NWS Raleigh NC",
+      "sent": "2026-11-25T01:47:00-05:00",
+      "severity": "Severe",
+      "ugc": [
+       "NCZ007",
+       "NCZ008",
+       "NCZ009",
+       "NCZ010",
+       "NCZ011",
+       "NCZ023",
+       "NCZ024",
+       "NCZ025",
+       "NCZ026",
+       "NCZ027",
+       "NCZ028",
+       "NCZ040",
+       "NCZ041",
+       "NCZ042",
+       "NCZ043",
+       "NCZ076",
+       "NCZ077",
+       "NCZ078",
+       "NCZ088",
+       "NCZ089"
+      ],
+      "urgency": "Future"
+     }
+    ],
+    "severity": "Severe",
+    "status": "upcoming",
+    "text": "Flood Watch begins Wed 4:00 PM ET until Thu 10:00 AM ET — Person; Granville; Vance; Warren; Halifax; Alamance; Orange; Durham; Franklin; Nash; Edgecombe; Chatham; Wake; Johnston; Wilson; Lee; Harnett; Wayne; Cumberland; Sampson.",
+    "ugc": [
+     "NCZ007",
+     "NCZ008",
+     "NCZ009",
+     "NCZ010",
+     "NCZ011",
+     "NCZ023",
+     "NCZ024",
+     "NCZ025",
+     "NCZ026",
+     "NCZ027",
+     "NCZ028",
+     "NCZ040",
+     "NCZ041",
+     "NCZ042",
+     "NCZ043",
+     "NCZ076",
+     "NCZ077",
+     "NCZ078",
+     "NCZ088",
+     "NCZ089"
+    ]
+   },
+   {
+    "areas": "Person; Granville; Vance; Warren; Halifax; Forsyth; Guilford; Alamance; Orange; Durham; Franklin; Nash; Edgecombe; Davidson; Randolph; Chatham; Wake; Johnston; Wilson; Stanly; Montgomery; Moore; Lee; Harnett; Wayne; Anson; Richmond; Scotland; Hoke; Cumberland; Sampson",
+    "ends": "2026-11-26T10:00:00-05:00",
+    "event": "Wind Advisory",
+    "kind": "advisory",
+    "onset": "2026-11-25T13:00:00-05:00",
+    "products": [
+     {
+      "areas": "Person; Granville; Vance; Warren; Halifax; Forsyth; Guilford; Alamance; Orange; Durham; Franklin; Nash; Edgecombe; Davidson; Randolph; Chatham; Wake; Johnston; Wilson; Stanly; Montgomery; Moore; Lee; Harnett; Wayne; Anson; Richmond; Scotland; Hoke; Cumberland; Sampson",
+      "certainty": "Likely",
+      "description": "* WHAT...Northeast winds 20 to 30 mph with gusts up to 45 mph\nexpected.\n\n* WHERE...All of central North Carolina.\n\n* WHEN...From 1 PM this afternoon to 10 AM EST Thursday.\n\n* IMPACTS...Gusty winds will blow around unsecured objects. Tree\nlimbs could be blown down and a few power outages may result.",
+      "headline": "Wind Advisory issued November 25 at 1:44AM EST until November 26 at 10:00AM EST by NWS Raleigh NC",
+      "id": "urn:oid:2.49.0.1.840.0.1e5d069c77395cbf523ed93ad1c04d4e6acd3068.001.1",
+      "instruction": "Winds this strong can make driving difficult, especially for high\nprofile vehicles. Use extra caution.",
+      "messageType": "Alert",
+      "sender": "NWS Raleigh NC",
+      "sent": "2026-11-25T01:44:00-05:00",
+      "severity": "Moderate",
+      "ugc": [
+       "NCZ007",
+       "NCZ008",
+       "NCZ009",
+       "NCZ010",
+       "NCZ011",
+       "NCZ021",
+       "NCZ022",
+       "NCZ023",
+       "NCZ024",
+       "NCZ025",
+       "NCZ026",
+       "NCZ027",
+       "NCZ028",
+       "NCZ038",
+       "NCZ039",
+       "NCZ040",
+       "NCZ041",
+       "NCZ042",
+       "NCZ043",
+       "NCZ073",
+       "NCZ074",
+       "NCZ075",
+       "NCZ076",
+       "NCZ077",
+       "NCZ078",
+       "NCZ083",
+       "NCZ084",
+       "NCZ085",
+       "NCZ086",
+       "NCZ088",
+       "NCZ089"
+      ],
+      "urgency": "Expected"
+     }
+    ],
+    "severity": "Moderate",
+    "status": "upcoming",
+    "text": "Wind Advisory begins Wed 1:00 PM ET until Thu 10:00 AM ET — Person; Granville; Vance; Warren; Halifax; Forsyth; Guilford; Alamance; Orange; Durham; Franklin; Nash; Edgecombe; Davidson; Randolph; Chatham; Wake; Johnston; Wilson; Stanly; Montgomery; Moore; Lee; Harnett; Wayne; Anson; Richmond; Scotland; Hoke; Cumberland; Sampson.",
+    "ugc": [
+     "NCZ007",
+     "NCZ008",
+     "NCZ009",
+     "NCZ010",
+     "NCZ011",
+     "NCZ021",
+     "NCZ022",
+     "NCZ023",
+     "NCZ024",
+     "NCZ025",
+     "NCZ026",
+     "NCZ027",
+     "NCZ028",
+     "NCZ038",
+     "NCZ039",
+     "NCZ040",
+     "NCZ041",
+     "NCZ042",
+     "NCZ043",
+     "NCZ073",
+     "NCZ074",
+     "NCZ075",
+     "NCZ076",
+     "NCZ077",
+     "NCZ078",
+     "NCZ083",
+     "NCZ084",
+     "NCZ085",
+     "NCZ086",
+     "NCZ088",
+     "NCZ089"
+    ]
+   }
+  ]
  },
- "issueDate": "2026-11-24",
- "issuedAt": "2026-11-24T10:15:01.069097+00:00",
- "issuedEt": "Tue Nov 24, 5:15 AM ET",
+ "issueDate": "2026-11-25",
+ "issuedAt": "2026-11-25T10:15:00.768210+00:00",
+ "issuedEt": "Wed Nov 25, 5:15 AM ET",
  "items": [
   [
    "Alerts",
-   "No NWS alerts at the dam."
+   "UPCOMING: Flood Watch begins Wed 4:00 PM ET until Thu 10:00 AM ET — Person; Granville; Vance; Warren; Halifax; Alamance; Orange; Durham; Franklin; Nash; Edgecombe; Chatham; Wake; Johnston; Wilson; Lee; Harnett; Wayne; Cumberland; Sampson. Wind Advisory begins Wed 1:00 PM ET until Thu 10:00 AM ET — Person; Granville; Vance; Warren; Halifax; Forsyth; Guilford; Alamance; Orange; Durham; Franklin; Nash; Edgecombe; Davidson; Randolph; Chatham; Wake; Johnston; Wilson; Stanly; Montgomery; Moore; Lee; Harnett; Wayne; Anson; Richmond; Scotland; Hoke; Cumberland; Sampson."
   ],
   [
    "Lake level",
-   "244.75 ft (NGVD29), 6.75 ft below the 251.5 ft guide curve; -0.01 ft in 24 h."
+   "244.74 ft (NGVD29), 6.76 ft below the 251.5 ft guide curve; -0.01 ft in 24 h."
   ],
   [
    "Dam release",
@@ -57,19 +218,19 @@
   ],
   [
    "Inflows",
-   "Eno River near Durham 16.7 cfs, normal; Flat River at Bahama 5.1 cfs, below normal."
+   "Eno River near Durham 11.7 cfs, below normal; Flat River at Bahama 5.5 cfs, below normal."
   ],
   [
    "Water temp",
-   "60°F at the dam sensor."
+   "58°F at the dam sensor."
   ],
   [
    "Rain",
-   "0.03 in last 24 h at the dam; NWS forecast 0.00 in in next 24 h."
+   "0.00 in last 24 h at the dam; NWS forecast 1.97 in in next 24 h."
   ],
   [
    "Weather",
-   "Partly Sunny, high 56°F, wind NE 9 to 14 mph."
+   "Light Rain, high 53°F, wind NE 12 to 17 mph."
   ]
  ],
  "missing": [],
@@ -91,10 +252,11 @@
  "sources": "USGS, USACE Wilmington District, NWS",
  "take": [
   "The lake is 6.8 ft below its guide curve, so more shoreline is exposed than usual; check NCWRC ramp notices before launching.",
-  "Flow below the dam is very low for the date."
+  "Flow below the dam is very low for the date.",
+  "Check the Flood Watch before an early start."
  ],
  "validation": {
-  "checkedAt": "2026-11-24T10:15:01.069097+00:00",
+  "checkedAt": "2026-11-25T10:15:00.768210+00:00",
   "checks": [
    "region",
    "location",
@@ -106,5 +268,5 @@
   "status": "ok"
  },
  "waterType": "freshwater",
- "words": 113
+ "words": 194
 }
