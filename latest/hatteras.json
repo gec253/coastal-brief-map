@@ -25,7 +25,7 @@
    "label": "Wind (coastal backup)",
    "stale": false,
    "station": "8654467",
-   "time": "5:06 AM ET"
+   "time": "5:18 AM ET"
   },
   {
    "label": "Seas",
@@ -43,19 +43,19 @@
    "label": "Barometer",
    "stale": false,
    "station": "8654467",
-   "time": "5:06 AM ET"
+   "time": "5:18 AM ET"
   },
   {
    "label": "Water level",
    "stale": false,
    "station": "8654467",
-   "time": "5:06 AM ET"
+   "time": "5:18 AM ET"
   },
   {
    "label": "Water temp",
    "stale": false,
    "station": "8654467",
-   "time": "5:06 AM ET"
+   "time": "5:18 AM ET"
   }
  ],
  "hazards": {
@@ -339,8 +339,8 @@
   ]
  },
  "issueDate": "2026-11-25",
- "issuedAt": "2026-11-25T10:15:00.657466+00:00",
- "issuedEt": "Wed Nov 25, 5:15 AM ET",
+ "issuedAt": "2026-11-25T10:24:02.073826+00:00",
+ "issuedEt": "Wed Nov 25, 5:24 AM ET",
  "items": [
   [
    "Advisories",
@@ -348,7 +348,7 @@
   ],
   [
    "Wind",
-   "Coastal backup, USCG Station Hatteras (shore station at Hatteras Inlet), observed 5:06 AM ET: 13 kt from the NE, gusting 19. Offshore buoy 41025 stale since 3:00 AM ET, not used. Shore wind usually reads lighter than offshore."
+   "Coastal backup, USCG Station Hatteras (shore station at Hatteras Inlet), observed 5:18 AM ET: 14 kt from the NE, gusting 20. Offshore buoy 41025 stale since 3:10 AM ET, not used. Shore wind usually reads lighter than offshore."
   ],
   [
    "Seas",
@@ -360,7 +360,7 @@
   ],
   [
    "Pressure",
-   "30.32 inHg, steady."
+   "30.31 inHg, steady."
   ],
   [
    "Marine forecast",
@@ -386,7 +386,7 @@
  "marineUpdated": "2026-11-25T04:17:00-05:00",
  "marineZone": "AMZ154",
  "missing": [
-  "offshore wind, offshore buoy 41025 (stale: last report 3:00 AM ET, not used; coastal backup shown)"
+  "offshore wind, offshore buoy 41025 (stale: last report 3:10 AM ET, not used; coastal backup shown)"
  ],
  "ok": true,
  "outlookPeriods": {
@@ -428,7 +428,7 @@
   "Offshore water is 3°F warmer than inshore."
  ],
  "validation": {
-  "checkedAt": "2026-11-25T10:15:00.657466+00:00",
+  "checkedAt": "2026-11-25T10:24:02.073826+00:00",
   "checks": [
    "region",
    "location",
@@ -444,10 +444,10 @@
  "waterType": "saltwater",
  "windSource": {
   "name": "USCG Station Hatteras",
-  "observed": "2026-11-25T10:06:00Z",
+  "observed": "2026-11-25T10:18:00Z",
   "primary": {
-   "lastReport": "2026-11-25T08:00:00Z",
-   "state": "stale since 3:00 AM ET",
+   "lastReport": "2026-11-25T08:10:00Z",
+   "state": "stale since 3:10 AM ET",
    "station": "41025"
   },
   "role": "backup",
