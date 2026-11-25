@@ -268,10 +268,11 @@ class Gating(unittest.TestCase):
         import subprocess
         # t440u: brief.py is refined on brief-refine-1123; other public pages stay locked.
         # t449u: conditions.py stays pinned at the approved duplicate-alert safety fix (c610f2f).
+        # t476u: conditions.py is pinned to the approved Hatteras wind-selection repair (c039549).
         # t455u/t456u/t458u: freshwater.py is pinned to this repair (first-paint, v3 timeouts/cache).
         # Alert-merge rules in alerts_point are unchanged; see tests/test_freshwater_first_paint.py.
         # Every other public page stays on PROD.
-        t449u = {"conditions.py": "c610f2f", "freshwater.py": "HEAD"}
+        t449u = {"conditions.py": "c039549", "freshwater.py": "HEAD"}
         for rel in PROTECTED_PUBLIC_PATHS:
             if rel in ("brief.py", "brief.css"):
                 continue

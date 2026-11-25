@@ -311,6 +311,9 @@ class ProtectedSurfacesUnchanged(unittest.TestCase):
         t444u = {"showcase.js": "d6b4900", "showcase.css": "d6b4900", "showcase.py": "d6b4900", "radar-viewer.js": "d6b4900"}
         # Ed t468u: the shared Light / Dark / Auto theme system needed small listeners here; pinned to that fix.
         t444u.update({"app.js": "c4ac86c", "radar-viewer.js": "c4ac86c"})
+        # Ed t476u / t477u: homepage_boot.py and dashboard.js are pinned to the
+        # approved Hatteras wind-selection repair (c039549).
+        t444u.update({"homepage_boot.py": "c039549", "dashboard.js": "c039549"})
         # t440u / t446u: brief.py and brief.css are the approved Morning Brief
         # refinements; homepage, viewers, and Catch Wall stay locked.
         for rel in whats_biting.PROTECTED_PATHS:
