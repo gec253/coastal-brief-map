@@ -51,6 +51,7 @@
   function resolved() { return stored() || (sysDark && sysDark.matches ? "dark" : "light"); }
   const tbtn = $("w-theme");
   function syncToggle() {
+    if (!tbtn) return;  // replaced by the shared Light / Dark / Auto control (theme_toggle.py)
     tbtn.setAttribute("aria-pressed", String(dark));
     tbtn.title = dark ? "Switch to day mode" : "Switch to night mode";
   }
@@ -66,7 +67,8 @@
     if (onTheme) onTheme();
   }
   syncToggle();
-  tbtn.addEventListener("click", function () { applyTheme(dark ? "light" : "dark", true); });
+  if (tbtn) tbtn.addEventListener("click", function () { applyTheme(dark ? "light" : "dark", true); });
+  window.addEventListener("cb:theme", function (e) { if (e && e.detail) applyTheme(e.detail.theme, false); });
   window.addEventListener("storage", function (e) { if (e.key === THEME_STORE || e.key === null) applyTheme(resolved(), false); });
   if (sysDark) {
     const onSys = function () { if (!stored() && !qTheme) applyTheme(resolved(), false); };

@@ -18,6 +18,7 @@ import featured_home  # noqa: E402
 import server  # noqa: E402
 import showcase  # noqa: E402
 import sprint_home  # noqa: E402
+import theme_toggle  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 KEY = "featured-home-test-key-24ok!!"
@@ -156,7 +157,7 @@ class Routes(unittest.TestCase):
         sc = showcase.variant(query or {}, rid)
         if sc:
             data = showcase.inject(data, sc, radar_meta=server.handle_radar_meta)
-        return data, sc
+        return theme_toggle.paint(data), sc  # Ed t468u: shared theme system on every public page
 
     def test_no_cookie_section_absent_and_body_matches_pipeline(self):
         os.environ["HOME_SHOWCASE"] = "1"

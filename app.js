@@ -88,6 +88,10 @@
   }
   function initTheme() {
     syncThemeToggle();
+    // Shared Light / Dark / Auto control (theme_toggle.py): keep the map basemap in step.
+    window.addEventListener("cb:theme", function (e) {
+      if (e && e.detail && (e.detail.theme === "dark" || e.detail.theme === "light")) setTheme(e.detail.theme, false);
+    });
     const btn = $("theme-toggle");
     if (btn) {
       btn.addEventListener("click", function () {

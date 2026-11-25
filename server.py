@@ -1429,7 +1429,7 @@ import radarview  # noqa: E402
 import showcase  # noqa: E402  (homepage Wind & Radar section; HOME_SHOWCASE flag, default off)
 import featured_home  # noqa: E402  (Featured in The Coastal Brief; public when PUBLIC_WHATS_BITING is on)
 import launch_flags  # noqa: E402  (default-off public launch flags; t425u)
-import theme_toggle  # noqa: E402  (homepage day/night toggle; /preview/home-b only for now)
+import theme_toggle  # noqa: E402  (site-wide Light / Dark / Auto theme system, Ed t468u)
 import nav_v2  # noqa: E402  (t453u masthead + nav v2; NAV_V2 env or preview cookie, default off)
 import whats_biting  # noqa: E402  (private /reports preview; cookie-gated, not public)
 import ramp_finder  # noqa: E402  (private /preview/ramps data preview; cookie-gated, not public)
@@ -3545,7 +3545,7 @@ class Handler(SimpleHTTPRequestHandler):
             sc = showcase.variant(q, rid)
             if sc:
                 data = showcase.inject(data, sc, radar_meta=handle_radar_meta, region=rid)
-            data = theme_toggle.apply(data)  # Ed t392u: masthead day/night toggle, preview only
+            data = theme_toggle.apply(data)  # shared Light / Dark / Auto system (Ed t468u)
         except Exception as e:
             sys.stderr.write("concept B preview failed: %s\n" % e)
             return self.send_error(500, "preview failed")
@@ -3644,13 +3644,20 @@ class Handler(SimpleHTTPRequestHandler):
         or this browser holds the preview cookie; any failure serves the original page."""
         if not isinstance(data, (bytes, bytearray)) or not str(ctype).startswith("text/html"):
             return data
+        path = urlparse(self.path or "/").path
         try:
-            if nav_v2.page_key(urlparse(self.path or "/").path) is None or not nav_v2.active(self._preview_ok):
-                return data
-            return nav_v2.apply(bytes(data), self.path or "/")
+            if nav_v2.page_key(path) is not None and nav_v2.active(self._preview_ok):
+                data = nav_v2.apply(bytes(data), self.path or "/")
         except Exception as e:
             sys.stderr.write("nav v2 skipped: %s\n" % e)
-            return data
+        # Ed t468u: one Light / Dark / Auto theme system on every public page (after NAV_V2, so the
+        # control lands in whichever masthead is served). Any failure serves the page as it was.
+        try:
+            if theme_toggle.page_ok(path):
+                data = theme_toggle.paint(bytes(data))
+        except Exception as e:
+            sys.stderr.write("theme skipped: %s\n" % e)
+        return data
 
     def _send_private(self, path: Path, ctype: str, data: bytes | None = None, status: int = 200, extra=None, robots: str = "noindex, nofollow"):
         if data is None:

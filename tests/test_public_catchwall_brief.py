@@ -187,7 +187,7 @@ class PublicCatchWallBrief(unittest.TestCase):
             self.assertIn('<style id="brief-style">', h)
             self.assertIn('<body class="mb-page mb-polish">', h)
             self.assertIn('aria-label="Print"', h)
-            self.assertIn('aria-label="Switch to dark mode"', h)
+            self.assertIn('role="radiogroup" aria-label="Color theme"', h)  # Ed t468u shared control
             self.assertIn('data-name-prefix="Region: "', h)
             self.assertIn('content="index, follow"', h)
             self._assert_public_clean(h)
@@ -199,7 +199,7 @@ class PublicCatchWallBrief(unittest.TestCase):
         st, b = brief.get("hatteras", include_fresh=True)
         raw = server._paint_public_brief(brief.page(b, include_fresh=True, public=True, ads_on=False).encode("utf-8")).decode("utf-8")
         text = lambda x: re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", re.sub(r"(?s)<(script|style|svg)\b.*?</\1>", "", x))).strip()
-        drop = lambda t: t.replace(" Print ", " ").replace(" Dark mode ", " ")
+        drop = lambda t: t.replace(" Print ", " ").replace(" Dark mode ", " ").replace(" Light Dark Auto ", " ")
         self.assertEqual(drop(text(raw)), drop(text(h)))   # same words, same order
 
     def test_brief_fallback_serves_unpolished_on_exception(self):

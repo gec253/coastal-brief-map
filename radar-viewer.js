@@ -31,7 +31,7 @@
   function stored() { try { const t = localStorage.getItem(THEME_STORE); return t === "light" || t === "dark" ? t : null; } catch (e) { return null; } }
   function resolved() { return stored() || (sysDark && sysDark.matches ? "dark" : "light"); }
   const tbtn = $("w-theme");
-  function syncToggle() { tbtn.setAttribute("aria-pressed", String(dark)); tbtn.title = dark ? "Switch to day mode" : "Switch to night mode"; }
+  function syncToggle() { if (!tbtn) return; tbtn.setAttribute("aria-pressed", String(dark)); tbtn.title = dark ? "Switch to day mode" : "Switch to night mode"; }
   function applyTheme(t, persist) {
     t = t === "dark" ? "dark" : "light";
     if (persist) { try { localStorage.setItem(THEME_STORE, t); } catch (e) {} }
@@ -42,7 +42,8 @@
     syncToggle(); if (onTheme) onTheme();
   }
   syncToggle();
-  tbtn.addEventListener("click", function () { applyTheme(dark ? "light" : "dark", true); });
+  if (tbtn) tbtn.addEventListener("click", function () { applyTheme(dark ? "light" : "dark", true); });
+  window.addEventListener("cb:theme", function (e) { if (e && e.detail) applyTheme(e.detail.theme, false); });
   window.addEventListener("storage", function (e) { if (e.key === THEME_STORE || e.key === null) applyTheme(resolved(), false); });
   if (sysDark) {
     const onSys = function () { if (!stored() && !qTheme) applyTheme(resolved(), false); };

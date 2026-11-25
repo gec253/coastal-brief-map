@@ -38,7 +38,7 @@
     if (save) try { localStorage.setItem("coastalBrief.theme", t); } catch (e) {}
   }
   setTheme(document.documentElement.getAttribute("data-theme") || "light", false);
-  $("theme-toggle").addEventListener("click", () => setTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark", true));
+  if ($("theme-toggle")) $("theme-toggle").addEventListener("click", () => setTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark", true));
 
   const tag = (k) => '<span class="tag tag-' + k + '">' + (k === "observed" ? "Observed" : "Forecast") + "</span>";
   const head = (title, kind) => '<header class="inst-h"><h3 class="inst-k">' + esc(title) + "</h3>" + (kind ? tag(kind) : "") + "</header>";

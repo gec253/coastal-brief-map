@@ -57,7 +57,9 @@ class BriefLakePublic(unittest.TestCase):
         self.assertEqual(body.count(b'<header class="site"'), 1)
         self.assertEqual(body.count(b'id="compact-bar"'), 1)
         self.assertEqual(body.count(b'id="rn-btn"'), 1)
-        self.assertEqual(body.count(b'id="theme-toggle"'), 1)
+        # Ed t468u: the page's own button is replaced by the one shared Light / Dark / Auto control.
+        self.assertEqual(body.count(b'id="theme-toggle"'), 0)
+        self.assertEqual(body.count(b'role="radiogroup" aria-label="Color theme"'), 1)
         if current == "brief":
             self.assertIn(b'id="nav-brief" aria-current="page"', body)
 

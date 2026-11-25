@@ -110,10 +110,14 @@ class SecondaryPages(Server):
             self.assertIn(b'class="skip"', body, path)
 
     def test_theme_toggle_kept_on_reports_and_ramps(self):
+        # Ed t468u: the shared Light / Dark / Auto control, once, inside the new masthead tools.
         env = dict(LIVE, NAV_V2="1")
         for path in ("/reports", "/ramps"):
             _, body = self._req(path, env=env)
-            self.assertEqual(body.count(b'id="theme-toggle"'), 1, path)
+            self.assertEqual(body.count(b'role="radiogroup" aria-label="Color theme"'), 1, path)
+            self.assertEqual(body.count(b'id="theme-toggle"'), 0, path)
+            tools = body.index(b'<div class="cbm-tools">')
+            self.assertLess(tools, body.index(b'role="radiogroup" aria-label="Color theme"'), path)
 
     def test_gated_items_follow_public_flags(self):
         env = {"NAV_V2": "1", "MORNING_BRIEF_ENABLED": "1", "PUBLIC_RAMPS": "1"}
