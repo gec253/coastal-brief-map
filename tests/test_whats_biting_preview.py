@@ -309,6 +309,8 @@ class ProtectedSurfacesUnchanged(unittest.TestCase):
         baseline = "3bfca7e"
         # Ed t444u: the Wind & Radar region fix intentionally changed these; they are pinned to that fix instead.
         t444u = {"showcase.js": "d6b4900", "showcase.css": "d6b4900", "showcase.py": "d6b4900", "radar-viewer.js": "d6b4900"}
+        # Ed t468u: the shared Light / Dark / Auto theme system needed small listeners here; pinned to that fix.
+        t444u.update({"app.js": "c4ac86c", "radar-viewer.js": "c4ac86c"})
         # t440u / t446u: brief.py and brief.css are the approved Morning Brief
         # refinements; homepage, viewers, and Catch Wall stay locked.
         for rel in whats_biting.PROTECTED_PATHS:
