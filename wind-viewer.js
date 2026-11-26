@@ -1,5 +1,4 @@
-/* /wind private viewer UI. The particle engine and wind math live in wind-lab.js (CBWind, CBWindMath).
-   NOAA MODEL FORECAST only (GFS default; private ?model=hrrr HRRR): never labelled as a station reading. Times in America/New_York (ET). */
+/* /wind viewer UI (CBWind / CBWindMath). NOAA MODEL FORECAST only. Times in ET. */
 (function () {
   "use strict";
   const W = window.CBWind, M = window.CBWindMath;
@@ -11,19 +10,17 @@
   const mm = (s) => !!(window.matchMedia && matchMedia(s).matches);
   const osReduce = mm("(prefers-reduced-motion: reduce)");
   const coarse = mm("(pointer: coarse)");
-  // Phone = touch screen whose short side is under 600 CSS px. Phones draw at 30 fps for battery; iPad/desktop at the display rate (60).
+  // Phone (coarse, short side < 600): 30 fps.
   const phone = coarse && Math.min(screen.width, screen.height) < 600;
   const fps = /[?&]fps=60\b/.test(q) ? 60 : /[?&]fps=30\b/.test(q) ? 30 : phone ? 30 : 60;
   let pref = null; try { pref = localStorage.getItem("coastalBrief.windMotion"); } catch (e) {}
   let motion = pref === "on" ? true : pref === "off" ? false : !osReduce;
   const AHEAD = [0, 3, 6, 9, 12];
-  // Private HRRR prototype: only with ?model=hrrr. GFS stays the default. One model per frame, never
-  // blended; the frame's own payload says which model it is (a GFS fallback is labelled as one).
+  // Private ?model=hrrr only. GFS default. Never blended.
   const wantHrrr = /[?&]model=hrrr\b/.test(q);
   let modelName = wantHrrr ? "HRRR" : "GFS";
   let ai = 0, grid = null, req = 0;
-  // ?at=lat,lon (from a region's homepage instrument) centres the opening view on that region's
-  // forecast point; anything outside the loaded data area is ignored and the coast-wide view is used.
+  // ?at=lat,lon centres the opening view if inside the data area.
   const AT = (/[?&]at=(-?\d{1,2}(?:\.\d{1,5})?),(-?\d{1,3}(?:\.\d{1,5})?)(?:&|$)/.exec(q) || []).slice(1).map(Number);
   const COAST = L.latLngBounds([33.75, -78.3], [36.55, -75.25]);
   const HOME = AT.length === 2 && AT[0] >= 32.5 && AT[0] <= 37.5 && AT[1] >= -80 && AT[1] <= -73
@@ -31,18 +28,16 @@
     : COAST;
   const yieldTask = () => new Promise((r) => (window.scheduler && scheduler.yield ? scheduler.yield().then(r) : setTimeout(r, 0)));
 
-  // ET clock (now). Clearly separate from the model's valid time.
+  // ET clock (now), not the model's valid time.
   const clockF = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" });
-  function tick() { $("w-clock").textContent = clockF.format(new Date()) + " ET"; }
+  let onTick = null;
+  function tick() { $("w-clock").textContent = clockF.format(new Date()) + " ET"; if (onTick) onTick(); }
   tick(); setInterval(tick, 15000);
 
   function ramp() { const c = $("w-ramp"), x = c.getContext("2d"); for (let i = 0; i < c.width; i++) { x.fillStyle = "rgb(" + M.rgb(i / c.width * 36, dark).join(",") + ")"; x.fillRect(i, 0, 1, c.height); } }
   ramp();
 
-  /* Theme: the same site preference as the Morning Brief and dashboard toggles (localStorage
-     "coastalBrief.theme" = "light" | "dark"; nothing stored = follow the phone's appearance).
-     wind.html applies it before first paint; this keeps it live without a reload: the sun/moon
-     toggle, other tabs (storage event), the phone switching appearance, and back/forward cache. */
+  /* Theme: coastalBrief.theme light|dark; unset = follow the phone. */
   const THEME_STORE = "coastalBrief.theme";
   const sysDark = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
   const qTheme = (/[?&]theme=(light|dark)\b/.exec(q) || [])[1] || null;
@@ -85,14 +80,13 @@
   setPlay();
 
   async function boot() {
-    // maxZoom 9.5 (about 1:630,000 at 35°N): the Census file asks not to be shown larger than 1:500,000.
+    // maxZoom 9.5: Census file asks not to be shown larger than 1:500,000.
     const map = L.map("wmap", { zoomControl: true, attributionControl: false, zoomSnap: 0.5, minZoom: 5, maxZoom: 9.5, maxBounds: [[30, -84], [40, -69]], tap: true, fadeAnimation: false });
     map.zoomControl.setPosition("topright");
     map.fitBounds(HOME);
-    // Attribution is static HTML (.w-attrib) so it paints with the chrome, before Leaflet runs.
+    // Attribution is static HTML (.w-attrib), painted with the chrome.
     await yieldTask();
-    // Coastline: our own Census land polygons in the page palette (CSS --coast-*), drawn into <canvas>
-    // tiles one per frame. No third-party tiles; a canvas tile can never be the LCP element.
+    // Census land in CSS --coast-*, canvas tiles (never the LCP element).
     const cs = getComputedStyle(root), bootDark = dark;
     const coast = window.CBCoast.layer({
       base: "/wind/coast-", land: cs.getPropertyValue("--coast-land").trim(),
@@ -120,8 +114,18 @@
     });
     $("w-center").addEventListener("click", function () { map.flyToBounds(COAST, { duration: osReduce ? 0 : 0.6 }); });
 
-    let dot = null;
+    let dot = null, loading = false;
     const live = $("w-read-body");
+    function validMs(iso) { return Date.parse(String(iso || "").replace("Z", "+00:00")); }
+    function relValid(iso) {
+      const h = (validMs(iso) - Date.now()) / 36e5;
+      if (!isFinite(h)) return "";
+      const n = Math.abs(Math.round(h));
+      if (h < -0.75) return n + " h ago";
+      if (h > 0.75) return "in " + n + " h";
+      return "";
+    }
+    function fcstTag(g) { return g && g.forecastHour != null ? "F" + String(g.forecastHour).padStart(3, "0") : ""; }
     function dismissRead() {
       if (dot) { map.removeLayer(dot); dot = null; }
       if (live) live.innerHTML = "";
@@ -134,17 +138,18 @@
       const s = grid ? wind.sample(latlng.lat, latlng.lng) : null;
       let body;
       if (!grid) {
-        body = "<span class=\"w-k\">" + kind + "</span><strong>No model data here</strong><span class=\"w-sub\">" +
-          ((status && !status.hidden && status.textContent) || "Model wind is unavailable right now.") + "</span>";
+        const msg = loading ? "Loading model wind…" : "Model data didn't load — try again";
+        body = "<span class=\"w-k\">" + kind + "</span><strong>" + msg + "</strong>";
       } else if (!s || !isFinite(s.kt) || !isFinite(s.from)) {
-        body = "<span class=\"w-k\">" + kind + "</span><strong>No model data here</strong><span class=\"w-sub\">This viewer loads GFS wind for 32.5–37.5°N, 73–80°W.</span>";
+        body = "<span class=\"w-k\">" + kind + "</span><strong>Outside model coverage — no GFS data for this spot</strong><span class=\"w-sub\">This viewer loads GFS wind for 32.5–37.5°N, 73–80°W.</span>";
       } else {
-        const a = AHEAD[ai];
+        const rel = relValid(grid.valid), behind = rel.indexOf("ago") >= 0;
+        const tline = "Valid " + M.etShort(grid.valid) + (rel ? (behind ? " — " + rel + " · Behind current time" : " · " + rel) : " · " + (fcstTag(grid) || "interpolated"));
         body = "<span class=\"w-k\">" + kind + "</span><strong>" + Math.round(s.kt) + " kt</strong> from " + M.compass(s.from) + " (" + Math.round(s.from) + "°)" +
-          "<span class=\"w-sub\">Valid " + M.etShort(grid.valid) + " · " + (a ? "+" + a + " h" : "nearest hour") + "</span>" +
+          "<span class=\"w-sub\">" + tline + "</span>" +
           "<span class=\"w-sub\">" + (label ? label + " · " : "") + latlng.lat.toFixed(2) + "°N " + Math.abs(latlng.lng).toFixed(2) + "°W · interpolated, 0.25° grid (~25 km)</span>";
       }
-      live.innerHTML = body;
+      if (live.innerHTML !== body) live.innerHTML = body;
       read.hidden = false;
     }
     $("w-read-x").addEventListener("click", dismissRead);
@@ -158,7 +163,6 @@
     window.__windView.readAt = readAt;
     window.__windView.dismiss = dismissRead;
     $("w-locate").addEventListener("click", function () {
-      // Only asks for location after this tap.
       if (!navigator.geolocation) { status.textContent = "Location isn't available in this browser."; status.hidden = false; return; }
       status.textContent = "Finding your location…"; status.hidden = false;
       navigator.geolocation.getCurrentPosition(function (p) {
@@ -171,12 +175,20 @@
     });
 
     function setHour() {
-      const a = AHEAD[ai];
       $("w-prev").disabled = ai === 0; $("w-next").disabled = ai === AHEAD.length - 1;
-      $("w-hour").querySelector(".w-hour-a").textContent = a === 0 ? "Nearest hour" : "Later";
-      $("w-hour").querySelector(".w-hour-b").textContent = "+" + a + " h";
+      const aEl = $("w-hour").querySelector(".w-hour-a"), bEl = $("w-hour").querySelector(".w-hour-b");
+      const tag = fcstTag(grid) || "Fcst hour";
+      const rel = grid ? relValid(grid.valid) : "";
+      const near = grid && !rel && isFinite(validMs(grid.valid)) ? clockF.format(new Date(validMs(grid.valid))) : "";
+      const lo = rel || near || "—";
+      if (aEl.textContent !== tag) aEl.textContent = tag;
+      if (bEl.textContent !== lo) bEl.textContent = lo;
     }
-    // Model name in the existing labels only (text, no layout change).
+    onTick = function () {
+      if (!grid) return;
+      setHour();
+      if (read && !read.hidden && dot) readAt(dot.getLatLng());
+    };
     function labelModel(g) {
       const hrrr = g.model === "hrrr";
       modelName = hrrr ? "HRRR" : "GFS";
@@ -193,32 +205,38 @@
       $("w-run").textContent = M.etShort(g.run);
       $("w-valid").textContent = M.etShort(g.valid);
       $("w-fh").textContent = "F" + String(g.forecastHour).padStart(3, "0");
-      $("w-valid").parentNode.setAttribute("title", M.etLong(g.valid));
+      const lag = relValid(g.valid);
+      $("w-valid").parentNode.setAttribute("title", M.etLong(g.valid) + (lag && lag.indexOf("ago") >= 0 ? " · Behind current time" : ""));
       $("w-run").parentNode.setAttribute("title", M.etLong(g.run) + " · " + g.source);
       wind.setGrid(g);
+      setHour();
       if (read && !read.hidden && dot) readAt(dot.getLatLng());
     }
     const memo = {};
+    function loadFail(msg) {
+      loading = false; status.textContent = msg;
+      if (dot && !grid) readAt(dot.getLatLng());
+    }
     async function load(i) {
       const my = ++req, a = AHEAD[i];
+      loading = true;
       status.textContent = a ? "Loading model wind +" + a + " h…" : "Loading NOAA " + modelName + " model wind…"; status.hidden = false;
       try {
         const qs = [a ? "ahead=" + a : "", wantHrrr ? "model=hrrr" : ""].filter(Boolean).join("&");
         let g = memo[a];
+        if (g && Math.abs(validMs(g.valid) - Date.now() - a * 36e5) > 54e5) g = null;
         if (!g) {
           const res = await fetch("/api/wind-grid" + (qs ? "?" + qs : ""));
           try { g = await res.json(); } catch (err) { g = {}; }
-          if (res.status === 429) {
-            status.textContent = (g && g.error) || "Too many requests. Please try again in a moment.";
-            return;
-          }
+          if (res.status === 429) { loadFail((g && g.error) || "Too many requests. Please try again in a moment."); return; }
         }
         if (my !== req) return;
-        if (!g.ok) { status.textContent = g.error || "Model wind is unavailable right now."; return; }
-        memo[a] = g; ai = i; setHour();
+        if (!g.ok) { loadFail(g.error || "Model wind is unavailable right now."); return; }
+        loading = false;
+        memo[a] = g; ai = i;
         await yieldTask();
         show(g); status.hidden = true;
-      } catch (e) { if (my === req) status.textContent = "Model wind is unavailable right now."; }
+      } catch (e) { if (my === req) loadFail("Model wind is unavailable right now."); }
     }
     $("w-prev").addEventListener("click", function () { if (ai > 0) load(ai - 1); });
     $("w-next").addEventListener("click", function () { if (ai < AHEAD.length - 1) load(ai + 1); });

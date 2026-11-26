@@ -34,7 +34,9 @@ class PhaseB1Panel(unittest.TestCase):
         self.assertIn('tabindex="-1"', self.html)  # map can take focus back after dismiss
         # Visible copy is filled in by JS; the heading must be a MODEL forecast, never observed.
         self.assertIn('modelName + " FORECAST"', self.js)
-        self.assertIn("No model data here", self.js)
+        self.assertIn("Outside model coverage — no GFS data for this spot", self.js)
+        self.assertIn("Model data didn't load — try again", self.js)
+        self.assertNotIn("No model data here", self.js)
         self.assertNotIn("Outside the model area", self.js)
         strings = " ".join(re.findall(r'"([^"]*)"', self.js))
         self.assertIsNone(re.search(r"observ", strings, re.I))
@@ -50,16 +52,18 @@ class PhaseB1Panel(unittest.TestCase):
         self.assertIn('el.focus()', self.js)
 
     def test_outside_grid_and_missing_data_have_no_number(self):
-        # Two honest no-data paths: no grid yet / failed fetch, and in-bbox miss or non-finite U/V.
+        # Two honest no-data paths: failed/missing grid vs outside coverage. Never a wind number.
         self.assertIn("This viewer loads GFS wind for 32.5–37.5°N, 73–80°W.", self.js)
         self.assertIn("Model wind is unavailable right now.", self.js)
         self.assertIn("!isFinite(s.kt)", self.js)
         self.assertIn("!isFinite(s.from)", self.js)
-        # A speed is only interpolated when a sample is finite; never emit a kt value in the no-data branch.
         no_grid = self.js.split("if (!grid)")[1].split("else if")[0]
         no_sample = self.js.split("!isFinite(s.from)")[1].split("} else {")[0]
-        self.assertIn("No model data here", no_grid)
-        self.assertIn("No model data here", no_sample)
+        self.assertIn("Model data didn't load — try again", no_grid)
+        self.assertIn("Loading model wind", no_grid)
+        self.assertIn("Outside model coverage — no GFS data for this spot", no_sample)
+        self.assertNotIn("Outside model coverage", no_grid)
+        self.assertNotIn("didn't load", no_sample)
         self.assertNotIn(" kt", no_grid)
         self.assertNotIn(" kt", no_sample)
         self.assertNotIn("Math.round", no_grid)
@@ -68,8 +72,11 @@ class PhaseB1Panel(unittest.TestCase):
     def test_in_grid_copy_is_forecast_with_valid_time(self):
         self.assertIn('Math.round(s.kt) + " kt</strong> from "', self.js)
         self.assertIn('M.compass(s.from)', self.js)
-        self.assertIn('>Valid " + M.etShort(grid.valid)', self.js)
-        self.assertIn('"nearest hour"', self.js)
+        self.assertIn('Valid " + M.etShort(grid.valid)', self.js)
+        self.assertIn("Behind current time", self.js)
+        self.assertIn(" h ago", self.js)
+        self.assertNotIn("nearest hour", self.js)
+        self.assertNotIn("Nearest hour", self.js)
         self.assertIn('interpolated, 0.25° grid (~25 km)', self.js)
         # Same bilinear sampler the particles use.
         self.assertIn("wind.sample(latlng.lat, latlng.lng)", self.js)
@@ -119,6 +126,37 @@ class PhaseB1Panel(unittest.TestCase):
             _sha256("wind-lab.js"),
             "aca358bd4ee33fdef19da2fd6aa907f690c2b080803b11d6cb86dac99c371558",
         )
+
+
+
+    def test_forecast_valid_lag_is_honest_and_never_called_now(self):
+        # Labels follow valid-time vs now, not the ahead-step index (+0 h / Nearest hour).
+        self.assertIn("function relValid", self.js)
+        self.assertIn("h < -0.75", self.js)          # 45 min+ behind → "N h ago"
+        self.assertIn("h > 0.75", self.js)
+        self.assertIn('n + " h ago"', self.js)
+        self.assertIn('"in " + n + " h"', self.js)
+        self.assertIn("Behind current time", self.js)
+        self.assertIn("fcstTag", self.js)
+        self.assertIn('padStart(3, "0")', self.js)
+        self.assertNotIn('a === 0 ? "Nearest hour"', self.js)
+        self.assertNotIn('"+" + a + " h"', self.js)
+        # Session memo is dropped when the cached valid time is far from the intended target.
+        self.assertIn("54e5", self.js)
+        # Clock tick refreshes the lag label without inventing a new value.
+        self.assertIn("onTick", self.js)
+
+    def test_hour_control_shrinks_instead_of_clipping(self):
+        hour = re.search(r"\.w-hour \{([^}]+)\}", self.css).group(1)
+        self.assertIn("min-width: 0", hour)
+        self.assertIn("text-overflow: ellipsis", self.css)
+        # Arrow / play / locate buttons stay at least 44 px in every breakpoint.
+        for rule in re.findall(r"\.w-(?:btn|arrow|play) \{([^}]*)\}", self.css):
+            for v in re.findall(r"min-(?:width|height): (\d+)px", rule):
+                self.assertGreaterEqual(int(v), 44, rule)
+        self.assertIn("Fcst hour", self.html)
+        self.assertNotIn("Nearest hour", self.html)
+        self.assertNotIn("+0 h", self.html)
 
 
 class AssetBudgetNote(unittest.TestCase):

@@ -177,7 +177,8 @@ class PageCopyAndControls(unittest.TestCase):
             self.assertIsNone(re.search(r"observ", copy, re.I))
             self.assertIsNone(re.search(r"\blive\b", copy, re.I))
         self.assertIn(" FORECAST", strings)                     # tap panel heading is "{model} FORECAST"
-        self.assertIn("No model data here", strings)
+        self.assertIn("Outside model coverage", strings)
+        self.assertIn("Model data didn't load", strings)
 
     def test_run_valid_forecast_hour_in_et(self):
         for i in ("w-run", "w-valid", "w-fh", "w-clock"):
