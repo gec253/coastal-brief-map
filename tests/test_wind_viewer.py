@@ -176,7 +176,8 @@ class PageCopyAndControls(unittest.TestCase):
         for copy in (self.visible_text(), attrs, strings):
             self.assertIsNone(re.search(r"observ", copy, re.I))
             self.assertIsNone(re.search(r"\blive\b", copy, re.I))
-        self.assertIn("model forecast", strings)                # tap readout labels the value too
+        self.assertIn(" FORECAST", strings)                     # tap panel heading is "{model} FORECAST"
+        self.assertIn("No model data here", strings)
 
     def test_run_valid_forecast_hour_in_et(self):
         for i in ("w-run", "w-valid", "w-fh", "w-clock"):

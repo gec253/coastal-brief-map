@@ -121,15 +121,42 @@
     $("w-center").addEventListener("click", function () { map.flyToBounds(COAST, { duration: osReduce ? 0 : 0.6 }); });
 
     let dot = null;
+    const live = $("w-read-body");
+    function dismissRead() {
+      if (dot) { map.removeLayer(dot); dot = null; }
+      if (live) live.innerHTML = "";
+      read.hidden = true;
+      const el = $("wmap"); if (el) el.focus();
+    }
     function readAt(latlng, label) {
-      const s = wind.sample(latlng.lat, latlng.lng);
       if (!dot) dot = L.circleMarker(latlng, { radius: 7, className: "w-dot", interactive: false }).addTo(map); else dot.setLatLng(latlng);
-      if (!s) { read.innerHTML = "<strong>Outside the model area</strong><span class=\"w-sub\">This viewer loads GFS wind for 32.5–37.5°N, 73–80°W.</span>"; read.hidden = false; return; }
-      read.innerHTML = "<strong>" + Math.round(s.kt) + " kt</strong> from " + M.compass(s.from) + " (" + Math.round(s.from) + "°) · " + modelName + " model forecast" +
-        "<span class=\"w-sub\">" + (label ? label + " · " : "") + latlng.lat.toFixed(2) + "°N " + Math.abs(latlng.lng).toFixed(2) + "°W · " + modelName + " 10 m, interpolated · valid " + M.etShort(grid.valid) + "</span>";
+      const kind = modelName + " FORECAST";
+      const s = grid ? wind.sample(latlng.lat, latlng.lng) : null;
+      let body;
+      if (!grid) {
+        body = "<span class=\"w-k\">" + kind + "</span><strong>No model data here</strong><span class=\"w-sub\">" +
+          ((status && !status.hidden && status.textContent) || "Model wind is unavailable right now.") + "</span>";
+      } else if (!s || !isFinite(s.kt) || !isFinite(s.from)) {
+        body = "<span class=\"w-k\">" + kind + "</span><strong>No model data here</strong><span class=\"w-sub\">This viewer loads GFS wind for 32.5–37.5°N, 73–80°W.</span>";
+      } else {
+        const a = AHEAD[ai];
+        body = "<span class=\"w-k\">" + kind + "</span><strong>" + Math.round(s.kt) + " kt</strong> from " + M.compass(s.from) + " (" + Math.round(s.from) + "°)" +
+          "<span class=\"w-sub\">Valid " + M.etShort(grid.valid) + " · " + (a ? "+" + a + " h" : "nearest hour") + "</span>" +
+          "<span class=\"w-sub\">" + (label ? label + " · " : "") + latlng.lat.toFixed(2) + "°N " + Math.abs(latlng.lng).toFixed(2) + "°W · interpolated, 0.25° grid (~25 km)</span>";
+      }
+      live.innerHTML = body;
       read.hidden = false;
     }
-    map.on("click", function (e) { if (grid) readAt(e.latlng); });
+    $("w-read-x").addEventListener("click", dismissRead);
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      const about = document.querySelector(".w-about");
+      if (about && about.open) { about.open = false; e.preventDefault(); return; }
+      if (read && !read.hidden) { e.preventDefault(); dismissRead(); }
+    });
+    map.on("click", function (e) { readAt(e.latlng); });
+    window.__windView.readAt = readAt;
+    window.__windView.dismiss = dismissRead;
     $("w-locate").addEventListener("click", function () {
       // Only asks for location after this tap.
       if (!navigator.geolocation) { status.textContent = "Location isn't available in this browser."; status.hidden = false; return; }

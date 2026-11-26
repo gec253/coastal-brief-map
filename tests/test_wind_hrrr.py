@@ -202,7 +202,7 @@ class Labels(unittest.TestCase):
         self.assertIn('"HRRR run" : "GFS run"', self.js)
         self.assertIn('"0.25° (HRRR unavailable)"', self.js)
         self.assertIn('"3 km model forecast"', self.js)
-        self.assertIn('modelName + " model forecast"', self.js)
+        self.assertIn('modelName + " FORECAST"', self.js)
         # same cells and badge as before: text only, no new layout
         self.assertIn('<span class="w-k" id="w-run-k">Model run</span>', self.html)
         self.assertIn('<span class="w-badge" id="w-badge">Model forecast</span>', self.html)

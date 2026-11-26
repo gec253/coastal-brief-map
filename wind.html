@@ -40,13 +40,16 @@
     <div class="w-cell w-cell-fh"><span class="w-k">Fcst hour</span><span class="w-v" id="w-fh">—</span></div>
   </section>
   <main class="w-stage" id="w-stage">
-    <div id="wmap" role="region" aria-label="Map of coastal North Carolina with animated NOAA GFS model wind. Tap or click the map to read the model wind at that point."></div>
+    <div id="wmap" role="region" tabindex="-1" aria-label="Map of coastal North Carolina with animated NOAA GFS model wind. Tap or click the map to read the model wind at that point."></div>
     <div class="w-legend" role="img" aria-label="Wind speed colour scale in knots, 0 to 35 and over">
       <canvas id="w-ramp" width="168" height="8" aria-hidden="true"></canvas>
       <span class="w-ticks" aria-hidden="true"><span>0</span><span>10</span><span>20</span><span>30</span><span>35+ kt</span></span>
     </div>
     <div class="w-stack">
-      <p class="w-read" id="w-read" aria-live="polite" hidden></p>
+      <div class="w-read" id="w-read" hidden>
+        <div id="w-read-body" aria-live="polite"></div>
+        <button type="button" class="w-read-x" id="w-read-x" aria-label="Dismiss forecast panel"><span aria-hidden="true">×</span></button>
+      </div>
       <p class="w-attrib">Wind: <a id="w-src" href="https://www.nco.ncep.noaa.gov/pmb/products/gfs/" rel="noopener">NOAA NCEP GFS</a> <span id="w-src-res">0.25° model forecast</span> · Coastline: U.S. Census Bureau, 2025 cartographic boundary file, 1:500,000 (not endorsed by the Census Bureau). <span id="w-disc">General information only: this is a model forecast and can be late or inaccurate for your location. Don’t rely on it alone for safety, marine or aviation decisions; check the National Weather Service.</span></p>
     </div>
     <script>/* ?model=hrrr (private): name HRRR before first paint so the text doesn't reflow later; a GFS fallback relabels it */if(/[?&]model=hrrr\b/.test(location.search)){var s=document.getElementById("w-src");s.textContent="NOAA NCEP HRRR";s.href="https://rapidrefresh.noaa.gov/hrrr/";document.getElementById("w-src-res").textContent="3 km model forecast";}</script>
