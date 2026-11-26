@@ -100,8 +100,43 @@ REGIONS = {
 
 ALL_MARINE_ZONES = {z for meta in REGIONS.values() for z in meta["zones"]}
 
-# Hard pause: gale warning or anything stronger, or a tropical storm /
-# hurricane warning. Watches do not hard-pause. Small Craft Advisory is soft.
+# Wakefield (AKQ) marine zones on the VA/NC border that cover North Carolina
+# water. Confirmed 26 Nov 2026 from api.weather.gov/zones/forecast/{id}:
+#   ANZ633  Currituck Sound
+#   ANZ658  Coastal waters from NC VA border to Currituck Beach Light NC out 20 NM
+#   ANZ688  Waters from NC VA border to Currituck Beach Light NC from 20 to 60 NM
+# Virginia-only Wakefield waters (ANZ654, ANZ656, ANZ684, ANZ686) are left out.
+WAKEFIELD_NC_MARINE_ZONES = ("ANZ633", "ANZ658", "ANZ688")
+
+# Ads marine coverage: the MHX/ILM list already used by this file (same AMZ
+# identifiers the conditions/brief systems query per region) plus the
+# Wakefield NC waters above. Do not mutate REGIONS — that mapping is ads-only
+# for Small Craft Advisory density, and conditions reads alertZones from
+# data/regions.json.
+ADS_REGION_ZONES = {
+    "north": list(REGIONS["north"]["zones"]) + list(WAKEFIELD_NC_MARINE_ZONES),
+    "central": list(REGIONS["central"]["zones"]),
+    "south": list(REGIONS["south"]["zones"]),
+}
+ADS_MARINE_ZONES = {z for zs in ADS_REGION_ZONES.values() for z in zs}
+ADS_MARINE_ZONE_LIST = (
+    list(REGIONS["north"]["zones"])
+    + list(REGIONS["central"]["zones"])
+    + list(REGIONS["south"]["zones"])
+    + list(WAKEFIELD_NC_MARINE_ZONES)
+)
+
+# Hard pause: gale or stronger, or a tropical storm / hurricane warning.
+# Identify first by VTEC phenomena+significance (and NWS eventCode). Event
+# names are a fallback only when those identifiers are absent. Watches do
+# not hard-pause. Small Craft Advisory is soft. SR.W (non-tropical Storm
+# Warning) is a marine hard pause and is not tropical storm mode — that
+# switch is separate and is never flipped here.
+HARD_PAUSE_VTEC = frozenset({"GL.W", "SR.W", "HF.W", "TR.W", "HU.W", "EW.W"})
+TROPICAL_VTEC = frozenset({"TR.W", "HU.W"})
+SOFT_VTEC = frozenset({"SC.Y"})
+HARD_PAUSE_EVENT_CODES = frozenset({"GLW", "SRW", "HFW", "TRW", "HUW", "EWW"})
+SOFT_EVENT_CODES = frozenset({"SCY"})
 HARD_PAUSE_EVENTS = {
     "gale warning",
     "storm warning",
@@ -119,6 +154,19 @@ SOFT_EVENTS = {
 }
 
 RESUME_AFTER = timedelta(hours=12)
+# If a complete marine evaluation cannot be refreshed, a previous "ads on"
+# result older than this is no longer safe to serve. Fail toward paused.
+# Documented in the t483u repair notes.
+ADS_SAFE_EVAL_MAX_AGE = timedelta(minutes=15)
+# Tighter than the general fetch_url defaults (those stay 45s / 4 tries).
+ADS_FETCH_TIMEOUT = 12
+ADS_FETCH_TRIES = 2
+NWS_ALERTS_ACTIVE = "https://api.weather.gov/alerts/active"
+_NWS_REPLACED_RE = re.compile(r"^\s*The .{0,80}? has been (replaced|cancelled|canceled)\b", re.I)
+_VTEC_RE = re.compile(
+    r"/[A-Z]\.(?P<action>[A-Z]{3})\.[A-Z0-9]{4}\.(?P<phen>[A-Z]{2})\.(?P<sig>[A-Z])\."
+)
+_VTEC_INACTIVE = frozenset({"CAN", "EXP"})
 ADS_LOCK = threading.Lock()
 CACHE_LOCK = threading.Lock()
 MAX_CACHE_BYTES = 400 * 1024 * 1024
@@ -433,74 +481,264 @@ def _ugc_from_alert(props: dict) -> set[str]:
     return codes
 
 
-def evaluate_ads(existing: dict | None = None) -> dict:
-    """Apply the approved ad-pause rule to live NWS alerts for NC marine zones."""
-    url = "https://api.weather.gov/alerts/active?area=NC&status=actual"
-    status, ctype, body = fetch_url(url, tries=3)
+def ads_marine_alerts_url(zones: list[str] | None = None) -> str:
+    """Same active-alert zone query the conditions and brief systems use."""
+    ids = zones if zones is not None else ADS_MARINE_ZONE_LIST
+    return NWS_ALERTS_ACTIVE + "?status=actual&zone=" + ",".join(ids)
+
+
+def ads_tropical_land_alerts_url() -> str:
+    """Land/area query used only for tropical warnings that attach to counties."""
+    return NWS_ALERTS_ACTIVE + "?area=NC&status=actual"
+
+
+def ads_required_feed_urls() -> list[str]:
+    """Required coverage: MHX/ILM marine, Wakefield NC marine, tropical land.
+
+    Splitting the marine list lets a single failed batch be treated as
+    incomplete (partial zone coverage) rather than a silent all-clear.
+    """
+    mhx_ilm = (
+        list(REGIONS["north"]["zones"])
+        + list(REGIONS["central"]["zones"])
+        + list(REGIONS["south"]["zones"])
+    )
+    return [
+        ads_marine_alerts_url(mhx_ilm),
+        ads_marine_alerts_url(list(WAKEFIELD_NC_MARINE_ZONES)),
+        ads_tropical_land_alerts_url(),
+    ]
+
+
+def _vtec_pairs(props: dict) -> list[tuple[str, str]]:
+    """Return (action, 'PH.S') pairs from official VTEC strings."""
+    params = props.get("parameters") or {}
+    raw = params.get("VTEC") or []
+    if isinstance(raw, str):
+        raw = [raw]
+    out: list[tuple[str, str]] = []
+    for item in raw:
+        if not isinstance(item, str):
+            continue
+        for m in _VTEC_RE.finditer(item):
+            out.append((m.group("action"), "%s.%s" % (m.group("phen"), m.group("sig"))))
+    return out
+
+
+def _event_codes(props: dict) -> set[str]:
+    codes = props.get("eventCode") or {}
+    raw = codes.get("NationalWeatherService") or []
+    if isinstance(raw, str):
+        raw = [raw]
+    return {str(c).upper() for c in raw if c}
+
+
+def _alert_vtec_set(props: dict, *, active_only: bool = True) -> set[str]:
+    pairs = _vtec_pairs(props)
+    if pairs:
+        if active_only:
+            return {phen_sig for action, phen_sig in pairs if action not in _VTEC_INACTIVE}
+        return {phen_sig for _action, phen_sig in pairs}
+    # Fall back to NWS eventCode (GLW, SRW, …) when VTEC is missing.
+    out: set[str] = set()
+    for code in _event_codes(props):
+        if len(code) == 3 and code.isalpha():
+            out.add("%s.%s" % (code[:2], code[2]))
+    return out
+
+
+def _nws_inactive_product(props: dict, now: datetime) -> bool:
+    """True when this product is not an in-effect Actual warning.
+
+    Same cancelled/replaced rule as conditions._nws_replaced, plus VTEC CAN/EXP
+    and an ends timestamp that has already passed. expires is not used to drop
+    a still-in-effect event (it is often the next-update time, earlier than ends).
+    """
+    if (props.get("status") or "Actual") != "Actual":
+        return True
+    if props.get("messageType") == "Cancel" or props.get("replacedBy"):
+        return True
+    if _NWS_REPLACED_RE.search(props.get("headline") or "") or _NWS_REPLACED_RE.search(props.get("description") or ""):
+        return True
+    pairs = _vtec_pairs(props)
+    if pairs and all(action in _VTEC_INACTIVE for action, _ps in pairs):
+        return True
+    ends = parse_iso(props.get("ends"))
+    if ends is not None and ends <= now:
+        return True
+    if props.get("ends") in (None, "") and parse_iso(props.get("expires")) is not None:
+        exp = parse_iso(props.get("expires"))
+        if exp is not None and exp <= now:
+            return True
+    return False
+
+
+def _alert_kind(props: dict) -> tuple[bool, bool, bool]:
+    """(is_hard, is_soft, is_tropical) from VTEC / eventCode, name as fallback."""
+    vtec = _alert_vtec_set(props, active_only=True)
+    codes = _event_codes(props)
+    ev_l = (props.get("event") or "").strip().lower()
+    if vtec or codes:
+        is_hard = bool(vtec & HARD_PAUSE_VTEC) or bool(codes & HARD_PAUSE_EVENT_CODES)
+        is_soft = bool(vtec & SOFT_VTEC) or bool(codes & SOFT_EVENT_CODES)
+        is_tropical = bool(vtec & TROPICAL_VTEC) or bool(codes & {"TRW", "HUW"})
+        return is_hard, is_soft, is_tropical
+    is_hard = ev_l in HARD_PAUSE_EVENTS
+    is_soft = ev_l in SOFT_EVENTS or ev_l.startswith("small craft advisory")
+    is_tropical = ev_l in {"tropical storm warning", "hurricane warning"}
+    return is_hard, is_soft, is_tropical
+
+
+def _parse_alert_collection(status: int, body: bytes) -> tuple[str, list]:
+    """Return ('ok', features), ('empty_invalid'/'malformed'/'http', [])."""
+    if status != 200:
+        return "http", []
+    try:
+        payload = json.loads(body.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError, AttributeError):
+        return "malformed", []
+    if not isinstance(payload, dict) or "features" not in payload:
+        return "malformed", []
+    features = payload.get("features")
+    if features is None or not isinstance(features, list):
+        return "malformed", []
+    return "ok", features
+
+
+def _fetch_ads_alert_feeds() -> tuple[bool, bool, str, list]:
+    """Fetch every required ads alert URL.
+
+    Returns (fetch_ok, coverage_complete, error_reason, features).
+    fetch_ok is True only when every required feed answered 200 with valid JSON.
+    An empty features list on a valid collection is complete coverage and a
+    true all-clear, not an error.
+    """
+    features: list = []
+    errors: list[str] = []
+    complete = True
+    for url in ads_required_feed_urls():
+        status, _ctype, body = fetch_url(url, tries=ADS_FETCH_TRIES, timeout=ADS_FETCH_TIMEOUT)
+        kind, batch = _parse_alert_collection(status, body)
+        if kind != "ok":
+            complete = False
+            if kind == "malformed":
+                errors.append("Malformed NWS alert feed (%s)." % url.split("?")[1])
+            else:
+                errors.append("NWS marine alert feed unavailable (HTTP %s, %s)." % (status, url.split("?")[1]))
+            continue
+        features.extend(batch)
+    fetch_ok = complete and not errors
+    reason = " ".join(errors)
+    return fetch_ok, complete, reason, features
+
+
+def _ads_is_safe_on_result(data: dict, now: datetime | None = None) -> bool:
+    """True only for a complete, recent evaluation that may keep ads on."""
+    if not data or not data.get("adsOn"):
+        return False
+    if not data.get("fetchOk") or data.get("coverageComplete") is False:
+        return False
+    ts = parse_iso(data.get("evaluatedAt"))
+    if ts is None:
+        return False
+    clock = now or now_utc()
+    return (clock - ts) <= ADS_SAFE_EVAL_MAX_AGE
+
+
+def evaluate_ads(existing: dict | None = None, now: datetime | None = None) -> dict:
+    """Apply the approved ad-pause rule to official NWS marine alerts.
+
+    Does not read or write tropical storm mode. A non-tropical Storm Warning
+    (SR.W) pauses ads and nothing else.
+    """
+    clock = now or now_utc()
+    previous = existing or {}
+    settled_since = parse_iso(previous.get("settledSince"))
+    fetch_ok, coverage_complete, fetch_error, features = _fetch_ads_alert_feeds()
+
     alerts_out = []
     hard_hits = []
     soft_regions: set[str] = set()
-    fetch_ok = status == 200
-    if fetch_ok:
-        try:
-            payload = json.loads(body.decode("utf-8"))
-        except (UnicodeDecodeError, json.JSONDecodeError):
-            payload = {}
-            fetch_ok = False
-        for feat in payload.get("features") or []:
-            props = feat.get("properties") or {}
-            if (props.get("status") or "Actual") != "Actual":
-                continue  # NWS test/exercise/draft messages are never real alerts
-            event = (props.get("event") or "").strip()
-            ev_l = event.lower()
-            codes = _ugc_from_alert(props)
-            marine = sorted(codes & ALL_MARINE_ZONES)
-            is_tropical = ev_l in {"tropical storm warning", "hurricane warning"}
-            is_hard = ev_l in HARD_PAUSE_EVENTS
-            is_soft = ev_l in SOFT_EVENTS or ev_l.startswith("small craft advisory")
-            # Tropical warnings: also count if issued for any NC area, because
-            # NWS often attaches them to land counties rather than AMZ IDs.
-            touches_rule = bool(marine) or (is_tropical and ev_l in {"tropical storm warning", "hurricane warning"})
-            if not (is_hard or is_soft):
-                continue
-            if is_hard and not touches_rule:
-                continue
-            if is_soft and not marine:
-                continue
-            rec = {
-                "event": event,
-                "severity": props.get("severity"),
-                "headline": props.get("headline"),
-                "zones": marine,
-                "ends": props.get("ends") or props.get("expires"),
-                "id": props.get("id") or feat.get("id"),
-            }
-            alerts_out.append(rec)
-            if is_hard and touches_rule:
-                hard_hits.append(rec)
-            elif is_soft:
-                for region, meta in REGIONS.items():
-                    if codes & set(meta["zones"]):
-                        soft_regions.add(region)
-
-    previous = existing or {}
-    settled_since = parse_iso(previous.get("settledSince"))
-    now = now_utc()
-    reasons = []
-
-    if not fetch_ok:
-        # Keep the last known flag rather than guessing. Say so.
-        kept = dict(previous) if previous else {
-            "adsOn": True, "mode": "full", "hardPause": False,
-            "reducedRegions": [], "reasons": [], "settledSince": None,
-            "resumeAfter": None, "alerts": [],
+    seen_ids: set[str] = set()
+    for feat in features:
+        props = feat.get("properties") or {}
+        if _nws_inactive_product(props, clock):
+            continue
+        is_hard, is_soft, is_tropical = _alert_kind(props)
+        if not (is_hard or is_soft):
+            continue
+        codes = _ugc_from_alert(props)
+        marine = sorted(codes & ADS_MARINE_ZONES)
+        touches_rule = bool(marine) or is_tropical
+        if is_hard and not touches_rule:
+            continue
+        if is_soft and not marine:
+            continue
+        ident = str(props.get("id") or feat.get("id") or "")
+        if ident and ident in seen_ids:
+            continue
+        if ident:
+            seen_ids.add(ident)
+        rec = {
+            "event": (props.get("event") or "").strip(),
+            "severity": props.get("severity"),
+            "headline": props.get("headline"),
+            "zones": marine,
+            "ends": props.get("ends") or props.get("expires"),
+            "id": ident or None,
+            "vtec": sorted(_alert_vtec_set(props, active_only=True)),
+            "tropical": bool(is_tropical),
         }
-        kept["evaluatedAt"] = iso(now)
-        kept["reasons"] = list(kept.get("reasons") or []) + [
-            "Could not refresh NWS alerts (HTTP %s). Left the previous ads flag as-is." % status
-        ]
-        kept["fetchOk"] = False
-        return kept
+        alerts_out.append(rec)
+        if is_hard and touches_rule:
+            hard_hits.append(rec)
+        elif is_soft:
+            for region, zones in ADS_REGION_ZONES.items():
+                if codes & set(zones):
+                    soft_regions.add(region)
+
+    reasons = []
+    resume_after = None
+
+    if not coverage_complete:
+        # Fail toward paused. Never copy a previous adsOn: true, and never
+        # default to ads on. Known hard pauses stay hard; otherwise this
+        # failed or partial refresh starts/keeps mode=paused so a later
+        # all-clear follows the 12-hour hold instead of restoring ads.
+        ads_on = False
+        mode = "paused"
+        hard_pause = bool(hard_hits) or bool(previous.get("hardPause"))
+        if hard_hits:
+            settled_since = None
+            for rec in hard_hits:
+                names = ", ".join(rec["zones"]) or ("NC (tropical warning)" if rec.get("tropical") else "NC marine waters")
+                reasons.append("%s is in effect for %s." % (rec["event"], names))
+            reasons.append("Ads stay off until 12 hours after these warnings end.")
+        elif previous.get("hardPause"):
+            settled_since = None
+            reasons.extend(list(previous.get("reasons") or []))
+        else:
+            if previous.get("hardPause") or previous.get("mode") == "paused":
+                if settled_since is None:
+                    settled_since = clock
+            elif settled_since is None:
+                settled_since = clock
+        reasons.append(fetch_error or "NWS marine alert coverage was incomplete. Ads stay off.")
+        if settled_since and not hard_pause:
+            resume_after = iso(settled_since + RESUME_AFTER)
+        return {
+            "adsOn": False,
+            "mode": mode,
+            "hardPause": hard_pause,
+            "reducedRegions": [],
+            "reasons": reasons,
+            "evaluatedAt": iso(clock),
+            "settledSince": iso(settled_since) if not hard_pause else None,
+            "resumeAfter": resume_after if not hard_pause else None,
+            "alerts": alerts_out,
+            "fetchOk": False,
+            "coverageComplete": False,
+        }
 
     if hard_hits:
         settled_since = None
@@ -509,17 +747,17 @@ def evaluate_ads(existing: dict | None = None) -> dict:
         hard_pause = True
         mode = "paused"
         for rec in hard_hits:
-            names = ", ".join(rec["zones"]) or "NC (tropical warning)"
+            names = ", ".join(rec["zones"]) or ("NC (tropical warning)" if rec.get("tropical") else "NC marine waters")
             reasons.append("%s is in effect for %s." % (rec["event"], names))
         reasons.append("Ads stay off until 12 hours after these warnings end.")
     else:
         hard_pause = False
         if previous.get("hardPause") or previous.get("mode") == "paused":
             if settled_since is None:
-                settled_since = now
+                settled_since = clock
         if settled_since is not None:
             resume_after_dt = settled_since + RESUME_AFTER
-            if now < resume_after_dt:
+            if clock < resume_after_dt:
                 ads_on = False
                 mode = "paused"
                 reasons.append(
@@ -535,7 +773,7 @@ def evaluate_ads(existing: dict | None = None) -> dict:
             ads_on = True
             resume_after_dt = None
             mode = "full"
-        resume_after = iso(resume_after_dt) if settled_since and not ads_on else (iso(resume_after_dt) if 'resume_after_dt' in dir() and resume_after_dt else None)
+        resume_after = iso(resume_after_dt) if settled_since and not ads_on else None
 
     if ads_on and soft_regions:
         mode = "reduced"
@@ -546,7 +784,6 @@ def evaluate_ads(existing: dict | None = None) -> dict:
     if ads_on and not reasons:
         reasons.append("No gale-or-stronger warning, tropical storm/hurricane warning, or small craft advisory on NC coastal marine zones.")
 
-    # Fix resume_after if we paused for 12h
     if hard_hits:
         resume_after = None
     elif not hard_pause and settled_since and not ads_on:
@@ -561,11 +798,12 @@ def evaluate_ads(existing: dict | None = None) -> dict:
         "hardPause": hard_pause,
         "reducedRegions": reduced,
         "reasons": reasons,
-        "evaluatedAt": iso(now),
+        "evaluatedAt": iso(clock),
         "settledSince": iso(settled_since),
         "resumeAfter": resume_after,
         "alerts": alerts_out,
         "fetchOk": True,
+        "coverageComplete": True,
     }
 
 
@@ -597,9 +835,26 @@ def ads_stale(data: dict, max_age: int = 5 * 60) -> bool:
 def get_ads(force: bool = False) -> dict:
     with ADS_LOCK:
         current = load_ads()
-        if not force and current and not ads_stale(current):
+        # Refresh on the usual 5-minute cadence, and never serve a cached
+        # "ads on" result that was incomplete, unsuccessful, or older than
+        # ADS_SAFE_EVAL_MAX_AGE (15 minutes).
+        cache_ok = (
+            not force
+            and current
+            and not ads_stale(current)
+            and (not current.get("adsOn") or _ads_is_safe_on_result(current))
+        )
+        if cache_ok:
             return current
         updated = evaluate_ads(current)
+        if updated.get("adsOn") and not _ads_is_safe_on_result(updated):
+            updated = dict(updated)
+            updated["adsOn"] = False
+            updated["mode"] = "paused"
+            updated["reducedRegions"] = []
+            reasons = list(updated.get("reasons") or [])
+            reasons.append("Previous ads-on evaluation is no longer safe to serve. Ads stay off.")
+            updated["reasons"] = reasons
         try:
             ADS_PATH.parent.mkdir(parents=True, exist_ok=True)
             tmp = ADS_PATH.with_suffix(".tmp")
