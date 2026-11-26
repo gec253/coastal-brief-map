@@ -19,14 +19,17 @@ import preview_copy  # noqa: E402
 import preview_zones  # noqa: E402
 
 NOW = datetime(2026, 11, 14, 15, 0, tzinfo=timezone.utc)
-ZONE_RE = re.compile(r"\b(?:AMZ|NCZ|NCC)\d+\b")
+ZONE_RE = re.compile(r"\b(?:AMZ|ANZ|NCZ|NCC)\d+\b")
 
 # Official display phrases, from names fetched 15 Nov 2026.
 EXPECTED = {
     "wilmington": "Coastal waters from Surf City to Cape Fear NC out 20 nm; Coastal New Hanover",
     "nags-head": (
         "S of Currituck Beach Light NC to Oregon Inlet NC out to 20 nm; "
-        "Northern Outer Banks; Croatan and Roanoke Sounds"
+        "Northern Outer Banks; Croatan and Roanoke Sounds; "
+        # Ed t487u: NC Wakefield (AKQ) waters, official names fetched 26 Nov 2026.
+        "Currituck Sound; Coastal waters from NC VA border to Currituck Beach Light NC out 20 nm; "
+        "Waters from NC VA border to Currituck Beach Light NC from 20 to 60 nm"
     ),
     "emerald-isle": "S of Cape Lookout NC to Surf City NC out to 20 nm; West Carteret",
     "topsail": (
@@ -94,6 +97,7 @@ class ZoneNameMap(unittest.TestCase):
     def test_every_required_code_has_official_name_and_source(self):
         required = {
             "AMZ158", "AMZ250", "AMZ150", "AMZ231",
+            "ANZ633", "ANZ658", "ANZ688",
             "NCZ195", "NCZ108", "NCZ203", "NCZ102", "NCZ199", "NCZ106",
             "NCZ041", "NCZ042", "NCZ078", "NCZ040", "NCZ025",
             "NCZ077", "NCZ088", "NCZ096",
@@ -106,7 +110,8 @@ class ZoneNameMap(unittest.TestCase):
             self.assertTrue(rec["name"], code)
             self.assertTrue(rec["source"].startswith("https://api.weather.gov/zones/"), code)
             self.assertIn(code, rec["source"], code)
-            self.assertEqual(rec["fetched"], "2026-11-15", code)
+            # t487u: the three NC Wakefield zones were fetched 26 Nov 2026; every other name 15 Nov.
+            self.assertEqual(rec["fetched"], "2026-11-26" if code in ("ANZ633", "ANZ658", "ANZ688") else "2026-11-15", code)
             # Names are the official NWS string, not a rewritten paraphrase.
             self.assertNotIn(code, rec["name"])
 

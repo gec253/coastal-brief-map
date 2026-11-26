@@ -765,7 +765,10 @@
       "alertZones": [
         "AMZ150",
         "NCZ203",
-        "AMZ231"
+        "AMZ231",
+        "ANZ633",
+        "ANZ658",
+        "ANZ688"
       ],
       "waterType": "saltwater",
       "notes": "Public since 14 Nov 2026. Kitty Hawk, Kill Devil Hills and Nags Head, south to Oregon Inlet. Wind, observed tide and some air readings come from Duck Pier or Oregon Inlet and are labeled as such. Inshore ocean water temperature is unavailable."

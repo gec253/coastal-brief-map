@@ -21,6 +21,7 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 
+import alert_status
 import conditions
 import homepage_boot
 import photo_rotation
@@ -363,6 +364,71 @@ def _alerts(a) -> dict:
     return {"state": "unknown", "items": [{"event": ALERTS_OFF[0], "meta": ALERTS_OFF[1]}]}
 
 
+def _raw_alert_records(a: dict) -> dict:
+    """(event, onset, ends) -> official NWS records, re-read from the same api.weather.gov URL that
+    conditions.alerts_block used, through the same cache (no extra request when it is warm).
+    Used only to add the start time (onset, else effective) and in-region zone names. {} on any failure."""
+    zones = list((a or {}).get("zones") or [])
+    if not zones:
+        return {}
+    try:
+        body = conditions.nws_json("https://api.weather.gov/alerts/active?status=actual&zone=" + ",".join(zones),
+                                   conditions.TTL_ALERTS)
+    except Exception:
+        return {}
+    feed = alert_status.read_feed(body, zones)
+    out = {}
+    for r in feed.get("records") or []:
+        out.setdefault((r["event"], r.get("onset"), r.get("ends") or r.get("expires")), []).append(r)
+    return out
+
+
+def _salt_alerts(a, now: datetime | None = None) -> dict:
+    """Saltwater alert strip rows (t487u): the existing rows, plus an UPCOMING / IN EFFECT label with
+    the official start time, and the in-region NWS zone names when an event name appears in more
+    than one row (Nags Head: MHX and Wakefield Storm Warnings). Rows are never dropped or merged here."""
+    base = _alerts(a)
+    if base.get("state") != "active":
+        return base
+    now = now or datetime.now(timezone.utc)
+    items = (a or {}).get("items") or []
+    raw = _raw_alert_records(a)
+    zones = list((a or {}).get("zones") or [])
+    counts = {}
+    for it in items:
+        counts[it.get("event")] = counts.get(it.get("event"), 0) + 1
+    out = []
+    for it in items:
+        recs = raw.get((it.get("event"), it.get("onset"), it.get("ends"))) or []
+        start = it.get("onset") or next((alert_status.start_of(r) for r in recs if alert_status.start_of(r)), None)
+        lab = alert_status.label_for({"start": start, "ends": it.get("ends")}, now)
+        if lab["phase"] == "upcoming":
+            meta = "starts " + et_time(start) + ((" · until " + et_time(it["ends"])) if it.get("ends") else "")
+        else:
+            meta = ("until " + et_time(it["ends"])) if it.get("ends") else ""
+        area = ""
+        if counts.get(it.get("event"), 0) > 1 and recs:
+            names = []
+            for r in recs:
+                for z in r["ugc"]:
+                    if z in zones:
+                        n = r["names"].get(z) or z
+                        if n not in names:
+                            names.append(n)
+            area = "; ".join(names)
+        out.append({"event": it.get("event") or "", "meta": meta, "tag": lab["tag"], "phase": lab["phase"], "area": area})
+    return {"state": "active", "items": out}
+
+
+def _coastal_flood(a, now: datetime | None = None) -> dict | None:
+    """Coastal Flood Warning (in effect or upcoming) in this region's official alerts, else None."""
+    now = now or datetime.now(timezone.utc)
+    if (a or {}).get("status") != "ok":
+        return None
+    rows = [{"event": it.get("event"), "start": it.get("onset"), "ends": it.get("ends")} for it in (a or {}).get("items") or []]
+    return alert_status.coastal_flood_active(rows, now)
+
+
 def _marine(m) -> dict | None:
     m = m or {}
     per = (m.get("periods") or [])
@@ -398,7 +464,13 @@ def salt_model(payload: dict) -> dict:
         )
     elif sel.get("role") == "none":
         wt["note"] = (sel.get("note") or (wr or {}).get("note") or wt.get("note") or "")
-    tiles = [wt, _seas_tile(R.get("seas")), _water_tile(R), _tide_tile(payload.get("tides"))]
+    tide = _tide_tile(payload.get("tides"))
+    cf = _coastal_flood(payload.get("alerts"))
+    if cf:
+        # t487u: a note beside the predicted tide only; NOAA's predicted values are not changed.
+        tide["flood"] = ("Coastal Flood Warning in effect" if cf["phase"] == "in_effect"
+                         else "Coastal Flood Warning issued (upcoming)") + ". " + alert_status.FLOOD_TIDE_NOTE
+    tiles = [wt, _seas_tile(R.get("seas")), _water_tile(R), tide]
     more = [_swell_tile(R.get("swell"))]
     air = R.get("airTemp")
     if _state(air) != "off":
@@ -415,7 +487,7 @@ def salt_model(payload: dict) -> dict:
     reg = payload.get("region") or {}
     return {
         "water": "salt", "region": reg, "tiles": tiles, "more": more,
-        "alerts": _alerts(payload.get("alerts")), "alerts_raw": payload.get("alerts"), "forecast": _marine(payload.get("marine")),
+        "alerts": _salt_alerts(payload.get("alerts")), "alerts_raw": payload.get("alerts"), "forecast": _marine(payload.get("marine")),
         "updated": et_time(payload.get("generatedAt")), "ok": True,
     }
 
@@ -935,6 +1007,8 @@ def tile_html(t: dict, big: bool = False) -> str:
             out.append('<p class="t-sub t-then">%s</p>' % _esc(t["then"]))
         if t["id"] == "tide":
             out.append(_tide_spark(t))
+    if t["id"] == "tide" and t.get("flood"):
+        out.append('<p class="t-flood" role="note">%s</p>' % _esc(t["flood"]))
     if st == "off" and t.get("note"):
         out.append('<p class="t-note">%s</p>' % _esc(t["note"]))
     src = t["src"]
@@ -1025,9 +1099,14 @@ def alerts_html(a: dict, pennants: bool = False, raw: dict | None = None) -> str
     for i, it in enumerate(a["items"]):
         sv = severity(it["event"]) if st == "active" else ""
         sevs.append(sv)
-        rows.append('<p class="al-row%s">%s<b class="al-ev">%s</b>%s</p>' % (
-            (" sev-" + sv) if sv else "", flag if i == 0 else "",
-            _esc(it["event"]), (' <span class="al-meta">%s</span>' % _esc(it["meta"])) if it["meta"] else ""))
+        tag = ""
+        if it.get("tag"):   # t487u: UPCOMING vs IN EFFECT, official start time in the meta
+            tag = ' <span class="al-tag">%s</span>' % _esc(it["tag"])
+        rows.append('<p class="al-row%s%s">%s<b class="al-ev">%s</b>%s%s%s</p>' % (
+            (" sev-" + sv) if sv else "", (" p-" + it["phase"].replace("_", "-")) if it.get("phase") else "",
+            flag if i == 0 else "",
+            _esc(it["event"]), tag, (' <span class="al-meta">%s</span>' % _esc(it["meta"])) if it["meta"] else "",
+            (' <span class="al-area">%s</span>' % _esc(it["area"])) if it.get("area") else ""))
     top = next((x for x in ("warn", "adv", "watch", "stmt") if x in sevs), "")
     return '<div class="al al-%s%s%s" role="status"><div class="al-rows">%s</div><a class="al-link" href="%s" rel="noopener">NWS details</a></div>' % (
         st, (" al-" + top) if top else "", " has-flag" if flag else "", "".join(rows), homepage_boot.NWS_DETAILS)

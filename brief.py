@@ -27,6 +27,7 @@ import html
 import json
 import os
 import re
+import sys
 import threading
 import time
 import urllib.request
@@ -1089,7 +1090,12 @@ def _nws_text(t: str) -> str:
     return re.sub(r"[ \t]*(?<!\n)\n(?!\n)[ \t]*", " ", (t or "").strip())
 
 
-def _hz_row_html(row: dict, b: dict, view_now: datetime, esc) -> str:
+# t487u: reconciled "status now" states for rows of the issued list -> existing row classes.
+_RC_CLASS = {"in_effect": "current", "updated": "current", "upgraded": "current", "replaced": "current",
+             "upcoming": "upcoming", "ended": "ended", "cancelled": "ended", "unconfirmed": "unconfirmed"}
+
+
+def _hz_row_html(row: dict, b: dict, view_now: datetime, esc, rc: dict | None = None) -> str:
     onset = brief_format._parse_iso(row.get("onset"))
     ends = brief_format._parse_iso(row.get("ends"))
     if ends is not None and ends <= view_now:
@@ -1098,6 +1104,14 @@ def _hz_row_html(row: dict, b: dict, view_now: datetime, esc) -> str:
         st = "upcoming"
     else:
         st = "current"
+    st_label = st.upper()
+    now_line = ""
+    if rc:
+        # The issued wording and times above stay as published; only the status chip and the
+        # "Now" line come from the current NWS check (never a silent ENDED without a check).
+        st = _RC_CLASS.get(rc.get("state"), "unconfirmed")
+        st_label = (rc.get("tag") or "Unconfirmed").upper()
+        now_line = '<span class="mb-hz-now"><span class="mb-sr">Status now: </span>%s</span>' % esc(rc.get("detail") or "")
     kind = row.get("kind") or brief_format.hazard_kind(row.get("event") or "")
     kind_label = _KIND_LABEL.get(kind, "Alert")
     start = brief_format.when_et(onset) if onset else ""
@@ -1141,12 +1155,108 @@ def _hz_row_html(row: dict, b: dict, view_now: datetime, esc) -> str:
             % (esc("; ".join(all_areas) or "Not listed"), "".join(prods), esc(link), esc(link_label)))
     return ('<li class="mb-hz-row k-%s s-%s"><details><summary>'
             '<span class="mb-hz-l1"><span class="mb-hz-kind">%s</span> <span class="mb-hz-ev">%s</span></span>'
-            '<span class="mb-hz-l2"><span class="mb-hz-when"><span class="mb-hz-st">%s</span> %s</span><span class="mb-hz-area">%s</span></span>'
+            '<span class="mb-hz-l2"><span class="mb-hz-when"><span class="mb-hz-st">%s</span> %s</span><span class="mb-hz-area">%s</span>%s</span>'
             '</summary>%s</details></li>'
-            % (esc(kind), st, esc(kind_label), esc(row.get("event") or ""), st.upper(), when, area, more))
+            % (esc(kind), st, esc(kind_label), esc(row.get("event") or ""), esc(st_label), when, area, now_line, more))
 
 
-def _hazards_html(b: dict, esc, view_now: datetime | None = None) -> str:
+def _issued_rows(b: dict) -> list:
+    """Rows of the issued hazards list, in stored order (the same objects the page renders)."""
+    hz = b.get("hazards") or {}
+    if hz.get("status") != "active":
+        return []
+    return list(hz.get("current") or []) + list(hz.get("upcoming") or [])
+
+
+def status_now_for(b: dict, fetch, now: datetime | None = None) -> dict | None:
+    """Current official NWS alerts for this brief's area (t487u). Never raises; never edits the snapshot.
+
+    Saltwater: the region's alert zones (same query the conditions page uses). Freshwater: the same
+    point query the Falls Lake brief used. `fetch(url)` returns parsed JSON or None (no stale copies)."""
+    import alert_status
+    try:
+        now = now or datetime.now(timezone.utc)
+        rid = b.get("regionId") or (b.get("region") or {}).get("id") or ""
+        fw = (b.get("waterType") or "") == "freshwater"
+        cfg = _region_cfg(rid, fw) or {}
+        start = brief_format._parse_iso(b.get("issuedAt"))
+        start_q = start.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ") if start else None
+        if fw:
+            pt = cfg.get("alertPoint") or [(cfg.get("anchor") or {}).get("lat"), (cfg.get("anchor") or {}).get("lon")]
+            if not pt or None in pt:
+                return None
+            q = "point=%.4f,%.4f" % (pt[0], pt[1])
+            zones = None
+        else:
+            zones = list(cfg.get("alertZones") or [])
+            if not zones:
+                return None
+            q = "zone=" + ",".join(zones)
+        url = "https://api.weather.gov/alerts/active?status=actual&" + q
+        hist = ("https://api.weather.gov/alerts?%s&start=%s" % (q, start_q)) if start_q else None
+        return alert_status.status_now(_issued_rows(b), url, fetch, now=now, zones=zones, history_url=hist)
+    except Exception as e:  # a bug here must not take the brief down; show "could not check" instead
+        sys.stderr.write("brief status_now failed: %r\n" % (e,))
+        return {"ok": False, "trusted": False, "checkedAt": (now or datetime.now(timezone.utc)).isoformat(),
+                "current": [], "issued": [{"state": "unconfirmed", "tag": "Unconfirmed",
+                                           "detail": "Status unconfirmed — check NWS."} for _ in _issued_rows(b)],
+                "coastalFlood": None}
+
+
+def _status_now_html(b: dict, sn: dict | None, esc, view_now: datetime) -> str:
+    """The separate, live "Status now" section. The issued brief above it is not changed."""
+    if not sn:
+        return ""
+    import alert_status
+    checked = brief_format.when_et(sn.get("checkedAt"), always_weekday=False)
+    link = '<p class="mb-hz-src"><a href="https://alerts.weather.gov/" target="_blank" rel="noopener">NWS active alerts</a> · live; this brief was issued %s and does not change.</p>' % esc(
+        (b.get("issuedEt") or "").split(", ")[-1] or "earlier")
+    head = ('<div class="mb-hz-head"><h2 class="mb-hz-h" id="mb-now-h">Status now</h2>'
+            '<p class="mb-hz-note">Current NWS alerts · checked %s</p></div>' % esc(checked))
+    if not sn.get("ok"):
+        return ('<section class="mb-now is-unknown" aria-labelledby="mb-now-h">%s'
+                '<p class="mb-now-warn">Could not reach the National Weather Service to check current alerts. '
+                'Status unconfirmed — check NWS before heading out.</p>%s</section>' % (head, link))
+    lis = []
+    rank = {"warning": 0, "watch": 1, "advisory": 2, "statement": 3}
+    cur = sorted(sn.get("current") or [], key=lambda r: (rank.get(brief_format.hazard_kind(r.get("event") or ""), 9),
+                                                       (brief_format._parse_iso(r.get("start")) or view_now).timestamp()))
+    for r in cur:
+        lab = r.get("label") or alert_status.label_for(r, view_now)
+        kind = brief_format.hazard_kind(r.get("event") or "")
+        area = "; ".join(r.get("local") or [])
+        upd = alert_status.et_clock(r.get("sent"), view_now)
+        lis.append(
+            '<li class="mb-now-row k-%s p-%s"><span class="mb-now-l1"><span class="mb-now-tag">%s</span> '
+            '<span class="mb-hz-kind">%s</span> <span class="mb-now-ev">%s</span></span>'
+            '<span class="mb-now-when">%s</span>%s%s</li>'
+            % (esc(kind), esc(lab["phase"].replace("_", "-")), esc(lab["tag"].upper()), esc(_KIND_LABEL.get(kind, "Alert")),
+               esc(r.get("event") or ""), esc(lab["when"]),
+               ('<span class="mb-now-area">%s</span>' % esc(area)) if area else "",
+               ('<span class="mb-now-upd">NWS update %s · %s</span>' % (esc(upd), esc(r.get("sender") or "NWS"))) if upd else ""))
+    warn = ""
+    if not sn.get("trusted"):
+        warn = ('<p class="mb-now-warn">An NWS alert record could not be read. Status unconfirmed — check NWS before heading out.</p>')
+    if lis:
+        body = '<ul class="mb-now-list">%s</ul>' % "".join(lis)
+    elif sn.get("trusted"):
+        body = '<p class="mb-now-clear">No NWS watches, warnings or advisories for this area right now.</p>'
+    else:
+        body = ""
+    return '<section class="mb-now" aria-labelledby="mb-now-h">%s%s%s%s</section>' % (head, body, warn, link)
+
+
+def _flood_tide_note_html(sn: dict | None, esc) -> str:
+    """Coastal Flood Warning note next to the predicted tides. Tide values are not touched."""
+    import alert_status
+    cf = (sn or {}).get("coastalFlood")
+    if not cf:
+        return ""
+    lead = "Coastal Flood Warning in effect." if cf.get("phase") == "in_effect" else "Coastal Flood Warning issued (upcoming)."
+    return '<p class="mb-tide-note" role="note"><b>%s</b> %s</p>' % (esc(lead), esc(alert_status.FLOOD_TIDE_NOTE))
+
+
+def _hazards_html(b: dict, esc, view_now: datetime | None = None, status_now: dict | None = None) -> str:
     water = b.get("waterType") or "saltwater"
     label = "Alerts" if water == "freshwater" else "Advisories"
     stored = _item(b, label)
@@ -1169,17 +1279,25 @@ def _hazards_html(b: dict, esc, view_now: datetime | None = None) -> str:
             k = r.get("kind") or brief_format.hazard_kind(r.get("event") or "")
             on = brief_format._parse_iso(r.get("onset"))
             return (rank.get(k, 9), on.timestamp() if on else 0)
+        recon = {}
+        if status_now:
+            for r, rc in zip(_issued_rows(b), status_now.get("issued") or []):
+                recon[id(r)] = rc
         rows.sort(key=key)
-        lis = "".join(_hz_row_html(r, b, view_now, esc) for r in rows)
+        lis = "".join(_hz_row_html(r, b, view_now, esc, recon.get(id(r)) if status_now else None) for r in rows)
         n = len(rows)
         issued = (b.get("issuedEt") or "").split(", ")[-1]
+        checked = ""
+        if status_now:
+            checked = " · status checked %s" % brief_format.when_et(status_now.get("checkedAt"), always_weekday=False)
         # Keep the stored snapshot line in the page so archived wording still matches tests.
         hidden = ('<p class="mb-adv-stored">%s</p>' % esc(stored)) if stored else ""
         return ('<section class="mb-adv is-active mb-hz" aria-labelledby="mb-hz-h">'
                 '<div class="mb-hz-head"><h2 class="mb-hz-h" id="mb-hz-h">NWS %s <span class="mb-hz-n">%d</span></h2>'
-                '<p class="mb-hz-note">List as issued %s · status now</p></div>'
+                '<p class="mb-hz-note">List as issued %s%s</p></div>'
                 '<ul class="mb-hz-list">%s</ul>%s</section>'
-                % ("alerts" if water == "freshwater" else "hazards", n, esc(issued or "at issue"), lis, hidden))
+                % ("alerts" if water == "freshwater" else "hazards", n, esc(issued or "at issue"),
+                   esc(checked) if status_now else " · status now", lis, hidden))
     # Legacy stored briefs with no hazards object.
     adv = _advisory(b)
     if not adv:
@@ -1301,7 +1419,8 @@ _TIDE_JS = """
 """
 
 
-def page(b: dict, include_fresh: bool = False, public: bool = False, ads_on: bool = False, view_now: datetime | None = None) -> str:
+def page(b: dict, include_fresh: bool = False, public: bool = False, ads_on: bool = False, view_now: datetime | None = None,
+         status_now: dict | None = None) -> str:
     """Render the brief page. On phones (<=600px) the prose
     sections under the at-a-glance strip start collapsed so readings
     are not shown twice above the fold; they stay open on tablet,
@@ -1328,8 +1447,8 @@ def page(b: dict, include_fresh: bool = False, public: bool = False, ads_on: boo
         fr_bits.append("<li><span class=\"mb-fk\">%s</span> <time>%s</time>%s%s</li>" % (esc(f["label"]), esc(f["time"]), stn, stale))
     fr = "".join(fr_bits) or "<li>No observation times were recorded at issue time.</li>"
     view_now = view_now or datetime.now(timezone.utc)
-    adv_html = _hazards_html(b, esc, view_now)
-    glance = _glance_html(b, view_now, esc, group="primary")
+    adv_html = _hazards_html(b, esc, view_now, status_now) + _status_now_html(b, status_now, esc, view_now)
+    glance = _glance_html(b, view_now, esc, group="primary") + _flood_tide_note_html(status_now, esc)
     glance_rest = _glance_html(b, view_now, esc, group="rest")
     astro_html = _astro_html(b, esc)
     outlook_html = _outlook_html(b, esc)

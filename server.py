@@ -3090,6 +3090,28 @@ def _link_folio_chrome_css(data: bytes) -> bytes:
     return data.replace(needle, needle + b"\n  " + _FOLIO_CHROME_CSS_LINK, 1)
 
 
+ALERT_STATUS_TTL = 120  # seconds; Morning Brief "Status now" reads (t487u)
+
+
+def _alert_status_fetch(url: str):
+    """Parsed JSON for the brief's Status now check, or None.
+
+    Fresh cache entries only (never the stale fallback conditions uses), one quick try, so a slow
+    or failed NWS read shows "status unconfirmed" instead of an old answer or a hung page."""
+    try:
+        hit = cache_get(url)
+        if hit and hit[0] == 200:
+            raw = hit[2]
+        else:
+            status, _ct, raw = fetch_url(url, tries=1, timeout=8)
+            if status != 200 or not raw:
+                return None
+            cache_put_ttl(url, ALERT_STATUS_TTL, raw)
+        return json.loads(raw.decode("utf-8"))
+    except Exception:
+        return None
+
+
 def _paint_public_brief(data: bytes) -> bytes:
     """Presentation-only Folio chrome on public /brief. brief.page() is unchanged."""
     data = _install_folio_chrome(data, "brief")
@@ -4084,7 +4106,10 @@ class Handler(SimpleHTTPRequestHandler):
             # No ad creative is wired into the brief yet, so never reserve an
             # empty gap. When ads are hooked up, pass ads_on from get_ads()
             # (adsOn and mode != paused) and place the slot below advisories.
-            body = brief.page(b, include_fresh=include_fresh, public=public, ads_on=False)
+            # t487u: the issued brief stays as published; the separate "Status now" section and the
+            # issued-list status chips come from a live NWS check made for this page view.
+            status_now = brief.status_now_for(b, _alert_status_fetch)
+            body = brief.page(b, include_fresh=include_fresh, public=public, ads_on=False, status_now=status_now)
             robots = "index, follow" if public else "noindex, nofollow"
             return self._send_private(
                 None,

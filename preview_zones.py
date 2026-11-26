@@ -69,6 +69,25 @@ ZONE_NAMES: dict[str, dict[str, str]] = {
         "source": "https://api.weather.gov/zones/marine/AMZ231",
         "fetched": "2026-11-15",
     },
+    # Ed t487u: NC waters forecast by NWS Wakefield VA (AKQ), on the Nags Head alert list.
+    "ANZ633": {
+        "name": "Currituck Sound",
+        "type": "coastal",
+        "source": "https://api.weather.gov/zones/marine/ANZ633",
+        "fetched": "2026-11-26",
+    },
+    "ANZ658": {
+        "name": "Coastal waters from NC VA border to Currituck Beach Light NC out 20 NM",
+        "type": "coastal",
+        "source": "https://api.weather.gov/zones/marine/ANZ658",
+        "fetched": "2026-11-26",
+    },
+    "ANZ688": {
+        "name": "Waters from NC VA border to Currituck Beach Light NC from 20 to 60 NM",
+        "type": "coastal",
+        "source": "https://api.weather.gov/zones/marine/ANZ688",
+        "fetched": "2026-11-26",
+    },
     # Land forecast zones
     "NCZ195": {
         "name": "West Carteret",

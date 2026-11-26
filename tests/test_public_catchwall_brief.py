@@ -195,9 +195,13 @@ class PublicCatchWallBrief(unittest.TestCase):
     def test_brief_polish_is_presentation_only(self):
         import brief
         import server
-        s, h = self._get("/brief?region=hatteras")
         st, b = brief.get("hatteras", include_fresh=True)
-        raw = server._paint_public_brief(brief.page(b, include_fresh=True, public=True, ads_on=False).encode("utf-8")).decode("utf-8")
+        # t487u: the route adds a live "Status now" check; pin one result so both renders share it.
+        sn = brief.status_now_for(b, lambda u: None)
+        with patch.object(brief, "status_now_for", return_value=sn):
+            s, h = self._get("/brief?region=hatteras")
+        raw = server._paint_public_brief(brief.page(b, include_fresh=True, public=True, ads_on=False,
+                                                    status_now=sn).encode("utf-8")).decode("utf-8")
         text = lambda x: re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", re.sub(r"(?s)<(script|style|svg)\b.*?</\1>", "", x))).strip()
         drop = lambda t: t.replace(" Print ", " ").replace(" Dark mode ", " ").replace(" Light Dark Auto ", " ")
         self.assertEqual(drop(text(raw)), drop(text(h)))   # same words, same order

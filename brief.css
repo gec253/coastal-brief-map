@@ -936,3 +936,29 @@ html[data-concept][data-theme="dark"][data-water="freshwater"] .mb-badge { color
 }
 [data-theme="dark"] .mb-moon-svg circle:first-child { fill: #E6D4A8; }
 
+
+/* t487u: live "Status now" section (separate from the issued 5:15 AM list), reconciled
+   status chips on the issued list, and the Coastal Flood Warning note by the predicted tides.
+   Server-rendered with the page: no client insertion, no layout shift. */
+.mb-hz-now { display: block; margin-top: 2px; font-weight: 600; color: var(--ink); }
+.mb-hz-row.s-unconfirmed .mb-hz-st { color: var(--warn-ink); border-color: var(--warn-ink); border-style: dotted; }
+.mb-now { margin: 10px 0 0; padding: 8px 10px 10px; border: 1px solid var(--edge); border-left: 4px solid var(--ink); border-radius: 6px; background: var(--card); color: var(--ink); }
+.mb-now.is-unknown { border-left-color: var(--warn-ink); }
+.mb-now-list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 6px; }
+.mb-now-row { padding: 6px 8px; border-left: 4px solid var(--hz, var(--ink-2)); border-radius: 4px; background: var(--paper, transparent); font-size: 0.84rem; line-height: 1.3; }
+.mb-now-row.k-warning { --hz: #9E2A1E; }
+.mb-now-row.k-watch { --hz: #8A5A00; }
+.mb-now-row.k-advisory { --hz: #1F4E79; }
+.mb-now-l1 { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 6px; }
+.mb-now-tag { display: inline-block; padding: 2px 5px; border: 1px solid var(--ink); border-radius: 3px; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; line-height: 1.1; }
+.mb-now-row.p-in-effect .mb-now-tag { background: var(--ink); color: var(--card); }
+.mb-now-row.p-upcoming .mb-now-tag { border-style: dashed; }
+.mb-now-ev { font-weight: 700; font-size: 0.95rem; }
+.mb-now-when { display: block; margin-top: 2px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.mb-now-area, .mb-now-upd { display: block; color: var(--ink-2); overflow-wrap: anywhere; }
+.mb-now-warn { margin: 6px 0 0; font-weight: 600; color: var(--warn-ink); }
+.mb-now-clear { margin: 6px 0 0; }
+.mb-tide-note { margin: 6px 0 0; padding: 4px 8px; border-left: 3px solid #9E2A1E; font-size: 0.82rem; line-height: 1.35; color: var(--ink); }
+[data-theme="dark"] .mb-now-row.k-warning, [data-theme="dark"] .mb-tide-note { --hz: #C2453A; border-left-color: #C2453A; }
+[data-theme="dark"] .mb-now-row.k-watch { --hz: #9A6400; }
+[data-theme="dark"] .mb-now-row.k-advisory { --hz: #2C6AA0; }

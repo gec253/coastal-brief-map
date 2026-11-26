@@ -576,7 +576,8 @@ class WilmingtonNagsConfig(unittest.TestCase):
         self.assertEqual(n["forecast"]["gridId"], "MHX")
         self.assertEqual((n["forecast"]["gridX"], n["forecast"]["gridY"]), (92, 116))
         self.assertEqual(n["marine"]["zone"], "AMZ150")
-        self.assertEqual(n["alertZones"], ["AMZ150", "NCZ203", "AMZ231"])
+        # Ed t487u: plus the NC Wakefield (AKQ) marine zones north of the MHX waters.
+        self.assertEqual(n["alertZones"], ["AMZ150", "NCZ203", "AMZ231", "ANZ633", "ANZ658", "ANZ688"])
         self.assertEqual(self.stations["8651370"]["name"], "Duck Pier")
         self.assertIn("sound side", self.stations["8652587"]["name"])
         self.assertIn("Oregon Inlet offshore", self.stations["44095"]["name"])
