@@ -599,10 +599,12 @@ class ServerFetchAndGuards(unittest.TestCase):
             self.assertEqual(out.stdout.strip(), "", rel)
 
     def test_protected_public_files_unchanged(self):
+        # Ed t489u: the three files changed for the Full Dashboard (t488u) stay protected, pinned to d5ea520.
+        pins = {"conditions.py": "d5ea520", "homepage_boot.py": "d5ea520", "dashboard.js": "d5ea520"}
         for rel in ("conditions.py", "homepage_boot.py", "dashboard.js", "app.js", "styles.css", "index.html",
                     "freshwater.py", "radar.html", "radar-viewer.js", "wind-lab.js", "wind.html", "wind-viewer.js",
                     "brief_preview.py", "brief_strings.py", "lake.js", "fresh-home.js"):
-            out = subprocess.run(["git", "diff", "--name-only", PROD, "--", rel], cwd=ROOT, capture_output=True, text=True)
+            out = subprocess.run(["git", "diff", "--name-only", pins.get(rel, PROD), "--", rel], cwd=ROOT, capture_output=True, text=True)
             self.assertEqual(out.stdout.strip(), "", rel)
 
 

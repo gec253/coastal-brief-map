@@ -272,7 +272,9 @@ class Gating(unittest.TestCase):
         # t455u/t456u/t458u: freshwater.py is pinned to this repair (first-paint, v3 timeouts/cache).
         # Alert-merge rules in alerts_point are unchanged; see tests/test_freshwater_first_paint.py.
         # Every other public page stays on PROD.
-        t449u = {"conditions.py": "c039549", "freshwater.py": "HEAD"}
+        # t489u: conditions.py is pinned to the approved Full Dashboard alert-display repair (d5ea520,
+        # SHA-256 c7378650749acacc7948b53976b4fbad25d7fc5cd320e9487ec8f0bd5b618017).
+        t449u = {"conditions.py": "d5ea520", "freshwater.py": "HEAD"}
         for rel in PROTECTED_PUBLIC_PATHS:
             if rel in ("brief.py", "brief.css"):
                 continue
