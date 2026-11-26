@@ -1,7 +1,9 @@
 """Private Phase A wind preview (Ed t480u). Public /wind stays on production assets."""
 from __future__ import annotations
 
+import json
 import os
+import shutil
 import subprocess
 import threading
 import unittest
@@ -14,6 +16,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 PROD = "58a376c"
 KEY = "a" * 32
+NODE = shutil.which("node")
 
 
 def _cookie():
@@ -123,6 +126,96 @@ class PhaseAPreview(unittest.TestCase):
         pub = (ROOT / "wind-lab.js").read_text()
         self.assertIn("function spawn(i, randomAge) { PX[i] = Math.random() * w; PY[i] = Math.random() * h;", pub)
         self.assertIn("FRAME_MS ? 60 : 110", pub)
+
+    @unittest.skipUnless(NODE, "node not installed")
+    def test_spawn_places_particles_only_in_valid_uv_cells(self):
+        """Behavioral check of preview spawn(): retry until uvAt sees real grid U/V.
+
+        uvAt is the same 'inside the model grid' test used by public /wind. Spawn
+        never invents U/V. With most of the viewport on-grid, every particle lands
+        in a valid cell. A leftover invalid placement can only happen if all 8
+        attempts miss (rare when coverage is high); the next frame respawns it
+        and does not advect a fabricated vector.
+        """
+        script = r"""
+const fs = require('fs');
+const src = fs.readFileSync('preview/wind/engine.js', 'utf8');
+const m = src.match(/function spawn\(i, randomAge\) \{[\s\S]*?\n    \}/);
+if (!m) { console.error('spawn not found'); process.exit(2); }
+const w = 80, h = 60;
+const lonX = new Float32Array(w), latY = new Float32Array(h);
+for (let x = 0; x < w; x++) lonX[x] = -80 + (7 * x) / w;     // -80 .. -73
+for (let y = 0; y < h; y++) latY[y] = 37.5 - (5 * y) / h;    // 37.5 .. 32.5
+// GFS-like bbox: 32.5-37.5N, 80-73W, leaving a thin strip outside to the north/west
+const WEST = -79.5, EAST = -73.2, SOUTH = 32.7, NORTH = 37.2;
+const PX = new Float32Array(4000), PY = new Float32Array(4000), AGE = new Uint8Array(4000);
+const tmp = [0, 0];
+let writes = 0, rejects = 0;
+function uvAt(lat, lon, out) {
+  if (!(lon >= WEST && lon <= EAST && lat >= SOUTH && lat <= NORTH)) { rejects++; return false; }
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) { rejects++; return false; }
+  out[0] = 1.5; out[1] = -0.5; writes++;
+  return true;
+}
+eval(m[0]);
+for (let i = 0; i < 4000; i++) spawn(i, true);
+let valid = 0, invalid = 0, edgeOnly = 0, invented = 0;
+const probe = [0, 0];
+for (let i = 0; i < 4000; i++) {
+  const xi = PX[i] | 0, yi = PY[i] | 0;
+  if (xi === 0 || yi === 0 || xi === w - 1 || yi === h - 1) edgeOnly++;
+  const before0 = probe[0], before1 = probe[1];
+  const ok = uvAt(latY[yi], lonX[xi], probe);
+  if (ok) {
+    valid++;
+    if (probe[0] !== 1.5 || probe[1] !== -0.5) invented++;
+  } else {
+    invalid++;
+    if (probe[0] !== before0 || probe[1] !== before1) invented++;
+  }
+  if (!(PX[i] >= 0 && PX[i] < w && PY[i] >= 0 && PY[i] < h)) invented++;
+}
+// Mid-size valid island (~40% of the viewport): 8 attempts should almost always hit.
+const island = {valid: 0, invalid: 0};
+{
+  const WEST2 = -79.0, EAST2 = -74.5, SOUTH2 = 33.5, NORTH2 = 36.5;
+  function uvIsland(lat, lon, out) {
+    if (!(lon >= WEST2 && lon <= EAST2 && lat >= SOUTH2 && lat <= NORTH2)) return false;
+    out[0] = 3; out[1] = 1; return true;
+  }
+  const uvAt = uvIsland;
+  eval(m[0]);
+  for (let i = 0; i < 1000; i++) spawn(i, false);
+  for (let i = 0; i < 1000; i++) {
+    if (uvIsland(latY[PY[i] | 0], lonX[PX[i] | 0], [0, 0])) island.valid++;
+    else island.invalid++;
+  }
+}
+// uvAt absent: spawn must still pick a viewport point and must not throw
+{
+  const uvAt = null;
+  eval(m[0]);
+  spawn(0, true);
+}
+console.log(JSON.stringify({
+  valid, invalid, edgeOnly, invented, writes, rejects,
+  islandValid: island.valid, islandInvalid: island.invalid,
+  sampleAge: AGE[0],
+  spawnSrc: m[0]
+}));
+"""
+        out = subprocess.run([NODE, "-e", script], cwd=ROOT, capture_output=True, text=True, timeout=30)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        res = json.loads(out.stdout)
+        self.assertEqual(res["invented"], 0)
+        self.assertEqual(res["invalid"], 0, res)
+        self.assertEqual(res["valid"], 4000)
+        # Not the old edge-only pattern: particles must appear in the interior.
+        self.assertGreater(res["valid"] - res["edgeOnly"], 3000)
+        self.assertIn("uvAt(latY[yi], lonX[xi], tmp)", res["spawnSrc"])
+        self.assertNotIn("e === 0 ? 0 : e === 1 ? w - 1", res["spawnSrc"])
+        # A ~40% valid island is strongly preferred (8 attempts beat a single random shot).
+        self.assertGreater(res["islandValid"], 900)
 
     def test_preview_not_in_sitemap_or_public_raw_paths(self):
 
