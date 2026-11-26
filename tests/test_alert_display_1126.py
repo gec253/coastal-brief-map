@@ -608,3 +608,180 @@ class ServerFetchAndGuards(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ---------------------------------------------------------------- t488u: Full Dashboard (/dashboard)
+
+class _FixedDT(datetime):
+    NOW = NOON
+
+    @classmethod
+    def now(cls, tz=None):
+        return cls.NOW.astimezone(tz) if tz else cls.NOW.replace(tzinfo=None)
+
+
+def _block_for(rid):
+    z = REGIONS[rid]["alertZones"]
+    feats = [f for f in FIX["active"]["features"] if set(f["properties"]["geocode"]["UGC"]) & set(z)]
+    with patch.object(conditions, "nws_json", return_value={"features": copy.deepcopy(feats)}):
+        return conditions.alerts_block(z, bool(REGIONS[rid].get("alertAreasInRegion"))), feats
+
+
+def _render_at(block, now):
+    import homepage_boot
+    _FixedDT.NOW = now
+    with patch.object(homepage_boot, "datetime", _FixedDT):
+        return homepage_boot.render_alerts_html(block)
+
+
+def _js_funcs(*names):
+    src = (ROOT / "dashboard.js").read_text()
+    out = []
+    for n in names:
+        i = src.index("  function %s(" % n)
+        j = src.index("\n  }\n", i) + 4
+        out.append(src[i:j])
+    return "\n".join(out)
+
+
+def _node(js):
+    return subprocess.run(["node", "-e", js], capture_output=True, text=True, timeout=30)
+
+
+VA_NAMES = ("Parramore Island", "Cape Charles Light", "Virginia-North Carolina border", "Chesapeake")
+
+
+class DashboardAlertsBlock(unittest.TestCase):
+    def test_nags_head_names_only_its_nc_waters(self):
+        b, _ = _block_for("nags-head")
+        areas = " | ".join(it["areas"] for it in b["items"])
+        for va in VA_NAMES:
+            self.assertNotIn(va, areas)
+        self.assertIn("Currituck Sound", areas)
+        self.assertIn("Coastal waters from NC VA border to Currituck Beach Light NC out 20 NM", areas)
+        self.assertIn("Waters from NC VA border to Currituck Beach Light NC from 20 to 60 NM", areas)
+
+    def test_official_fields_preserved(self):
+        b, feats = _block_for("nags-head")
+        storm = [it for it in b["items"] if "NC VA border" in it["areas"]][0]
+        p = [f["properties"] for f in feats if "ANZ658" in f["properties"]["geocode"]["UGC"]][0]
+        self.assertEqual(set(storm), {"event", "headline", "severity", "areas", "onset", "ends", "sender"})
+        for k_it, k_p in (("event", "event"), ("severity", "severity"), ("sender", "senderName"),
+                          ("onset", "onset"), ("headline", "headline")):
+            self.assertEqual(storm[k_it], p.get(k_p))
+        self.assertEqual(storm["ends"], p.get("ends") or p.get("expires"))
+
+    def test_other_regions_keep_full_area_desc(self):
+        for rid in ("hatteras", "crystal-coast", "wilmington", "corolla-duck"):
+            b, feats = _block_for(rid)
+            descs = {f["properties"]["areaDesc"] for f in feats}
+            with patch.object(conditions, "nws_json", return_value={"features": copy.deepcopy(feats)}):
+                self.assertEqual(b, conditions.alerts_block(REGIONS[rid]["alertZones"]), rid)
+            for it in b["items"]:
+                self.assertTrue(all(part.strip() in "; ".join(descs) for part in it["areas"].split(";")), rid)
+
+    def test_misaligned_area_desc_is_not_trimmed(self):
+        f = feat("m1", "Storm Warning", ["ANZ656", "ANZ658"], area="Some official text without a split")
+        with patch.object(conditions, "nws_json", return_value=feed(f)):
+            b = conditions.alerts_block(["ANZ658"], True)
+        self.assertEqual(b["items"][0]["areas"], "Some official text without a split")
+
+    def test_merge_unions_local_names(self):
+        a = feat("x1", "Storm Warning", ["ANZ656", "ANZ658"], area="VA waters; NC waters near", onset="2026-11-26T00:51:00-05:00", ends="2026-11-27T13:00:00-05:00")
+        c = feat("x2", "Storm Warning", ["ANZ686", "ANZ688"], area="VA far; NC waters far", onset="2026-11-26T00:51:00-05:00", ends="2026-11-27T13:00:00-05:00")
+        with patch.object(conditions, "nws_json", return_value=feed(a, c)):
+            b = conditions.alerts_block(["ANZ658", "ANZ688"], True)
+        self.assertEqual([it["areas"] for it in b["items"]], ["NC waters near; NC waters far"])
+
+    def test_assemble_passes_region_flag(self):
+        src = (ROOT / "conditions.py").read_text()
+        self.assertIn('bool(region.get("alertAreasInRegion"))', src)
+        self.assertTrue(REGIONS["nags-head"].get("alertAreasInRegion"))
+        self.assertFalse(any(r.get("alertAreasInRegion") for k, r in REGIONS.items() if k != "nags-head"))
+
+
+class DashboardFirstPaint(unittest.TestCase):
+    def test_wilmington_gale_upcoming_before_4pm_with_official_start(self):
+        b, _ = _block_for("wilmington")
+        html, cls = _render_at(b, NOON)
+        self.assertEqual(cls, "is-active")
+        gale = [p for p in html.split('<div class="al-item"') if "Gale Warning" in p][0]
+        self.assertIn('data-ph="up"', gale)
+        self.assertIn('<b class="al-st">Upcoming</b> · starts 4:00 PM ET · until Fri 1:00 PM ET', gale)
+
+    def test_wilmington_gale_in_effect_after_4pm(self):
+        b, _ = _block_for("wilmington")
+        html, _ = _render_at(b, ts(16, 1))
+        gale = [p for p in html.split('<div class="al-item"') if "Gale Warning" in p][0]
+        self.assertIn('data-ph="in"', gale)
+        self.assertIn('<b class="al-st">In effect</b> · until Fri 1:00 PM ET', gale)
+        self.assertNotIn("starts", gale)
+
+    def test_nags_head_first_paint_has_no_virginia_waters(self):
+        b, _ = _block_for("nags-head")
+        html, _ = _render_at(b, NOON)
+        for va in VA_NAMES:
+            self.assertNotIn(va, html)
+        self.assertIn("Currituck Sound", html)
+        self.assertIn("NWS details", html)
+
+    def test_unknown_and_clear_states_unchanged(self):
+        import homepage_boot
+        self.assertEqual(homepage_boot.render_alerts_html(None)[1], "is-unknown")
+        self.assertEqual(homepage_boot.render_alerts_html({"status": "ok", "items": [], "zones": ["AMZ158"]})[1], "is-clear")
+
+
+class DashboardJs(unittest.TestCase):
+    def _run(self, body):
+        js = "const esc=s=>String(s);\n" + _js_funcs("isUpcoming", "coastalFlood") + "\n" + body
+        r = _node(js)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        return r.stdout.strip()
+
+    def test_upcoming_relabels_when_start_passes(self):
+        out = self._run("""
+const it={onset:"2026-11-26T16:00:00-05:00",ends:"2026-11-27T13:00:00-05:00"};
+Date.now=()=>Date.parse("2026-11-26T15:59:00-05:00"); const a=isUpcoming(it);
+Date.now=()=>Date.parse("2026-11-26T16:00:00-05:00"); const b=isUpcoming(it);
+console.log(a+","+b+","+isUpcoming({onset:null}));""")
+        self.assertEqual(out, "true,false,false")
+
+    def test_coastal_flood_rule_matches_homepage(self):
+        out = self._run("""
+Date.now=()=>Date.parse("2026-11-26T12:00:00-05:00");
+const cf=(s,e,st)=>coastalFlood({status:st||"ok",items:[{event:"Coastal Flood Warning",onset:s,ends:e}]});
+console.log(JSON.stringify([cf("2026-11-26T05:31:00-05:00","2026-11-26T14:00:00-05:00"),
+ cf("2026-11-26T18:00:00-05:00","2026-11-27T02:00:00-05:00"),
+ cf("2026-11-26T05:00:00-05:00","2026-11-26T11:00:00-05:00"),
+ cf("2026-11-26T05:31:00-05:00",null),
+ cf("2026-11-26T05:31:00-05:00","2026-11-26T14:00:00-05:00","error"),
+ coastalFlood({status:"ok",items:[{event:"Coastal Flood Advisory",onset:"2026-11-26T05:00:00-05:00"}]})]));""")
+        self.assertEqual(json.loads(out), ["Coastal Flood Warning in effect.", "Coastal Flood Warning issued (upcoming).",
+                                           None, "Coastal Flood Warning in effect.", None, None])
+        for ph in ("in_effect", "upcoming"):
+            got = A.coastal_flood_active([{"event": "Coastal Flood Warning",
+                                           "start": "2026-11-26T05:31:00-05:00" if ph == "in_effect" else "2026-11-26T18:00:00-05:00",
+                                           "ends": "2026-11-27T02:00:00-05:00"}], ts(12))
+            self.assertEqual(got["phase"], ph)
+
+    def test_tide_note_wording_matches_homepage_and_values_untouched(self):
+        src = (ROOT / "dashboard.js").read_text()
+        i = src.index("  function renderTide(")
+        body = src[i:src.index("\n  }\n", i)]
+        self.assertIn(A.FLOOD_TIDE_NOTE, body)
+        self.assertIn('role="note"', body)
+        self.assertIn("renderTide(d.tides, d.alerts)", src)
+        base = subprocess.run(["git", "show", PROD + ":dashboard.js"], cwd=ROOT, capture_output=True, text=True).stdout
+        bi = base.index("  function renderTide(")
+        old = base[bi:base.index("\n  }\n", bi)]
+        # Only the signature and the one note line differ; every tide value expression is as in production.
+        added = [ln for ln in body.splitlines() if ln not in old.splitlines()]
+        removed = [ln for ln in old.splitlines() if ln not in body.splitlines()]
+        self.assertEqual(len(added), 2, added)
+        self.assertEqual(removed, ["  function renderTide(t) {"])
+
+    def test_render_alerts_labels_and_relabel_hook(self):
+        src = (ROOT / "dashboard.js").read_text()
+        self.assertIn('<b class="al-st">\' + (up ? "Upcoming" : "In effect")', src)
+        self.assertIn('" · starts " + esc(etTime(it.onset))', src)
+        self.assertIn("else if (alertPhaseStale(d.alerts))", src)

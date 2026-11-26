@@ -422,7 +422,7 @@
   }
 
   // ---------- tides ----------
-  function renderTide(t) {
+  function renderTide(t, alerts) {
     const el = $("i-tide");
     el.classList.remove("is-loading", "is-off");
     if (!t || t.status !== "ok") {
@@ -464,6 +464,7 @@
       '<ol class="tide-list">' + next.slice(0, 4).map(function (e) {
         return '<li class="' + (e.type === "H" ? "is-high" : "is-low") + '"><span class="tl-k">' + (e.type === "H" ? "High" : "Low") + '</span><span class="tl-t">' + esc(etTime(e.t)) + '</span><span class="tl-v">' + fmt(e.v, 1) + " ft</span></li>";
       }).join("") + "</ol>" +
+      (coastalFlood(alerts) ? '<p class="fine tide-flood" role="note"><b>' + esc(coastalFlood(alerts)) + "</b> Predicted tides do not include storm surge or other weather-driven water levels.</p>" : "") +
       '<div class="inst-foot">' + predCaption(t) + obsCaption(t.observed, (t.observed && t.observed.station) || t.station) + "</div>";
     if (hasCurve) drawTideChart(t);
   }
@@ -731,9 +732,33 @@
     box.hidden = false;
     box.className = "dash-alert is-active";
     box.innerHTML = items.map(function (it) {
-      return '<div class="al-item"><span class="al-dot"></span><span class="al-ev">' + esc(it.event) + "</span>" +
-        '<span class="al-meta">' + (it.ends ? "until " + esc(etTime(it.ends)) : "") + (it.areas ? " · " + esc(it.areas) : "") + "</span></div>";
+      // t488u: UPCOMING (official start still ahead) vs IN EFFECT; same rule as homepage_boot.render_alerts_html.
+      const up = isUpcoming(it);
+      return '<div class="al-item" data-ph="' + (up ? "up" : "in") + '"><span class="al-dot"></span><span class="al-ev">' + esc(it.event) + "</span>" +
+        '<span class="al-meta"><b class="al-st">' + (up ? "Upcoming" : "In effect") + "</b>" + (up ? " · starts " + esc(etTime(it.onset)) : "") +
+        (it.ends ? " · until " + esc(etTime(it.ends)) : "") + (it.areas ? " · " + esc(it.areas) : "") + "</span></div>";
     }).join("") + '<a class="al-link" href="https://www.weather.gov/mhx/" target="_blank" rel="noopener">NWS details</a>';
+  }
+  function isUpcoming(it) {
+    const s = new Date(it.onset || NaN).getTime();
+    return !isNaN(s) && s > Date.now();
+  }
+  // True when a shown UPCOMING / IN EFFECT label no longer matches the clock (relabel at the start time).
+  function alertPhaseStale(a) {
+    const rows = document.querySelectorAll("#dash-alert .al-item[data-ph]");
+    const items = (a && a.items) || [];
+    if (rows.length !== items.length) return false;
+    return items.some(function (it, i) { return rows[i].getAttribute("data-ph") !== (isUpcoming(it) ? "up" : "in"); });
+  }
+  // Coastal Flood Warning (in effect or upcoming) for this region, else null. Same rule as the homepage tide tile.
+  function coastalFlood(a) {
+    if (!a || a.status !== "ok") return null;
+    const now = Date.now();
+    const it = (a.items || []).find(function (x) {
+      const e = new Date(x.ends || NaN).getTime();
+      return x.event === "Coastal Flood Warning" && !(e <= now);
+    });
+    return it ? (isUpcoming(it) ? "Coastal Flood Warning issued (upcoming)." : "Coastal Flood Warning in effect.") : null;
   }
 
   // ---------- seven-day forecast ----------
@@ -1024,7 +1049,7 @@
     tweenAll($("i-wind"));
     renderSeas(R.seas);
     renderSwell(R.swell);
-    renderTide(d.tides);
+    renderTide(d.tides, d.alerts);
     renderWater(R.waterTemp, R.waterTempOffshore);
     renderAir(R.airTemp);
     renderPressure(R.pressure);
@@ -1079,6 +1104,8 @@
       renderGlance(d);
       renderAlerts(d.alerts, d.marine);
       state.firstPaintDirty = true;
+    } else if (alertPhaseStale(d.alerts)) {
+      renderAlerts(d.alerts, d.marine);
     }
     hookGlanceIO();
     renderHeaderBits(d);

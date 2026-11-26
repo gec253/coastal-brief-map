@@ -906,7 +906,18 @@ def _union_areas(a, b):
     return "; ".join(parts) or a
 
 
-def alerts_block(zones):
+def _in_region_areas(p, zones):
+    """t487u/t488u: NWS zone names for the in-region zones only, taken from areaDesc when it lines
+    up 1:1 with geocode.UGC (NWS order). None when it does not line up (then areaDesc is kept as is)."""
+    ugc = (p.get("geocode") or {}).get("UGC") or []
+    parts = [x.strip() for x in (p.get("areaDesc") or "").split(";") if x.strip()]
+    if not ugc or len(parts) != len(ugc):
+        return None
+    local = [parts[i] for i, z in enumerate(ugc) if z in zones]
+    return "; ".join(local) or None
+
+
+def alerts_block(zones, in_region_areas=False):
     url = "https://api.weather.gov/alerts/active?status=actual&zone=" + ",".join(zones)
     d = nws_json(url, TTL_ALERTS)
     if d is None:
@@ -923,11 +934,14 @@ def alerts_block(zones):
         # different areas (Nov 24, 2026: Pamlico Sound SCA, West Carteret Coastal Flood Watch)
         # are no longer dropped; same event+onset+end share one row listing every area.
         key = (p.get("event"), p.get("onset"), p.get("ends") or p.get("expires"))
+        # t488u: Nags Head (regions.json alertAreasInRegion) names only its own NC waters, using the
+        # official NWS zone names from areaDesc; every other field is unchanged.
+        areas = (in_region_areas and _in_region_areas(p, zones)) or p.get("areaDesc")
         if key in seen:
-            seen[key]["areas"] = _union_areas(seen[key]["areas"], p.get("areaDesc"))
+            seen[key]["areas"] = _union_areas(seen[key]["areas"], areas)
             continue
         it = {"event": p.get("event"), "headline": p.get("headline"), "severity": p.get("severity"),
-              "areas": p.get("areaDesc"), "onset": p.get("onset"), "ends": p.get("ends") or p.get("expires"),
+              "areas": areas, "onset": p.get("onset"), "ends": p.get("ends") or p.get("expires"),
               "sender": p.get("senderName")}
         seen[key] = it
         items.append(it)
@@ -1113,7 +1127,8 @@ def assemble(region_id: str | None, preview: bool = False) -> tuple[int, dict]:
     f_tide = _POOL.submit(tides_block, region["tide"], stations, anchor, now)
     f_fc = _POOL.submit(forecast_block, region["forecast"])
     f_mar = _POOL.submit(marine_block, region["marine"])
-    f_al = _POOL.submit(alerts_block, region.get("alertZones") or [region["marine"]["zone"]])
+    f_al = _POOL.submit(alerts_block, region.get("alertZones") or [region["marine"]["zone"]],
+                        bool(region.get("alertAreasInRegion")))
     readings = {}
     for kind, fut in futures.items():
         try:

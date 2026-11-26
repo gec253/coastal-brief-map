@@ -192,15 +192,21 @@ def render_alerts_html(a: dict | None) -> tuple[str, str]:
             cls = "is-unknown"  # could not check: not painted as a verified all-clear
     else:
         parts = []
+        now = datetime.now(timezone.utc)
         for it in items:
-            meta = ""
+            # t488u: UPCOMING (issued, official start still ahead) vs IN EFFECT; dashboard.js uses the same rule.
+            st = _to_dt(it.get("onset"))
+            up = bool(st and st > now)
+            meta = '<b class="al-st">%s</b>' % ("Upcoming" if up else "In effect")
+            if up:
+                meta += " · starts " + _esc(et_time(st))
             if it.get("ends"):
-                meta += "until " + _esc(et_time(it["ends"]))
+                meta += " · until " + _esc(et_time(it["ends"]))
             if it.get("areas"):
                 meta += (" · " if meta else "") + _esc(it["areas"])
             parts.append(
-                '<div class="al-item"><span class="al-dot"></span>'
-                '<span class="al-ev">'
+                '<div class="al-item" data-ph="%s"><span class="al-dot"></span>' % ("up" if up else "in")
+                + '<span class="al-ev">'
                 + _esc(it.get("event"))
                 + "</span>"
                 '<span class="al-meta">'
