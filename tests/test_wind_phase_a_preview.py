@@ -112,7 +112,20 @@ class PhaseAPreview(unittest.TestCase):
             baseline = subprocess.check_output(["git", "show", "%s:%s" % (PROD, rel)], cwd=ROOT)
             self.assertEqual(current, baseline, rel)
 
+    def test_preview_engine_respawns_in_field_not_only_at_edges(self):
+        eng = (ROOT / "preview" / "wind" / "engine.js").read_text()
+        # Phase A coverage fix: mid-life respawn is uniform in the viewport, not edge-only.
+        self.assertNotIn("e === 0 ? 0 : e === 1 ? w - 1", eng)
+        self.assertIn("Math.random() * w", eng)
+        self.assertIn("uvAt(latY[yi], lonX[xi], tmp)", eng)  # prefer real grid U/V
+        self.assertIn("maxParticles: phone ? 1100 : 2200", (ROOT / "wind-viewer.js").read_text())
+        self.assertIn("FRAME_MS ? 78 : 130", eng)
+        pub = (ROOT / "wind-lab.js").read_text()
+        self.assertIn("function spawn(i, randomAge) { PX[i] = Math.random() * w; PY[i] = Math.random() * h;", pub)
+        self.assertIn("FRAME_MS ? 60 : 110", pub)
+
     def test_preview_not_in_sitemap_or_public_raw_paths(self):
+
         with mock.patch.dict(os.environ, {"PREVIEW_KEY": KEY, "WIND_PARTICLES_ENABLED": ""}):
             st, _, sm = self._get("/sitemap.xml")
             self.assertEqual(st, 200)

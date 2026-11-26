@@ -91,8 +91,14 @@
       if (!motion) drawArrows();
     }
     function spawn(i, randomAge) {
-      if (randomAge || !w || !h) { PX[i] = Math.random() * w; PY[i] = Math.random() * h; }
-      else { const e = (Math.random() * 4) | 0; PX[i] = e === 0 ? 0 : e === 1 ? w - 1 : Math.random() * w; PY[i] = e === 2 ? 0 : e === 3 ? h - 1 : Math.random() * h; }
+      // Uniform random point in the viewport (same as public /wind). Prefer a cell
+      // with real grid U/V; never invent vectors. Edge-only respawn left a hole inland.
+      for (let t = 0; t < 8; t++) {
+        PX[i] = Math.random() * w; PY[i] = Math.random() * h;
+        const xi = PX[i] | 0, yi = PY[i] | 0;
+        if (!uvAt || !w || !h) break;
+        if (xi >= 0 && yi >= 0 && xi < w && yi < h && uvAt(latY[yi], lonX[xi], tmp)) break;
+      }
       AGE[i] = randomAge ? (Math.random() * 80) | 0 : 0;
     }
     function frame(ts) {
