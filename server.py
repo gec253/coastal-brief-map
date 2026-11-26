@@ -174,6 +174,12 @@ _VTEC_RE = re.compile(
     r"/[A-Z]\.(?P<action>[A-Z]{3})\.[A-Z0-9]{4}\.(?P<phen>[A-Z]{2})\.(?P<sig>[A-Z])\."
 )
 _VTEC_INACTIVE = frozenset({"CAN", "EXP"})
+# Full P-VTEC string, used to validate records and read the event begin time.
+_VTEC_FULL_RE = re.compile(
+    r"^/(?P<cls>[OTEX])\.(?P<action>NEW|CON|EXT|EXA|EXB|UPG|CAN|EXP|COR|ROU)\."
+    r"(?P<office>[A-Z]{4})\.(?P<phen>[A-Z]{2})\.(?P<sig>[A-Z])\.(?P<etn>\d{4})\."
+    r"(?P<begin>\d{6}T\d{4}Z)-(?P<end>\d{6}T\d{4}Z)/$"
+)
 ADS_LOCK = threading.Lock()
 CACHE_LOCK = threading.Lock()
 MAX_CACHE_BYTES = 400 * 1024 * 1024
@@ -570,11 +576,11 @@ def _nws_inactive_product(props: dict, now: datetime) -> bool:
     pairs = _vtec_pairs(props)
     if pairs and all(action in _VTEC_INACTIVE for action, _ps in pairs):
         return True
-    ends = parse_iso(props.get("ends"))
+    ends = _ads_time(props.get("ends"))
     if ends is not None and ends <= now:
         return True
-    if props.get("ends") in (None, "") and parse_iso(props.get("expires")) is not None:
-        exp = parse_iso(props.get("expires"))
+    if props.get("ends") in (None, "") and _ads_time(props.get("expires")) is not None:
+        exp = _ads_time(props.get("expires"))
         if exp is not None and exp <= now:
             return True
     return False
@@ -596,20 +602,117 @@ def _alert_kind(props: dict) -> tuple[bool, bool, bool]:
     return is_hard, is_soft, is_tropical
 
 
-def _parse_alert_collection(status: int, body: bytes) -> tuple[str, list]:
-    """Return ('ok', features), ('empty_invalid'/'malformed'/'http', [])."""
+def _ads_time(value) -> datetime | None:
+    """Timezone-aware ISO time, or None. Never raises (non-strings, naive times)."""
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if dt.tzinfo is None or dt.utcoffset() is None:
+        return None
+    return dt
+
+
+def _str_list(value) -> bool:
+    return isinstance(value, list) and all(isinstance(v, str) for v in value)
+
+
+def _alert_record_problem(feat) -> str | None:
+    """Why an individual NWS alert record cannot be trusted, or None if it can.
+
+    Any untrusted record makes the whole response untrustworthy: missing data
+    is uncertainty, never evidence of safety.
+    """
+    if not isinstance(feat, dict):
+        return "feature is not an object"
+    props = feat.get("properties")
+    if not isinstance(props, dict):
+        return "missing properties"
+    ident = props.get("id") or feat.get("id")
+    if not isinstance(ident, str) or not ident.strip():
+        return "missing id"
+    event = props.get("event")
+    if not isinstance(event, str) or not event.strip():
+        return "missing event"
+    for key in ("status", "messageType"):
+        if not isinstance(props.get(key), str) or not props.get(key):
+            return "missing %s" % key
+    for key in ("sent", "effective", "expires"):
+        if _ads_time(props.get(key)) is None:
+            return "missing or unparseable %s" % key
+    for key in ("onset", "ends"):
+        if props.get(key) is not None and _ads_time(props.get(key)) is None:
+            return "unparseable %s" % key
+    for key in ("headline", "description", "replacedBy"):
+        if props.get(key) is not None and not isinstance(props.get(key), str):
+            return "wrong type for %s" % key
+    params = props.get("parameters")
+    if not isinstance(params, dict):
+        return "missing parameters"
+    if "VTEC" in params:
+        vtec = params.get("VTEC")
+        if not _str_list(vtec) or not all(_VTEC_FULL_RE.match(v.strip()) for v in vtec):
+            return "bad VTEC"
+    codes = props.get("eventCode")
+    if codes is not None:
+        if not isinstance(codes, dict):
+            return "bad eventCode"
+        nws = codes.get("NationalWeatherService")
+        if nws is not None and not _str_list(nws):
+            return "bad eventCode"
+    geocode = props.get("geocode")
+    if not isinstance(geocode, dict) or not _str_list(geocode.get("UGC")) or not geocode.get("UGC"):
+        return "missing zone codes"
+    if props.get("affectedZones") is not None and not _str_list(props.get("affectedZones")):
+        return "bad affectedZones"
+    return None
+
+
+def _alert_begin(props: dict) -> datetime | None:
+    """When the hazard itself begins: onset, else VTEC begin, else effective."""
+    onset = _ads_time(props.get("onset"))
+    if onset is not None:
+        return onset
+    for item in (props.get("parameters") or {}).get("VTEC") or []:
+        m = _VTEC_FULL_RE.match(item.strip()) if isinstance(item, str) else None
+        if m and m.group("begin") != "000000T0000Z":
+            try:
+                return datetime.strptime(m.group("begin"), "%y%m%dT%H%MZ").replace(tzinfo=timezone.utc)
+            except ValueError:
+                return None
+    return _ads_time(props.get("effective"))
+
+
+def _parse_alert_payload(status: int, body: bytes) -> tuple[str, list, dict | None]:
+    """Return (kind, trusted_features, payload).
+
+    kind is 'ok', 'http', 'malformed', or 'untrusted_record'. For
+    'untrusted_record' the trusted records are still returned so a warning in
+    them keeps ads paused, but the response never counts as complete.
+    """
     if status != 200:
-        return "http", []
+        return "http", [], None
     try:
         payload = json.loads(body.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError, AttributeError):
-        return "malformed", []
+        return "malformed", [], None
     if not isinstance(payload, dict) or "features" not in payload:
-        return "malformed", []
+        return "malformed", [], None
     features = payload.get("features")
     if features is None or not isinstance(features, list):
-        return "malformed", []
-    return "ok", features
+        return "malformed", [], None
+    trusted = [f for f in features if _alert_record_problem(f) is None]
+    if len(trusted) != len(features):
+        return "untrusted_record", trusted, payload
+    return "ok", features, payload
+
+
+def _parse_alert_collection(status: int, body: bytes) -> tuple[str, list]:
+    """Return ('ok', features) or ('http'/'malformed'/'untrusted_record', trusted)."""
+    kind, features, _payload = _parse_alert_payload(status, body)
+    return kind, features
 
 
 def _fetch_ads_alert_feeds() -> tuple[bool, bool, str, list]:
@@ -625,11 +728,20 @@ def _fetch_ads_alert_feeds() -> tuple[bool, bool, str, list]:
     complete = True
     for url in ads_required_feed_urls():
         status, _ctype, body = fetch_url(url, tries=ADS_FETCH_TRIES, timeout=ADS_FETCH_TIMEOUT)
-        kind, batch = _parse_alert_collection(status, body)
+        kind, batch, payload = _parse_alert_payload(status, body)
+        if kind == "ok" and isinstance(payload, dict) and payload.get("pagination") not in (None, {}):
+            # /alerts/active is not paginated; a next page means a truncated answer.
+            kind = "truncated"
         if kind != "ok":
             complete = False
             if kind == "malformed":
                 errors.append("Malformed NWS alert feed (%s)." % url.split("?")[1])
+            elif kind == "untrusted_record":
+                errors.append("NWS alert feed had a malformed alert record; the response is not trusted (%s)." % url.split("?")[1])
+                features.extend(batch)  # trusted records may still pause, never clear
+            elif kind == "truncated":
+                errors.append("NWS alert feed was truncated (%s)." % url.split("?")[1])
+                features.extend(batch)
             else:
                 errors.append("NWS marine alert feed unavailable (HTTP %s, %s)." % (status, url.split("?")[1]))
             continue
@@ -663,46 +775,83 @@ def ads_history_feed_urls(start: datetime) -> list[str]:
     return [ads_recent_marine_alerts_url(start), ads_recent_tropical_land_alerts_url(start)]
 
 
-def _alerts_next_url(payload: dict) -> str | None:
-    pag = payload.get("pagination") if isinstance(payload, dict) else None
+_ALERT_FILTER_KEYS = ("status", "code", "zone", "area", "start")
+
+
+def _alert_query_filters(url: str) -> dict[str, frozenset]:
+    """Normalize NWS alert filters: 'code=A,B' and 'code[0]=A&code[1]=B' compare equal."""
+    from urllib.parse import parse_qsl
+    out: dict[str, set] = {}
+    for key, value in parse_qsl(urlparse(url).query, keep_blank_values=True):
+        base = key.split("[", 1)[0]
+        if base in _ALERT_FILTER_KEYS:
+            vals = [v for v in value.split(",") if v]
+            if base == "start":
+                vals = [iso(_ads_time(v)) or ("unparseable:" + v) for v in vals]
+            out.setdefault(base, set()).update(vals)
+    return {k: frozenset(v) for k, v in out.items()}
+
+
+def _alerts_next_url(payload: dict, request_url: str | None = None) -> tuple[str, str | None]:
+    """Classify the NWS pagination link.
+
+    Returns ('end', None) when the collection has no pagination (the NWS
+    terminal page), ('next', url) for a valid same-query next page, or
+    ('invalid', None) for anything else. An invalid link is never read as
+    the end of the history.
+    """
+    if not isinstance(payload, dict) or payload.get("pagination") is None:
+        return "end", None
+    pag = payload.get("pagination")
     if not isinstance(pag, dict):
-        return None
+        return "invalid", None
+    if "next" not in pag or pag.get("next") is None:
+        return "end", None
     nxt = pag.get("next")
-    if not isinstance(nxt, str) or not nxt:
-        return None
+    if not isinstance(nxt, str) or not nxt.strip():
+        return "invalid", None
     parsed = urlparse(nxt)
     if parsed.scheme != "https" or parsed.netloc != "api.weather.gov":
-        return None
-    if not (parsed.path or "/").startswith("/alerts"):
-        return None
-    return nxt
+        return "invalid", None
+    if parsed.path.rstrip("/") != "/alerts":
+        return "invalid", None
+    if request_url is not None and _alert_query_filters(nxt) != _alert_query_filters(request_url):
+        return "invalid", None
+    return "next", nxt
 
 
 def _fetch_paginated_alerts(url: str) -> tuple[str, list]:
-    """Follow NWS pagination. Returns ('ok', features) or ('http'/'malformed', [])."""
+    """Follow NWS pagination.
+
+    Returns ('ok', features) only when every page was 200, well formed, had
+    only trusted records, and the chain reached the NWS terminal page.
+    Otherwise ('http'/'malformed'/'untrusted_record'/'bad_next'/'loop'/'page_cap', []).
+    """
     features: list = []
     current = url
+    seen = set()
     for _page in range(ADS_HISTORY_MAX_PAGES):
+        if current in seen:
+            return "loop", []
+        seen.add(current)
         status, _ctype, body = fetch_url(current, tries=ADS_FETCH_TRIES, timeout=ADS_FETCH_TIMEOUT)
-        kind, batch = _parse_alert_collection(status, body)
+        kind, batch, payload = _parse_alert_payload(status, body)
         if kind != "ok":
-            return kind if kind != "empty_invalid" else "malformed", []
+            return kind, []
         features.extend(batch)
-        try:
-            payload = json.loads(body.decode("utf-8"))
-        except (UnicodeDecodeError, json.JSONDecodeError):
-            return "malformed", []
-        nxt = _alerts_next_url(payload)
-        if not nxt:
+        link, nxt = _alerts_next_url(payload, url)
+        if link == "end":
             return "ok", features
+        if link != "next" or not nxt:
+            return "bad_next", []
         current = nxt
-    return "malformed", []
+    return "page_cap", []
 
 
 def _clearance_time(props: dict, now: datetime) -> datetime | None:
     """When a qualifying product left effect, or None if it did not."""
-    sent = parse_iso(props.get("sent"))
-    ends = parse_iso(props.get("ends"))
+    sent = _ads_time(props.get("sent"))
+    ends = _ads_time(props.get("ends"))
     cancelled = (
         props.get("messageType") == "Cancel"
         or ( _vtec_pairs(props) and all(a in _VTEC_INACTIVE for a, _ps in _vtec_pairs(props)) )
@@ -710,7 +859,7 @@ def _clearance_time(props: dict, now: datetime) -> datetime | None:
     if props.get("replacedBy"):
         return None
     if cancelled:
-        when = sent or parse_iso(props.get("onset")) or now
+        when = sent or _ads_time(props.get("onset")) or now
         return when if when <= now else now
     if ends is not None and ends <= now:
         return ends
@@ -790,7 +939,7 @@ def _ads_is_safe_on_result(data: dict, now: datetime | None = None) -> bool:
         return False
     if not data.get("fetchOk") or data.get("coverageComplete") is False:
         return False
-    ts = parse_iso(data.get("lastGoodEvaluatedAt") or data.get("evaluatedAt"))
+    ts = _ads_time(data.get("lastGoodEvaluatedAt") or data.get("evaluatedAt"))
     if ts is None:
         return False
     clock = now or now_utc()
@@ -799,7 +948,14 @@ def _ads_is_safe_on_result(data: dict, now: datetime | None = None) -> bool:
 
 def _trusted_previous(data: dict | None) -> dict:
     """Ignore the committed default ads.json; keep runtime pause/hold/outage state."""
-    if not data:
+    if not data or not isinstance(data, dict):
+        return {}
+    # Corrupted persisted times cannot be trusted: treat as no state (cold
+    # start), which stays paused until a complete evaluation and NWS history.
+    for key in ("settledSince", "holdStartedAt", "outageStartedAt", "lastGoodEvaluatedAt"):
+        if data.get(key) is not None and _ads_time(data.get(key)) is None:
+            return {}
+    if data.get("knownWarnings") is not None and not isinstance(data.get("knownWarnings"), list):
         return {}
     if data.get("knownWarnings") or data.get("settledSince") or data.get("holdStartedAt"):
         return data
@@ -821,21 +977,27 @@ def _known_from_previous(previous: dict) -> list[dict]:
     for rec in raw or []:
         if not isinstance(rec, dict):
             continue
-        ident = rec.get("id")
+        ident = rec.get("id") if isinstance(rec.get("id"), str) else None
         if ident and ident in seen:
             continue
         if ident:
             seen.add(ident)
-        out.append({
-            "event": rec.get("event"),
+        zones = rec.get("zones")
+        vtec = rec.get("vtec")
+        item = {
+            "event": rec.get("event") if isinstance(rec.get("event"), str) else "Qualifying warning",
             "severity": rec.get("severity"),
             "headline": rec.get("headline"),
-            "zones": list(rec.get("zones") or []),
+            "zones": [z for z in zones if isinstance(z, str)] if isinstance(zones, list) else [],
             "ends": rec.get("ends"),
             "id": ident,
-            "vtec": list(rec.get("vtec") or []),
+            "vtec": [v for v in vtec if isinstance(v, str)] if isinstance(vtec, list) else [],
             "tropical": bool(rec.get("tropical")),
-        })
+        }
+        for key in ("officialEnds", "onset", "timing"):
+            if key in rec:
+                item[key] = rec.get(key)
+        out.append(item)
     return out
 
 
@@ -843,7 +1005,11 @@ def _warning_clearance_from_known(known: list[dict], now: datetime) -> datetime 
     """Latest time previously verified warnings left effect."""
     latest = None
     for rec in known:
-        ends = parse_iso(rec.get("ends"))
+        # Use the official NWS end only. expires is the next-update time, not
+        # the end, so a record without an official end clears at "now"
+        # (observed removal/cancellation), never earlier.
+        raw_end = rec.get("officialEnds") if "officialEnds" in rec else rec.get("ends")
+        ends = _ads_time(raw_end)
         if ends is not None and ends <= now:
             when = ends
         else:
@@ -889,21 +1055,86 @@ def _ads_result(
         "knownWarnings": known_warnings,
         "outageStartedAt": iso(outage_started),
         "lastGoodEvaluatedAt": iso(last_good),
+        "warningTiming": None,
     }
+
+
+def _warning_reason(rec: dict, names: str, clock: datetime) -> str:
+    """Describe a qualifying warning without calling an upcoming one 'in effect'."""
+    if rec.get("timing") == "upcoming":
+        begin = _ads_time(rec.get("onset"))
+        when = (" at %s" % _to_et(begin)) if begin is not None else ""
+        return "%s has been issued for %s and takes effect%s (upcoming, not yet in effect)." % (
+            rec.get("event") or "Qualifying warning", names, when)
+    return "%s is in effect for %s." % (rec.get("event") or "Qualifying warning", names)
+
+
+def _refresh_timing(known: list[dict], clock: datetime) -> None:
+    """Re-label retained warnings whose onset has now passed."""
+    for rec in known:
+        begin = _ads_time(rec.get("onset"))
+        if rec.get("timing") == "upcoming" and begin is not None and begin <= clock:
+            rec["timing"] = "in_effect"
+
+
+def _warning_timing(known: list[dict]) -> str | None:
+    if not known:
+        return None
+    if any(rec.get("timing", "in_effect") != "upcoming" for rec in known):
+        return "in_effect"
+    return "upcoming"
 
 
 def evaluate_ads(existing: dict | None = None, now: datetime | None = None) -> dict:
     """Apply the approved ad-pause rule to official NWS marine alerts.
 
-    Missing data is uncertainty, never evidence of safety. A non-tropical
-    Storm Warning (SR.W) pauses ads and does not touch tropical storm mode.
+    Missing data is uncertainty, never evidence of safety. Any unexpected
+    error fails toward paused and keeps previously verified warnings/holds.
     """
     clock = now or now_utc()
+    try:
+        return _evaluate_ads(existing, clock)
+    except Exception as exc:  # noqa: BLE001 - fail closed, never crash /api/ads
+        return _ads_failsafe_result(existing, clock, "Ad evaluator error (%s). Ads stay off." % type(exc).__name__)
+
+
+def _ads_failsafe_result(existing, clock: datetime, why: str) -> dict:
+    """Paused result for an evaluator failure. Keeps known warnings and an existing hold."""
+    try:
+        previous = _trusted_previous(existing)
+        prior_known = _known_from_previous(previous)
+        settled = _ads_time(previous.get("settledSince") or previous.get("holdStartedAt"))
+        outage = _ads_time(previous.get("outageStartedAt")) or clock
+        last_good = _ads_time(previous.get("lastGoodEvaluatedAt"))
+    except Exception:  # noqa: BLE001
+        previous, prior_known, settled, outage, last_good = {}, [], None, clock, None
+    hard = bool(prior_known and (previous.get("hardPause") or previous.get("pauseReason") == "warning"))
+    if hard:
+        reason, known = "warning", prior_known
+    elif settled is not None:
+        reason, known = "hold", []
+    else:
+        reason, known = "unknown", []
+    result = _ads_result(
+        ads_on=False, mode="paused", hard_pause=hard, reduced=[],
+        reasons=[why, "Missing data is uncertainty, never evidence of safety."],
+        clock=clock, settled_since=settled if reason == "hold" else None,
+        resume_after=iso(settled + RESUME_AFTER) if reason == "hold" and settled else None,
+        alerts=known, fetch_ok=False, coverage_complete=False,
+        pause_reason=reason, known_warnings=known,
+        outage_started=outage, last_good=last_good,
+    )
+    result["warningTiming"] = _warning_timing(known)
+    return result
+
+
+def _evaluate_ads(existing: dict | None, clock: datetime) -> dict:
     previous = _trusted_previous(existing)
-    settled_since = parse_iso(previous.get("settledSince") or previous.get("holdStartedAt"))
-    outage_started = parse_iso(previous.get("outageStartedAt"))
-    last_good = parse_iso(previous.get("lastGoodEvaluatedAt"))
+    settled_since = _ads_time(previous.get("settledSince") or previous.get("holdStartedAt"))
+    outage_started = _ads_time(previous.get("outageStartedAt"))
+    last_good = _ads_time(previous.get("lastGoodEvaluatedAt"))
     prior_known = _known_from_previous(previous)
+    _refresh_timing(prior_known, clock)
 
     fetch_ok, coverage_complete, fetch_error, features = _fetch_ads_alert_feeds()
 
@@ -930,12 +1161,16 @@ def evaluate_ads(existing: dict | None = None, now: datetime | None = None) -> d
             continue
         if ident:
             seen_ids.add(ident)
+        begin = _alert_begin(props)
         rec = {
             "event": (props.get("event") or "").strip(),
             "severity": props.get("severity"),
             "headline": props.get("headline"),
             "zones": marine,
             "ends": props.get("ends") or props.get("expires"),
+            "officialEnds": props.get("ends"),
+            "onset": iso(begin),
+            "timing": "upcoming" if (begin is not None and begin > clock) else "in_effect",
             "id": ident or None,
             "vtec": sorted(_alert_vtec_set(props, active_only=True)),
             "tropical": bool(is_tropical),
@@ -969,7 +1204,7 @@ def evaluate_ads(existing: dict | None = None, now: datetime | None = None) -> d
             pause_reason = "warning"
             settled_since = None
             resume_after = None
-            reasons = ["%s is in effect for %s." % (rec["event"], _names(rec)) for rec in known]
+            reasons = [_warning_reason(rec, _names(rec), clock) for rec in known]
             reasons.append("Ads stay off until 12 hours after these warnings end.")
         elif prior_known and (previous.get("hardPause") or previous.get("pauseReason") == "warning"):
             known = prior_known
@@ -977,7 +1212,12 @@ def evaluate_ads(existing: dict | None = None, now: datetime | None = None) -> d
             pause_reason = "warning"
             settled_since = None
             resume_after = None
-            reasons = ["Previously verified %s remains in effect for %s (feed incomplete; warning retained)." % (rec["event"], _names(rec)) for rec in known]
+            reasons = [
+                ("Previously verified %s for %s is retained (upcoming, not yet in effect; feed incomplete)."
+                 if rec.get("timing") == "upcoming" else
+                 "Previously verified %s remains in effect for %s (feed incomplete; warning retained).")
+                % (rec["event"], _names(rec)) for rec in known
+            ]
         elif settled_since is not None:
             known = []
             hard_pause = False
@@ -1003,7 +1243,7 @@ def evaluate_ads(existing: dict | None = None, now: datetime | None = None) -> d
             reasons.append("This is a technical outage, not a weather hold. Ads stay off until complete, fresh marine coverage is available.")
         elif pause_reason == "unknown":
             reasons.append("No persisted pause state was available. Ads stay off until a complete, fresh evaluation.")
-        return _ads_result(
+        result = _ads_result(
             ads_on=False, mode=mode, hard_pause=hard_pause, reduced=[],
             reasons=reasons, clock=clock, settled_since=settled_since if pause_reason == "hold" else None,
             resume_after=resume_after if pause_reason == "hold" else None,
@@ -1011,21 +1251,27 @@ def evaluate_ads(existing: dict | None = None, now: datetime | None = None) -> d
             pause_reason=pause_reason, known_warnings=known,
             outage_started=outage_started, last_good=last_good,
         )
+        result["warningTiming"] = _warning_timing(known)
+        return result
 
     # --- Complete, fresh active coverage.
     outage_started = None
     last_good = clock
 
     if hard_hits:
-        reasons = ["%s is in effect for %s." % (rec["event"], _names(rec)) for rec in hard_hits]
+        reasons = [_warning_reason(rec, _names(rec), clock) for rec in hard_hits]
+        if any(rec.get("timing") == "upcoming" for rec in hard_hits):
+            reasons.append("Established policy: an issued qualifying warning pauses ads from issuance, including before it takes effect.")
         reasons.append("Ads stay off until 12 hours after these warnings end.")
-        return _ads_result(
+        result = _ads_result(
             ads_on=False, mode="paused", hard_pause=True, reduced=[],
             reasons=reasons, clock=clock, settled_since=None, resume_after=None,
             alerts=alerts_out, fetch_ok=True, coverage_complete=True,
             pause_reason="warning", known_warnings=hard_hits,
             outage_started=None, last_good=last_good,
         )
+        result["warningTiming"] = _warning_timing(hard_hits)
+        return result
 
     # No active qualifying warning. Decide among: continue/start a weather hold,
     # allow ads, or stay paused because we cannot prove the last 12 hours.
@@ -1040,7 +1286,7 @@ def evaluate_ads(existing: dict | None = None, now: datetime | None = None) -> d
     # whether a qualifying warning ended recently. A short technical outage
     # with no known warning and no outstanding hold does not need history
     # and must not start a weather hold.
-    prev_last_good = parse_iso(previous.get("lastGoodEvaluatedAt")) if previous else None
+    prev_last_good = _ads_time(previous.get("lastGoodEvaluatedAt")) if previous else None
     history_needed = (not previous) or (prev_last_good is None) or (
         (clock - prev_last_good) > RESUME_AFTER and not had_warning and not in_hold
     )
@@ -1122,14 +1368,15 @@ def _to_et(dt: datetime) -> str:
 def load_ads() -> dict:
     if ADS_PATH.is_file():
         try:
-            return json.loads(ADS_PATH.read_text())
-        except (OSError, json.JSONDecodeError):
+            data = json.loads(ADS_PATH.read_text())
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError):
             return {}
+        return data if isinstance(data, dict) else {}
     return {}
 
 
 def ads_stale(data: dict, max_age: int = 5 * 60) -> bool:
-    ts = parse_iso(data.get("evaluatedAt"))
+    ts = _ads_time(data.get("evaluatedAt")) if isinstance(data, dict) else None
     if ts is None:
         return True
     return (now_utc() - ts).total_seconds() > max_age
