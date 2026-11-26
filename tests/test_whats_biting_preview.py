@@ -317,6 +317,9 @@ class ProtectedSurfacesUnchanged(unittest.TestCase):
         # homepage_boot.py 9e9f3591349135a7bb84c5c27978637a5805291d33a35337262d2ee6979d959f,
         # dashboard.js e6e4e879bcad83b4ed6aa9445bc50b0b8aacc534b19a99f8f1acce30a45ffdf6).
         t444u.update({"homepage_boot.py": "d5ea520", "dashboard.js": "d5ea520"})
+        # Ed t497u: wind-lab.js pinned to the reviewed Phase A public engine 8f17de6
+        # (SHA-256 aca358bd4ee33fdef19da2fd6aa907f690c2b080803b11d6cb86dac99c371558).
+        t444u.update({"wind-lab.js": "8f17de6"})
         # t440u / t446u: brief.py and brief.css are the approved Morning Brief
         # refinements; homepage, viewers, and Catch Wall stay locked.
         for rel in whats_biting.PROTECTED_PATHS:
