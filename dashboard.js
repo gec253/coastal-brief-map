@@ -732,11 +732,11 @@
     box.hidden = false;
     box.className = "dash-alert is-active";
     box.innerHTML = items.map(function (it) {
-      // t488u: UPCOMING (official start still ahead) vs IN EFFECT; same rule as homepage_boot.render_alerts_html.
+      // t488u: UPCOMING (official start still ahead) vs IN EFFECT; same rule and text as homepage_boot.render_alerts_html.
       const up = isUpcoming(it);
-      return '<div class="al-item" data-ph="' + (up ? "up" : "in") + '"><span class="al-dot"></span><span class="al-ev">' + esc(it.event) + "</span>" +
-        '<span class="al-meta"><b class="al-st">' + (up ? "Upcoming" : "In effect") + "</b>" + (up ? " · starts " + esc(etTime(it.onset)) : "") +
-        (it.ends ? " · until " + esc(etTime(it.ends)) : "") + (it.areas ? " · " + esc(it.areas) : "") + "</span></div>";
+      return '<div class="al-item"><span class="al-dot"></span><span class="al-ev">' + esc(it.event) + "</span>" +
+        '<span class="al-meta">' + (up ? "UPCOMING — starts " + esc(etTime(it.onset)) + (it.ends ? ", until " : "") : "IN EFFECT" + (it.ends ? " — until " : "")) +
+        (it.ends ? esc(etTime(it.ends)) : "") + (it.areas ? " · " + esc(it.areas) : "") + "</span></div>";
     }).join("") + '<a class="al-link" href="https://www.weather.gov/mhx/" target="_blank" rel="noopener">NWS details</a>';
   }
   function isUpcoming(it) {
@@ -745,10 +745,10 @@
   }
   // True when a shown UPCOMING / IN EFFECT label no longer matches the clock (relabel at the start time).
   function alertPhaseStale(a) {
-    const rows = document.querySelectorAll("#dash-alert .al-item[data-ph]");
+    const rows = document.querySelectorAll("#dash-alert .al-item .al-meta");
     const items = (a && a.items) || [];
     if (rows.length !== items.length) return false;
-    return items.some(function (it, i) { return rows[i].getAttribute("data-ph") !== (isUpcoming(it) ? "up" : "in"); });
+    return items.some(function (it, i) { return /^UPCOMING/.test(rows[i].textContent) !== isUpcoming(it); });
   }
   // Coastal Flood Warning (in effect or upcoming) for this region, else null. Same rule as the homepage tide tile.
   function coastalFlood(a) {

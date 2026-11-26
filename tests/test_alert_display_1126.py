@@ -706,15 +706,13 @@ class DashboardFirstPaint(unittest.TestCase):
         html, cls = _render_at(b, NOON)
         self.assertEqual(cls, "is-active")
         gale = [p for p in html.split('<div class="al-item"') if "Gale Warning" in p][0]
-        self.assertIn('data-ph="up"', gale)
-        self.assertIn('<b class="al-st">Upcoming</b> · starts 4:00 PM ET · until Fri 1:00 PM ET', gale)
+        self.assertIn('<span class="al-meta">UPCOMING — starts 4:00 PM ET, until Fri 1:00 PM ET · ', gale)
 
     def test_wilmington_gale_in_effect_after_4pm(self):
         b, _ = _block_for("wilmington")
         html, _ = _render_at(b, ts(16, 1))
         gale = [p for p in html.split('<div class="al-item"') if "Gale Warning" in p][0]
-        self.assertIn('data-ph="in"', gale)
-        self.assertIn('<b class="al-st">In effect</b> · until Fri 1:00 PM ET', gale)
+        self.assertIn('<span class="al-meta">IN EFFECT — until Fri 1:00 PM ET · ', gale)
         self.assertNotIn("starts", gale)
 
     def test_nags_head_first_paint_has_no_virginia_waters(self):
@@ -724,6 +722,14 @@ class DashboardFirstPaint(unittest.TestCase):
             self.assertNotIn(va, html)
         self.assertIn("Currituck Sound", html)
         self.assertIn("NWS details", html)
+
+    def test_dashboard_zone_fold_keeps_label_and_times_visible(self):
+        import server
+        b, _ = _block_for("wilmington")
+        html, _ = _render_at(b, NOON)
+        folded = server._folio_fold_alerts(html.encode()).decode()
+        gale = [p for p in folded.split('<div class="al-item">') if "Gale Warning" in p][0]
+        self.assertIn('<span class="al-meta">UPCOMING — starts 4:00 PM ET, until Fri 1:00 PM ET</span><details class="al-zones">', gale)
 
     def test_unknown_and_clear_states_unchanged(self):
         import homepage_boot
@@ -782,6 +788,6 @@ console.log(JSON.stringify([cf("2026-11-26T05:31:00-05:00","2026-11-26T14:00:00-
 
     def test_render_alerts_labels_and_relabel_hook(self):
         src = (ROOT / "dashboard.js").read_text()
-        self.assertIn('<b class="al-st">\' + (up ? "Upcoming" : "In effect")', src)
-        self.assertIn('" · starts " + esc(etTime(it.onset))', src)
+        self.assertIn('(up ? "UPCOMING — starts " + esc(etTime(it.onset)) + (it.ends ? ", until " : "") : "IN EFFECT" + (it.ends ? " — until " : ""))', src)
+        self.assertIn("/^UPCOMING/.test(rows[i].textContent) !== isUpcoming(it)", src)
         self.assertIn("else if (alertPhaseStale(d.alerts))", src)

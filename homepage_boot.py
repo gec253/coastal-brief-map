@@ -195,18 +195,20 @@ def render_alerts_html(a: dict | None) -> tuple[str, str]:
         now = datetime.now(timezone.utc)
         for it in items:
             # t488u: UPCOMING (issued, official start still ahead) vs IN EFFECT; dashboard.js uses the same rule.
+            # Plain text before the first " · " so the dashboard's zone fold keeps the times visible.
             st = _to_dt(it.get("onset"))
             up = bool(st and st > now)
-            meta = '<b class="al-st">%s</b>' % ("Upcoming" if up else "In effect")
             if up:
-                meta += " · starts " + _esc(et_time(st))
+                meta = "UPCOMING — starts " + _esc(et_time(st)) + (", until " if it.get("ends") else "")
+            else:
+                meta = "IN EFFECT" + (" — until " if it.get("ends") else "")
             if it.get("ends"):
-                meta += " · until " + _esc(et_time(it["ends"]))
+                meta += _esc(et_time(it["ends"]))
             if it.get("areas"):
                 meta += (" · " if meta else "") + _esc(it["areas"])
             parts.append(
-                '<div class="al-item" data-ph="%s"><span class="al-dot"></span>' % ("up" if up else "in")
-                + '<span class="al-ev">'
+                '<div class="al-item"><span class="al-dot"></span>'
+                '<span class="al-ev">'
                 + _esc(it.get("event"))
                 + "</span>"
                 '<span class="al-meta">'
