@@ -1,65 +1,312 @@
 {
  "astro": {
-  "date": "2026-11-25",
+  "date": "2026-11-26",
   "label": "Beaufort Inlet",
   "lat": 34.695,
   "lon": -76.668,
   "moon": {
-   "fraction": 0.9817,
-   "illuminationPct": 98,
+   "fraction": 0.9347,
+   "illuminationPct": 93,
    "name": "Waning Gibbous",
    "waxing": false
   },
   "regionId": "crystal-coast",
   "source": "Computed locally from the NOAA Solar Calculator equations and Meeus (Astronomical Algorithms, ch. 48). Not a live USNO fetch.",
   "status": "ok",
-  "sunrise": "2026-11-25T06:50:08.559773-05:00",
-  "sunriseEt": "6:50 AM",
-  "sunset": "2026-11-25T16:57:00.188150-05:00",
-  "sunsetEt": "4:57 PM",
+  "sunrise": "2026-11-26T06:51:04.502256-05:00",
+  "sunriseEt": "6:51 AM",
+  "sunset": "2026-11-26T16:56:42.701858-05:00",
+  "sunsetEt": "4:56 PM",
   "tz": "America/New_York"
  },
- "forecastUpdated": "2026-11-25T09:18:23+00:00",
+ "forecastUpdated": "2026-11-26T06:27:51+00:00",
  "freshness": [
   {
    "label": "Wind",
    "stale": false,
-   "station": "41064",
-   "time": "4:08 AM ET"
+   "station": "CLKN7",
+   "time": "4:40 AM ET"
   },
   {
    "label": "Seas",
    "stale": false,
    "station": "41159",
-   "time": "4:56 AM ET"
+   "time": "3:56 AM ET"
   },
   {
    "label": "Swell",
    "stale": false,
    "station": "41159",
-   "time": "4:56 AM ET"
+   "time": "3:56 AM ET"
   },
   {
    "label": "Barometer",
    "stale": false,
    "station": "8656483",
-   "time": "5:06 AM ET"
+   "time": "5:00 AM ET"
   },
   {
    "label": "Water level",
    "stale": false,
    "station": "8656483",
-   "time": "5:06 AM ET"
+   "time": "5:00 AM ET"
   },
   {
    "label": "Water temp",
    "stale": false,
    "station": "8656483",
-   "time": "5:06 AM ET"
+   "time": "5:00 AM ET"
   }
  ],
  "hazards": {
   "current": [
+   {
+    "areas": "East Carteret; Northern Outer Banks; Ocracoke Island; Hatteras Island",
+    "ends": "2026-11-26T06:00:00-05:00",
+    "event": "High Wind Warning",
+    "kind": "warning",
+    "local": [
+     "East Carteret"
+    ],
+    "localUgc": [
+     "NCZ196"
+    ],
+    "onset": "2026-11-26T00:05:00-05:00",
+    "products": [
+     {
+      "areas": "East Carteret; Northern Outer Banks; Ocracoke Island; Hatteras Island",
+      "certainty": "Likely",
+      "description": "* WHAT...Southeast winds 25 to 35 mph with gusts up to 60 mph.\n\n* WHERE...East Carteret County, and Hatteras Island, Northern Outer\nBanks, and Ocracoke Island.\n\n* WHEN...Until 6 AM EST early this morning.\n\n* IMPACTS...Damaging winds will blow down trees and power lines.\nWidespread power outages are expected. Travel will be difficult,\nespecially for high profile vehicles.",
+      "headline": "High Wind Warning issued November 26 at 12:05AM EST until November 26 at 6:00AM EST by NWS Newport/Morehead City NC",
+      "id": "urn:oid:2.49.0.1.840.0.98484c9980ae17e9b6aac369742666a92487505c.001.1",
+      "instruction": "People are urged to secure loose objects that could be blown around\nor damaged by the wind.",
+      "messageType": "Update",
+      "sender": "NWS Newport/Morehead City NC",
+      "sent": "2026-11-26T00:05:00-05:00",
+      "severity": "Severe",
+      "ugc": [
+       "NCZ196",
+       "NCZ203",
+       "NCZ204",
+       "NCZ205"
+      ],
+      "urgency": "Expected"
+     }
+    ],
+    "severity": "Severe",
+    "status": "current",
+    "text": "High Wind Warning now in effect until Thu 6:00 AM ET — East Carteret; Northern Outer Banks; Ocracoke Island; Hatteras Island.",
+    "ugc": [
+     "NCZ196",
+     "NCZ203",
+     "NCZ204",
+     "NCZ205"
+    ]
+   },
+   {
+    "areas": "S of Currituck Beach Light NC to Oregon Inlet NC out to 20 NM; S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM; S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM",
+    "ends": "2026-11-26T06:00:00-05:00",
+    "event": "Storm Warning",
+    "kind": "warning",
+    "local": [
+     "S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM",
+     "S of Cape Lookout NC to Surf City NC out to 20 NM"
+    ],
+    "localUgc": [
+     "AMZ156",
+     "AMZ158"
+    ],
+    "onset": "2026-11-26T00:39:00-05:00",
+    "products": [
+     {
+      "areas": "S of Currituck Beach Light NC to Oregon Inlet NC out to 20 NM; S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM; S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM",
+      "certainty": "Observed",
+      "description": "* WHAT...Southeast winds 30 to 35 kt with gusts up to 50 kt and\nseas 13 to 18 ft.\n\n* WHERE...The coastal waters from Oregon Inlet to Surf City, and\nthe coastal waters from Duck to Oregon Inlet.\n\n* WHEN...Until 6 AM EST early this morning.\n\n* IMPACTS...Storm force winds and hazardous seas will capsize or\ndamage vessels and reduce visibility.",
+      "headline": "Storm Warning issued November 26 at 12:39AM EST until November 26 at 6:00AM EST by NWS Newport/Morehead City NC",
+      "id": "urn:oid:2.49.0.1.840.0.381615a44dd4e0d7c60e0683e5fce06cff696d08.003.1",
+      "instruction": "Mariners should remain in port, alter course, and/or secure the\nvessel for severe conditions.",
+      "messageType": "Update",
+      "sender": "NWS Newport/Morehead City NC",
+      "sent": "2026-11-26T00:39:00-05:00",
+      "severity": "Severe",
+      "ugc": [
+       "AMZ150",
+       "AMZ152",
+       "AMZ154",
+       "AMZ156",
+       "AMZ158"
+      ],
+      "urgency": "Immediate"
+     }
+    ],
+    "severity": "Severe",
+    "status": "current",
+    "text": "Storm Warning now in effect until Thu 6:00 AM ET — S of Currituck Beach Light NC to Oregon Inlet NC out to 20 NM; S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM; S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM.",
+    "ugc": [
+     "AMZ150",
+     "AMZ152",
+     "AMZ154",
+     "AMZ156",
+     "AMZ158"
+    ]
+   },
+   {
+    "areas": "East Carteret",
+    "ends": "2026-11-26T16:00:00-05:00",
+    "event": "Coastal Flood Warning",
+    "kind": "warning",
+    "local": [
+     "East Carteret"
+    ],
+    "localUgc": [
+     "NCZ196"
+    ],
+    "onset": "2026-11-26T04:49:00-05:00",
+    "products": [
+     {
+      "areas": "East Carteret",
+      "certainty": "Likely",
+      "description": "* WHAT...For the High Surf Advisory, large breaking waves of 6\nto 10 feet expected in the surf zone. For the Coastal Flood\nWarning, 2 to 4 feet of inundation above ground level expected\nin low- lying areas near shorelines and tidal waterways.\n\n* WHERE...East Carteret County.\n\n* WHEN...For the High Surf Advisory, until 10 AM EST Friday. For\nthe Coastal Flood Warning, from 7 PM this evening to 4 PM EST\nThursday.\n\n* IMPACTS...Up to 2 to 4 feet of inundation above ground level\nis possible in some areas near shorelines and tidal waterways\nresulting in an elevated threat of property damage. Flooding\nwill extend inland from the waterfront threatening some homes\nand businesses. Isolated road closures and flooding of\nvehicles will be possible. Dangerous swimming and surfing\nconditions and localized beach erosion.\n\n* ADDITIONAL DETAILS...The higher of the high tide cycles will\nbe during the morning hours each day this week. The worst\nimpacts are currently forecast with the morning high tide\ncycle on Thursday.",
+      "headline": "Coastal Flood Warning issued November 26 at 4:49AM EST until November 26 at 4:00PM EST by NWS Newport/Morehead City NC",
+      "id": "urn:oid:2.49.0.1.840.0.2b5d0ae1896ec2c82f220d877e12a871038457ad.001.1",
+      "instruction": "Take the necessary actions to protect flood-prone property. If\ntravel is required, do not drive around barricades or through\nwater of unknown depth.\n\nInexperienced swimmers should remain out of the water due to\ndangerous surf conditions.",
+      "messageType": "Update",
+      "sender": "NWS Newport/Morehead City NC",
+      "sent": "2026-11-26T04:49:00-05:00",
+      "severity": "Severe",
+      "ugc": [
+       "NCZ196"
+      ],
+      "urgency": "Expected"
+     }
+    ],
+    "severity": "Severe",
+    "status": "current",
+    "text": "Coastal Flood Warning now in effect until Thu 4:00 PM ET — East Carteret.",
+    "ugc": [
+     "NCZ196"
+    ]
+   },
+   {
+    "areas": "Washington; Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Jones; Pamlico; Northern Craven; Southern Craven; West Carteret; East Carteret; Inland Onslow; Coastal Onslow; Northern Outer Banks; Ocracoke Island; Hatteras Island",
+    "ends": "2026-11-26T13:00:00-05:00",
+    "event": "Flood Watch",
+    "kind": "watch",
+    "local": [
+     "West Carteret",
+     "East Carteret"
+    ],
+    "localUgc": [
+     "NCZ195",
+     "NCZ196"
+    ],
+    "onset": "2026-11-25T23:48:00-05:00",
+    "products": [
+     {
+      "areas": "Washington; Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Jones; Pamlico; Northern Craven; Southern Craven; West Carteret; East Carteret; Inland Onslow; Coastal Onslow; Northern Outer Banks; Ocracoke Island; Hatteras Island",
+      "certainty": "Possible",
+      "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...A portion of eastern North Carolina, including the\nfollowing areas, Beaufort, Coastal Onslow, East Carteret, Hatteras\nIsland, Inland Onslow, Jones, Mainland Dare, Mainland Hyde,\nNorthern Craven, Northern Outer Banks, Ocracoke Island, Pamlico,\nSouthern Craven, Tyrrell, Washington and West Carteret.\n\n* WHEN...Through early Thursday afternoon.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas. Storm drains\nand ditches may become clogged with debris.\n\n* ADDITIONAL DETAILS...\n- Rainfall totals of 4 to 6 inches are forecast, with locally\nhigher amounts possible especially near the Crystal Coast and\nsouthern Outer Banks.\n- http://www.weather.gov/safety/flood",
+      "headline": "Flood Watch issued November 25 at 11:48PM EST until November 26 at 1:00PM EST by NWS Newport/Morehead City NC",
+      "id": "urn:oid:2.49.0.1.840.0.6f7b724dd7e5de8ea6c92ebeede9cf70e62502bf.001.1",
+      "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+      "messageType": "Update",
+      "sender": "NWS Newport/Morehead City NC",
+      "sent": "2026-11-25T23:48:00-05:00",
+      "severity": "Severe",
+      "ugc": [
+       "NCZ045",
+       "NCZ046",
+       "NCZ047",
+       "NCZ080",
+       "NCZ081",
+       "NCZ092",
+       "NCZ094",
+       "NCZ193",
+       "NCZ194",
+       "NCZ195",
+       "NCZ196",
+       "NCZ198",
+       "NCZ199",
+       "NCZ203",
+       "NCZ204",
+       "NCZ205"
+      ],
+      "urgency": "Future"
+     }
+    ],
+    "severity": "Severe",
+    "status": "current",
+    "text": "Flood Watch now in effect until Thu 1:00 PM ET — Washington; Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Jones; Pamlico; Northern Craven; Southern Craven; West Carteret; East Carteret; Inland Onslow; Coastal Onslow; Northern Outer Banks; Ocracoke Island; Hatteras Island.",
+    "ugc": [
+     "NCZ045",
+     "NCZ046",
+     "NCZ047",
+     "NCZ080",
+     "NCZ081",
+     "NCZ092",
+     "NCZ094",
+     "NCZ193",
+     "NCZ194",
+     "NCZ195",
+     "NCZ196",
+     "NCZ198",
+     "NCZ199",
+     "NCZ203",
+     "NCZ204",
+     "NCZ205"
+    ]
+   },
+   {
+    "areas": "Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Pamlico; Southern Craven; West Carteret; Coastal Onslow",
+    "ends": "2026-11-26T06:00:00-05:00",
+    "event": "Wind Advisory",
+    "kind": "advisory",
+    "local": [
+     "West Carteret"
+    ],
+    "localUgc": [
+     "NCZ195"
+    ],
+    "onset": "2026-11-26T00:05:00-05:00",
+    "products": [
+     {
+      "areas": "Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Pamlico; Southern Craven; West Carteret; Coastal Onslow",
+      "certainty": "Likely",
+      "description": "* WHAT...East winds 20 to 30 mph with gusts up to 50 mph.\n\n* WHERE...Beaufort, Coastal Onslow, Mainland Dare, Mainland Hyde,\nPamlico, Southern Craven, Tyrrell, and West Carteret Counties.\n\n* WHEN...Until 6 AM EST early this morning.\n\n* IMPACTS...Gusty winds will blow around unsecured objects. Tree\nlimbs could be blown down and a few power outages may result.",
+      "headline": "Wind Advisory issued November 26 at 12:05AM EST until November 26 at 6:00AM EST by NWS Newport/Morehead City NC",
+      "id": "urn:oid:2.49.0.1.840.0.98484c9980ae17e9b6aac369742666a92487505c.002.1",
+      "instruction": "Winds this strong can make driving difficult, especially for high\nprofile vehicles. Use extra caution.\n\nSecure outdoor objects.",
+      "messageType": "Update",
+      "sender": "NWS Newport/Morehead City NC",
+      "sent": "2026-11-26T00:05:00-05:00",
+      "severity": "Moderate",
+      "ugc": [
+       "NCZ046",
+       "NCZ047",
+       "NCZ080",
+       "NCZ081",
+       "NCZ094",
+       "NCZ194",
+       "NCZ195",
+       "NCZ199"
+      ],
+      "urgency": "Expected"
+     }
+    ],
+    "severity": "Moderate",
+    "status": "current",
+    "text": "Wind Advisory now in effect until Thu 6:00 AM ET — Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Pamlico; Southern Craven; West Carteret; Coastal Onslow.",
+    "ugc": [
+     "NCZ046",
+     "NCZ047",
+     "NCZ080",
+     "NCZ081",
+     "NCZ094",
+     "NCZ194",
+     "NCZ195",
+     "NCZ199"
+    ]
+   },
    {
     "areas": "West Carteret; Coastal Onslow",
     "ends": "2026-11-26T16:00:00-05:00",
@@ -71,18 +318,18 @@
     "localUgc": [
      "NCZ195"
     ],
-    "onset": "2026-11-25T04:59:00-05:00",
+    "onset": "2026-11-26T04:49:00-05:00",
     "products": [
      {
       "areas": "West Carteret; Coastal Onslow",
       "certainty": "Likely",
-      "description": "* WHAT...For the Coastal Flood Advisory, up to 3 feet of\ninundation above ground level expected in low-lying areas near\nshorelines and tidal waterways. For the High Surf Advisory,\nlarge breaking waves of 6 to 9 feet expected in the surf zone.\n\n* WHERE...West Carteret and Coastal Onslow Counties.\n\n* WHEN...For the Coastal Flood Advisory, from 4 AM Wednesday to\n4 PM EST Thursday. For the High Surf Advisory, from 7 PM\nWednesday to 7 PM EST Thursday.\n\n* IMPACTS...Up to 3 feet of inundation above ground level is\npossible in some areas near shorelines and tidal waterways\nresulting in an elevated threat of property damage. Flooding\nwill extend inland from the waterfront threatening some homes\nand businesses. Dangerous swimming and surfing conditions and\nlocalized beach erosion.\n\n* ADDITIONAL DETAILS...The higher of the high tide cycles will\nbe during the morning hours each day this week. This is\nforecast to bring minor moderate impacts on Wednesday. The\nworst impacts are currently forecast with the morning high\ntide cycle on Thursday.",
-      "headline": "Coastal Flood Advisory issued November 25 at 4:59AM EST until November 26 at 4:00PM EST by NWS Newport/Morehead City NC",
-      "id": "urn:oid:2.49.0.1.840.0.43ea175359bf5cd36f47c6981f0d8536624d33a9.005.1",
+      "description": "* WHAT...For the Coastal Flood Advisory, up to 3 feet of\ninundation above ground level expected in low-lying areas near\nshorelines and tidal waterways. For the High Surf Advisory,\nlarge breaking waves of 6 to 9 feet expected in the surf zone.\n\n* WHERE...West Carteret and Coastal Onslow Counties.\n\n* WHEN...For the Coastal Flood Advisory, until 4 PM EST\nThursday. For the High Surf Advisory, from 7 PM this evening\nto 7 PM EST Thursday.\n\n* IMPACTS...Up to 3 feet of inundation above ground level is\npossible in some areas near shorelines and tidal waterways\nresulting in an elevated threat of property damage. Flooding\nwill extend inland from the waterfront threatening some homes\nand businesses. Dangerous swimming and surfing conditions and\nlocalized beach erosion.\n\n* ADDITIONAL DETAILS...The higher of the high tide cycles will\nbe during the morning hours each day this week. The worst\nimpacts are currently forecast with the morning high tide\ncycle on Thursday.",
+      "headline": "Coastal Flood Advisory issued November 26 at 4:49AM EST until November 26 at 4:00PM EST by NWS Newport/Morehead City NC",
+      "id": "urn:oid:2.49.0.1.840.0.2b5d0ae1896ec2c82f220d877e12a871038457ad.005.1",
       "instruction": "If travel is required, allow extra time as some roads may be\nclosed. Do not drive around barricades or through water of\nunknown depth. Take the necessary actions to protect flood-prone\nproperty.\n\nInexperienced swimmers should remain out of the water due to\ndangerous surf conditions.",
       "messageType": "Update",
       "sender": "NWS Newport/Morehead City NC",
-      "sent": "2026-11-25T04:59:00-05:00",
+      "sent": "2026-11-26T04:49:00-05:00",
       "severity": "Minor",
       "ugc": [
        "NCZ195",
@@ -110,18 +357,18 @@
     "localUgc": [
      "NCZ196"
     ],
-    "onset": "2026-11-25T04:59:00-05:00",
+    "onset": "2026-11-26T04:49:00-05:00",
     "products": [
      {
       "areas": "East Carteret",
       "certainty": "Likely",
-      "description": "* WHAT...For the High Surf Advisory, large breaking waves of 6 to\n10 feet expected in the surf zone. For the Coastal Flood\nWarning, 2 to 4 feet of inundation above ground level expected\nin low-lying areas near shorelines and tidal waterways.\n\n* WHERE...East Carteret County.\n\n* WHEN...For the High Surf Advisory, from 4 AM Wednesday to 10\nAM EST Friday. For the Coastal Flood Warning, from 7 PM\nWednesday to 4 PM EST Thursday.\n\n* IMPACTS...Up to 2 to 4 feet of inundation above ground level\nis possible in some areas near shorelines and tidal waterways\nresulting in an elevated threat of property damage. Flooding\nwill extend inland from the waterfront threatening some homes\nand businesses. Isolated road closures and flooding of\nvehicles will be possible. Dangerous swimming and surfing\nconditions and localized beach erosion.\n\n* ADDITIONAL DETAILS...The higher of the high tide cycles will\nbe during the morning hours each day this week with minor\nimpacts being felt on Wednesday. The worst impacts are\ncurrently forecast with the morning high tide cycle on\nThursday.",
-      "headline": "High Surf Advisory issued November 25 at 4:59AM EST until November 27 at 10:00AM EST by NWS Newport/Morehead City NC",
-      "id": "urn:oid:2.49.0.1.840.0.43ea175359bf5cd36f47c6981f0d8536624d33a9.001.2",
+      "description": "* WHAT...For the High Surf Advisory, large breaking waves of 6\nto 10 feet expected in the surf zone. For the Coastal Flood\nWarning, 2 to 4 feet of inundation above ground level expected\nin low- lying areas near shorelines and tidal waterways.\n\n* WHERE...East Carteret County.\n\n* WHEN...For the High Surf Advisory, until 10 AM EST Friday. For\nthe Coastal Flood Warning, from 7 PM this evening to 4 PM EST\nThursday.\n\n* IMPACTS...Up to 2 to 4 feet of inundation above ground level\nis possible in some areas near shorelines and tidal waterways\nresulting in an elevated threat of property damage. Flooding\nwill extend inland from the waterfront threatening some homes\nand businesses. Isolated road closures and flooding of\nvehicles will be possible. Dangerous swimming and surfing\nconditions and localized beach erosion.\n\n* ADDITIONAL DETAILS...The higher of the high tide cycles will\nbe during the morning hours each day this week. The worst\nimpacts are currently forecast with the morning high tide\ncycle on Thursday.",
+      "headline": "High Surf Advisory issued November 26 at 4:49AM EST until November 27 at 10:00AM EST by NWS Newport/Morehead City NC",
+      "id": "urn:oid:2.49.0.1.840.0.2b5d0ae1896ec2c82f220d877e12a871038457ad.001.2",
       "instruction": "Take the necessary actions to protect flood-prone property. If\ntravel is required, do not drive around barricades or through\nwater of unknown depth.\n\nInexperienced swimmers should remain out of the water due to\ndangerous surf conditions.",
       "messageType": "Update",
       "sender": "NWS Newport/Morehead City NC",
-      "sent": "2026-11-25T04:59:00-05:00",
+      "sent": "2026-11-26T04:49:00-05:00",
       "severity": "Minor",
       "ugc": [
        "NCZ196"
@@ -135,257 +382,6 @@
     "ugc": [
      "NCZ196"
     ]
-   }
-  ],
-  "line": "CURRENT: Coastal Flood Advisory now in effect until Thu 4:00 PM ET — West Carteret; Coastal Onslow. High Surf Advisory now in effect until Fri 10:00 AM ET — East Carteret. UPCOMING: High Wind Warning begins Wed 4:00 PM ET until Thu 5:00 AM ET — East Carteret; Northern Outer Banks; Ocracoke Island; Hatteras Island. Coastal Flood Warning begins Wed 7:00 PM ET until Thu 4:00 PM ET — East Carteret. Storm Warning begins Wed 7:00 PM ET until Thu 5:00 AM ET — S of Currituck Beach Light NC to Oregon Inlet NC out to 20 NM; S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM; S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM. Flood Watch begins Wed 4:00 PM ET until Thu 10:00 AM ET — Washington; Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Jones; Pamlico; Northern Craven; Southern Craven; West Carteret; East Carteret; Inland Onslow; Coastal Onslow; Northern Outer Banks; Ocracoke Island; Hatteras Island. Wind Advisory begins Wed 4:00 PM ET until Thu 5:00 AM ET — Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Pamlico; Southern Craven; West Carteret; Coastal Onslow. High Surf Advisory begins Wed 7:00 PM ET until Thu 7:00 PM ET — West Carteret; Coastal Onslow.",
-  "status": "active",
-  "upcoming": [
-   {
-    "areas": "East Carteret; Northern Outer Banks; Ocracoke Island; Hatteras Island",
-    "ends": "2026-11-26T05:00:00-05:00",
-    "event": "High Wind Warning",
-    "kind": "warning",
-    "local": [
-     "East Carteret"
-    ],
-    "localUgc": [
-     "NCZ196"
-    ],
-    "onset": "2026-11-25T16:00:00-05:00",
-    "products": [
-     {
-      "areas": "East Carteret; Northern Outer Banks; Ocracoke Island; Hatteras Island",
-      "certainty": "Likely",
-      "description": "* WHAT...East winds 30 to 40 mph with gusts up to 60 mph expected.\n\n* WHERE...East Carteret County, and Hatteras Island, Northern Outer\nBanks, and Ocracoke Island.\n\n* WHEN...From 4 PM this afternoon to 5 AM EST Thursday.\n\n* IMPACTS...Damaging winds will blow down trees and power lines.\nWidespread power outages are expected. Travel will be difficult,\nespecially for high profile vehicles.\n\n* ADDITIONAL DETAILS...A coastal storm will produce strong winds\nacross portions of ENC Wednesday afternoon through early Thursday\nmorning.",
-      "headline": "High Wind Warning issued November 25 at 12:58AM EST until November 26 at 5:00AM EST by NWS Newport/Morehead City NC",
-      "id": "urn:oid:2.49.0.1.840.0.bd5b9d04190a3341f3071eab0a3570eaf3c62758.001.2",
-      "instruction": "People are urged to secure loose objects that could be blown around\nor damaged by the wind.",
-      "messageType": "Alert",
-      "sender": "NWS Newport/Morehead City NC",
-      "sent": "2026-11-25T00:58:00-05:00",
-      "severity": "Severe",
-      "ugc": [
-       "NCZ196",
-       "NCZ203",
-       "NCZ204",
-       "NCZ205"
-      ],
-      "urgency": "Expected"
-     }
-    ],
-    "severity": "Severe",
-    "status": "upcoming",
-    "text": "High Wind Warning begins Wed 4:00 PM ET until Thu 5:00 AM ET — East Carteret; Northern Outer Banks; Ocracoke Island; Hatteras Island.",
-    "ugc": [
-     "NCZ196",
-     "NCZ203",
-     "NCZ204",
-     "NCZ205"
-    ]
-   },
-   {
-    "areas": "East Carteret",
-    "ends": "2026-11-26T16:00:00-05:00",
-    "event": "Coastal Flood Warning",
-    "kind": "warning",
-    "local": [
-     "East Carteret"
-    ],
-    "localUgc": [
-     "NCZ196"
-    ],
-    "onset": "2026-11-25T19:00:00-05:00",
-    "products": [
-     {
-      "areas": "East Carteret",
-      "certainty": "Likely",
-      "description": "* WHAT...For the High Surf Advisory, large breaking waves of 6 to\n10 feet expected in the surf zone. For the Coastal Flood\nWarning, 2 to 4 feet of inundation above ground level expected\nin low-lying areas near shorelines and tidal waterways.\n\n* WHERE...East Carteret County.\n\n* WHEN...For the High Surf Advisory, from 4 AM Wednesday to 10\nAM EST Friday. For the Coastal Flood Warning, from 7 PM\nWednesday to 4 PM EST Thursday.\n\n* IMPACTS...Up to 2 to 4 feet of inundation above ground level\nis possible in some areas near shorelines and tidal waterways\nresulting in an elevated threat of property damage. Flooding\nwill extend inland from the waterfront threatening some homes\nand businesses. Isolated road closures and flooding of\nvehicles will be possible. Dangerous swimming and surfing\nconditions and localized beach erosion.\n\n* ADDITIONAL DETAILS...The higher of the high tide cycles will\nbe during the morning hours each day this week with minor\nimpacts being felt on Wednesday. The worst impacts are\ncurrently forecast with the morning high tide cycle on\nThursday.",
-      "headline": "Coastal Flood Warning issued November 25 at 4:59AM EST until November 26 at 4:00PM EST by NWS Newport/Morehead City NC",
-      "id": "urn:oid:2.49.0.1.840.0.43ea175359bf5cd36f47c6981f0d8536624d33a9.001.1",
-      "instruction": "Take the necessary actions to protect flood-prone property. If\ntravel is required, do not drive around barricades or through\nwater of unknown depth.\n\nInexperienced swimmers should remain out of the water due to\ndangerous surf conditions.",
-      "messageType": "Update",
-      "sender": "NWS Newport/Morehead City NC",
-      "sent": "2026-11-25T04:59:00-05:00",
-      "severity": "Severe",
-      "ugc": [
-       "NCZ196"
-      ],
-      "urgency": "Expected"
-     }
-    ],
-    "severity": "Severe",
-    "status": "upcoming",
-    "text": "Coastal Flood Warning begins Wed 7:00 PM ET until Thu 4:00 PM ET — East Carteret.",
-    "ugc": [
-     "NCZ196"
-    ]
-   },
-   {
-    "areas": "S of Currituck Beach Light NC to Oregon Inlet NC out to 20 NM; S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM; S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM",
-    "ends": "2026-11-26T05:00:00-05:00",
-    "event": "Storm Warning",
-    "kind": "warning",
-    "local": [
-     "S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM",
-     "S of Cape Lookout NC to Surf City NC out to 20 NM"
-    ],
-    "localUgc": [
-     "AMZ156",
-     "AMZ158"
-    ],
-    "onset": "2026-11-25T19:00:00-05:00",
-    "products": [
-     {
-      "areas": "S of Currituck Beach Light NC to Oregon Inlet NC out to 20 NM; S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM; S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM",
-      "certainty": "Observed",
-      "description": "* WHAT...East winds 30 to 40 kt with gusts up to 50 kt and seas\n15 to 20 ft expected.\n\n* WHERE...The coastal waters from Oregon Inlet to Surf City, and\nthe coastal waters from Duck to Oregon Inlet.\n\n* WHEN...From 7 PM this evening to 5 AM EST Thursday.\n\n* IMPACTS...Storm force winds and hazardous seas will capsize or\ndamage vessels and reduce visibility.",
-      "headline": "Storm Warning issued November 25 at 4:16AM EST until November 26 at 5:00AM EST by NWS Newport/Morehead City NC",
-      "id": "urn:oid:2.49.0.1.840.0.6cd740dab8b73fcf1f22cb5a774e72a38f054104.005.1",
-      "instruction": "Mariners should remain in port, alter course, and/or secure the\nvessel for severe conditions.",
-      "messageType": "Update",
-      "sender": "NWS Newport/Morehead City NC",
-      "sent": "2026-11-25T04:16:00-05:00",
-      "severity": "Severe",
-      "ugc": [
-       "AMZ150",
-       "AMZ152",
-       "AMZ154",
-       "AMZ156",
-       "AMZ158"
-      ],
-      "urgency": "Immediate"
-     }
-    ],
-    "severity": "Severe",
-    "status": "upcoming",
-    "text": "Storm Warning begins Wed 7:00 PM ET until Thu 5:00 AM ET — S of Currituck Beach Light NC to Oregon Inlet NC out to 20 NM; S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM; S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM.",
-    "ugc": [
-     "AMZ150",
-     "AMZ152",
-     "AMZ154",
-     "AMZ156",
-     "AMZ158"
-    ]
-   },
-   {
-    "areas": "Washington; Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Jones; Pamlico; Northern Craven; Southern Craven; West Carteret; East Carteret; Inland Onslow; Coastal Onslow; Northern Outer Banks; Ocracoke Island; Hatteras Island",
-    "ends": "2026-11-26T10:00:00-05:00",
-    "event": "Flood Watch",
-    "kind": "watch",
-    "local": [
-     "West Carteret",
-     "East Carteret"
-    ],
-    "localUgc": [
-     "NCZ195",
-     "NCZ196"
-    ],
-    "onset": "2026-11-25T16:00:00-05:00",
-    "products": [
-     {
-      "areas": "Washington; Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Jones; Pamlico; Northern Craven; Southern Craven; West Carteret; East Carteret; Inland Onslow; Coastal Onslow; Northern Outer Banks; Ocracoke Island; Hatteras Island",
-      "certainty": "Possible",
-      "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...A portion of eastern North Carolina, including the\nfollowing areas, Beaufort, Coastal Onslow, East Carteret, Hatteras\nIsland, Inland Onslow, Jones, Mainland Dare, Mainland Hyde,\nNorthern Craven, Northern Outer Banks, Ocracoke Island, Pamlico,\nSouthern Craven, Tyrrell, Washington and West Carteret.\n\n* WHEN...From Wednesday afternoon through Thursday morning.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas. Storm drains\nand ditches may become clogged with debris.\n\n* ADDITIONAL DETAILS...\n- A coastal storm will combine with anomalously high moisture, weak\ninstability, and strong lift to produce areas of moderate to\nheavy rain across the watch area. Rainfall totals of 4 to 6\ninches are forecast, with locally higher amounts possible.\n- http://www.weather.gov/safety/flood",
-      "headline": "Flood Watch issued November 24 at 11:32PM EST until November 26 at 10:00AM EST by NWS Newport/Morehead City NC",
-      "id": "urn:oid:2.49.0.1.840.0.b179dcfb9f126e8a421e42c46be9861dab8ba070.002.1",
-      "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
-      "messageType": "Update",
-      "sender": "NWS Newport/Morehead City NC",
-      "sent": "2026-11-24T23:32:00-05:00",
-      "severity": "Severe",
-      "ugc": [
-       "NCZ045",
-       "NCZ046",
-       "NCZ047",
-       "NCZ080",
-       "NCZ081",
-       "NCZ092",
-       "NCZ094",
-       "NCZ193",
-       "NCZ194",
-       "NCZ195",
-       "NCZ196",
-       "NCZ198",
-       "NCZ199",
-       "NCZ203",
-       "NCZ204",
-       "NCZ205"
-      ],
-      "urgency": "Future"
-     }
-    ],
-    "severity": "Severe",
-    "status": "upcoming",
-    "text": "Flood Watch begins Wed 4:00 PM ET until Thu 10:00 AM ET — Washington; Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Jones; Pamlico; Northern Craven; Southern Craven; West Carteret; East Carteret; Inland Onslow; Coastal Onslow; Northern Outer Banks; Ocracoke Island; Hatteras Island.",
-    "ugc": [
-     "NCZ045",
-     "NCZ046",
-     "NCZ047",
-     "NCZ080",
-     "NCZ081",
-     "NCZ092",
-     "NCZ094",
-     "NCZ193",
-     "NCZ194",
-     "NCZ195",
-     "NCZ196",
-     "NCZ198",
-     "NCZ199",
-     "NCZ203",
-     "NCZ204",
-     "NCZ205"
-    ]
-   },
-   {
-    "areas": "Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Pamlico; Southern Craven; West Carteret; Coastal Onslow",
-    "ends": "2026-11-26T05:00:00-05:00",
-    "event": "Wind Advisory",
-    "kind": "advisory",
-    "local": [
-     "West Carteret"
-    ],
-    "localUgc": [
-     "NCZ195"
-    ],
-    "onset": "2026-11-25T16:00:00-05:00",
-    "products": [
-     {
-      "areas": "Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Pamlico; Southern Craven; West Carteret; Coastal Onslow",
-      "certainty": "Likely",
-      "description": "* WHAT...East winds 25 to 30 mph with gusts up to 50 mph expected.\n\n* WHERE...Beaufort, Coastal Onslow, Mainland Dare, Mainland Hyde,\nPamlico, Southern Craven, Tyrrell, and West Carteret Counties.\n\n* WHEN...From 4 PM this afternoon to 5 AM EST Thursday.\n\n* IMPACTS...Gusty winds will blow around unsecured objects. Tree\nlimbs could be blown down and a few power outages may result.\n\n* ADDITIONAL DETAILS...A coastal storm will produce strong winds\nacross portions of ENC Wednesday afternoon through early Thursday\nmorning.",
-      "headline": "Wind Advisory issued November 25 at 12:58AM EST until November 26 at 5:00AM EST by NWS Newport/Morehead City NC",
-      "id": "urn:oid:2.49.0.1.840.0.bd5b9d04190a3341f3071eab0a3570eaf3c62758.003.1",
-      "instruction": "Winds this strong can make driving difficult, especially for high\nprofile vehicles. Use extra caution.\n\nSecure outdoor objects.",
-      "messageType": "Update",
-      "sender": "NWS Newport/Morehead City NC",
-      "sent": "2026-11-25T00:58:00-05:00",
-      "severity": "Moderate",
-      "ugc": [
-       "NCZ046",
-       "NCZ047",
-       "NCZ080",
-       "NCZ081",
-       "NCZ094",
-       "NCZ194",
-       "NCZ195",
-       "NCZ199"
-      ],
-      "urgency": "Expected"
-     }
-    ],
-    "severity": "Moderate",
-    "status": "upcoming",
-    "text": "Wind Advisory begins Wed 4:00 PM ET until Thu 5:00 AM ET — Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Pamlico; Southern Craven; West Carteret; Coastal Onslow.",
-    "ugc": [
-     "NCZ046",
-     "NCZ047",
-     "NCZ080",
-     "NCZ081",
-     "NCZ094",
-     "NCZ194",
-     "NCZ195",
-     "NCZ199"
-    ]
    },
    {
     "areas": "West Carteret; Coastal Onslow",
@@ -398,18 +394,18 @@
     "localUgc": [
      "NCZ195"
     ],
-    "onset": "2026-11-25T19:00:00-05:00",
+    "onset": "2026-11-26T04:49:00-05:00",
     "products": [
      {
       "areas": "West Carteret; Coastal Onslow",
       "certainty": "Likely",
-      "description": "* WHAT...For the Coastal Flood Advisory, up to 3 feet of\ninundation above ground level expected in low-lying areas near\nshorelines and tidal waterways. For the High Surf Advisory,\nlarge breaking waves of 6 to 9 feet expected in the surf zone.\n\n* WHERE...West Carteret and Coastal Onslow Counties.\n\n* WHEN...For the Coastal Flood Advisory, from 4 AM Wednesday to\n4 PM EST Thursday. For the High Surf Advisory, from 7 PM\nWednesday to 7 PM EST Thursday.\n\n* IMPACTS...Up to 3 feet of inundation above ground level is\npossible in some areas near shorelines and tidal waterways\nresulting in an elevated threat of property damage. Flooding\nwill extend inland from the waterfront threatening some homes\nand businesses. Dangerous swimming and surfing conditions and\nlocalized beach erosion.\n\n* ADDITIONAL DETAILS...The higher of the high tide cycles will\nbe during the morning hours each day this week. This is\nforecast to bring minor moderate impacts on Wednesday. The\nworst impacts are currently forecast with the morning high\ntide cycle on Thursday.",
-      "headline": "High Surf Advisory issued November 25 at 4:59AM EST until November 26 at 7:00PM EST by NWS Newport/Morehead City NC",
-      "id": "urn:oid:2.49.0.1.840.0.43ea175359bf5cd36f47c6981f0d8536624d33a9.005.2",
+      "description": "* WHAT...For the Coastal Flood Advisory, up to 3 feet of\ninundation above ground level expected in low-lying areas near\nshorelines and tidal waterways. For the High Surf Advisory,\nlarge breaking waves of 6 to 9 feet expected in the surf zone.\n\n* WHERE...West Carteret and Coastal Onslow Counties.\n\n* WHEN...For the Coastal Flood Advisory, until 4 PM EST\nThursday. For the High Surf Advisory, from 7 PM this evening\nto 7 PM EST Thursday.\n\n* IMPACTS...Up to 3 feet of inundation above ground level is\npossible in some areas near shorelines and tidal waterways\nresulting in an elevated threat of property damage. Flooding\nwill extend inland from the waterfront threatening some homes\nand businesses. Dangerous swimming and surfing conditions and\nlocalized beach erosion.\n\n* ADDITIONAL DETAILS...The higher of the high tide cycles will\nbe during the morning hours each day this week. The worst\nimpacts are currently forecast with the morning high tide\ncycle on Thursday.",
+      "headline": "High Surf Advisory issued November 26 at 4:49AM EST until November 26 at 7:00PM EST by NWS Newport/Morehead City NC",
+      "id": "urn:oid:2.49.0.1.840.0.2b5d0ae1896ec2c82f220d877e12a871038457ad.005.2",
       "instruction": "If travel is required, allow extra time as some roads may be\nclosed. Do not drive around barricades or through water of\nunknown depth. Take the necessary actions to protect flood-prone\nproperty.\n\nInexperienced swimmers should remain out of the water due to\ndangerous surf conditions.",
       "messageType": "Update",
       "sender": "NWS Newport/Morehead City NC",
-      "sent": "2026-11-25T04:59:00-05:00",
+      "sent": "2026-11-26T04:49:00-05:00",
       "severity": "Minor",
       "ugc": [
        "NCZ195",
@@ -419,76 +415,79 @@
      }
     ],
     "severity": "Minor",
-    "status": "upcoming",
-    "text": "High Surf Advisory begins Wed 7:00 PM ET until Thu 7:00 PM ET — West Carteret; Coastal Onslow.",
+    "status": "current",
+    "text": "High Surf Advisory now in effect until Thu 7:00 PM ET — West Carteret; Coastal Onslow.",
     "ugc": [
      "NCZ195",
      "NCZ199"
     ]
    }
-  ]
+  ],
+  "line": "CURRENT: High Wind Warning now in effect until Thu 6:00 AM ET — East Carteret; Northern Outer Banks; Ocracoke Island; Hatteras Island. Storm Warning now in effect until Thu 6:00 AM ET — S of Currituck Beach Light NC to Oregon Inlet NC out to 20 NM; S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM; S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM. Coastal Flood Warning now in effect until Thu 4:00 PM ET — East Carteret. Flood Watch now in effect until Thu 1:00 PM ET — Washington; Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Jones; Pamlico; Northern Craven; Southern Craven; West Carteret; East Carteret; Inland Onslow; Coastal Onslow; Northern Outer Banks; Ocracoke Island; Hatteras Island. Wind Advisory now in effect until Thu 6:00 AM ET — Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Pamlico; Southern Craven; West Carteret; Coastal Onslow. Coastal Flood Advisory now in effect until Thu 4:00 PM ET — West Carteret; Coastal Onslow. High Surf Advisory now in effect until Fri 10:00 AM ET — East Carteret. High Surf Advisory now in effect until Thu 7:00 PM ET — West Carteret; Coastal Onslow.",
+  "status": "active",
+  "upcoming": []
  },
- "issueDate": "2026-11-25",
- "issuedAt": "2026-11-25T10:15:00.048670+00:00",
- "issuedEt": "Wed Nov 25, 5:15 AM ET",
+ "issueDate": "2026-11-26",
+ "issuedAt": "2026-11-26T10:15:00.253664+00:00",
+ "issuedEt": "Thu Nov 26, 5:15 AM ET",
  "items": [
   [
    "Advisories",
-   "CURRENT: Coastal Flood Advisory now in effect until Thu 4:00 PM ET — West Carteret; Coastal Onslow. High Surf Advisory now in effect until Fri 10:00 AM ET — East Carteret. UPCOMING: High Wind Warning begins Wed 4:00 PM ET until Thu 5:00 AM ET — East Carteret; Northern Outer Banks; Ocracoke Island; Hatteras Island. Coastal Flood Warning begins Wed 7:00 PM ET until Thu 4:00 PM ET — East Carteret. Storm Warning begins Wed 7:00 PM ET until Thu 5:00 AM ET — S of Currituck Beach Light NC to Oregon Inlet NC out to 20 NM; S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM; S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM. Flood Watch begins Wed 4:00 PM ET until Thu 10:00 AM ET — Washington; Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Jones; Pamlico; Northern Craven; Southern Craven; West Carteret; East Carteret; Inland Onslow; Coastal Onslow; Northern Outer Banks; Ocracoke Island; Hatteras Island. Wind Advisory begins Wed 4:00 PM ET until Thu 5:00 AM ET — Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Pamlico; Southern Craven; West Carteret; Coastal Onslow. High Surf Advisory begins Wed 7:00 PM ET until Thu 7:00 PM ET — West Carteret; Coastal Onslow."
+   "CURRENT: High Wind Warning now in effect until Thu 6:00 AM ET — East Carteret; Northern Outer Banks; Ocracoke Island; Hatteras Island. Storm Warning now in effect until Thu 6:00 AM ET — S of Currituck Beach Light NC to Oregon Inlet NC out to 20 NM; S of Oregon Inlet NC to Cape Hatteras NC out to 20 NM; S of Cape Hatteras NC to Ocracoke Inlet NC out to 20 NM; S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM. Coastal Flood Warning now in effect until Thu 4:00 PM ET — East Carteret. Flood Watch now in effect until Thu 1:00 PM ET — Washington; Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Jones; Pamlico; Northern Craven; Southern Craven; West Carteret; East Carteret; Inland Onslow; Coastal Onslow; Northern Outer Banks; Ocracoke Island; Hatteras Island. Wind Advisory now in effect until Thu 6:00 AM ET — Tyrrell; Mainland Dare; Beaufort; Mainland Hyde; Pamlico; Southern Craven; West Carteret; Coastal Onslow. Coastal Flood Advisory now in effect until Thu 4:00 PM ET — West Carteret; Coastal Onslow. High Surf Advisory now in effect until Fri 10:00 AM ET — East Carteret. High Surf Advisory now in effect until Thu 7:00 PM ET — West Carteret; Coastal Onslow."
   ],
   [
    "Wind",
-   "31 kt from the E, gusting 45, at Onslow Bay Outer (LEJ3); about steady from 29 kt 10 h earlier."
+   "23 kt from the SE, gusting 32, at Cape Lookout; down from 29 kt 10 h earlier."
   ],
   [
    "Seas",
-   "10.2 ft every 7 s from the ENE at Onslow Bay Outer (CDIP 217); building from 9.5 ft 10 h earlier. Offshore buoy observation, not a beach surf height."
+   "14.4 ft every 10 s from the ESE at Onslow Bay Outer (CDIP 217); little changed from 14.4 ft 10 h earlier. Offshore buoy observation, not a beach surf height."
   ],
   [
    "Swell",
-   "1.6 ft at 10 s from the E (split from the buoy spectrum). Offshore buoy observation, not a beach surf height."
+   "8.9 ft at 12 s from the E (split from the buoy spectrum). Offshore buoy observation, not a beach surf height."
   ],
   [
    "Pressure",
-   "30.27 inHg, steady."
+   "29.59 inHg, falling."
   ],
   [
    "Marine forecast",
-   "Today: NE winds 25 to 30 kt, increasing to 30 to 35 kt late. (NWS AMZ158)"
+   "Rest Of Tonight: SE winds 25 to 35 kt with gusts up to 45 kt. (NWS AMZ158)"
   ],
   [
    "Outlook",
-   "Tonight: E winds 30 to 35 kt, becoming SE 25 to 35 kt after midnight. Gusts up to 45 kt. Thu: SW winds 20 to 25 kt with gusts up to 30 kt. Seas 11 to 15 ft, subsiding to 9 to 13 ft in the afternoon. (NWS AMZ158, issued Wed 4:17 AM ET)."
+   "Rest Of Tonight: SE winds 25 to 35 kt with gusts up to 45 kt. Seas 12 to 16 ft, except 8 to 11 ft near shore. Thu: S winds 20 to 25 kt, becoming SW 25 to 30 kt in the afternoon. Gusts up to 35 kt. (NWS AMZ158, issued Thu 12:42 PM ET)."
   ],
   [
    "Rain",
-   "100% chance through tonight; rain showers, high 67°F."
+   "100% chance through tonight; rain showers, high 70°F."
   ],
   [
    "Tides",
-   "low 1:15 AM ET (-0.4 ft), high 7:50 AM ET (4.3 ft), low 2:21 PM ET (-0.0 ft), high 8:08 PM ET (3.1 ft) at Beaufort, Duke Marine Lab, MLLW."
+   "low 2:07 AM ET (-0.4 ft), high 8:44 AM ET (4.3 ft), low 3:12 PM ET (0.0 ft), high 9:03 PM ET (3.1 ft) at Beaufort, Duke Marine Lab, MLLW."
   ],
   [
    "Water temp",
-   "59°F inshore (Beaufort, Duke Marine Lab), 71°F offshore (buoy 41159)."
+   "61°F inshore (Beaufort, Duke Marine Lab), 74°F offshore (buoy 41159)."
   ]
  ],
- "marineUpdated": "2026-11-25T04:17:00-05:00",
+ "marineUpdated": "2026-11-26T12:42:00-05:00",
  "marineZone": "AMZ158",
  "missing": [],
  "ok": true,
  "outlookPeriods": {
   "periods": [
    {
-    "name": "Tonight",
-    "text": "E winds 30 to 35 kt, becoming SE 25 to 35 kt after midnight. Gusts up to 45 kt."
+    "name": "Rest Of Tonight",
+    "text": "SE winds 25 to 35 kt with gusts up to 45 kt. Seas 12 to 16 ft, except 8 to 11 ft near shore."
    },
    {
     "name": "Thu",
-    "text": "SW winds 20 to 25 kt with gusts up to 30 kt. Seas 11 to 15 ft, subsiding to 9 to 13 ft in the afternoon."
+    "text": "S winds 20 to 25 kt, becoming SW 25 to 30 kt in the afternoon. Gusts up to 35 kt."
    }
   ],
-  "source": "NWS AMZ158, issued Wed 4:17 AM ET"
+  "source": "NWS AMZ158, issued Thu 12:42 PM ET"
  },
  "reason": "scheduled",
  "region": {
@@ -511,12 +510,12 @@
  "regionId": "crystal-coast",
  "sources": "NOAA NDBC, NOAA CO-OPS, NWS (api.weather.gov)",
  "take": [
-  "High Wind Warning begins Wed 4:00 PM ET until Thu 5:00 AM ET — East Carteret; Northern Outer Banks; Ocracoke Island; Hatteras Island.",
-  "The NWS marine forecast has wind or seas building later today.",
-  "Offshore water is 12°F warmer than inshore."
+  "High Wind Warning now in effect until Thu 6:00 AM ET — East Carteret; Northern Outer Banks; Ocracoke Island; Hatteras Island.",
+  "Wind has eased 6 kt over the past 10 h.",
+  "Offshore water is 13°F warmer than inshore."
  ],
  "validation": {
-  "checkedAt": "2026-11-25T10:15:00.048670+00:00",
+  "checkedAt": "2026-11-26T10:15:00.253664+00:00",
   "checks": [
    "region",
    "location",
@@ -530,5 +529,5 @@
   "status": "ok"
  },
  "waterType": "saltwater",
- "words": 467
+ "words": 451
 }
