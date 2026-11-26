@@ -89,9 +89,9 @@ def _eval(mapping, existing=None, now=NOW):
     urls = _urls()
 
     def fake_fetch(url, tries=4, timeout=45, backoff=None):
-        if url not in mapping and not any(k in url for k in mapping):
-            # Unmapped required URL: treat as empty-valid so tests can override one batch.
-            if url in urls:
+        if url not in mapping and not any(k in url for k in mapping if k not in ("default",)):
+            # Unmapped required or history URL: empty-valid so tests can override one batch.
+            if url in urls or url.startswith("https://api.weather.gov/alerts"):
                 return 200, "application/json", _empty()
         val = mapping.get(url)
         if val is None:
@@ -253,20 +253,23 @@ class WarningLifecycle(unittest.TestCase):
         self.assertTrue(paused["hardPause"])
         self.assertIsNone(paused["settledSince"])
 
-        ended_at = start + timedelta(hours=6, minutes=1)
+        official_end = start + timedelta(hours=6)
+        ended_at = official_end + timedelta(minutes=1)
         # Product gone from the active feed (expired / ended).
         hold = _eval({}, existing=paused, now=ended_at)
         self.assertFalse(hold["adsOn"])
         self.assertFalse(hold["hardPause"])
         self.assertEqual(hold["mode"], "paused")
-        self.assertIsNotNone(hold["settledSince"])
-        self.assertEqual(hold["resumeAfter"], server.iso(ended_at + server.RESUME_AFTER))
+        self.assertEqual(hold["pauseReason"], "hold")
+        self.assertEqual(hold["settledSince"], server.iso(official_end))
+        self.assertEqual(hold["resumeAfter"], server.iso(official_end + server.RESUME_AFTER))
+        self.assertEqual(hold["holdUntil"], hold["resumeAfter"])
 
-        still = _eval({}, existing=hold, now=ended_at + timedelta(hours=11, minutes=59))
+        still = _eval({}, existing=hold, now=official_end + timedelta(hours=11, minutes=59))
         self.assertFalse(still["adsOn"])
         self.assertEqual(still["settledSince"], hold["settledSince"])
 
-        done = _eval({}, existing=hold, now=ended_at + timedelta(hours=12, minutes=1))
+        done = _eval({}, existing=hold, now=official_end + timedelta(hours=12, minutes=1))
         self.assertTrue(done["adsOn"])
         self.assertFalse(done["hardPause"])
         self.assertEqual(done["mode"], "full")
@@ -333,6 +336,8 @@ class FeedFailures(unittest.TestCase):
             "reducedRegions": [], "reasons": [], "settledSince": None,
             "resumeAfter": None, "alerts": [], "fetchOk": True, "coverageComplete": True,
             "evaluatedAt": server.iso(NOW - timedelta(minutes=6)),
+            "lastGoodEvaluatedAt": server.iso(NOW - timedelta(minutes=6)),
+            "pauseReason": None, "knownWarnings": [], "outageStartedAt": None,
         }
         out = _eval({mhx: URLError("timed out"), akq: (200, "application/json", _empty()),
                      land: (200, "application/json", _empty())}, existing=previous, now=NOW)
@@ -341,8 +346,12 @@ class FeedFailures(unittest.TestCase):
         self.assertFalse(out["fetchOk"])
         self.assertFalse(out["coverageComplete"])
         self.assertFalse(out["hardPause"])
-        self.assertIsNotNone(out["settledSince"])
-        self.assertIsNotNone(out["resumeAfter"])
+        self.assertEqual(out["pauseReason"], "outage")
+        self.assertIsNone(out["settledSince"])
+        self.assertIsNone(out["resumeAfter"])
+        self.assertIsNotNone(out["outageStartedAt"])
+        self.assertEqual(out["knownWarnings"], [])
+        self.assertEqual(out["lastGoodEvaluatedAt"], previous["evaluatedAt"])
 
     def test_malformed_json_fails_closed(self):
         mhx, _akq, _land = _urls()
@@ -412,24 +421,28 @@ class FeedFailures(unittest.TestCase):
 
 
 class OutageRecovery(unittest.TestCase):
-    def test_recovery_after_outage_follows_twelve_hour_hold(self):
-        previous_on = {"adsOn": True, "mode": "full", "hardPause": False, "settledSince": None}
+    def test_short_outage_without_known_warning_recovers_without_hold(self):
+        previous_on = {
+            "adsOn": True, "mode": "full", "hardPause": False, "settledSince": None,
+            "fetchOk": True, "coverageComplete": True,
+            "evaluatedAt": server.iso(NOW - timedelta(minutes=3)),
+            "lastGoodEvaluatedAt": server.iso(NOW - timedelta(minutes=3)),
+            "pauseReason": None, "knownWarnings": [],
+        }
         failed = _eval({url: (502, "text/plain", b"timeout") for url in _urls()}, existing=previous_on, now=NOW)
         self.assertFalse(failed["adsOn"])
         self.assertEqual(failed["mode"], "paused")
+        self.assertEqual(failed["pauseReason"], "outage")
+        self.assertIsNone(failed["settledSince"])
+        self.assertIsNone(failed["resumeAfter"])
+        self.assertEqual(failed["knownWarnings"], [])
 
         recovered = _eval({}, existing=failed, now=NOW + timedelta(minutes=5))
-        self.assertFalse(recovered["adsOn"])
+        self.assertTrue(recovered["adsOn"])
         self.assertFalse(recovered["hardPause"])
-        self.assertEqual(recovered["mode"], "paused")
-        self.assertIsNotNone(recovered["resumeAfter"])
-        # Hold starts from the fail-closed evaluation, not from recovery.
-        start = server.parse_iso(failed["settledSince"])
-        self.assertEqual(server.parse_iso(recovered["resumeAfter"]), start + server.RESUME_AFTER)
-
-        after = _eval({}, existing=recovered, now=start + server.RESUME_AFTER + timedelta(minutes=1))
-        self.assertTrue(after["adsOn"])
-        self.assertEqual(after["mode"], "full")
+        self.assertIn(recovered["mode"], {"full", "reduced"})
+        self.assertIsNone(recovered["resumeAfter"])
+        self.assertIsNone(recovered["pauseReason"])
 
 
 class NoWarningAndSoft(unittest.TestCase):
@@ -475,6 +488,154 @@ class NoWarningAndSoft(unittest.TestCase):
         out = _eval({land: (200, "application/json", _collection(hww))}, now=NOW)
         self.assertFalse(out["hardPause"])
         self.assertTrue(out["adsOn"])
+
+
+class ThanksgivingSequence(unittest.TestCase):
+    def test_full_storm_outage_recovery_hold_sequence(self):
+        mhx, _akq, _land = _urls()
+        storm_end = NOW + timedelta(hours=2)
+        storm = _feat(
+            "Storm Warning", VTEC_STORM, ["AMZ154"],
+            onset=NOW.isoformat(), ends=storm_end.isoformat(), ident="oid:storm-live",
+        )
+        # 1. Storm Warning active -> immediate pause. Ads logic does not
+        # consult observations; no NDBC/station URL is fetched.
+        fetched = []
+
+        def track(mapping):
+            def fake(url, tries=4, timeout=45, backoff=None):
+                fetched.append(url)
+                if url in mapping:
+                    return mapping[url]
+                if url.startswith("https://api.weather.gov/alerts"):
+                    return 200, "application/json", _empty()
+                raise AssertionError("unexpected URL %s" % url)
+            return fake
+
+        mapping = {mhx: (200, "application/json", _collection(storm))}
+        with __import__("unittest.mock", fromlist=["patch"]).patch("server.fetch_url", side_effect=track(mapping)):
+            active = server.evaluate_ads(None, now=NOW)
+        self.assertTrue(active["hardPause"])
+        self.assertFalse(active["adsOn"])
+        self.assertEqual(active["pauseReason"], "warning")
+        self.assertEqual(active["knownWarnings"][0]["id"], "oid:storm-live")
+        self.assertTrue(all("api.weather.gov/alerts" in u for u in fetched))
+        self.assertFalse(any("ndbc" in u or "tidesandcurrents" in u or "waterservices" in u for u in fetched))
+
+        # 2. NWS feed fails -> stay paused, retain the verified warning, no hold reset.
+        t_out = NOW + timedelta(minutes=20)
+        outage = _eval({url: (502, "text/plain", b"timeout") for url in _urls()}, existing=active, now=t_out)
+        self.assertFalse(outage["adsOn"])
+        self.assertTrue(outage["hardPause"])
+        self.assertEqual(outage["pauseReason"], "warning")
+        self.assertEqual([w["id"] for w in outage["knownWarnings"]], ["oid:storm-live"])
+        self.assertEqual(outage["knownWarnings"][0]["zones"], ["AMZ154"])
+        self.assertEqual(outage["knownWarnings"][0]["ends"], storm_end.isoformat())
+        self.assertIsNotNone(outage["outageStartedAt"])
+        self.assertIsNone(outage["settledSince"])
+
+        # 3. Feed recovers, warning still active -> paused, no hold started, no reset.
+        t_back = t_out + timedelta(minutes=10)
+        still = _eval({mhx: (200, "application/json", _collection(storm))}, existing=outage, now=t_back)
+        self.assertTrue(still["hardPause"])
+        self.assertFalse(still["adsOn"])
+        self.assertEqual(still["pauseReason"], "warning")
+        self.assertIsNone(still["settledSince"])
+        self.assertIsNone(still["outageStartedAt"])
+        self.assertTrue(still["coverageComplete"])
+
+        # 4. Warning ends -> 12-hour hold starts at the official end, not at recovery.
+        t_ended = storm_end + timedelta(minutes=5)
+        hold = _eval({}, existing=still, now=t_ended)
+        self.assertFalse(hold["adsOn"])
+        self.assertFalse(hold["hardPause"])
+        self.assertEqual(hold["pauseReason"], "hold")
+        self.assertEqual(hold["settledSince"], server.iso(storm_end))
+        self.assertEqual(hold["resumeAfter"], server.iso(storm_end + server.RESUME_AFTER))
+
+        # 5. Still paused just before the hold expires; ads allowed after.
+        almost = _eval({}, existing=hold, now=storm_end + server.RESUME_AFTER - timedelta(minutes=1))
+        self.assertFalse(almost["adsOn"])
+        self.assertEqual(almost["pauseReason"], "hold")
+        done = _eval({}, existing=hold, now=storm_end + server.RESUME_AFTER + timedelta(minutes=1))
+        self.assertTrue(done["adsOn"])
+        self.assertIsNone(done["pauseReason"])
+
+
+class RestartPersistence(unittest.TestCase):
+    def test_restart_mid_hold_keeps_hold(self):
+        started = NOW
+        hold = {
+            "adsOn": False, "mode": "paused", "hardPause": False,
+            "pauseReason": "hold",
+            "settledSince": server.iso(started),
+            "holdStartedAt": server.iso(started),
+            "resumeAfter": server.iso(started + server.RESUME_AFTER),
+            "holdUntil": server.iso(started + server.RESUME_AFTER),
+            "knownWarnings": [],
+            "fetchOk": True, "coverageComplete": True,
+            "evaluatedAt": server.iso(started + timedelta(minutes=1)),
+            "lastGoodEvaluatedAt": server.iso(started + timedelta(minutes=1)),
+        }
+        # Simulate a process restart: only the persisted record is available.
+        mid = _eval({}, existing=hold, now=started + timedelta(hours=6))
+        self.assertFalse(mid["adsOn"])
+        self.assertEqual(mid["pauseReason"], "hold")
+        self.assertEqual(mid["settledSince"], hold["settledSince"])
+        self.assertEqual(mid["resumeAfter"], hold["resumeAfter"])
+
+    def test_restart_with_no_state_starts_paused_on_incomplete_feed(self):
+        out = _eval({url: (502, "text/plain", b"down") for url in _urls()}, existing=None, now=NOW)
+        self.assertFalse(out["adsOn"])
+        self.assertEqual(out["mode"], "paused")
+        self.assertEqual(out["pauseReason"], "unknown")
+        self.assertIsNone(out["settledSince"])
+        self.assertEqual(out["knownWarnings"], [])
+
+    def test_cold_start_without_recent_clearance_allows_ads_after_complete_eval(self):
+        out = _eval({}, existing=None, now=NOW)
+        self.assertTrue(out["adsOn"])
+        self.assertTrue(out["coverageComplete"])
+        self.assertIsNone(out["pauseReason"])
+
+    def test_cold_start_uses_history_when_a_warning_ended_three_hours_ago(self):
+        ended = NOW - timedelta(hours=3)
+        hist = _feat(
+            "Gale Warning", VTEC_GALE, ["AMZ135"], ident="oid:ended-gale",
+            onset=(ended - timedelta(hours=6)).isoformat(),
+            ends=ended.isoformat(), message_type="Update",
+        )
+        hist_url = server.ads_recent_marine_alerts_url(NOW - server.ADS_HISTORY_LOOKBACK)
+        out = _eval(
+            {hist_url: (200, "application/json", _collection(hist))},
+            existing=None, now=NOW,
+        )
+        self.assertFalse(out["adsOn"])
+        self.assertEqual(out["pauseReason"], "hold")
+        self.assertEqual(out["settledSince"], server.iso(ended))
+        self.assertEqual(out["resumeAfter"], server.iso(ended + server.RESUME_AFTER))
+
+    def test_cold_start_stays_paused_if_history_is_unavailable(self):
+        hist_urls = server.ads_history_feed_urls(NOW - server.ADS_HISTORY_LOOKBACK)
+        out = _eval(
+            {hist_urls[0]: (502, "text/plain", b"down"), hist_urls[1]: (200, "application/json", _empty())},
+            existing=None, now=NOW,
+        )
+        self.assertFalse(out["adsOn"])
+        self.assertEqual(out["pauseReason"], "unknown")
+        self.assertIsNone(out["settledSince"])
+
+    def test_untrusted_committed_ads_json_is_treated_as_no_state(self):
+        committed = {
+            "adsOn": True, "mode": "full", "hardPause": False,
+            "evaluatedAt": "2026-11-14T13:09:38+00:00",
+            "reasons": ["No gale-or-stronger warning..."],
+            "fetchOk": True,
+        }
+        self.assertEqual(server._trusted_previous(committed), {})
+        out = _eval({url: (502, "text/plain", b"down") for url in _urls()}, existing=committed, now=NOW)
+        self.assertFalse(out["adsOn"])
+        self.assertEqual(out["pauseReason"], "unknown")
 
 
 class GetAdsSafety(unittest.TestCase):

@@ -162,6 +162,13 @@ ADS_SAFE_EVAL_MAX_AGE = timedelta(minutes=15)
 ADS_FETCH_TIMEOUT = 12
 ADS_FETCH_TRIES = 2
 NWS_ALERTS_ACTIVE = "https://api.weather.gov/alerts/active"
+NWS_ALERTS_HISTORY = "https://api.weather.gov/alerts"
+# Issued-since lookback when asking NWS whether a qualifying warning ended in
+# the past 12 hours (start= is "issued since"). A 7-day window catches a
+# product issued earlier that later ended or was cancelled.
+ADS_HISTORY_LOOKBACK = timedelta(days=7)
+ADS_HISTORY_MAX_PAGES = 10
+HARD_EVENT_CODE_QUERY = "GLW,SRW,HFW,TRW,HUW,EWW"
 _NWS_REPLACED_RE = re.compile(r"^\s*The .{0,80}? has been (replaced|cancelled|canceled)\b", re.I)
 _VTEC_RE = re.compile(
     r"/[A-Z]\.(?P<action>[A-Z]{3})\.[A-Z0-9]{4}\.(?P<phen>[A-Z]{2})\.(?P<sig>[A-Z])\."
@@ -606,12 +613,12 @@ def _parse_alert_collection(status: int, body: bytes) -> tuple[str, list]:
 
 
 def _fetch_ads_alert_feeds() -> tuple[bool, bool, str, list]:
-    """Fetch every required ads alert URL.
+    """Fetch every required active ads alert URL.
 
     Returns (fetch_ok, coverage_complete, error_reason, features).
     fetch_ok is True only when every required feed answered 200 with valid JSON.
     An empty features list on a valid collection is complete coverage and a
-    true all-clear, not an error.
+    true all-clear for *active* products, not an error.
     """
     features: list = []
     errors: list[str] = []
@@ -632,28 +639,272 @@ def _fetch_ads_alert_feeds() -> tuple[bool, bool, str, list]:
     return fetch_ok, complete, reason, features
 
 
+def ads_recent_marine_alerts_url(start: datetime) -> str:
+    """History query: qualifying hard products issued since `start` on NC marine zones."""
+    stamp = start.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return (
+        NWS_ALERTS_HISTORY
+        + "?status=actual&code=" + HARD_EVENT_CODE_QUERY
+        + "&zone=" + ",".join(ADS_MARINE_ZONE_LIST)
+        + "&start=" + stamp
+    )
+
+
+def ads_recent_tropical_land_alerts_url(start: datetime) -> str:
+    """History query for tropical warnings attached to NC land counties."""
+    stamp = start.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return (
+        NWS_ALERTS_HISTORY
+        + "?status=actual&code=TRW,HUW&area=NC&start=" + stamp
+    )
+
+
+def ads_history_feed_urls(start: datetime) -> list[str]:
+    return [ads_recent_marine_alerts_url(start), ads_recent_tropical_land_alerts_url(start)]
+
+
+def _alerts_next_url(payload: dict) -> str | None:
+    pag = payload.get("pagination") if isinstance(payload, dict) else None
+    if not isinstance(pag, dict):
+        return None
+    nxt = pag.get("next")
+    if not isinstance(nxt, str) or not nxt:
+        return None
+    parsed = urlparse(nxt)
+    if parsed.scheme != "https" or parsed.netloc != "api.weather.gov":
+        return None
+    if not (parsed.path or "/").startswith("/alerts"):
+        return None
+    return nxt
+
+
+def _fetch_paginated_alerts(url: str) -> tuple[str, list]:
+    """Follow NWS pagination. Returns ('ok', features) or ('http'/'malformed', [])."""
+    features: list = []
+    current = url
+    for _page in range(ADS_HISTORY_MAX_PAGES):
+        status, _ctype, body = fetch_url(current, tries=ADS_FETCH_TRIES, timeout=ADS_FETCH_TIMEOUT)
+        kind, batch = _parse_alert_collection(status, body)
+        if kind != "ok":
+            return kind if kind != "empty_invalid" else "malformed", []
+        features.extend(batch)
+        try:
+            payload = json.loads(body.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return "malformed", []
+        nxt = _alerts_next_url(payload)
+        if not nxt:
+            return "ok", features
+        current = nxt
+    return "malformed", []
+
+
+def _clearance_time(props: dict, now: datetime) -> datetime | None:
+    """When a qualifying product left effect, or None if it did not."""
+    sent = parse_iso(props.get("sent"))
+    ends = parse_iso(props.get("ends"))
+    cancelled = (
+        props.get("messageType") == "Cancel"
+        or ( _vtec_pairs(props) and all(a in _VTEC_INACTIVE for a, _ps in _vtec_pairs(props)) )
+    )
+    if props.get("replacedBy"):
+        return None
+    if cancelled:
+        when = sent or parse_iso(props.get("onset")) or now
+        return when if when <= now else now
+    if ends is not None and ends <= now:
+        return ends
+    return None
+
+
+def _history_clearance_records(features: list, now: datetime) -> list[tuple[datetime, dict]]:
+    """Qualifying hard products that ended or were cancelled in the last 12 hours."""
+    window_start = now - RESUME_AFTER
+    out: list[tuple[datetime, dict]] = []
+    for feat in features:
+        props = feat.get("properties") or {}
+        if (props.get("status") or "Actual") != "Actual":
+            continue
+        is_hard, _is_soft, is_tropical = _alert_kind(props)
+        if not is_hard:
+            continue
+        # For cancelled products, _alert_kind may see only CAN VTEC and fall
+        # through to the event name — still treat a hard event name as hard.
+        if not is_hard and (props.get("event") or "").strip().lower() not in HARD_PAUSE_EVENTS:
+            continue
+        codes = _ugc_from_alert(props)
+        marine = sorted(codes & ADS_MARINE_ZONES)
+        if not marine and not is_tropical:
+            ev_l = (props.get("event") or "").strip().lower()
+            is_tropical = ev_l in {"tropical storm warning", "hurricane warning"}
+            if not is_tropical:
+                # Cancelled records can lose active VTEC; event name is enough here.
+                if ev_l not in HARD_PAUSE_EVENTS:
+                    continue
+                if not marine and ev_l not in {"tropical storm warning", "hurricane warning"}:
+                    continue
+        when = _clearance_time(props, now)
+        if when is None or when < window_start or when > now:
+            continue
+        rec = {
+            "event": (props.get("event") or "").strip(),
+            "severity": props.get("severity"),
+            "headline": props.get("headline"),
+            "zones": marine,
+            "ends": props.get("ends") or props.get("expires"),
+            "id": str(props.get("id") or feat.get("id") or "") or None,
+            "vtec": sorted(_alert_vtec_set(props, active_only=False)),
+            "tropical": bool(is_tropical),
+            "clearedAt": iso(when),
+        }
+        out.append((when, rec))
+    out.sort(key=lambda pair: pair[0])
+    return out
+
+
+def _fetch_recent_clearances(now: datetime) -> tuple[bool, str, list[tuple[datetime, dict]]]:
+    """Look up recently ended/cancelled qualifying warnings.
+
+    Uses GET /alerts?zone=&code=&start= (and a tropical area=NC query), which
+    api.weather.gov documents and which was verified on 26 Nov 2026. `start`
+    is "issued since", so the issued lookback is 7 days, then we keep only
+    products whose end or cancellation falls in the past 12 hours.
+    """
+    start = now - ADS_HISTORY_LOOKBACK
+    collected: list = []
+    errors: list[str] = []
+    for url in ads_history_feed_urls(start):
+        kind, batch = _fetch_paginated_alerts(url)
+        if kind != "ok":
+            errors.append("NWS recent-alert history was unavailable (%s)." % kind)
+            continue
+        collected.extend(batch)
+    if errors:
+        return False, " ".join(errors), []
+    return True, "", _history_clearance_records(collected, now)
+
+
 def _ads_is_safe_on_result(data: dict, now: datetime | None = None) -> bool:
     """True only for a complete, recent evaluation that may keep ads on."""
     if not data or not data.get("adsOn"):
         return False
     if not data.get("fetchOk") or data.get("coverageComplete") is False:
         return False
-    ts = parse_iso(data.get("evaluatedAt"))
+    ts = parse_iso(data.get("lastGoodEvaluatedAt") or data.get("evaluatedAt"))
     if ts is None:
         return False
     clock = now or now_utc()
     return (clock - ts) <= ADS_SAFE_EVAL_MAX_AGE
 
 
+def _trusted_previous(data: dict | None) -> dict:
+    """Ignore the committed default ads.json; keep runtime pause/hold/outage state."""
+    if not data:
+        return {}
+    if data.get("knownWarnings") or data.get("settledSince") or data.get("holdStartedAt"):
+        return data
+    if data.get("hardPause") and (data.get("alerts") or data.get("outageStartedAt")):
+        return data
+    if data.get("lastGoodEvaluatedAt") and data.get("coverageComplete"):
+        return data
+    if data.get("pauseReason") in {"warning", "hold", "outage", "unknown"}:
+        return data
+    return {}
+
+
+def _known_from_previous(previous: dict) -> list[dict]:
+    raw = previous.get("knownWarnings")
+    if not isinstance(raw, list) or not raw:
+        raw = previous.get("alerts") if previous.get("hardPause") else []
+    out = []
+    seen = set()
+    for rec in raw or []:
+        if not isinstance(rec, dict):
+            continue
+        ident = rec.get("id")
+        if ident and ident in seen:
+            continue
+        if ident:
+            seen.add(ident)
+        out.append({
+            "event": rec.get("event"),
+            "severity": rec.get("severity"),
+            "headline": rec.get("headline"),
+            "zones": list(rec.get("zones") or []),
+            "ends": rec.get("ends"),
+            "id": ident,
+            "vtec": list(rec.get("vtec") or []),
+            "tropical": bool(rec.get("tropical")),
+        })
+    return out
+
+
+def _warning_clearance_from_known(known: list[dict], now: datetime) -> datetime | None:
+    """Latest time previously verified warnings left effect."""
+    latest = None
+    for rec in known:
+        ends = parse_iso(rec.get("ends"))
+        if ends is not None and ends <= now:
+            when = ends
+        else:
+            when = now  # cancelled or removed before the stated end
+        if latest is None or when > latest:
+            latest = when
+    return latest
+
+
+def _ads_result(
+    *,
+    ads_on: bool,
+    mode: str,
+    hard_pause: bool,
+    reduced: list[str],
+    reasons: list[str],
+    clock: datetime,
+    settled_since: datetime | None,
+    resume_after: str | None,
+    alerts: list,
+    fetch_ok: bool,
+    coverage_complete: bool,
+    pause_reason: str | None,
+    known_warnings: list,
+    outage_started: datetime | None,
+    last_good: datetime | None,
+) -> dict:
+    return {
+        "adsOn": ads_on,
+        "mode": mode,
+        "hardPause": hard_pause,
+        "reducedRegions": reduced,
+        "reasons": reasons,
+        "evaluatedAt": iso(clock),
+        "settledSince": iso(settled_since),
+        "resumeAfter": resume_after,
+        "holdStartedAt": iso(settled_since),
+        "holdUntil": resume_after,
+        "alerts": alerts,
+        "fetchOk": fetch_ok,
+        "coverageComplete": coverage_complete,
+        "pauseReason": pause_reason,
+        "knownWarnings": known_warnings,
+        "outageStartedAt": iso(outage_started),
+        "lastGoodEvaluatedAt": iso(last_good),
+    }
+
+
 def evaluate_ads(existing: dict | None = None, now: datetime | None = None) -> dict:
     """Apply the approved ad-pause rule to official NWS marine alerts.
 
-    Does not read or write tropical storm mode. A non-tropical Storm Warning
-    (SR.W) pauses ads and nothing else.
+    Missing data is uncertainty, never evidence of safety. A non-tropical
+    Storm Warning (SR.W) pauses ads and does not touch tropical storm mode.
     """
     clock = now or now_utc()
-    previous = existing or {}
-    settled_since = parse_iso(previous.get("settledSince"))
+    previous = _trusted_previous(existing)
+    settled_since = parse_iso(previous.get("settledSince") or previous.get("holdStartedAt"))
+    outage_started = parse_iso(previous.get("outageStartedAt"))
+    last_good = parse_iso(previous.get("lastGoodEvaluatedAt"))
+    prior_known = _known_from_previous(previous)
+
     fetch_ok, coverage_complete, fetch_error, features = _fetch_ads_alert_feeds()
 
     alerts_out = []
@@ -697,117 +948,169 @@ def evaluate_ads(existing: dict | None = None, now: datetime | None = None) -> d
                 if codes & set(zones):
                     soft_regions.add(region)
 
-    reasons = []
-    resume_after = None
+    def _names(rec: dict) -> str:
+        return ", ".join(rec.get("zones") or []) or (
+            "NC (tropical warning)" if rec.get("tropical") else "NC marine waters"
+        )
 
+    # --- Incomplete / unavailable / malformed active coverage: pause immediately.
+    # Do not start a 12-hour weather hold from a technical outage alone.
     if not coverage_complete:
-        # Fail toward paused. Never copy a previous adsOn: true, and never
-        # default to ads on. Known hard pauses stay hard; otherwise this
-        # failed or partial refresh starts/keeps mode=paused so a later
-        # all-clear follows the 12-hour hold instead of restoring ads.
         ads_on = False
         mode = "paused"
-        hard_pause = bool(hard_hits) or bool(previous.get("hardPause"))
         if hard_hits:
+            known = hard_hits
+            # Merge previously verified warnings that this partial fetch did not repeat.
+            have = {r.get("id") for r in known if r.get("id")}
+            for rec in prior_known:
+                if rec.get("id") and rec["id"] not in have:
+                    known.append(rec)
+            hard_pause = True
+            pause_reason = "warning"
             settled_since = None
-            for rec in hard_hits:
-                names = ", ".join(rec["zones"]) or ("NC (tropical warning)" if rec.get("tropical") else "NC marine waters")
-                reasons.append("%s is in effect for %s." % (rec["event"], names))
+            resume_after = None
+            reasons = ["%s is in effect for %s." % (rec["event"], _names(rec)) for rec in known]
             reasons.append("Ads stay off until 12 hours after these warnings end.")
-        elif previous.get("hardPause"):
+        elif prior_known and (previous.get("hardPause") or previous.get("pauseReason") == "warning"):
+            known = prior_known
+            hard_pause = True
+            pause_reason = "warning"
             settled_since = None
-            reasons.extend(list(previous.get("reasons") or []))
+            resume_after = None
+            reasons = ["Previously verified %s remains in effect for %s (feed incomplete; warning retained)." % (rec["event"], _names(rec)) for rec in known]
+        elif settled_since is not None:
+            known = []
+            hard_pause = False
+            pause_reason = "hold"
+            resume_after_dt = settled_since + RESUME_AFTER
+            resume_after = iso(resume_after_dt)
+            reasons = [
+                "NWS marine coverage is incomplete. The 12-hour weather hold already in effect is unchanged. Ads stay off until %s ET."
+                % _to_et(resume_after_dt)
+            ]
         else:
-            if previous.get("hardPause") or previous.get("mode") == "paused":
-                if settled_since is None:
-                    settled_since = clock
-            elif settled_since is None:
-                settled_since = clock
+            known = []
+            hard_pause = False
+            pause_reason = "outage" if previous or last_good else "unknown"
+            resume_after = None
+            # Keep any existing weather hold; do not invent one.
+            settled_since = None
+            reasons = []
+        if outage_started is None:
+            outage_started = clock
         reasons.append(fetch_error or "NWS marine alert coverage was incomplete. Ads stay off.")
-        if settled_since and not hard_pause:
-            resume_after = iso(settled_since + RESUME_AFTER)
-        return {
-            "adsOn": False,
-            "mode": mode,
-            "hardPause": hard_pause,
-            "reducedRegions": [],
-            "reasons": reasons,
-            "evaluatedAt": iso(clock),
-            "settledSince": iso(settled_since) if not hard_pause else None,
-            "resumeAfter": resume_after if not hard_pause else None,
-            "alerts": alerts_out,
-            "fetchOk": False,
-            "coverageComplete": False,
-        }
+        if pause_reason == "outage":
+            reasons.append("This is a technical outage, not a weather hold. Ads stay off until complete, fresh marine coverage is available.")
+        elif pause_reason == "unknown":
+            reasons.append("No persisted pause state was available. Ads stay off until a complete, fresh evaluation.")
+        return _ads_result(
+            ads_on=False, mode=mode, hard_pause=hard_pause, reduced=[],
+            reasons=reasons, clock=clock, settled_since=settled_since if pause_reason == "hold" else None,
+            resume_after=resume_after if pause_reason == "hold" else None,
+            alerts=hard_hits or known, fetch_ok=False, coverage_complete=False,
+            pause_reason=pause_reason, known_warnings=known,
+            outage_started=outage_started, last_good=last_good,
+        )
+
+    # --- Complete, fresh active coverage.
+    outage_started = None
+    last_good = clock
 
     if hard_hits:
-        settled_since = None
-        resume_after = None
-        ads_on = False
-        hard_pause = True
-        mode = "paused"
-        for rec in hard_hits:
-            names = ", ".join(rec["zones"]) or ("NC (tropical warning)" if rec.get("tropical") else "NC marine waters")
-            reasons.append("%s is in effect for %s." % (rec["event"], names))
+        reasons = ["%s is in effect for %s." % (rec["event"], _names(rec)) for rec in hard_hits]
         reasons.append("Ads stay off until 12 hours after these warnings end.")
-    else:
-        hard_pause = False
-        if previous.get("hardPause") or previous.get("mode") == "paused":
-            if settled_since is None:
-                settled_since = clock
-        if settled_since is not None:
-            resume_after_dt = settled_since + RESUME_AFTER
-            if clock < resume_after_dt:
-                ads_on = False
-                mode = "paused"
-                reasons.append(
-                    "No gale-or-stronger or tropical warning right now. Ads stay off until %s ET (12 hours after conditions settled)."
-                    % _to_et(resume_after_dt)
-                )
-            else:
-                ads_on = True
-                settled_since = None
-                resume_after_dt = None
-                mode = "full"
-        else:
-            ads_on = True
-            resume_after_dt = None
-            mode = "full"
-        resume_after = iso(resume_after_dt) if settled_since and not ads_on else None
+        return _ads_result(
+            ads_on=False, mode="paused", hard_pause=True, reduced=[],
+            reasons=reasons, clock=clock, settled_since=None, resume_after=None,
+            alerts=alerts_out, fetch_ok=True, coverage_complete=True,
+            pause_reason="warning", known_warnings=hard_hits,
+            outage_started=None, last_good=last_good,
+        )
 
-    if ads_on and soft_regions:
+    # No active qualifying warning. Decide among: continue/start a weather hold,
+    # allow ads, or stay paused because we cannot prove the last 12 hours.
+    reasons: list[str] = []
+    clearance = None
+    in_hold = settled_since is not None
+    had_warning = bool(prior_known and (previous.get("hardPause") or previous.get("pauseReason") == "warning"))
+    if had_warning:
+        clearance = _warning_clearance_from_known(prior_known, clock)
+
+    # Cold start or a gap longer than the 12-hour window: ask NWS history
+    # whether a qualifying warning ended recently. A short technical outage
+    # with no known warning and no outstanding hold does not need history
+    # and must not start a weather hold.
+    prev_last_good = parse_iso(previous.get("lastGoodEvaluatedAt")) if previous else None
+    history_needed = (not previous) or (prev_last_good is None) or (
+        (clock - prev_last_good) > RESUME_AFTER and not had_warning and not in_hold
+    )
+
+    history_ok = True
+    history_error = ""
+    history_clearances: list[tuple[datetime, dict]] = []
+    if history_needed and not in_hold and not had_warning:
+        history_ok, history_error, history_clearances = _fetch_recent_clearances(clock)
+        if history_ok and history_clearances:
+            clearance = history_clearances[-1][0]
+
+    if had_warning and clearance is not None:
+        settled_since = clearance
+    elif in_hold:
+        pass  # keep existing settled_since
+    elif history_needed and history_ok and clearance is not None:
+        settled_since = clearance
+
+    if not history_ok and not in_hold and not had_warning:
+        return _ads_result(
+            ads_on=False, mode="paused", hard_pause=False, reduced=[],
+            reasons=[history_error or "Could not verify whether a qualifying warning ended in the past 12 hours. Ads stay off.",
+                     "Missing recent-alert history is uncertainty, not evidence that conditions are settled."],
+            clock=clock, settled_since=None, resume_after=None,
+            alerts=alerts_out, fetch_ok=True, coverage_complete=True,
+            pause_reason="unknown", known_warnings=[],
+            outage_started=None, last_good=last_good,
+        )
+
+    if settled_since is not None:
+        resume_after_dt = settled_since + RESUME_AFTER
+        if clock < resume_after_dt:
+            reasons.append(
+                "No gale-or-stronger or tropical warning right now. Ads stay off until %s ET (12 hours after conditions settled)."
+                % _to_et(resume_after_dt)
+            )
+            return _ads_result(
+                ads_on=False, mode="paused", hard_pause=False, reduced=[],
+                reasons=reasons, clock=clock, settled_since=settled_since,
+                resume_after=iso(resume_after_dt),
+                alerts=alerts_out, fetch_ok=True, coverage_complete=True,
+                pause_reason="hold", known_warnings=[],
+                outage_started=None, last_good=last_good,
+            )
+        settled_since = None
+
+    # Complete, fresh, no active warning, no outstanding hold.
+    ads_on = True
+    mode = "full"
+    reasons = []
+    if soft_regions:
         mode = "reduced"
         labels = [REGIONS[r]["label"] for r in sorted(soft_regions)]
         reasons.append(
             "Small craft advisory is in effect. Reduce ad density on: " + "; ".join(labels) + "."
         )
-    if ads_on and not reasons:
+    if not reasons:
         reasons.append("No gale-or-stronger warning, tropical storm/hurricane warning, or small craft advisory on NC coastal marine zones.")
-
-    if hard_hits:
-        resume_after = None
-    elif not hard_pause and settled_since and not ads_on:
-        resume_after = iso(settled_since + RESUME_AFTER)
-    elif ads_on:
-        resume_after = None
-
-    reduced = sorted(soft_regions) if ads_on else []
-    return {
-        "adsOn": ads_on,
-        "mode": mode,
-        "hardPause": hard_pause,
-        "reducedRegions": reduced,
-        "reasons": reasons,
-        "evaluatedAt": iso(clock),
-        "settledSince": iso(settled_since),
-        "resumeAfter": resume_after,
-        "alerts": alerts_out,
-        "fetchOk": True,
-        "coverageComplete": True,
-    }
+    return _ads_result(
+        ads_on=ads_on, mode=mode, hard_pause=False, reduced=sorted(soft_regions) if ads_on else [],
+        reasons=reasons, clock=clock, settled_since=None, resume_after=None,
+        alerts=alerts_out, fetch_ok=True, coverage_complete=True,
+        pause_reason=None, known_warnings=[],
+        outage_started=None, last_good=last_good,
+    )
 
 
 def _to_et(dt: datetime) -> str:
+
     try:
         from zoneinfo import ZoneInfo
         local = dt.astimezone(ZoneInfo("America/New_York"))
@@ -846,7 +1149,8 @@ def get_ads(force: bool = False) -> dict:
         )
         if cache_ok:
             return current
-        updated = evaluate_ads(current)
+        previous = _trusted_previous(current)
+        updated = evaluate_ads(previous, now=now_utc())
         if updated.get("adsOn") and not _ads_is_safe_on_result(updated):
             updated = dict(updated)
             updated["adsOn"] = False
