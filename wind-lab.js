@@ -9,9 +9,9 @@
   "use strict";
   const KT = 1.943844;
   const DIRS = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
-  // Speed ramp in knots. Light map: deeper inks; dark map: luminous tints.
-  const STOPS_DARK = [[0, [120, 160, 190]], [8, [110, 200, 215]], [15, [140, 220, 170]], [22, [235, 215, 120]], [30, [245, 150, 90]], [38, [240, 95, 95]]];
-  const STOPS_LIGHT = [[0, [70, 110, 140]], [8, [25, 120, 150]], [15, [30, 125, 95]], [22, [170, 130, 30]], [30, [190, 85, 40]], [38, [150, 35, 35]]];
+  // Speed ramp (knots): navy -> Carolina blue -> cyan.
+  const STOPS_DARK = [[0, [116, 154, 184]], [8, [75, 156, 211]], [15, [88, 198, 222]], [22, [130, 226, 236]], [30, [188, 242, 250]], [38, [236, 252, 255]]];
+  const STOPS_LIGHT = [[0, [20, 46, 70]], [8, [30, 82, 118]], [15, [34, 114, 164]], [22, [24, 122, 162]], [30, [12, 106, 134]], [38, [4, 86, 108]]];
   function rgb(kt, dark) {
     const S = dark ? STOPS_DARK : STOPS_LIGHT;
     for (let i = 1; i < S.length; i++) if (kt <= S[i][0]) {
@@ -56,7 +56,7 @@
     let dark = !!opts.dark;
     const BUCKETS = 12, BMAX = 36;
     const bucketColor = [], bucketWidth = [];
-    function palette() { for (let i = 0; i < BUCKETS; i++) { const kt = (i + 0.5) * BMAX / BUCKETS, c = rgb(kt, dark); bucketColor[i] = "rgba(" + c.join(",") + "," + (0.55 + 0.45 * i / (BUCKETS - 1)).toFixed(2) + ")"; bucketWidth[i] = 0.9 + 1.5 * i / (BUCKETS - 1); } }
+    function palette() { for (let i = 0; i < BUCKETS; i++) { const kt = (i + 0.5) * BMAX / BUCKETS, c = rgb(kt, dark); bucketColor[i] = "rgba(" + c.join(",") + "," + (0.52 + 0.48 * i / (BUCKETS - 1)).toFixed(2) + ")"; bucketWidth[i] = 0.85 + 1.45 * i / (BUCKETS - 1); } }
     palette();
     let uvAt = null, motion = !!opts.motion;
     const canvas = L.DomUtil.create("canvas", "wind-particles");
@@ -67,7 +67,7 @@
     let w = 0, h = 0, lonX = null, latY = null, n = 0, maxN = 0;
     let PX, PY, AGE, running = false, raf = 0, moving = false, visible = true, last = 0, slow = 0;
     const tmp = [0, 0];
-    const FRAME_MS = opts.frameMs || 0, MAXAGE = FRAME_MS ? 60 : 110;
+    const FRAME_MS = opts.frameMs || 0, MAXAGE = FRAME_MS ? 78 : 130;
     let lastDraw = 0;
     const bx = Array.from({ length: BUCKETS }, () => []);
     const stats = { frames: 0, times: [], particles: 0, dpr: dpr, frameMs: FRAME_MS, intervals: [] };
@@ -77,6 +77,7 @@
       canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); canvas.style.width = w + "px"; canvas.style.height = h + "px";
       L.DomUtil.setPosition(canvas, map.containerPointToLayerPoint([0, 0]));
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.lineCap = "round"; ctx.lineJoin = "round";
       // Web Mercator: lon depends only on x, lat only on y. Two cheap linear passes, no per-pixel unproject.
       lonX = new Float32Array(w); latY = new Float32Array(h);
       const lon0 = map.containerPointToLatLng([0, 0]).lng, lon1 = map.containerPointToLatLng([w, 0]).lng;
@@ -89,7 +90,15 @@
       ctx.clearRect(0, 0, w, h);
       if (!motion) drawArrows();
     }
-    function spawn(i, randomAge) { PX[i] = Math.random() * w; PY[i] = Math.random() * h; AGE[i] = randomAge ? (Math.random() * 100) | 0 : 0; }
+    function spawn(i, randomAge) {
+      for (let t = 0; t < 8; t++) {
+        PX[i] = Math.random() * w; PY[i] = Math.random() * h;
+        const xi = PX[i] | 0, yi = PY[i] | 0;
+        if (!uvAt || !w || !h) break;
+        if (xi >= 0 && yi >= 0 && xi < w && yi < h && uvAt(latY[yi], lonX[xi], tmp)) break;
+      }
+      AGE[i] = randomAge ? (Math.random() * 80) | 0 : 0;
+    }
     function frame(ts) {
       raf = 0;
       if (!running) return;
@@ -101,7 +110,7 @@
       lastDraw = ts;
       const t0 = performance.now();
       ctx.globalCompositeOperation = "destination-in";
-      ctx.fillStyle = FRAME_MS ? "rgba(0,0,0,0.87)" : "rgba(0,0,0,0.93)"; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = FRAME_MS ? "rgba(0,0,0,0.90)" : "rgba(0,0,0,0.945)"; ctx.fillRect(0, 0, w, h);
       ctx.globalCompositeOperation = "source-over";
       const k = Math.pow(2, map.getZoom() - 7) * 0.16 * stepMul;
       for (let b = 0; b < BUCKETS; b++) bx[b].length = 0;

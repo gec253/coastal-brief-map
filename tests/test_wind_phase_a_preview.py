@@ -88,7 +88,7 @@ class PhaseAPreview(unittest.TestCase):
             self.assertIn(b'href="/preview/wind"', hub)
             self.assertIn(b"Wind viewer \xc2\xb7 Phase A", hub)
 
-    def test_public_wind_matches_production_baseline(self):
+    def test_public_wind_serves_phase_a_without_preview_paths(self):
         with mock.patch.dict(os.environ, {"PREVIEW_KEY": KEY, "WIND_PARTICLES_ENABLED": ""}):
             st, _, html = self._get("/wind")
             self.assertEqual(st, 200)
@@ -98,19 +98,20 @@ class PhaseAPreview(unittest.TestCase):
 
             st, _, css = self._get("/wind.css")
             self.assertEqual(st, 200)
-            prod_css = subprocess.check_output(["git", "show", "%s:wind.css" % PROD], cwd=ROOT)
-            self.assertEqual(css, prod_css)
-            self.assertNotIn(b"#CDDCE6", css)
+            self.assertEqual(css, (ROOT / "wind.css").read_bytes())
+            self.assertEqual(css, (ROOT / "preview" / "wind" / "wind.css").read_bytes())
+            self.assertIn(b"--map-bg: #CDDCE6", css)
+            # Radar keeps the previous light water when wind.css is shared.
+            self.assertIn(b'body[data-radar-view="viewer"] { --map-bg: #EAF1F4; }', css)
 
             st, _, js = self._get("/wind/engine.js")
             self.assertEqual(st, 200)
-            prod_js = subprocess.check_output(["git", "show", "%s:wind-lab.js" % PROD], cwd=ROOT)
-            self.assertEqual(js, prod_js)
-            self.assertIn(b"[240, 95, 95]", js)
-            self.assertNotIn(b"[75, 156, 211]", js)
+            self.assertEqual(js, (ROOT / "wind-lab.js").read_bytes())
+            self.assertIn(b"[75, 156, 211]", js)   # Carolina blue
+            self.assertNotIn(b"[240, 95, 95]", js)  # old rainbow tip
 
-        # On-disk public files stay at the production commit (payload budget uses these).
-        for rel in ("wind.css", "wind-lab.js", "wind.html", "wind-viewer.js"):
+        # Protected page/viewer pins stay at the prior baseline; engine + css are the Phase A launch.
+        for rel in ("wind.html", "wind-viewer.js"):
             current = (ROOT / rel).read_bytes()
             baseline = subprocess.check_output(["git", "show", "%s:%s" % (PROD, rel)], cwd=ROOT)
             self.assertEqual(current, baseline, rel)
@@ -124,12 +125,16 @@ class PhaseAPreview(unittest.TestCase):
         self.assertIn("maxParticles: phone ? 1100 : 2200", (ROOT / "wind-viewer.js").read_text())
         self.assertIn("FRAME_MS ? 78 : 130", eng)
         pub = (ROOT / "wind-lab.js").read_text()
-        self.assertIn("function spawn(i, randomAge) { PX[i] = Math.random() * w; PY[i] = Math.random() * h;", pub)
-        self.assertIn("FRAME_MS ? 60 : 110", pub)
+        # Public /wind now uses the same valid-cell respawn as the approved preview.
+        self.assertNotIn("e === 0 ? 0 : e === 1 ? w - 1", pub)
+        self.assertIn("uvAt(latY[yi], lonX[xi], tmp)", pub)
+        self.assertIn("for (let t = 0; t < 8; t++)", pub)
+        self.assertIn("FRAME_MS ? 78 : 130", pub)
+        self.assertIn("maxParticles: phone ? 1100 : 2200", (ROOT / "wind-viewer.js").read_text())
 
     @unittest.skipUnless(NODE, "node not installed")
     def test_spawn_places_particles_only_in_valid_uv_cells(self):
-        """Behavioral check of preview spawn(): retry until uvAt sees real grid U/V.
+        """Behavioral check of spawn() in the preview and public engines: retry until uvAt sees real grid U/V.
 
         uvAt is the same 'inside the model grid' test used by public /wind. Spawn
         never invents U/V. With most of the viewport on-grid, every particle lands
@@ -204,18 +209,23 @@ console.log(JSON.stringify({
   spawnSrc: m[0]
 }));
 """
-        out = subprocess.run([NODE, "-e", script], cwd=ROOT, capture_output=True, text=True, timeout=30)
-        self.assertEqual(out.returncode, 0, out.stderr)
-        res = json.loads(out.stdout)
-        self.assertEqual(res["invented"], 0)
-        self.assertEqual(res["invalid"], 0, res)
-        self.assertEqual(res["valid"], 4000)
-        # Not the old edge-only pattern: particles must appear in the interior.
-        self.assertGreater(res["valid"] - res["edgeOnly"], 3000)
-        self.assertIn("uvAt(latY[yi], lonX[xi], tmp)", res["spawnSrc"])
-        self.assertNotIn("e === 0 ? 0 : e === 1 ? w - 1", res["spawnSrc"])
-        # A ~40% valid island is strongly preferred (8 attempts beat a single random shot).
-        self.assertGreater(res["islandValid"], 900)
+        for src in ("preview/wind/engine.js", "wind-lab.js"):
+            with self.subTest(src=src):
+                out = subprocess.run(
+                    [NODE, "-e", script.replace("preview/wind/engine.js", src)],
+                    cwd=ROOT, capture_output=True, text=True, timeout=30,
+                )
+                self.assertEqual(out.returncode, 0, out.stderr)
+                res = json.loads(out.stdout)
+                self.assertEqual(res["invented"], 0)
+                self.assertEqual(res["invalid"], 0, res)
+                self.assertEqual(res["valid"], 4000)
+                # Not the old edge-only pattern: particles must appear in the interior.
+                self.assertGreater(res["valid"] - res["edgeOnly"], 3000)
+                self.assertIn("uvAt(latY[yi], lonX[xi], tmp)", res["spawnSrc"])
+                self.assertNotIn("e === 0 ? 0 : e === 1 ? w - 1", res["spawnSrc"])
+                # A ~40% valid island is strongly preferred (8 attempts beat a single random shot).
+                self.assertGreater(res["islandValid"], 900)
 
     def test_preview_not_in_sitemap_or_public_raw_paths(self):
 
