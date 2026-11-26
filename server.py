@@ -2241,6 +2241,7 @@ import whats_biting  # noqa: E402  (private /reports preview; cookie-gated, not 
 import ramp_finder  # noqa: E402  (private /preview/ramps data preview; cookie-gated, not public)
 import freshwater  # noqa: E402
 import brief  # noqa: E402
+import brief_status  # noqa: E402
 import wave_intro  # noqa: E402
 import sprint_home  # noqa: E402
 import photo_rotation  # noqa: E402
@@ -4108,7 +4109,8 @@ class Handler(SimpleHTTPRequestHandler):
             # (adsOn and mode != paused) and place the slot below advisories.
             # t487u: the issued brief stays as published; the separate "Status now" section and the
             # issued-list status chips come from a live NWS check made for this page view.
-            status_now = brief.status_now_for(b, _alert_status_fetch)
+            # t491u: one overall 3.5 s budget for all Status now NWS work; the check finishes in the background.
+            status_now = brief_status.status_now(b, _alert_status_fetch, brief.status_now_for)
             body = brief.page(b, include_fresh=include_fresh, public=public, ads_on=False, status_now=status_now)
             robots = "index, follow" if public else "noindex, nofollow"
             return self._send_private(
