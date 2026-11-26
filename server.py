@@ -2818,6 +2818,7 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 <a class="card" href="/preview/brief/cape-fear-river"><b>Preview brief · Cape Fear River</b><span>Private Morning Brief preview, built on request. Not published or archived.</span></a>
 <a class="card" href="/wind"><b>Wind viewer</b><span>Dedicated animated model wind (NOAA GFS forecast), private review</span></a>
 <a class="card" href="/lab/wind"><b>Wind flow</b><span>Animated model wind (NOAA GFS forecast)</span></a>
+<a class="card" href="/preview/wind"><b>Wind viewer · Phase A</b><span>Private visual refinement: navy, Carolina blue and cyan flow, smoother trails, nautical light water. Same NOAA GFS model forecast; public /wind is unchanged.</span></a>
 <a class="card" href="/lab/tiles"><b>Tile designs</b><span>The instrument tile prototype</span></a>
 <a class="card" href="/preview/masthead?c=c"><b>Masthead concepts</b><span>Three directions for a cinematic gold wave-to-masthead reveal (A editorial, B nautical, C hybrid). Replay from the bar at the bottom.</span></a>
 <a class="card" href="/preview/home"><b>Homepage (Ed's pick)</b><span>Classic Coastal Editorial masthead (A) with the Modern Coastal Magazine layout and the Bodie Island sunrise. Compare Cinematic and the other mastheads from the bar at the bottom.</span></a>
@@ -2923,6 +2924,28 @@ class Handler(SimpleHTTPRequestHandler):
                 return True
         return False
 
+    def _wind_phase_a_preview_route(self, parsed):
+        """Cookie-gated Phase A wind preview. Public /wind is untouched."""
+        if not self._preview_ok():
+            return self.send_error(404, "not found")
+        self._static_cache = "private, no-store"
+        extra = [("Vary", "Cookie")]
+        if parsed.path == "/preview/wind":
+            data = (ROOT / "wind.html").read_bytes()
+            data = data.replace(b'href="/wind.css"', b'href="/preview/wind/wind.css"', 1)
+            data = data.replace(b'src="/wind/engine.js"', b'src="/preview/wind/engine.js"', 1)
+            data = data.replace(b'content="index, follow"', b'content="noindex, nofollow"', 1)
+            try:
+                data = theme_toggle.paint(data)
+            except Exception as e:
+                sys.stderr.write("theme skipped: %s\n" % e)
+            return self._send_private(None, "text/html; charset=utf-8", data, extra=extra)
+        if parsed.path == "/preview/wind/wind.css":
+            return self._send_private(ROOT / "preview" / "wind" / "wind.css", "text/css; charset=utf-8", extra=extra)
+        if parsed.path == "/preview/wind/engine.js":
+            return self._send_private(ROOT / "preview" / "wind" / "engine.js", "text/javascript; charset=utf-8", extra=extra)
+        return self.send_error(404, "not found")
+
     def _preview_route(self, parsed):
         k = _preview_secret()
         if not k:
@@ -2996,6 +3019,10 @@ class Handler(SimpleHTTPRequestHandler):
             return self._ramp_finder_route(parsed)
         if parsed.path == "/preview":
             return self._preview_route(parsed)
+        if parsed.path in ("/preview/wind", "/preview/wind/engine.js", "/preview/wind/wind.css"):
+            # Private Phase A wind visual preview (Ed t480u). Same cookie as /preview; 404 without it.
+            # Public /wind, /wind.css and /wind/engine.js stay on production assets.
+            return self._wind_phase_a_preview_route(parsed)
         if parsed.path == "/preview/photos-check":
             if not self._preview_ok():
                 return self.send_error(404, "not found")
