@@ -271,5 +271,6 @@ a:focus-visible,button:focus-visible,select:focus-visible{outline:3px solid #C4A
 .gauge{height:41px}
 .nav{display:flex;flex-wrap:wrap;align-items:stretch}.navrow{flex:1 1 0;min-width:0}
 .allnav>summary{padding:0 12px;border-left:1px solid rgba(196,163,106,.35)}.allnav[open]{flex-basis:100%}.allnav[open]>summary{border-left:0}
-.gates,.chapter,.ft{content-visibility:auto;contain-intrinsic-size:auto 1200px}
+.gates,.chapter,.ft{content-visibility:auto}.gates{contain-intrinsic-size:auto 890px}.chapter.water{contain-intrinsic-size:auto 1350px}.chapter.coast{contain-intrinsic-size:auto 1200px}.ft{contain-intrinsic-size:auto 650px}
+.allnav li button{justify-content:flex-start}
 .haz-link{min-height:44px;align-items:center}
