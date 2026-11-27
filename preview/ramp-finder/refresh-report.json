@@ -1,0 +1,513 @@
+{
+ "status": "ok",
+ "attempted_at": "2026-11-27T18:10-05:00",
+ "ncwrc_count": 267,
+ "previous_count": 267,
+ "diff": {
+  "added": [],
+  "removed": [],
+  "changed": {}
+ },
+ "counts": {
+  "total": 285,
+  "by_basis": {
+   "manual_verified": 55,
+   "ncwrc_official_listing": 230
+  },
+  "by_access_type": {
+   "trailer": 267,
+   "unknown": 7,
+   "paddle": 11
+  },
+  "by_listing_class": {
+   "general": 274,
+   "limited": 7,
+   "needs_review": 4
+  },
+  "by_status": {
+   "listed_open": 261,
+   "not_stated": 15,
+   "temporarily_closed": 6,
+   "partially_open": 1,
+   "conflicting": 2
+  },
+  "by_regulatory": {
+   "COASTAL": 40,
+   "INLAND": 198,
+   "not stated": 15,
+   "JOINT": 32
+  },
+  "by_salinity": {
+   "saltwater:verified": 16,
+   "unknown:not_inferred": 42,
+   "tidal:inferred": 23,
+   "freshwater:verified": 32,
+   "brackish:verified": 7,
+   "freshwater:inferred": 165
+  },
+  "by_area": {
+   "crystal-coast": 17,
+   "falls-lake": 9,
+   "jordan-lake": 7,
+   "nags-head": 6,
+   "neuse-river": 25,
+   "other-coastal": 85,
+   "other-mountain": 54,
+   "other-piedmont": 68,
+   "topsail": 6,
+   "wilmington": 8
+  },
+  "neuse": {
+   "lower": 20,
+   "upper": 5
+  }
+ },
+ "quality": {
+  "matches": [
+   {
+    "slug": "baa-beaufort",
+    "globalid": "a0b7de80-4428-4ba5-9b38-2b3634fb35c8",
+    "ncwrc_name": "BEAUFORT",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-cedar-island",
+    "globalid": "5dac2736-0fb5-4c20-97f8-ac3ee515e80f",
+    "ncwrc_name": "CEDAR ISLAND",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-emerald-isle",
+    "globalid": "13350368-1fc2-48c2-a24c-9414bbad0314",
+    "ncwrc_name": "EMERALD ISLE",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-gordon-s-myers-at-cedar-point",
+    "globalid": "aeec3239-ef87-4924-bc5f-e8985a3e9390",
+    "ncwrc_name": "GORDON S. MYERS AT CEDAR POINT",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-haywood-landing",
+    "globalid": "d3efd5e2-1151-426b-8a6b-64e281d9217f",
+    "ncwrc_name": "HAYWOOD LANDING",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-morehead-city",
+    "globalid": "cfc81f2a-d128-48bb-a71c-7dbc07fcd3f1",
+    "ncwrc_name": "MOREHEAD CITY",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-newport",
+    "globalid": "9383e592-735c-4945-b915-a89345105b42",
+    "ncwrc_name": "NEWPORT",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-oyster-creek",
+    "globalid": "7bb05131-9ed6-4e0a-8501-e1a9373c3418",
+    "ncwrc_name": "OYSTER CREEK",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-salters-creek",
+    "globalid": "89794d18-9cd1-4258-94b2-e28ff3a7fca5",
+    "ncwrc_name": "SALTERS CREEK",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-straits-landing",
+    "globalid": "f774cac0-77dd-450a-8a71-6d1dd03185ac",
+    "ncwrc_name": "STRAITS LANDING",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-west-beaufort",
+    "globalid": "248f3ee5-2d04-4d8e-83f5-91b242932aab",
+    "ncwrc_name": "WEST BEAUFORT",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-eno-river",
+    "globalid": "a953f967-e1ed-4a75-a098-9ad87527e3b1",
+    "ncwrc_name": "ENO RIVER",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-hickory-hill",
+    "globalid": "0e5618cf-1f52-42a8-83cd-d4520b50fdff",
+    "ncwrc_name": "HICKORY HILL",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-ledge-rock",
+    "globalid": "00767096-3ab7-4a78-8f94-cb400a4281a3",
+    "ncwrc_name": "LEDGE ROCK",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-upper-bartons-creek",
+    "globalid": "f6d2681b-9a04-4061-8061-614b4c435fe4",
+    "ncwrc_name": "UPPER BARTONS CREEK",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-farrington-point",
+    "globalid": "496b5dcb-3e3b-4b6b-b35a-7e93d93ee66b",
+    "ncwrc_name": "FARRINGTON POINT",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-brices-creek",
+    "globalid": "2479c330-733e-4a1d-ac53-f2266465e0db",
+    "ncwrc_name": "BRICES CREEK",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-bridgeton",
+    "globalid": "161d7863-9671-43f9-8750-8f74bdc2fcfb",
+    "ncwrc_name": "BRIDGETON",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-cool-springs",
+    "globalid": "eeec8bfe-85f5-4d7c-bd98-f95409e1cc8d",
+    "ncwrc_name": "COOL SPRINGS",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-cow-pen-landing",
+    "globalid": "d20da44b-e8ce-401f-8c71-6a357a41f465",
+    "ncwrc_name": "COW PEN LANDING",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-coxs-ferry",
+    "globalid": "8b6248f9-865d-43f1-80f9-913166e169e5",
+    "ncwrc_name": "COXS FERRY",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-dawson-creek",
+    "globalid": "5c57b688-8b2c-4aad-9280-5707c7883177",
+    "ncwrc_name": "DAWSON CREEK",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-goldsboro",
+    "globalid": "215f514d-a192-4077-9204-3d20f0506964",
+    "ncwrc_name": "GOLDSBORO",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-kinston",
+    "globalid": "ab22e080-5b8a-42d1-8ea8-6b2c57b4b776",
+    "ncwrc_name": "KINSTON",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-lees-landing",
+    "globalid": "21c33db9-dec5-4219-bfd2-d0643fd24444",
+    "ncwrc_name": "LEES LANDING",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-maple-cypress",
+    "globalid": "a2426f34-7b10-42d0-840f-deee2fb8d2df",
+    "ncwrc_name": "MAPLE CYPRESS",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-oriental",
+    "globalid": "bc480160-42ae-4cf2-ae40-0ea6a707906c",
+    "ncwrc_name": "ORIENTAL",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-percy-berry",
+    "globalid": "e69c4101-e96b-4f93-beef-6a9d2489e1b0",
+    "ncwrc_name": "PERCY BERRY",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-pollocksville",
+    "globalid": "cd7e03e7-90e4-4946-8c18-0146041dfab0",
+    "ncwrc_name": "POLLOCKSVILLE",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-prices-landing",
+    "globalid": "2de01750-8b28-470b-84d5-77eea6e84c85",
+    "ncwrc_name": "PRICES LANDING",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-richardsons-bridge",
+    "globalid": "5f360260-53d0-48cd-b3bc-a1eba31f50eb",
+    "ncwrc_name": "RICHARDSONS BRIDGE",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-seven-springs",
+    "globalid": "4de161ab-93bb-4137-bd56-e79b843a896d",
+    "ncwrc_name": "SEVEN SPRINGS",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-slocum-creek",
+    "globalid": "2877ce3f-e699-4611-8533-2b7586e31f8a",
+    "ncwrc_name": "SLOCUM CREEK",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-smithfield",
+    "globalid": "8dca32cc-5f5c-4af0-b1b7-15fa85eab2a9",
+    "ncwrc_name": "SMITHFIELD",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-spring-garden",
+    "globalid": "e2d47f5e-4e2a-468d-9f12-d4d5000e433c",
+    "ncwrc_name": "SPRING GARDEN",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-stevens-mill",
+    "globalid": "1557f56f-f871-483b-b1de-a54ee2d3fef8",
+    "ncwrc_name": "STEVENS MILL",
+    "method": "crosswalk (NCWRC GlobalID)"
+   },
+   {
+    "slug": "baa-trenton",
+    "globalid": "26daab83-3849-4948-b30f-b6ac497ada0a",
+    "ncwrc_name": "TRENTON",
+    "method": "crosswalk (NCWRC GlobalID)"
+   }
+  ],
+  "near_duplicates_flagged": [],
+  "conflicts": [],
+  "unmatched_notices": [
+   "jordan-low-water-parkers-creek"
+  ],
+  "missing": {
+   "coordinates": [
+    "parks-falls-bw-wells-campers",
+    "parks-falls-beaverdam",
+    "parks-falls-highway-50",
+    "parks-falls-holly-point-campers",
+    "parks-falls-rolling-view",
+    "parks-jordan-ebenezer",
+    "parks-jordan-new-hope",
+    "usace-jordan-poes-ridge",
+    "parks-jordan-poplar-point-campers",
+    "parks-jordan-seaforth",
+    "parks-jordan-vista-point-sailboat",
+    "local-newbern-glenburnie",
+    "local-newbern-lawson-creek-1",
+    "local-newbern-lawson-creek-2"
+   ],
+   "lanes": [
+    "local-atlantic-beach-moonlight-drive",
+    "local-atlantic-beach-west-bogue-sound",
+    "parks-falls-bw-wells-campers",
+    "parks-falls-beaverdam",
+    "parks-falls-highway-50",
+    "parks-falls-holly-point-campers",
+    "parks-falls-rolling-view",
+    "parks-jordan-ebenezer",
+    "parks-jordan-new-hope",
+    "usace-jordan-poes-ridge",
+    "parks-jordan-poplar-point-campers",
+    "parks-jordan-seaforth",
+    "parks-jordan-vista-point-sailboat",
+    "local-newbern-glenburnie",
+    "local-newbern-lawson-creek-1",
+    "local-newbern-lawson-creek-2",
+    "local-newbern-union-point",
+    "baa-bridgewater",
+    "baa-dan-river",
+    "baa-jessup-mill",
+    "baa-nc-hwy-109"
+   ],
+   "trailer_parking": [
+    "local-morehead-south-10th",
+    "parks-falls-bw-wells-campers",
+    "parks-falls-beaverdam",
+    "parks-falls-highway-50",
+    "parks-falls-holly-point-campers",
+    "parks-falls-rolling-view",
+    "parks-jordan-ebenezer",
+    "parks-jordan-new-hope",
+    "usace-jordan-poes-ridge",
+    "parks-jordan-poplar-point-campers",
+    "parks-jordan-seaforth",
+    "parks-jordan-vista-point-sailboat",
+    "local-newbern-glenburnie",
+    "local-newbern-lawson-creek-1",
+    "local-newbern-lawson-creek-2",
+    "baa-todd",
+    "baa-lucia"
+   ],
+   "fees": [
+    "baa-great-lake",
+    "baa-shell-rock-landing",
+    "local-morehead-south-10th",
+    "local-atlantic-beach-west-bogue-sound",
+    "baa-willis-landing",
+    "parks-falls-beaverdam",
+    "parks-falls-highway-50",
+    "parks-falls-rolling-view",
+    "parks-jordan-ebenezer",
+    "parks-jordan-new-hope",
+    "parks-jordan-seaforth",
+    "parks-jordan-vista-point-sailboat",
+    "local-newbern-glenburnie",
+    "local-newbern-lawson-creek-1",
+    "local-newbern-lawson-creek-2",
+    "baa-aurora",
+    "baa-belhaven",
+    "baa-blounts-creek",
+    "baa-boardman",
+    "baa-brumley-road",
+    "baa-fair-bluff",
+    "baa-frying-pan",
+    "baa-greenville",
+    "baa-havens-garden",
+    "baa-hertford",
+    "baa-holden-beach",
+    "baa-hookerton",
+    "baa-jacksonville-landing",
+    "baa-lake-mattamuskeet",
+    "baa-lillington",
+    "baa-lock-and-dam-1",
+    "baa-lock-and-dam-2",
+    "baa-masons-landing",
+    "baa-midway-drive",
+    "baa-murfreesboro",
+    "baa-oak-island",
+    "baa-plymouth-water-street",
+    "baa-poyners-road",
+    "baa-rodanthe",
+    "baa-sawyers-creek",
+    "baa-shingle-landing",
+    "baa-sunset-beach",
+    "baa-vandemere",
+    "baa-waynes-landing",
+    "baa-william-o-huske-lock-and-dam",
+    "baa-williamston",
+    "baa-wrights-creek",
+    "baa-apalachia",
+    "baa-avey-creek",
+    "baa-barkers-creek",
+    "baa-bear-creek",
+    "baa-black-bear",
+    "baa-bridgewater",
+    "baa-c-j-harris",
+    "baa-cable-cove",
+    "baa-castle-bridge",
+    "baa-cedar-cliff",
+    "baa-cheoah-point",
+    "baa-conley-creek",
+    "baa-crater-park",
+    "baa-craven-street-bridge",
+    "baa-donnaha-park",
+    "baa-dusty-ridge",
+    "baa-flat-branch",
+    "baa-grape-creek",
+    "baa-gunpowder",
+    "baa-hanging-dog",
+    "baa-horse-shoe",
+    "baa-jackrabbit",
+    "baa-johns-river",
+    "baa-lake-adger",
+    "baa-lake-emory",
+    "baa-lemmons-branch",
+    "baa-lewellyn-branch",
+    "baa-linville-river",
+    "baa-lovelady",
+    "baa-luck-stone",
+    "baa-old-288",
+    "baa-oxford",
+    "baa-pine-creek",
+    "baa-pine-hall",
+    "baa-piney-bluff",
+    "baa-powerhouse",
+    "baa-ramsey-bluff",
+    "baa-ranger-station",
+    "baa-rhodhiss",
+    "baa-roaring-river",
+    "baa-rocky-branch",
+    "baa-south-point",
+    "baa-tsali",
+    "baa-us-221",
+    "baa-us-221a",
+    "baa-westfeldt-park",
+    "baa-whittier",
+    "baa-wittenburg",
+    "baa-wolf-creek",
+    "baa-battle-park",
+    "baa-beatties-ford",
+    "baa-blewetts-grave",
+    "baa-bringle-ferry",
+    "baa-circle-drive",
+    "baa-clarks-creek",
+    "baa-county-line",
+    "baa-cross-point-landing",
+    "baa-double-bluff",
+    "baa-draper-landing",
+    "baa-dutch-second",
+    "baa-fifth-street-landing",
+    "baa-flat-creek",
+    "baa-flemingtown-landing",
+    "baa-gaston",
+    "baa-hager-creek",
+    "baa-harts",
+    "baa-henderson-point",
+    "baa-hibernia",
+    "baa-highwy-73",
+    "baa-hollemans-crossing",
+    "baa-hyco-afterbay",
+    "baa-jessup-mill",
+    "baa-lillys-bridge",
+    "baa-little-creek",
+    "baa-long-island",
+    "baa-lookout-shoals",
+    "baa-lucia",
+    "baa-mccrary-creek",
+    "baa-nc-hwy-109",
+    "baa-neck-road",
+    "baa-odom",
+    "baa-pinnacle",
+    "baa-riverbend",
+    "baa-rockingham",
+    "baa-sharon",
+    "baa-shelby",
+    "baa-stony-mountain",
+    "baa-sunset-park",
+    "baa-swift-island",
+    "baa-thelma",
+    "baa-triple-springs",
+    "baa-weldon",
+    "baa-worthville-road",
+    "baa-surf-city",
+    "baa-west-onslow-beach",
+    "baa-castle-hayne",
+    "baa-dram-tree-park",
+    "baa-snows-cut",
+    "baa-sutton-lake",
+    "baa-trails-end"
+   ]
+  },
+  "review": [
+   "local-atlantic-beach-west-bogue-sound",
+   "parks-falls-holly-point-campers",
+   "parks-jordan-poplar-point-campers",
+   "parks-jordan-vista-point-sailboat",
+   "baa-hibernia",
+   "baa-norwood"
+  ]
+ }
+}

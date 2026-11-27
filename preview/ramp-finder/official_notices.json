@@ -1,0 +1,79 @@
+{
+ "note": "Dated official notices, entered by hand from the official page on the date shown. A notice wins over an older dataset status. Recheck before any public release. Remove or update a notice when the official page changes.",
+ "notices": [
+  {
+   "key": "jordan-low-water-vista-point",
+   "ids": ["parks-jordan-vista-point-sailboat"],
+   "status": "temporarily_closed",
+   "label": "Temporarily closed (low water)",
+   "notice_label": "Current official notice",
+   "text": "N.C. State Parks reports the Vista Point boat ramp closed due to low water levels. Ebenezer Church and New Hope are listed as open alternatives.",
+   "as_of_date": "2026-11-27",
+   "as_of_label": "Nov 27, 2026 (official banner checked)",
+   "source_name": "N.C. State Parks, Jordan Lake State Recreation Area",
+   "source_url": "https://www.ncparks.gov/state-parks/jordan-lake-state-recreation-area"
+  },
+  {
+   "key": "jordan-low-water-parkers-creek",
+   "ids": [],
+   "status": "temporarily_closed",
+   "label": "Temporarily closed (low water)",
+   "notice_label": "Current official notice",
+   "text": "N.C. State Parks reports the Parkers Creek boat ramp closed due to low water levels.",
+   "as_of_date": "2026-11-27",
+   "as_of_label": "Nov 27, 2026 (official banner checked)",
+   "source_name": "N.C. State Parks, Jordan Lake State Recreation Area",
+   "source_url": "https://www.ncparks.gov/state-parks/jordan-lake-state-recreation-area"
+  },
+  {
+   "key": "jordan-low-water-seaforth",
+   "ids": ["parks-jordan-seaforth"],
+   "status": "partially_open",
+   "label": "Partly open: 1 ramp, single-axle trailers only",
+   "notice_label": "Current official notice",
+   "text": "N.C. State Parks reports Seaforth has 1 ramp open for single-axle trailers due to low water levels.",
+   "as_of_date": "2026-11-27",
+   "as_of_label": "Nov 27, 2026 (official banner checked)",
+   "source_name": "N.C. State Parks, Jordan Lake State Recreation Area",
+   "source_url": "https://www.ncparks.gov/state-parks/jordan-lake-state-recreation-area"
+  },
+  {
+   "key": "falls-holly-point-construction",
+   "ids": ["parks-falls-holly-point-campers"],
+   "status": "temporarily_closed",
+   "label": "Temporarily closed (construction)",
+   "notice_label": "Current official notice",
+   "text": "N.C. State Parks reports Holly Point is currently closed for construction. All other Falls Lake areas are listed as open as normal.",
+   "as_of_date": "2026-11-27",
+   "as_of_label": "Nov 27, 2026 (official banner checked)",
+   "source_name": "N.C. State Parks, Falls Lake State Recreation Area",
+   "source_url": "https://www.ncparks.gov/state-parks/falls-lake-state-recreation-area"
+  },
+  {
+   "key": "kerr-low-water",
+   "ids": [],
+   "waterbody": "KERR LAKE",
+   "status": "info",
+   "label": "",
+   "notice_label": "Current official notice",
+   "text": "N.C. State Parks reports most boat ramps at Kerr Lake closed due to low water levels. It lists its Kimball Point ramp and the NC Wildlife ramp at Hibernia as the only boat ramps open on the North Carolina side.",
+   "as_of_date": "2026-11-27",
+   "as_of_label": "Nov 27, 2026 (official banner checked)",
+   "source_name": "N.C. State Parks, Kerr Lake State Recreation Area",
+   "source_url": "https://www.ncparks.gov/state-parks/kerr-lake-state-recreation-area"
+  },
+  {
+   "key": "kerr-hibernia-conflict",
+   "ids": ["baa-hibernia"],
+   "status": "conflicting",
+   "review": true,
+   "label": "Status unclear: official sources disagree",
+   "notice_label": "Official sources disagree",
+   "text": "NCWRC data (last edited Nov 6, 2026) lists Hibernia as temporarily closed due to low water. The N.C. State Parks Kerr Lake banner checked Nov 27, 2026 lists the NC Wildlife ramp at Hibernia as open, and the same banner says the Hibernia area is closed for the season for construction. Check with the park before traveling.",
+   "as_of_date": "2026-11-27",
+   "as_of_label": "Nov 27, 2026 (both sources checked)",
+   "source_name": "N.C. State Parks, Kerr Lake State Recreation Area",
+   "source_url": "https://www.ncparks.gov/state-parks/kerr-lake-state-recreation-area"
+  }
+ ]
+}

@@ -2240,6 +2240,7 @@ import theme_toggle  # noqa: E402  (site-wide Light / Dark / Auto theme system, 
 import nav_v2  # noqa: E402  (t453u masthead + nav v2; NAV_V2 env or preview cookie, default off)
 import signature_helm  # noqa: E402  (Ed t529u preview /preview/helm; Ed t534u public homepage / and /index.html)
 import whats_biting  # noqa: E402  (private /reports preview; cookie-gated, not public)
+import ramp_statewide  # noqa: E402  (private /preview/ramps-statewide; cookie-gated, not public)
 import ramp_finder  # noqa: E402  (private /preview/ramps data preview; cookie-gated, not public)
 import freshwater  # noqa: E402
 import brief  # noqa: E402
@@ -3665,6 +3666,7 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 <a class="card" href="/catch-wall"><b>Catch Wall photo submissions</b><span>Private test: the Share form and the review page work in this browser, even while public uploads stay off. Photos you send wait in the pending queue until you approve them.</span></a>
 <a class="card" href="/reports"><b>What’s Biting? · fishing reports</b><span>Private preview: a report index and five regional pages (Crystal Coast, Hatteras, Falls Lake, Jordan Lake, and the Neuse from Falls Dam to Goldsboro). Cookie-gated, noindex, not in the sitemap. Not on the public homepage.</span></a>
 <a class="card" href="/preview/ramps"><b>Ramp Finder</b><span>Private data preview: searchable public boat-ramp list and a private interactive map prototype for the Crystal Coast, Falls Lake, Jordan Lake and the Neuse River. Cookie-gated, noindex, not in the sitemap. Not a public launch. Not on the public homepage.</span></a>
+<a class="card" href="/preview/ramps-statewide"><b>Ramp Finder · Statewide (Phase 1)</b><span>Private data preview: every NCWRC Boating Access Area merged with our verified ramps, with trailer, paddle, limited and closed launches separated, new Wilmington, Topsail and Nags Head areas, an honest Hatteras note and the Neuse split. Cookie-gated, noindex, not in the sitemap. Public /ramps is unchanged.</span></a>
 <a class="card" href="/preview/photos-check"><b>Photo setup check</b><span>A private status report: storage, image tools, and the pending queue. It never shows keys.</span></a>
 <p><a href="/preview?lock=1">Lock this browser again</a></p></main></body></html>""" % PREVIEW_DAYS
 
@@ -3873,6 +3875,10 @@ class Handler(SimpleHTTPRequestHandler):
         if (parsed.path in ("/ramps", "/ramps/", "/ramps.css", "/ramps.json")
                 or parsed.path.startswith("/ramps/")):
             return self._ramp_finder_public_route(parsed)
+        if parsed.path == "/preview/ramps-statewide" or parsed.path.startswith("/preview/ramps-statewide/"):
+            # Private statewide Ramp Finder preview (Ed t547u, Phase 1). Same cookie as /preview;
+            # 404 without it. Public /ramps is unchanged and never reads statewide.json.
+            return self._ramp_statewide_route(parsed)
         if (parsed.path in ("/preview/ramps", "/preview/ramps/", "/preview/ramps.css",
                             "/preview/ramps.json")
                 or parsed.path.startswith("/preview/ramps/")):
@@ -4560,6 +4566,20 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_error(status, "not found")
         data = body.encode("utf-8") if isinstance(body, str) else body
         return self._send_private(None, ctype, data, status, robots="index, follow")
+
+    def _ramp_statewide_route(self, parsed):
+        """Cookie-gated statewide Ramp Finder preview. 404 without the preview cookie. noindex, no-store."""
+        if not self._preview_ok():
+            return self.send_error(404, "not found")
+        q = parse_qs(parsed.query or "")
+        status, ctype, body = ramp_statewide.resolve_request(parsed.path, q)
+        if status != 200:
+            return self.send_error(status, "not found")
+        data = body.encode("utf-8") if isinstance(body, str) else body
+        return self._send_private(
+            None, ctype, data, status,
+            extra=[("Cache-Control", "no-store"), ("Vary", "Cookie")],
+        )
 
     def _ramp_finder_route(self, parsed):
         """Cookie-gated /preview/ramps preview. 404 without the preview cookie. noindex, no-store."""

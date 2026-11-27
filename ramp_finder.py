@@ -6,6 +6,7 @@ no paid APIs. Pins are drawn only from official inventory coordinates.
 """
 from __future__ import annotations
 
+import contextvars
 import hashlib
 import html
 import json
@@ -150,7 +151,15 @@ def _qs(params: dict) -> str:
 SITE_ORIGIN = "https://thecoastalbrief.com"
 
 
+# Private statewide preview (Ed t547u) renders through these helpers with its own
+# base path. Default None keeps every existing public and preview page unchanged.
+STATEWIDE_BASE: contextvars.ContextVar = contextvars.ContextVar("rf_statewide_base", default=None)
+
+
 def list_base(public: bool = False) -> str:
+    override = None if public else STATEWIDE_BASE.get()
+    if override:
+        return override
     return "/ramps" if public else "/preview/ramps"
 
 
@@ -296,6 +305,8 @@ def _shell(title: str, body: str, skip: str = "Skip to the ramp list", *, curren
     css_text = css_bytes().decode("utf-8")
     if public and not launch_flags.ramp_map_public():
         map_nav = ""
+    elif not public and STATEWIDE_BASE.get():
+        map_nav = ""  # statewide map is Phase 2; the private Nov 22 map stays at /preview/ramps/map
     else:
         cur = " aria-current=\"page\"" if current == "map" else ""
         map_nav = f'<a href="{map_base(public)}"{cur}>Map</a>'
@@ -369,10 +380,27 @@ def facility_rows(rec):
         ("salinity_class", "Salinity"),
         ("fishing_water_designation", "Fishing-water designation"),
     ]
+    statewide = "access_status" in rec
     for key, label in mapping:
+        if statewide and key == "salinity_class":
+            rows.append(("Water (fresh / brackish / salt)", (rec.get("salinity") or {}).get("label") or "Not determined"))
+            continue
+        if statewide and key == "fishing_water_designation":
+            rows.append(("Fishing-rules classification", rec.get("regulatory_label") or "not stated"))
+            continue
         item = _facility(rec, key, label)
         if item:
             rows.append(item)
+    if statewide:
+        st = rec.get("access_status") or {}
+        rows[0:0] = [
+            ("Access type", rec.get("access_type_label") or "not stated"),
+            ("Official status", f'{st.get("label", "")}. {st.get("detail", "")} As of {st.get("as_of") or "not stated"}.'.strip()),
+            ("Listed under", rec.get("neuse_segment_label") or rec.get("area_label") or ""),
+        ]
+        rows.append(("Record basis", "Manually verified Ramp Finder record (NCWRC fills only blank fields)"
+                     if rec.get("record_basis") == "manual_verified" else
+                     "NCWRC official listing; facility details exactly as NCWRC records them"))
     return rows
 
 
@@ -600,6 +628,19 @@ def badges_for(rec) -> str:
         bits.append('<span class="badge badge-caution">Hours need clarification</span>')
     if rec.get("county") == "Jones" or "Jones" in (rec.get("county") or ""):
         bits.append('<span class="badge badge-county">Jones County</span>')
+    st = (rec.get("access_status") or {}).get("code")
+    if st == "temporarily_closed":
+        bits.insert(0, '<span class="badge badge-closed">Temporarily closed</span>')
+    elif st == "partially_open":
+        bits.insert(0, '<span class="badge badge-caution">Partly open</span>')
+    elif st == "conflicting":
+        bits.insert(0, '<span class="badge badge-caution">Status unclear</span>')
+    elif st == "not_stated":
+        bits.append('<span class="badge badge-info">Status not stated</span>')
+    if rec.get("access_type") == "paddle":
+        bits.append('<span class="badge badge-paddle">Paddle / carry-in</span>')
+    if (rec.get("flags") or {}).get("motorboats_restricted"):
+        bits.append('<span class="badge badge-limited">Motorboats restricted</span>')
     if not bits:
         return ""
     return '<div class="badges">' + "".join(bits) + "</div>"
@@ -616,6 +657,17 @@ def amenity_line(rec) -> str:
     return " · ".join(str(b) for b in bits)
 
 
+def _statewide_water_line(rec) -> str:
+    if "salinity" not in rec:
+        return ""
+    sal = (rec.get("salinity") or {}).get("label") or "Not determined"
+    reg = rec.get("regulatory_class") or ""
+    reg = {"INLAND": "Inland fishing waters", "COASTAL": "Coastal fishing waters",
+           "JOINT": "Joint fishing waters"}.get(reg, "Fishing-rules class not stated")
+    extra = f' · {esc(rec["_distance_note"])}' if rec.get("_distance_note") else ""
+    return f'<span class="amen sw-water">{esc(sal)} · {esc(reg)}{extra}</span>'
+
+
 def card_html(rec, *, public: bool = False) -> str:
     amen = amenity_line(rec)
     amen_html = f'<span class="amen">{esc(amen)}</span>' if amen else ""
@@ -627,6 +679,7 @@ def card_html(rec, *, public: bool = False) -> str:
         f'<span class="meta">{esc(display_waterbody_name(rec.get("body_of_water") or ""))}'
         f'{" — " + esc(loc) if loc else ""}</span>'
         f'{amen_html}'
+        f'{_statewide_water_line(rec)}'
         f'{badges_for(rec)}'
         f'</a></li>'
     )

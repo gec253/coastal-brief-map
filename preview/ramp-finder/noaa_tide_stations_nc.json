@@ -1,0 +1,3114 @@
+{
+ "source": "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations.json?type=tidepredictions",
+ "fetched": "2026-11-27T18:05-05:00",
+ "stations": [
+  {
+   "id": "8630055",
+   "name": "Franklin City",
+   "lat": 38.0067,
+   "lng": -75.3817,
+   "type": "S"
+  },
+  {
+   "id": "8630111",
+   "name": "Jesters Island",
+   "lat": 37.9817008972168,
+   "lng": -75.30169677734375,
+   "type": "R"
+  },
+  {
+   "id": "8630194",
+   "name": "Chincoteague Island, Blake Cove",
+   "lat": 37.9517,
+   "lng": -75.355,
+   "type": "S"
+  },
+  {
+   "id": "8630225",
+   "name": "Chincoteague Island, Oyster Bay",
+   "lat": 37.9417,
+   "lng": -75.3467,
+   "type": "S"
+  },
+  {
+   "id": "8630229",
+   "name": "Chincoteague Island, Lewis Creek",
+   "lat": 37.9383,
+   "lng": -75.3733,
+   "type": "S"
+  },
+  {
+   "id": "8630249",
+   "name": "Chincoteague Island, USCG Station",
+   "lat": 37.93170166015625,
+   "lng": -75.38330078125,
+   "type": "R"
+  },
+  {
+   "id": "8630308",
+   "name": "Chincoteague Channel (south end)",
+   "lat": 37.9067,
+   "lng": -75.405,
+   "type": "R"
+  },
+  {
+   "id": "8630315",
+   "name": "Southern Chincoteague Island",
+   "lat": 37.902400970458984,
+   "lng": -75.40789794921875,
+   "type": "R"
+  },
+  {
+   "id": "8630371",
+   "name": "Wishart Point, Bogues Bay",
+   "lat": 37.8817,
+   "lng": -75.4917,
+   "type": "S"
+  },
+  {
+   "id": "8630413",
+   "name": "Assateague Beach, Toms Cove",
+   "lat": 37.865,
+   "lng": -75.3683,
+   "type": "S"
+  },
+  {
+   "id": "8630440",
+   "name": "Wallops Island",
+   "lat": 37.8417,
+   "lng": -75.4783,
+   "type": "S"
+  },
+  {
+   "id": "8630637",
+   "name": "Gargathy Neck",
+   "lat": 37.7767,
+   "lng": -75.5617,
+   "type": "S"
+  },
+  {
+   "id": "8630839",
+   "name": "Folly Creek, Metompkin Inlet",
+   "lat": 37.6967,
+   "lng": -75.635,
+   "type": "S"
+  },
+  {
+   "id": "8630901",
+   "name": "Metompkin Inlet",
+   "lat": 37.6717,
+   "lng": -75.595,
+   "type": "S"
+  },
+  {
+   "id": "8631044",
+   "name": "Wachapreague, Wachapreague Channel",
+   "lat": 37.60777777777778,
+   "lng": -75.68583333333333,
+   "type": "R"
+  },
+  {
+   "id": "8631234",
+   "name": "Revel Creek, Revel Island",
+   "lat": 37.4967,
+   "lng": -75.6833,
+   "type": "S"
+  },
+  {
+   "id": "8631287",
+   "name": "Upshur Neck, south end",
+   "lat": 37.4667,
+   "lng": -75.8,
+   "type": "S"
+  },
+  {
+   "id": "8631411",
+   "name": "Great Machipongo Inlet (inside)",
+   "lat": 37.3933,
+   "lng": -75.7133,
+   "type": "S"
+  },
+  {
+   "id": "8631542",
+   "name": "Sand Shoal Inlet (Coast Guard Station)",
+   "lat": 37.3017,
+   "lng": -75.7783,
+   "type": "S"
+  },
+  {
+   "id": "8631591",
+   "name": "Oyster Harbor",
+   "lat": 37.2883,
+   "lng": -75.925,
+   "type": "S"
+  },
+  {
+   "id": "8631874",
+   "name": "Smith Island (Coast Guard Station)",
+   "lat": 37.1233,
+   "lng": -75.9117,
+   "type": "S"
+  },
+  {
+   "id": "8632085",
+   "name": "Fishermans Island",
+   "lat": 37.0967,
+   "lng": -75.9833,
+   "type": "S"
+  },
+  {
+   "id": "8632200",
+   "name": "Kiptopeke Beach",
+   "lat": 37.165199279785156,
+   "lng": -75.9884033203125,
+   "type": "R"
+  },
+  {
+   "id": "8632314",
+   "name": "Old Plantation Light",
+   "lat": 37.2333,
+   "lng": -76.05,
+   "type": "S"
+  },
+  {
+   "id": "8632366",
+   "name": "Cape Charles Harbor",
+   "lat": 37.2633,
+   "lng": -76.02,
+   "type": "S"
+  },
+  {
+   "id": "8632837",
+   "name": "Rappahannock Light",
+   "lat": 37.538299560546875,
+   "lng": -76.01499938964844,
+   "type": "R"
+  },
+  {
+   "id": "8632869",
+   "name": "Gaskins Point, Occohannock Creek",
+   "lat": 37.5567,
+   "lng": -75.9167,
+   "type": "R"
+  },
+  {
+   "id": "8633091",
+   "name": "Harborton, Pungoteague Creek",
+   "lat": 37.6667,
+   "lng": -75.8333,
+   "type": "S"
+  },
+  {
+   "id": "8633214",
+   "name": "Onancock, Onancock Creek",
+   "lat": 37.7117,
+   "lng": -75.7567,
+   "type": "S"
+  },
+  {
+   "id": "8633362",
+   "name": "Chesconessex Creek, Schooner Bay",
+   "lat": 37.7633,
+   "lng": -75.7733,
+   "type": "S"
+  },
+  {
+   "id": "8633451",
+   "name": "Watts Island",
+   "lat": 37.7983,
+   "lng": -75.8967,
+   "type": "S"
+  },
+  {
+   "id": "8633532",
+   "name": "Tangier Island",
+   "lat": 37.8283,
+   "lng": -75.9933,
+   "type": "R"
+  },
+  {
+   "id": "8633596",
+   "name": "Guard Shore",
+   "lat": 37.85,
+   "lng": -75.7,
+   "type": "S"
+  },
+  {
+   "id": "8633604",
+   "name": "Muddy Creek Entrance",
+   "lat": 37.855,
+   "lng": -75.675,
+   "type": "S"
+  },
+  {
+   "id": "8633777",
+   "name": "Saxis, Starling Creek",
+   "lat": 37.92169952392578,
+   "lng": -75.72830200195312,
+   "type": "R"
+  },
+  {
+   "id": "8634214",
+   "name": "Alexandria, Va.",
+   "lat": 38.805,
+   "lng": -77.0383,
+   "type": "S"
+  },
+  {
+   "id": "8634689",
+   "name": "Quantico, Va.",
+   "lat": 38.52,
+   "lng": -77.2867,
+   "type": "S"
+  },
+  {
+   "id": "8634858",
+   "name": "Aquia Creek, Va.",
+   "lat": 38.4183,
+   "lng": -77.3533,
+   "type": "S"
+  },
+  {
+   "id": "8634892",
+   "name": "Mathias Point, Va.",
+   "lat": 38.3983,
+   "lng": -77.0533,
+   "type": "S"
+  },
+  {
+   "id": "8635027",
+   "name": "Dahlgren, Upper Machodoc Creek, Va.",
+   "lat": 38.31975277777778,
+   "lng": -77.03659722222223,
+   "type": "R"
+  },
+  {
+   "id": "8635150",
+   "name": "Colonial Beach, Va.",
+   "lat": 38.2517,
+   "lng": -76.96,
+   "type": "R"
+  },
+  {
+   "id": "8635154",
+   "name": "Massaponax",
+   "lat": 38.255,
+   "lng": -77.41,
+   "type": "S"
+  },
+  {
+   "id": "8635171",
+   "name": "Hopyard Landing",
+   "lat": 38.2433,
+   "lng": -77.2267,
+   "type": "S"
+  },
+  {
+   "id": "8635257",
+   "name": "Park Turn",
+   "lat": 38.2133,
+   "lng": -77.2433,
+   "type": "R"
+  },
+  {
+   "id": "8635299",
+   "name": "Port Royal",
+   "lat": 38.1733,
+   "lng": -77.19,
+   "type": "S"
+  },
+  {
+   "id": "8635409",
+   "name": "Mount Holly, Nomini Creek, Va.",
+   "lat": 38.0983,
+   "lng": -76.735,
+   "type": "S"
+  },
+  {
+   "id": "8635485",
+   "name": "Ragged Point, Coles Neck, Va.",
+   "lat": 38.1417,
+   "lng": -76.6133,
+   "type": "S"
+  },
+  {
+   "id": "8635554",
+   "name": "Saunders Wharf",
+   "lat": 38.09,
+   "lng": -77.0333,
+   "type": "S"
+  },
+  {
+   "id": "8635671",
+   "name": "Kinsale, Yeocomico River, Va.",
+   "lat": 38.0317,
+   "lng": -76.5767,
+   "type": "S"
+  },
+  {
+   "id": "8635750",
+   "name": "Lewisetta, Va.",
+   "lat": 37.99610137939453,
+   "lng": -76.46440124511719,
+   "type": "R"
+  },
+  {
+   "id": "8635762",
+   "name": "Travis Point, Coan River, Va.",
+   "lat": 37.9967,
+   "lng": -76.4667,
+   "type": "S"
+  },
+  {
+   "id": "8635881",
+   "name": "Tappahannock",
+   "lat": 37.93,
+   "lng": -76.8567,
+   "type": "S"
+  },
+  {
+   "id": "8635959",
+   "name": "Sunnybank, Little Wicomico River",
+   "lat": 37.8867,
+   "lng": -76.2667,
+   "type": "S"
+  },
+  {
+   "id": "8635985",
+   "name": "Wares Wharf",
+   "lat": 37.8733,
+   "lng": -76.7833,
+   "type": "R"
+  },
+  {
+   "id": "8636046",
+   "name": "Glebe Point, Great Wicomico River",
+   "lat": 37.8467,
+   "lng": -76.3683,
+   "type": "S"
+  },
+  {
+   "id": "8636128",
+   "name": "Fleeton Point",
+   "lat": 37.8133,
+   "lng": -76.275,
+   "type": "S"
+  },
+  {
+   "id": "8636142",
+   "name": "Great Wicomico River Light",
+   "lat": 37.805,
+   "lng": -76.2683,
+   "type": "S"
+  },
+  {
+   "id": "8636261",
+   "name": "Bayport",
+   "lat": 37.755,
+   "lng": -76.6733,
+   "type": "S"
+  },
+  {
+   "id": "8636458",
+   "name": "Millenbeck, Corrotoman River",
+   "lat": 37.6683,
+   "lng": -76.4867,
+   "type": "S"
+  },
+  {
+   "id": "8636499",
+   "name": "Wakema (Fraziers Ferry), Mattaponi River",
+   "lat": 37.65,
+   "lng": -76.9,
+   "type": "S"
+  },
+  {
+   "id": "8636522",
+   "name": "Urbanna",
+   "lat": 37.65,
+   "lng": -76.575,
+   "type": "S"
+  },
+  {
+   "id": "8636558",
+   "name": "Northbury",
+   "lat": 37.625,
+   "lng": -77.1217,
+   "type": "S"
+  },
+  {
+   "id": "8636580",
+   "name": "Windmill Point",
+   "lat": 37.6155,
+   "lng": -76.28977777777777,
+   "type": "R"
+  },
+  {
+   "id": "8636623",
+   "name": "Windmill Point Light",
+   "lat": 37.5967,
+   "lng": -76.2367,
+   "type": "S"
+  },
+  {
+   "id": "8636653",
+   "name": "Lester Manor",
+   "lat": 37.5833,
+   "lng": -76.99,
+   "type": "R"
+  },
+  {
+   "id": "8636654",
+   "name": "Mill Creek (Grey Point)",
+   "lat": 37.5833,
+   "lng": -76.4183,
+   "type": "S"
+  },
+  {
+   "id": "8636735",
+   "name": "Jackson Creek, Deltaville",
+   "lat": 37.5483,
+   "lng": -76.3317,
+   "type": "S"
+  },
+  {
+   "id": "8636769",
+   "name": "West Point",
+   "lat": 37.535,
+   "lng": -76.7933,
+   "type": "S"
+  },
+  {
+   "id": "8636831",
+   "name": "Dixie",
+   "lat": 37.5067,
+   "lng": -76.4167,
+   "type": "S"
+  },
+  {
+   "id": "8636941",
+   "name": "Richmond Deepwater Terminal, James River",
+   "lat": 37.45955555555555,
+   "lng": -77.42077777777777,
+   "type": "R"
+  },
+  {
+   "id": "8636969",
+   "name": "Roane Point",
+   "lat": 37.4467,
+   "lng": -76.7083,
+   "type": "S"
+  },
+  {
+   "id": "8637072",
+   "name": "Belleville",
+   "lat": 37.4117,
+   "lng": -76.4383,
+   "type": "S"
+  },
+  {
+   "id": "8637144",
+   "name": "Wolf Trap Light",
+   "lat": 37.39,
+   "lng": -76.19,
+   "type": "S"
+  },
+  {
+   "id": "8637199",
+   "name": "Mobjack, East River",
+   "lat": 37.3733,
+   "lng": -76.3467,
+   "type": "S"
+  },
+  {
+   "id": "8637444",
+   "name": "Browns Bay",
+   "lat": 37.3,
+   "lng": -76.4,
+   "type": "S"
+  },
+  {
+   "id": "8637472",
+   "name": "Cheatham Annex",
+   "lat": 37.2917,
+   "lng": -76.5867,
+   "type": "S"
+  },
+  {
+   "id": "8637624",
+   "name": "Gloucester Point",
+   "lat": 37.2467,
+   "lng": -76.5,
+   "type": "R"
+  },
+  {
+   "id": "8637663",
+   "name": "Tue Marshes Light",
+   "lat": 37.235,
+   "lng": -76.385,
+   "type": "S"
+  },
+  {
+   "id": "8637686",
+   "name": "Yorktown, Goodwin Neck",
+   "lat": 37.23,
+   "lng": -76.4367,
+   "type": "S"
+  },
+  {
+   "id": "8637689",
+   "name": "Yorktown, USCG Training Center",
+   "lat": 37.2265,
+   "lng": -76.47880555555555,
+   "type": "R"
+  },
+  {
+   "id": "8637712",
+   "name": "Jamestown",
+   "lat": 37.22010040283203,
+   "lng": -76.79139709472656,
+   "type": "R"
+  },
+  {
+   "id": "8638017",
+   "name": "Fort Eustis (MARAD)",
+   "lat": 37.13822222222223,
+   "lng": -76.62275,
+   "type": "R"
+  },
+  {
+   "id": "8638051",
+   "name": "Messick Point, Back River",
+   "lat": 37.1083,
+   "lng": -76.3183,
+   "type": "S"
+  },
+  {
+   "id": "8638288",
+   "name": "Old Point Comfort",
+   "lat": 37.0033,
+   "lng": -76.315,
+   "type": "S"
+  },
+  {
+   "id": "8638339",
+   "name": "Western Branch",
+   "lat": 36.82322222222222,
+   "lng": -76.39911111111111,
+   "type": "R"
+  },
+  {
+   "id": "8638379",
+   "name": "Newport News",
+   "lat": 36.9733,
+   "lng": -76.4333,
+   "type": "S"
+  },
+  {
+   "id": "8638401",
+   "name": "Huntington Park",
+   "lat": 37.0133,
+   "lng": -76.4583,
+   "type": "S"
+  },
+  {
+   "id": "8638406",
+   "name": "Town Point",
+   "lat": 36.8833,
+   "lng": -76.5083,
+   "type": "S"
+  },
+  {
+   "id": "8638407",
+   "name": "Menchville",
+   "lat": 37.0817,
+   "lng": -76.525,
+   "type": "S"
+  },
+  {
+   "id": "8638409",
+   "name": "Hollidays Point (Kings Highway bridge)",
+   "lat": 36.8383,
+   "lng": -76.55,
+   "type": "S"
+  },
+  {
+   "id": "8638418",
+   "name": "Smithfield, Pagan River",
+   "lat": 36.9833,
+   "lng": -76.63,
+   "type": "S"
+  },
+  {
+   "id": "8638421",
+   "name": "Burwell Bay",
+   "lat": 37.0567,
+   "lng": -76.6683,
+   "type": "S"
+  },
+  {
+   "id": "8638424",
+   "name": "Kingsmill",
+   "lat": 37.22,
+   "lng": -76.6633,
+   "type": "R"
+  },
+  {
+   "id": "8638433",
+   "name": "Scotland",
+   "lat": 37.185,
+   "lng": -76.7833,
+   "type": "R"
+  },
+  {
+   "id": "8638441",
+   "name": "Wright Island Landing",
+   "lat": 37.345,
+   "lng": -76.875,
+   "type": "S"
+  },
+  {
+   "id": "8638442",
+   "name": "Ferry Point (bridge)",
+   "lat": 37.2633,
+   "lng": -76.8767,
+   "type": "S"
+  },
+  {
+   "id": "8638445",
+   "name": "Lanexa, Chicahomny River",
+   "lat": 37.4033,
+   "lng": -76.9117,
+   "type": "R"
+  },
+  {
+   "id": "8638449",
+   "name": "Claremont",
+   "lat": 37.2317,
+   "lng": -76.9483,
+   "type": "S"
+  },
+  {
+   "id": "8638450",
+   "name": "Tettington, James River",
+   "lat": 37.24,
+   "lng": -76.9433,
+   "type": "R"
+  },
+  {
+   "id": "8638455",
+   "name": "Sturgeon Point",
+   "lat": 37.3067,
+   "lng": -77.0067,
+   "type": "S"
+  },
+  {
+   "id": "8638464",
+   "name": "Willcox Wharf, Charles City",
+   "lat": 37.315,
+   "lng": -77.0983,
+   "type": "R"
+  },
+  {
+   "id": "8638476",
+   "name": "Jordan Point",
+   "lat": 37.3133,
+   "lng": -77.2233,
+   "type": "S"
+  },
+  {
+   "id": "8638478",
+   "name": "Haxall",
+   "lat": 37.3733,
+   "lng": -77.2433,
+   "type": "S"
+  },
+  {
+   "id": "8638481",
+   "name": "City Point, Hopewell",
+   "lat": 37.3133,
+   "lng": -77.27,
+   "type": "R"
+  },
+  {
+   "id": "8638486",
+   "name": "Meadowville",
+   "lat": 37.3783,
+   "lng": -77.3233,
+   "type": "S"
+  },
+  {
+   "id": "8638489",
+   "name": "Puddledock, Appomattox River",
+   "lat": 37.2667,
+   "lng": -77.3717,
+   "type": "R"
+  },
+  {
+   "id": "8638491",
+   "name": "Chester",
+   "lat": 37.3833,
+   "lng": -77.3783,
+   "type": "S"
+  },
+  {
+   "id": "8638495",
+   "name": "Richmond (river locks)",
+   "lat": 37.525,
+   "lng": -77.42,
+   "type": "R"
+  },
+  {
+   "id": "8638514",
+   "name": "Pig Point",
+   "lat": 36.9167,
+   "lng": -76.435,
+   "type": "S"
+  },
+  {
+   "id": "8638596",
+   "name": "Craney Island Light",
+   "lat": 36.8917,
+   "lng": -76.3383,
+   "type": "S"
+  },
+  {
+   "id": "8638610",
+   "name": "HAMPTON ROADS (Sewells Point)",
+   "lat": 36.9427778,
+   "lng": -76.3286111,
+   "type": "R"
+  },
+  {
+   "id": "8638654",
+   "name": "Norfolk",
+   "lat": 36.8517,
+   "lng": -76.2983,
+   "type": "S"
+  },
+  {
+   "id": "8638660",
+   "name": "Portsmouth, Naval Shipyard",
+   "lat": 36.8217,
+   "lng": -76.2933,
+   "type": "R"
+  },
+  {
+   "id": "8638671",
+   "name": "Lafayette River",
+   "lat": 36.88422222222222,
+   "lng": -76.27585833333333,
+   "type": "R"
+  },
+  {
+   "id": "8638776",
+   "name": "Little Creek, NAB",
+   "lat": 36.9117,
+   "lng": -76.175,
+   "type": "S"
+  },
+  {
+   "id": "8638854",
+   "name": "Buchanan Creek entrance",
+   "lat": 36.8617,
+   "lng": -76.115,
+   "type": "S"
+  },
+  {
+   "id": "8638863",
+   "name": "CHESAPEAKE BAY BRIDGE TUNNEL",
+   "lat": 36.96670150756836,
+   "lng": -76.11329650878906,
+   "type": "R"
+  },
+  {
+   "id": "8638867",
+   "name": "Bayville",
+   "lat": 36.8933,
+   "lng": -76.105,
+   "type": "S"
+  },
+  {
+   "id": "8638888",
+   "name": "Lynnhaven Inlet, Virginia Pilots Dock",
+   "lat": 36.9067,
+   "lng": -76.09,
+   "type": "S"
+  },
+  {
+   "id": "8638901",
+   "name": "CBBT, CHESAPEAKE CHANNEL",
+   "lat": 37.032901763916016,
+   "lng": -76.08329772949219,
+   "type": "R"
+  },
+  {
+   "id": "8638916",
+   "name": "Long Creek",
+   "lat": 36.9033,
+   "lng": -76.07,
+   "type": "S"
+  },
+  {
+   "id": "8638922",
+   "name": "Brown Cove",
+   "lat": 36.875,
+   "lng": -76.0617,
+   "type": "S"
+  },
+  {
+   "id": "8638923",
+   "name": "Broad Bay Canal",
+   "lat": 36.9017,
+   "lng": -76.0617,
+   "type": "S"
+  },
+  {
+   "id": "8638999",
+   "name": "Cape Henry",
+   "lat": 36.93000030517578,
+   "lng": -76.00666809082031,
+   "type": "S"
+  },
+  {
+   "id": "8639168",
+   "name": "Virginia Beach",
+   "lat": 36.8433,
+   "lng": -75.9717,
+   "type": "S"
+  },
+  {
+   "id": "8639207",
+   "name": "Rudee Inlet, interior channel",
+   "lat": 36.8317,
+   "lng": -75.9733,
+   "type": "R"
+  },
+  {
+   "id": "8639208",
+   "name": "Rudee Inlet entrance",
+   "lat": 36.8317,
+   "lng": -75.9683,
+   "type": "S"
+  },
+  {
+   "id": "8639214",
+   "name": "Rudee Heights, Lake Wesley",
+   "lat": 36.825,
+   "lng": -75.975,
+   "type": "S"
+  },
+  {
+   "id": "8639219",
+   "name": "Lake Rudee, south end",
+   "lat": 36.825,
+   "lng": -75.9817,
+   "type": "S"
+  },
+  {
+   "id": "8639348",
+   "name": "Money Point",
+   "lat": 36.77819444444445,
+   "lng": -76.30186111111111,
+   "type": "R"
+  },
+  {
+   "id": "8639414",
+   "name": "Deep Creek Entrance",
+   "lat": 36.755,
+   "lng": -76.2933,
+   "type": "S"
+  },
+  {
+   "id": "8639428",
+   "name": "Sandbridge",
+   "lat": 36.6917,
+   "lng": -75.92,
+   "type": "S"
+  },
+  {
+   "id": "8651370",
+   "name": "DUCK PIER",
+   "lat": 36.18330001831055,
+   "lng": -75.74669647216797,
+   "type": "R"
+  },
+  {
+   "id": "8651605",
+   "name": "Kitty Hawk (ocean)",
+   "lat": 36.1017,
+   "lng": -75.71,
+   "type": "S"
+  },
+  {
+   "id": "8652226",
+   "name": "Jennettes Pier, Nags Head (ocean)",
+   "lat": 35.91,
+   "lng": -75.59169444444444,
+   "type": "S"
+  },
+  {
+   "id": "8652247",
+   "name": "Manns Harbor, Croatan Sound",
+   "lat": 35.9033,
+   "lng": -75.77,
+   "type": "R"
+  },
+  {
+   "id": "8652437",
+   "name": "Oyster Creek, Croatan Sound",
+   "lat": 35.845,
+   "lng": -75.655,
+   "type": "R"
+  },
+  {
+   "id": "8652547",
+   "name": "Roanoke Marshes Light, Croatan Sound",
+   "lat": 35.8117,
+   "lng": -75.7,
+   "type": "R"
+  },
+  {
+   "id": "8652587",
+   "name": "OREGON INLET MARINA",
+   "lat": 35.79569444444444,
+   "lng": -75.54819444444445,
+   "type": "R"
+  },
+  {
+   "id": "8652591",
+   "name": "Roanoke Sound Channel",
+   "lat": 35.7983,
+   "lng": -75.5833,
+   "type": "S"
+  },
+  {
+   "id": "8652648",
+   "name": "Old House Channel",
+   "lat": 35.77669906616211,
+   "lng": -75.58499908447266,
+   "type": "R"
+  },
+  {
+   "id": "8652657",
+   "name": "Oregon Inlet Channel",
+   "lat": 35.7733,
+   "lng": -75.5583,
+   "type": "S"
+  },
+  {
+   "id": "8652659",
+   "name": "Oregon Inlet Bridge",
+   "lat": 35.7733,
+   "lng": -75.5383,
+   "type": "S"
+  },
+  {
+   "id": "8652678",
+   "name": "Oregon Inlet (USCG Station)",
+   "lat": 35.7683,
+   "lng": -75.5267,
+   "type": "R"
+  },
+  {
+   "id": "8652737",
+   "name": "Davis Slough",
+   "lat": 35.7483,
+   "lng": -75.5533,
+   "type": "S"
+  },
+  {
+   "id": "8653215",
+   "name": "Rodanthe, Pamlico Sound",
+   "lat": 35.595001220703125,
+   "lng": -75.4717025756836,
+   "type": "R"
+  },
+  {
+   "id": "8653244",
+   "name": "Pungo River, Route 45, NC",
+   "lat": 35.585201263427734,
+   "lng": -76.48560333251953,
+   "type": "R"
+  },
+  {
+   "id": "8653471",
+   "name": "Engelhard",
+   "lat": 35.5093994140625,
+   "lng": -75.98889923095703,
+   "type": "R"
+  },
+  {
+   "id": "8653951",
+   "name": "Peter's Ditch",
+   "lat": 35.35013888888889,
+   "lng": -75.51202777777777,
+   "type": "R"
+  },
+  {
+   "id": "8654400",
+   "name": "CAPE HATTERAS FISHING PIER",
+   "lat": 35.2233,
+   "lng": -75.635,
+   "type": "R"
+  },
+  {
+   "id": "8654467",
+   "name": "Hatteras (ocean)",
+   "lat": 35.20859909057617,
+   "lng": -75.7042007446289,
+   "type": "R"
+  },
+  {
+   "id": "8654769",
+   "name": "Ocracoke, Pamlico Sound",
+   "lat": 35.115501403808594,
+   "lng": -75.98690032958984,
+   "type": "R"
+  },
+  {
+   "id": "8655133",
+   "name": "Oriental, Neuse River",
+   "lat": 35.024600982666016,
+   "lng": -76.69180297851562,
+   "type": "R"
+  },
+  {
+   "id": "8655151",
+   "name": "Cedar Island",
+   "lat": 35.01890182495117,
+   "lng": -76.31430053710938,
+   "type": "R"
+  },
+  {
+   "id": "8655875",
+   "name": "Sea Level",
+   "lat": 34.875,
+   "lng": -76.3433,
+   "type": "R"
+  },
+  {
+   "id": "8656084",
+   "name": "Core Creek Bridge",
+   "lat": 34.82500076293945,
+   "lng": -76.69000244140625,
+   "type": "R"
+  },
+  {
+   "id": "8656201",
+   "name": "Davis, Core Sound",
+   "lat": 34.79679870605469,
+   "lng": -76.45549774169922,
+   "type": "R"
+  },
+  {
+   "id": "8656225",
+   "name": "North River Bridge",
+   "lat": 34.7917,
+   "lng": -76.6083,
+   "type": "S"
+  },
+  {
+   "id": "8656306",
+   "name": "Newport River (Yacht Club)",
+   "lat": 34.7683,
+   "lng": -76.6717,
+   "type": "S"
+  },
+  {
+   "id": "8656451",
+   "name": "Gallant Channel",
+   "lat": 34.7283,
+   "lng": -76.6683,
+   "type": "S"
+  },
+  {
+   "id": "8656467",
+   "name": "SpoonersCreek",
+   "lat": 34.725,
+   "lng": -76.8033,
+   "type": "R"
+  },
+  {
+   "id": "8656483",
+   "name": "Beaufort, Duke Marine Lab",
+   "lat": 34.71733055555556,
+   "lng": -76.67065833333334,
+   "type": "R"
+  },
+  {
+   "id": "8656496",
+   "name": "Morehead City",
+   "lat": 34.7183,
+   "lng": -76.695,
+   "type": "S"
+  },
+  {
+   "id": "8656499",
+   "name": "Atlantic Beach Bridge",
+   "lat": 34.7183,
+   "lng": -76.7367,
+   "type": "S"
+  },
+  {
+   "id": "8656502",
+   "name": "Morehead City Harbor",
+   "lat": 34.720001220703125,
+   "lng": -76.71080017089844,
+   "type": "R"
+  },
+  {
+   "id": "8656503",
+   "name": "Harkers Island Bridge",
+   "lat": 34.715,
+   "lng": -76.5783,
+   "type": "S"
+  },
+  {
+   "id": "8656518",
+   "name": "Beaufort, Taylor Creek",
+   "lat": 34.7117,
+   "lng": -76.645,
+   "type": "S"
+  },
+  {
+   "id": "8656539",
+   "name": "Lenoxville Point",
+   "lat": 34.7083,
+   "lng": -76.62,
+   "type": "S"
+  },
+  {
+   "id": "8656554",
+   "name": "Channel Marker Lt. 59",
+   "lat": 34.7033,
+   "lng": -76.62,
+   "type": "S"
+  },
+  {
+   "id": "8656566",
+   "name": "Coral Bay, Atlantic Beach",
+   "lat": 34.7,
+   "lng": -76.7683,
+   "type": "S"
+  },
+  {
+   "id": "8656569",
+   "name": "Beaufort Inlet Channel Range",
+   "lat": 34.6983,
+   "lng": -76.665,
+   "type": "S"
+  },
+  {
+   "id": "8656571",
+   "name": "Fort Macon, USCG Station",
+   "lat": 34.6983,
+   "lng": -76.6817,
+   "type": "S"
+  },
+  {
+   "id": "8656590",
+   "name": "Atlantic Beach",
+   "lat": 34.6933,
+   "lng": -76.7117,
+   "type": "R"
+  },
+  {
+   "id": "8656613",
+   "name": "Swansboro, East Corbett Ave. Bridge",
+   "lat": 34.68659973144531,
+   "lng": -77.11810302734375,
+   "type": "R"
+  },
+  {
+   "id": "8656841",
+   "name": "Cape Lookout Bight",
+   "lat": 34.6133,
+   "lng": -76.5383,
+   "type": "R"
+  },
+  {
+   "id": "8656937",
+   "name": "Cape Lookout (ocean)",
+   "lat": 34.6083,
+   "lng": -76.5283,
+   "type": "S"
+  },
+  {
+   "id": "8657002",
+   "name": "Sneads Ferry, New River",
+   "lat": 34.57630157470703,
+   "lng": -77.39540100097656,
+   "type": "R"
+  },
+  {
+   "id": "8657167",
+   "name": "New River Inlet",
+   "lat": 34.5333,
+   "lng": -77.3417,
+   "type": "S"
+  },
+  {
+   "id": "8657419",
+   "name": "Ocean City Beach (fishing pier)",
+   "lat": 34.4517,
+   "lng": -77.495,
+   "type": "S"
+  },
+  {
+   "id": "8657813",
+   "name": "Hampstead",
+   "lat": 34.33940124511719,
+   "lng": -77.70600128173828,
+   "type": "R"
+  },
+  {
+   "id": "8658120",
+   "name": "Wilmington",
+   "lat": 34.22669982910156,
+   "lng": -77.95330047607422,
+   "type": "R"
+  },
+  {
+   "id": "8658145",
+   "name": "Shinn Point, ICWW",
+   "lat": 34.217899322509766,
+   "lng": -77.81230163574219,
+   "type": "R"
+  },
+  {
+   "id": "8658163",
+   "name": "Wrightsville Beach",
+   "lat": 34.21330555555556,
+   "lng": -77.78669444444445,
+   "type": "R"
+  },
+  {
+   "id": "8658501",
+   "name": "Orton Point",
+   "lat": 34.0567,
+   "lng": -77.94,
+   "type": "S"
+  },
+  {
+   "id": "8658559",
+   "name": "Wilmington Beach",
+   "lat": 34.0317,
+   "lng": -77.8933,
+   "type": "S"
+  },
+  {
+   "id": "8658579",
+   "name": "Sunny Point Army Base, Wharf no.3",
+   "lat": 34.0233,
+   "lng": -77.9467,
+   "type": "R"
+  },
+  {
+   "id": "8658622",
+   "name": "Reaves Point",
+   "lat": 34.0033,
+   "lng": -77.955,
+   "type": "S"
+  },
+  {
+   "id": "8658654",
+   "name": "Sunny Point Army Base, Wharf no.1",
+   "lat": 33.99,
+   "lng": -77.9567,
+   "type": "S"
+  },
+  {
+   "id": "8658715",
+   "name": "Federal Point",
+   "lat": 33.9617,
+   "lng": -77.94,
+   "type": "S"
+  },
+  {
+   "id": "8658741",
+   "name": "Zekes Island",
+   "lat": 33.95,
+   "lng": -77.9517,
+   "type": "R"
+  },
+  {
+   "id": "8658901",
+   "name": "Bald Head",
+   "lat": 33.88,
+   "lng": -78.0017,
+   "type": "S"
+  },
+  {
+   "id": "8659084",
+   "name": "Southport",
+   "lat": 33.915,
+   "lng": -78.0183,
+   "type": "R"
+  },
+  {
+   "id": "8659086",
+   "name": "Fort Caswell",
+   "lat": 33.8967,
+   "lng": -78.0167,
+   "type": "S"
+  },
+  {
+   "id": "8659182",
+   "name": "Oak Island, Yaupon Beach",
+   "lat": 33.9017,
+   "lng": -78.0817,
+   "type": "R"
+  },
+  {
+   "id": "8659414",
+   "name": "Varnamtown, Lockwoods Folly River",
+   "lat": 33.933101654052734,
+   "lng": -78.21890258789062,
+   "type": "R"
+  },
+  {
+   "id": "8659665",
+   "name": "Bowen Point, Shallotte Inlet",
+   "lat": 33.915000915527344,
+   "lng": -78.37329864501953,
+   "type": "R"
+  },
+  {
+   "id": "8659897",
+   "name": "Sunset Beach Pier",
+   "lat": 33.865,
+   "lng": -78.5067,
+   "type": "R"
+  },
+  {
+   "id": "8660098",
+   "name": "Little River Neck, north end",
+   "lat": 33.87,
+   "lng": -78.5733,
+   "type": "S"
+  },
+  {
+   "id": "8660121",
+   "name": "Little River (town)",
+   "lat": 33.87,
+   "lng": -78.6083,
+   "type": "S"
+  },
+  {
+   "id": "8660147",
+   "name": "Dunn Sound, north end",
+   "lat": 33.86,
+   "lng": -78.58,
+   "type": "S"
+  },
+  {
+   "id": "8660148",
+   "name": "Dunn Sound, Little River Inlet",
+   "lat": 33.8583,
+   "lng": -78.57,
+   "type": "S"
+  },
+  {
+   "id": "8660166",
+   "name": "Nixon Crossroads",
+   "lat": 33.855,
+   "lng": -78.6483,
+   "type": "S"
+  },
+  {
+   "id": "8660195",
+   "name": "Dunn Sound, west end",
+   "lat": 33.8517,
+   "lng": -78.5883,
+   "type": "S"
+  },
+  {
+   "id": "8660265",
+   "name": "Cherry Grove (inside)",
+   "lat": 33.835,
+   "lng": -78.6333,
+   "type": "S"
+  },
+  {
+   "id": "8660266",
+   "name": "Hog Inlet Pier",
+   "lat": 33.8367,
+   "lng": -78.6067,
+   "type": "S"
+  },
+  {
+   "id": "8660275",
+   "name": "Conway, RR. bridge",
+   "lat": 33.835,
+   "lng": -79.0417,
+   "type": "S"
+  },
+  {
+   "id": "8660315",
+   "name": "Grahamville",
+   "lat": 33.83,
+   "lng": -78.9533,
+   "type": "S"
+  },
+  {
+   "id": "8660401",
+   "name": "Myrtle Beach Airport",
+   "lat": 33.82,
+   "lng": -78.7183,
+   "type": "S"
+  },
+  {
+   "id": "8660475",
+   "name": "Pitch Landing",
+   "lat": 33.8,
+   "lng": -79.055,
+   "type": "S"
+  },
+  {
+   "id": "8660642",
+   "name": "North Myrtle Beach, ICWW",
+   "lat": 33.766700744628906,
+   "lng": -78.81500244140625,
+   "type": "S"
+  },
+  {
+   "id": "8660754",
+   "name": "Carolina Forest, ICWW",
+   "lat": 33.734901428222656,
+   "lng": -78.88269805908203,
+   "type": "R"
+  },
+  {
+   "id": "8660831",
+   "name": "Keysfield",
+   "lat": 33.745,
+   "lng": -79.065,
+   "type": "S"
+  },
+  {
+   "id": "8660854",
+   "name": "Myrtle Beach, Combination Bridge",
+   "lat": 33.7133,
+   "lng": -78.9217,
+   "type": "S"
+  },
+  {
+   "id": "8660983",
+   "name": "Socastee Bridge",
+   "lat": 33.6867,
+   "lng": -79.005,
+   "type": "S"
+  },
+  {
+   "id": "8661067",
+   "name": "Enterprise Landing",
+   "lat": 33.6667,
+   "lng": -79.0633,
+   "type": "S"
+  },
+  {
+   "id": "8661070",
+   "name": "Springmaid Pier, Myrtle beach",
+   "lat": 33.654998779296875,
+   "lng": -78.91829681396484,
+   "type": "R"
+  },
+  {
+   "id": "8661093",
+   "name": "Yauhannah Bridge",
+   "lat": 33.66,
+   "lng": -79.155,
+   "type": "S"
+  },
+  {
+   "id": "8661119",
+   "name": "Little Bull Creek entrance, Bull Creek",
+   "lat": 33.6017,
+   "lng": -79.1183,
+   "type": "S"
+  },
+  {
+   "id": "8661139",
+   "name": "Bucksport",
+   "lat": 33.6467,
+   "lng": -79.095,
+   "type": "R"
+  },
+  {
+   "id": "8661299",
+   "name": "Lower Topsaw Landing",
+   "lat": 33.6083,
+   "lng": -79.1517,
+   "type": "S"
+  },
+  {
+   "id": "8661347",
+   "name": "Bull Creek entrance",
+   "lat": 33.5967,
+   "lng": -79.0983,
+   "type": "S"
+  },
+  {
+   "id": "8661367",
+   "name": "Rhems, Black Mingo Creek, Black River",
+   "lat": 33.6033,
+   "lng": -79.4267,
+   "type": "S"
+  },
+  {
+   "id": "8661419",
+   "name": "Garden City Bridge, Main Creek",
+   "lat": 33.5783,
+   "lng": -79.0033,
+   "type": "R"
+  },
+  {
+   "id": "8661437",
+   "name": "Garden City Pier (ocean)",
+   "lat": 33.575,
+   "lng": -78.9967,
+   "type": "R"
+  },
+  {
+   "id": "8661493",
+   "name": "Wachesaw Landing, Waccamaw River",
+   "lat": 33.560001373291016,
+   "lng": -79.08499908447266,
+   "type": "R"
+  },
+  {
+   "id": "8661529",
+   "name": "Captain Alex's Marina, Parsonage Creek",
+   "lat": 33.5517,
+   "lng": -79.0367,
+   "type": "S"
+  },
+  {
+   "id": "8661558",
+   "name": "Holly Grove Plantation",
+   "lat": 33.5517,
+   "lng": -79.1767,
+   "type": "S"
+  },
+  {
+   "id": "8661559",
+   "name": "Smith's Dock",
+   "lat": 33.545,
+   "lng": -79.045,
+   "type": "S"
+  },
+  {
+   "id": "8661582",
+   "name": "Divine's Dock",
+   "lat": 33.5417,
+   "lng": -79.0283,
+   "type": "S"
+  },
+  {
+   "id": "8661593",
+   "name": "Winea Plantation, Black River",
+   "lat": 33.535,
+   "lng": -79.3883,
+   "type": "S"
+  },
+  {
+   "id": "8661608",
+   "name": "Allston Creek",
+   "lat": 33.5317,
+   "lng": -79.0533,
+   "type": "S"
+  },
+  {
+   "id": "8661609",
+   "name": "Oaks Creek, 0.5 mi. above entrance",
+   "lat": 33.53,
+   "lng": -79.0433,
+   "type": "S"
+  },
+  {
+   "id": "8661684",
+   "name": "Oaks Creek, upper end",
+   "lat": 33.5117,
+   "lng": -79.0683,
+   "type": "R"
+  },
+  {
+   "id": "8661686",
+   "name": "Black River (south of Dunbar)",
+   "lat": 33.5117,
+   "lng": -79.3417,
+   "type": "S"
+  },
+  {
+   "id": "8661703",
+   "name": "Thoroughfare Creek entrance",
+   "lat": 33.5067,
+   "lng": -79.145,
+   "type": "R"
+  },
+  {
+   "id": "8661734",
+   "name": "Mt. Pleasant Plantation, Black River",
+   "lat": 33.495,
+   "lng": -79.4617,
+   "type": "S"
+  },
+  {
+   "id": "8661741",
+   "name": "Arundel Plantation",
+   "lat": 33.4833,
+   "lng": -79.1783,
+   "type": "S"
+  },
+  {
+   "id": "8661866",
+   "name": "South of Sam Worth Game Management Area",
+   "lat": 33.4683,
+   "lng": -79.1883,
+   "type": "S"
+  },
+  {
+   "id": "8661867",
+   "name": "Litchfield Beach bridge",
+   "lat": 33.4717,
+   "lng": -79.1017,
+   "type": "S"
+  },
+  {
+   "id": "8661873",
+   "name": "Carr Creek, 1 mile above entrance",
+   "lat": 33.465,
+   "lng": -79.1867,
+   "type": "S"
+  },
+  {
+   "id": "8661913",
+   "name": "Weymouth Plantation",
+   "lat": 33.455,
+   "lng": -79.205,
+   "type": "S"
+  },
+  {
+   "id": "8661947",
+   "name": "Midway Inlet North, Pawleys Island",
+   "lat": 33.4483,
+   "lng": -79.1117,
+   "type": "S"
+  },
+  {
+   "id": "8661989",
+   "name": "Bennet's Dock, Pawleys Island Creek",
+   "lat": 33.435,
+   "lng": -79.1267,
+   "type": "R"
+  },
+  {
+   "id": "8661991",
+   "name": "Hagley Landing",
+   "lat": 33.435,
+   "lng": -79.1817,
+   "type": "S"
+  },
+  {
+   "id": "8662006",
+   "name": "Pawleys Island Pier (ocean)",
+   "lat": 33.4317,
+   "lng": -79.1167,
+   "type": "R"
+  },
+  {
+   "id": "8662071",
+   "name": "Ward's Dock, Pawleys Inlet",
+   "lat": 33.4117,
+   "lng": -79.135,
+   "type": "R"
+  },
+  {
+   "id": "8662216",
+   "name": "Cumberland",
+   "lat": 33.37,
+   "lng": -79.4333,
+   "type": "S"
+  },
+  {
+   "id": "8662237",
+   "name": "Jacobs Wharf",
+   "lat": 33.3633,
+   "lng": -79.355,
+   "type": "S"
+  },
+  {
+   "id": "8662245",
+   "name": "Oyster Landing (N. Inlet Estuary)",
+   "lat": 33.35169982910156,
+   "lng": -79.18669891357422,
+   "type": "R"
+  },
+  {
+   "id": "8662299",
+   "name": "Clambank Creek, Goat Island, North Inlet",
+   "lat": 33.3333,
+   "lng": -79.1933,
+   "type": "R"
+  },
+  {
+   "id": "8662405",
+   "name": "Jamestown Bridge, Santee River",
+   "lat": 33.305,
+   "lng": -79.6783,
+   "type": "S"
+  },
+  {
+   "id": "8662549",
+   "name": "South Island Ferry, Intracoastal Waterway",
+   "lat": 33.2517,
+   "lng": -79.2683,
+   "type": "S"
+  },
+  {
+   "id": "8662670",
+   "name": "Pleasant Hill Landing, Santee River",
+   "lat": 33.245,
+   "lng": -79.5217,
+   "type": "S"
+  },
+  {
+   "id": "8662746",
+   "name": "South Island Plantation (C.G. Station)",
+   "lat": 33.235,
+   "lng": -79.2033,
+   "type": "S"
+  },
+  {
+   "id": "8662747",
+   "name": "Georgetown Lighthouse",
+   "lat": 33.2233,
+   "lng": -79.185,
+   "type": "S"
+  },
+  {
+   "id": "8662793",
+   "name": "North Santee Bridge",
+   "lat": 33.21,
+   "lng": -79.385,
+   "type": "S"
+  },
+  {
+   "id": "8662796",
+   "name": "Minim Creek ent., ICWW, North Santee Bay",
+   "lat": 33.195,
+   "lng": -79.275,
+   "type": "S"
+  },
+  {
+   "id": "8662799",
+   "name": "U.S. Highway 17 bridge, South Santee River",
+   "lat": 33.185,
+   "lng": -79.4067,
+   "type": "S"
+  },
+  {
+   "id": "8662926",
+   "name": "Georgetown, Sampit River Ent.",
+   "lat": 33.361698150634766,
+   "lng": -79.27999877929688,
+   "type": "R"
+  },
+  {
+   "id": "8662931",
+   "name": "Waccamaw River Entrance",
+   "lat": 33.36669921875,
+   "lng": -79.25499725341797,
+   "type": "R"
+  },
+  {
+   "id": "8662953",
+   "name": "Windsor Plantation, Black River",
+   "lat": 33.415,
+   "lng": -79.25,
+   "type": "R"
+  },
+  {
+   "id": "8663101",
+   "name": "Cape Romain",
+   "lat": 33.025,
+   "lng": -79.3483,
+   "type": "S"
+  },
+  {
+   "id": "8663219",
+   "name": "South Santee River, ICWW, 4 Mi Canal Creek",
+   "lat": 33.15420150756836,
+   "lng": -79.35440063476562,
+   "type": "R"
+  },
+  {
+   "id": "8663261",
+   "name": "Cedar Island, North Santee Bay",
+   "lat": 33.14,
+   "lng": -79.245,
+   "type": "S"
+  },
+  {
+   "id": "8663381",
+   "name": "Cedar Island Point, South Santee River",
+   "lat": 33.12,
+   "lng": -79.27,
+   "type": "S"
+  },
+  {
+   "id": "8663461",
+   "name": "Casino Creek, ICWW",
+   "lat": 33.1083,
+   "lng": -79.3933,
+   "type": "S"
+  },
+  {
+   "id": "8663535",
+   "name": "Quinby Creek bridge, East Branch",
+   "lat": 33.095,
+   "lng": -79.8083,
+   "type": "S"
+  },
+  {
+   "id": "8663539",
+   "name": "Pimlico, West Branch",
+   "lat": 33.095,
+   "lng": -79.9533,
+   "type": "S"
+  },
+  {
+   "id": "8663618",
+   "name": "McClellanville, Jeremy Creek",
+   "lat": 33.0783,
+   "lng": -79.46,
+   "type": "S"
+  },
+  {
+   "id": "8663631",
+   "name": "Old Rice Mill, West Branch",
+   "lat": 33.0783,
+   "lng": -79.925,
+   "type": "S"
+  },
+  {
+   "id": "8663665",
+   "name": "Richmond Plantation, East Branch",
+   "lat": 33.0767,
+   "lng": -79.855,
+   "type": "S"
+  },
+  {
+   "id": "8663731",
+   "name": "Bonneau Ferry, East Branch",
+   "lat": 33.0717,
+   "lng": -79.8833,
+   "type": "S"
+  },
+  {
+   "id": "8663757",
+   "name": "Dupont, Dean Hall",
+   "lat": 33.0583,
+   "lng": -79.9367,
+   "type": "S"
+  },
+  {
+   "id": "8663781",
+   "name": "Blessing Plantation, East Branch",
+   "lat": 33.055,
+   "lng": -79.88,
+   "type": "S"
+  },
+  {
+   "id": "8663858",
+   "name": "Buck Hall, Awendaw Creek",
+   "lat": 33.040000915527344,
+   "lng": -79.55999755859375,
+   "type": "R"
+  },
+  {
+   "id": "8663899",
+   "name": "Harbor River entrance",
+   "lat": 33.0333,
+   "lng": -79.535,
+   "type": "S"
+  },
+  {
+   "id": "8664022",
+   "name": "General Dynamics Pier",
+   "lat": 33.0083,
+   "lng": -79.9233,
+   "type": "R"
+  },
+  {
+   "id": "8664099",
+   "name": "Five Fathom Creek entrance",
+   "lat": 33,
+   "lng": -79.4967,
+   "type": "S"
+  },
+  {
+   "id": "8664131",
+   "name": "Back River Reservoir, West Branch",
+   "lat": 32.995,
+   "lng": -79.9367,
+   "type": "S"
+  },
+  {
+   "id": "8664442",
+   "name": "Moores Landing, ICWW, Sewee Bay",
+   "lat": 32.9367,
+   "lng": -79.655,
+   "type": "S"
+  },
+  {
+   "id": "8664515",
+   "name": "Snow Point, 0.4 mi. North of",
+   "lat": 32.9483,
+   "lng": -79.9317,
+   "type": "S"
+  },
+  {
+   "id": "8664531",
+   "name": "Bacon Bridge",
+   "lat": 32.9583,
+   "lng": -80.2033,
+   "type": "S"
+  },
+  {
+   "id": "8664532",
+   "name": "Greggs Landing, Mateeba Gardens",
+   "lat": 32.9317,
+   "lng": -80.1567,
+   "type": "S"
+  },
+  {
+   "id": "8664541",
+   "name": "Yeamans Hall, Goose Creek",
+   "lat": 32.925,
+   "lng": -79.9867,
+   "type": "S"
+  },
+  {
+   "id": "8664545",
+   "name": "Cainhoy",
+   "lat": 32.9267,
+   "lng": -79.83,
+   "type": "R"
+  },
+  {
+   "id": "8664582",
+   "name": "Woodville",
+   "lat": 32.92,
+   "lng": -79.7333,
+   "type": "S"
+  },
+  {
+   "id": "8664589",
+   "name": "Hanahan, Turkey Creek, Goose Creek",
+   "lat": 32.9183,
+   "lng": -80.0117,
+   "type": "S"
+  },
+  {
+   "id": "8664611",
+   "name": "Big Paradise Island",
+   "lat": 32.915,
+   "lng": -79.7467,
+   "type": "S"
+  },
+  {
+   "id": "8664621",
+   "name": "Wharf Creek entrance",
+   "lat": 32.9133,
+   "lng": -79.6167,
+   "type": "S"
+  },
+  {
+   "id": "8664662",
+   "name": "Goose Creek entrance",
+   "lat": 32.91,
+   "lng": -79.9517,
+   "type": "R"
+  },
+  {
+   "id": "8664688",
+   "name": "Clouter Creek, north entrance",
+   "lat": 32.9067,
+   "lng": -79.935,
+   "type": "S"
+  },
+  {
+   "id": "8664699",
+   "name": "North Charleston, Ashley river",
+   "lat": 32.900299072265625,
+   "lng": -80.11750030517578,
+   "type": "R"
+  },
+  {
+   "id": "8664701",
+   "name": "Nowell Creek",
+   "lat": 32.9,
+   "lng": -79.9,
+   "type": "S"
+  },
+  {
+   "id": "8664782",
+   "name": "Parker Island, Horlbeck Creek",
+   "lat": 32.885,
+   "lng": -79.845,
+   "type": "S"
+  },
+  {
+   "id": "8664801",
+   "name": "Price Creek, North Capers Island",
+   "lat": 32.8817,
+   "lng": -79.6583,
+   "type": "S"
+  },
+  {
+   "id": "8664841",
+   "name": "Magnolia Gardens",
+   "lat": 32.8767,
+   "lng": -80.0833,
+   "type": "S"
+  },
+  {
+   "id": "8664878",
+   "name": "Old Capers Landing, Santee Pass, Capers Island",
+   "lat": 32.87,
+   "lng": -79.6867,
+   "type": "S"
+  },
+  {
+   "id": "8664941",
+   "name": "Capers Creek, South Capers Island",
+   "lat": 32.8567,
+   "lng": -79.7067,
+   "type": "R"
+  },
+  {
+   "id": "8664945",
+   "name": "Clouter Creek, south entrance",
+   "lat": 32.86,
+   "lng": -79.9383,
+   "type": "S"
+  },
+  {
+   "id": "8664992",
+   "name": "North Dewees Island, Capers Inlet",
+   "lat": 32.85,
+   "lng": -79.7033,
+   "type": "S"
+  },
+  {
+   "id": "8665002",
+   "name": "Drayton, Bee's Ferry",
+   "lat": 32.8483,
+   "lng": -80.0517,
+   "type": "S"
+  },
+  {
+   "id": "8665099",
+   "name": "I-526 bridge",
+   "lat": 32.8367,
+   "lng": -80.0217,
+   "type": "R"
+  },
+  {
+   "id": "8665101",
+   "name": "Cosgrove Bridge",
+   "lat": 32.835,
+   "lng": -79.9867,
+   "type": "S"
+  },
+  {
+   "id": "8665111",
+   "name": "South Dewees Island, Dewees Inlet",
+   "lat": 32.8333,
+   "lng": -79.7267,
+   "type": "S"
+  },
+  {
+   "id": "8665145",
+   "name": "Duck Island",
+   "lat": 32.83,
+   "lng": -79.9667,
+   "type": "S"
+  },
+  {
+   "id": "8665167",
+   "name": "Hamlin Sound",
+   "lat": 32.8267,
+   "lng": -79.7867,
+   "type": "S"
+  },
+  {
+   "id": "8665192",
+   "name": "Hobcaw Point",
+   "lat": 32.8217,
+   "lng": -79.9,
+   "type": "S"
+  },
+  {
+   "id": "8665257",
+   "name": "Canaday Landing, south of, Edisto River",
+   "lat": 32.8133,
+   "lng": -80.4067,
+   "type": "S"
+  },
+  {
+   "id": "8665387",
+   "name": "Hamlin Creek, Isle of Palms",
+   "lat": 32.7867,
+   "lng": -79.7917,
+   "type": "S"
+  },
+  {
+   "id": "8665424",
+   "name": "Folly Creek, Hwy. 171 bridge",
+   "lat": 32.675,
+   "lng": -79.9517,
+   "type": "S"
+  },
+  {
+   "id": "8665426",
+   "name": "Shem Creek",
+   "lat": 32.7933,
+   "lng": -79.8817,
+   "type": "S"
+  },
+  {
+   "id": "8665475",
+   "name": "Limehouse Bridge",
+   "lat": 32.7867,
+   "lng": -80.105,
+   "type": "S"
+  },
+  {
+   "id": "8665494",
+   "name": "Isle of Palms Pier",
+   "lat": 32.7833,
+   "lng": -79.785,
+   "type": "S"
+  },
+  {
+   "id": "8665495",
+   "name": "South Ashley Bridge",
+   "lat": 32.7833,
+   "lng": -79.9567,
+   "type": "S"
+  },
+  {
+   "id": "8665530",
+   "name": "CHARLESTON (Customhouse Wharf)",
+   "lat": 32.7808333,
+   "lng": -79.9236111,
+   "type": "R"
+  },
+  {
+   "id": "8665552",
+   "name": "Breach Inlet, Isle of Palms",
+   "lat": 32.7767,
+   "lng": -79.8117,
+   "type": "S"
+  },
+  {
+   "id": "8665567",
+   "name": "Ben Sawyer Bridge, ICWW",
+   "lat": 32.7733,
+   "lng": -79.8417,
+   "type": "S"
+  },
+  {
+   "id": "8665589",
+   "name": "Sandblasters, Pennys Creek",
+   "lat": 32.77,
+   "lng": -80.0633,
+   "type": "S"
+  },
+  {
+   "id": "8665599",
+   "name": "Pennys Creek, west entrance",
+   "lat": 32.7683,
+   "lng": -80.07,
+   "type": "S"
+  },
+  {
+   "id": "8665613",
+   "name": "Wappoo Creek, highway bridge",
+   "lat": 32.7667,
+   "lng": -79.9733,
+   "type": "S"
+  },
+  {
+   "id": "8665637",
+   "name": "The Cove, Fort Moultrie",
+   "lat": 32.7633,
+   "lng": -79.8567,
+   "type": "S"
+  },
+  {
+   "id": "8665641",
+   "name": "Elliott Cut entrance",
+   "lat": 32.7633,
+   "lng": -80.0017,
+   "type": "S"
+  },
+  {
+   "id": "8665726",
+   "name": "Fort Johnson",
+   "lat": 32.7517,
+   "lng": -79.8983,
+   "type": "S"
+  },
+  {
+   "id": "8665728",
+   "name": "Fort Sumter",
+   "lat": 32.7533,
+   "lng": -79.8767,
+   "type": "S"
+  },
+  {
+   "id": "8665737",
+   "name": "Jacksonboro Camp",
+   "lat": 32.7533,
+   "lng": -80.45,
+   "type": "S"
+  },
+  {
+   "id": "8665763",
+   "name": "Hollywood, Wadmalaw River",
+   "lat": 32.746700286865234,
+   "lng": -80.16500091552734,
+   "type": "R"
+  },
+  {
+   "id": "8665775",
+   "name": "James Island Creek, 1 mi. above ent.",
+   "lat": 32.745,
+   "lng": -79.9483,
+   "type": "S"
+  },
+  {
+   "id": "8665814",
+   "name": "Ashepoo",
+   "lat": 32.7433,
+   "lng": -80.5567,
+   "type": "S"
+  },
+  {
+   "id": "8666017",
+   "name": "Penny Creek, south of, Edisto River",
+   "lat": 32.715,
+   "lng": -80.4367,
+   "type": "S"
+  },
+  {
+   "id": "8666029",
+   "name": "Church Creek bridge",
+   "lat": 32.715,
+   "lng": -80.0917,
+   "type": "S"
+  },
+  {
+   "id": "8666101",
+   "name": "Johns Island, Church Creek",
+   "lat": 32.7067,
+   "lng": -80.1567,
+   "type": "S"
+  },
+  {
+   "id": "8666131",
+   "name": "Lower Toogoodoo Creek, 2 mi. above entrance",
+   "lat": 32.7033,
+   "lng": -80.2783,
+   "type": "S"
+  },
+  {
+   "id": "8666166",
+   "name": "Cuckolds Creek",
+   "lat": 32.7133,
+   "lng": -80.695,
+   "type": "S"
+  },
+  {
+   "id": "8666167",
+   "name": "Hope Creek, Edisto River",
+   "lat": 32.7,
+   "lng": -80.4267,
+   "type": "S"
+  },
+  {
+   "id": "8666217",
+   "name": "Yonges Island",
+   "lat": 32.695,
+   "lng": -80.2233,
+   "type": "S"
+  },
+  {
+   "id": "8666282",
+   "name": "Oak Branch, Bohicket Creek",
+   "lat": 32.6833,
+   "lng": -80.0967,
+   "type": "S"
+  },
+  {
+   "id": "8666283",
+   "name": "Abbapoola Creek entrance",
+   "lat": 32.6767,
+   "lng": -80.0067,
+   "type": "S"
+  },
+  {
+   "id": "8666359",
+   "name": "Bluff Plantation",
+   "lat": 32.6833,
+   "lng": -80.7383,
+   "type": "S"
+  },
+  {
+   "id": "8666367",
+   "name": "Willtown Bluff, Edisto River",
+   "lat": 32.6817,
+   "lng": -80.4167,
+   "type": "S"
+  },
+  {
+   "id": "8666433",
+   "name": "Toogoodoo Creek, 2 mi. above entrance",
+   "lat": 32.6683,
+   "lng": -80.2933,
+   "type": "S"
+  },
+  {
+   "id": "8666467",
+   "name": "Folly River, north, Folly Island",
+   "lat": 32.67,
+   "lng": -79.9167,
+   "type": "S"
+  },
+  {
+   "id": "8666552",
+   "name": "Park Island, Tom Point Creek",
+   "lat": 32.665,
+   "lng": -80.3167,
+   "type": "S"
+  },
+  {
+   "id": "8666616",
+   "name": "Dawho River",
+   "lat": 32.6567,
+   "lng": -80.3917,
+   "type": "S"
+  },
+  {
+   "id": "8666652",
+   "name": "Folly River Bridge, Folly Island",
+   "lat": 32.6617,
+   "lng": -79.945,
+   "type": "S"
+  },
+  {
+   "id": "8666659",
+   "name": "U.S. 17 Bridge",
+   "lat": 32.6517,
+   "lng": -80.6833,
+   "type": "S"
+  },
+  {
+   "id": "8666699",
+   "name": "Bluff Point",
+   "lat": 32.6467,
+   "lng": -80.2567,
+   "type": "S"
+  },
+  {
+   "id": "8666749",
+   "name": "Airy Hall Plantation",
+   "lat": 32.6317,
+   "lng": -80.4717,
+   "type": "S"
+  },
+  {
+   "id": "8666767",
+   "name": "Snake Island",
+   "lat": 32.64,
+   "lng": -80.015,
+   "type": "S"
+  },
+  {
+   "id": "8666775",
+   "name": "Leadenwah Creek, 3 mi. above entrance",
+   "lat": 32.6367,
+   "lng": -80.2017,
+   "type": "S"
+  },
+  {
+   "id": "8666799",
+   "name": "Dawho Bridge, Dawho River",
+   "lat": 32.6367,
+   "lng": -80.3417,
+   "type": "S"
+  },
+  {
+   "id": "8666918",
+   "name": "Ho-Non-Wah Boy Scout Camp, Bohicket Creek",
+   "lat": 32.625,
+   "lng": -80.1667,
+   "type": "S"
+  },
+  {
+   "id": "8667017",
+   "name": "Brickyard Ferry, swing bridge",
+   "lat": 32.6133,
+   "lng": -80.4817,
+   "type": "S"
+  },
+  {
+   "id": "8667062",
+   "name": "Kiawah River Bridge",
+   "lat": 32.6033,
+   "lng": -80.1317,
+   "type": "S"
+  },
+  {
+   "id": "8667067",
+   "name": "Pine Landing",
+   "lat": 32.6033,
+   "lng": -80.3883,
+   "type": "S"
+  },
+  {
+   "id": "8667074",
+   "name": "Wiggins, Chehaw River",
+   "lat": 32.6017,
+   "lng": -80.5417,
+   "type": "S"
+  },
+  {
+   "id": "8667075",
+   "name": "Steamboat Landing, Steamboat Creek",
+   "lat": 32.6033,
+   "lng": -80.2867,
+   "type": "S"
+  },
+  {
+   "id": "8667076",
+   "name": "Tulifiny River, I-95 bridge",
+   "lat": 32.6017,
+   "lng": -80.9033,
+   "type": "S"
+  },
+  {
+   "id": "8667089",
+   "name": "Rockville, Bohicket Creek",
+   "lat": 32.5983,
+   "lng": -80.195,
+   "type": "S"
+  },
+  {
+   "id": "8667101",
+   "name": "Windsor Plantation, Russel Creek",
+   "lat": 32.5983,
+   "lng": -80.345,
+   "type": "S"
+  },
+  {
+   "id": "8667146",
+   "name": "North Dawson Landing, Coosawhatchie River",
+   "lat": 32.5617,
+   "lng": -80.91,
+   "type": "S"
+  },
+  {
+   "id": "8667172",
+   "name": "Sheldon, Huspa Creek, Whale Branch",
+   "lat": 32.5833,
+   "lng": -80.7833,
+   "type": "S"
+  },
+  {
+   "id": "8667178",
+   "name": "Point of Pines",
+   "lat": 32.585,
+   "lng": -80.2283,
+   "type": "S"
+  },
+  {
+   "id": "8667199",
+   "name": "Briars Creek ent., Wimbee Creek, Bull River",
+   "lat": 32.5783,
+   "lng": -80.67,
+   "type": "S"
+  },
+  {
+   "id": "8667201",
+   "name": "Bluff Islands",
+   "lat": 32.5783,
+   "lng": -80.4933,
+   "type": "S"
+  },
+  {
+   "id": "8667209",
+   "name": "Musselboro Island, Mosquito Creek",
+   "lat": 32.5783,
+   "lng": -80.4483,
+   "type": "S"
+  },
+  {
+   "id": "8667259",
+   "name": "Fields Point",
+   "lat": 32.5683,
+   "lng": -80.5533,
+   "type": "S"
+  },
+  {
+   "id": "8667272",
+   "name": "Bowles Island, New Chehaw River",
+   "lat": 32.565,
+   "lng": -80.5167,
+   "type": "S"
+  },
+  {
+   "id": "8667281",
+   "name": "Ocella Creek, 2 mi. above entrance",
+   "lat": 32.5617,
+   "lng": -80.2383,
+   "type": "S"
+  },
+  {
+   "id": "8667295",
+   "name": "White House Woods, Mosquito Creek",
+   "lat": 32.55870056152344,
+   "lng": -80.45439910888672,
+   "type": "R"
+  },
+  {
+   "id": "8667309",
+   "name": "Fenwick Island",
+   "lat": 32.56,
+   "lng": -80.4183,
+   "type": "S"
+  },
+  {
+   "id": "8667351",
+   "name": "Hutchinson Island",
+   "lat": 32.5517,
+   "lng": -80.4817,
+   "type": "S"
+  },
+  {
+   "id": "8667411",
+   "name": "Lobeco, Whale Branch",
+   "lat": 32.5733,
+   "lng": -80.745,
+   "type": "S"
+  },
+  {
+   "id": "8667425",
+   "name": "Peters Point, St. Pierre Creek",
+   "lat": 32.54,
+   "lng": -80.34,
+   "type": "S"
+  },
+  {
+   "id": "8667482",
+   "name": "Ashepoo-Coosaw Cutoff, ICWW",
+   "lat": 32.525,
+   "lng": -80.4517,
+   "type": "S"
+  },
+  {
+   "id": "8667491",
+   "name": "Whale Branch entrance",
+   "lat": 32.525,
+   "lng": -80.675,
+   "type": "S"
+  },
+  {
+   "id": "8667493",
+   "name": "Summerhouse Point, Bull River",
+   "lat": 32.5267,
+   "lng": -80.5733,
+   "type": "S"
+  },
+  {
+   "id": "8667508",
+   "name": "RR. Bridge, Hall Island",
+   "lat": 32.5217,
+   "lng": -80.8383,
+   "type": "S"
+  },
+  {
+   "id": "8667524",
+   "name": "Seabrook",
+   "lat": 32.5233,
+   "lng": -80.4067,
+   "type": "S"
+  },
+  {
+   "id": "8667591",
+   "name": "Pilot Island, West Branch Boyds Creek",
+   "lat": 32.505,
+   "lng": -80.8633,
+   "type": "S"
+  },
+  {
+   "id": "8667612",
+   "name": "Air Station Beaufort, McCalleys creek",
+   "lat": 32.50189971923828,
+   "lng": -80.68489837646484,
+   "type": "R"
+  },
+  {
+   "id": "8667624",
+   "name": "Brickyard Point, Brickyard Creek",
+   "lat": 32.4933,
+   "lng": -80.685,
+   "type": "S"
+  },
+  {
+   "id": "8667630",
+   "name": "Edisto Beach, Edisto Island",
+   "lat": 32.5017,
+   "lng": -80.2967,
+   "type": "S"
+  },
+  {
+   "id": "8667633",
+   "name": "Corning Landing, Whale Branch",
+   "lat": 32.5025,
+   "lng": -80.7841,
+   "type": "R"
+  },
+  {
+   "id": "8667676",
+   "name": "Edisto Marina, Big Bay Creek entrance",
+   "lat": 32.4933,
+   "lng": -80.34,
+   "type": "S"
+  },
+  {
+   "id": "8667679",
+   "name": "Carters Dock, Big Bay Creek",
+   "lat": 32.4933,
+   "lng": -80.3267,
+   "type": "S"
+  },
+  {
+   "id": "8667733",
+   "name": "Sams Point, Lucy Point Creek",
+   "lat": 32.4833,
+   "lng": -80.6,
+   "type": "S"
+  },
+  {
+   "id": "8667783",
+   "name": "Otter Island",
+   "lat": 32.4767,
+   "lng": -80.42,
+   "type": "S"
+  },
+  {
+   "id": "8667864",
+   "name": "Marine Corps Air Station, Brickyard Creek",
+   "lat": 32.465,
+   "lng": -80.6917,
+   "type": "S"
+  },
+  {
+   "id": "8667901",
+   "name": "Lucy Point Creek entrance",
+   "lat": 32.4517,
+   "lng": -80.61,
+   "type": "S"
+  },
+  {
+   "id": "8667909",
+   "name": "Albergottie Creek, Rt. 21 bridge",
+   "lat": 32.45,
+   "lng": -80.7317,
+   "type": "S"
+  },
+  {
+   "id": "8667927",
+   "name": "Village Creek Entrance",
+   "lat": 32.445,
+   "lng": -80.5033,
+   "type": "S"
+  },
+  {
+   "id": "8667972",
+   "name": "Edding Point, Edding Creek",
+   "lat": 32.4467,
+   "lng": -80.5333,
+   "type": "S"
+  },
+  {
+   "id": "8667982",
+   "name": "Jenkins Creek, 1 mi. above entrance",
+   "lat": 32.44,
+   "lng": -80.5533,
+   "type": "S"
+  },
+  {
+   "id": "8667999",
+   "name": "Beaufort",
+   "lat": 32.43,
+   "lng": -80.675,
+   "type": "R"
+  },
+  {
+   "id": "8668077",
+   "name": "Village Creek Cemetery",
+   "lat": 32.4167,
+   "lng": -80.52,
+   "type": "S"
+  },
+  {
+   "id": "8668091",
+   "name": "Jenkins Creek, Polawana Island",
+   "lat": 32.42,
+   "lng": -80.5767,
+   "type": "S"
+  },
+  {
+   "id": "8668092",
+   "name": "Battery Creek, 4 mi. above entrance",
+   "lat": 32.4133,
+   "lng": -80.7,
+   "type": "S"
+  },
+  {
+   "id": "8668109",
+   "name": "Broughton Point, Hazzard Creek",
+   "lat": 32.41,
+   "lng": -80.885,
+   "type": "S"
+  },
+  {
+   "id": "8668146",
+   "name": "Harbor River Bridge",
+   "lat": 32.4033,
+   "lng": -80.4533,
+   "type": "S"
+  },
+  {
+   "id": "8668155",
+   "name": "Distant Island Creek, upper end, Cowen Creek",
+   "lat": 32.4017,
+   "lng": -80.6533,
+   "type": "S"
+  },
+  {
+   "id": "8668173",
+   "name": "Cowen Creek, Rt. 21 bridge",
+   "lat": 32.3983,
+   "lng": -80.6167,
+   "type": "S"
+  },
+  {
+   "id": "8668223",
+   "name": "Hwy. 170 bridge",
+   "lat": 32.3867,
+   "lng": -80.7767,
+   "type": "S"
+  },
+  {
+   "id": "8668227",
+   "name": "Johnson Creek Bridge, Hunting Island",
+   "lat": 32.3917,
+   "lng": -80.4383,
+   "type": "S"
+  },
+  {
+   "id": "8668255",
+   "name": "Capers Creek, Cowen Creek, St. Helena Island",
+   "lat": 32.3717,
+   "lng": -80.605,
+   "type": "S"
+  },
+  {
+   "id": "8668282",
+   "name": "Distant Island, Cowen Creek",
+   "lat": 32.3783,
+   "lng": -80.6333,
+   "type": "S"
+  },
+  {
+   "id": "8668301",
+   "name": "Chechessee Bluff, Chechessee River",
+   "lat": 32.3733,
+   "lng": -80.8367,
+   "type": "S"
+  },
+  {
+   "id": "8668445",
+   "name": "Parris Island, Marine Corps Recruit Depot",
+   "lat": 32.35,
+   "lng": -80.6683,
+   "type": "S"
+  },
+  {
+   "id": "8668482",
+   "name": "Baileys Landing, Okatee River, Colleton River",
+   "lat": 32.3467,
+   "lng": -80.89,
+   "type": "S"
+  },
+  {
+   "id": "8668498",
+   "name": "Fripps Inlet, Hunting Island Bridge",
+   "lat": 32.34,
+   "lng": -80.465,
+   "type": "R"
+  },
+  {
+   "id": "8668511",
+   "name": "Callawassie Island Bridge, Colleton River",
+   "lat": 32.3417,
+   "lng": -80.8567,
+   "type": "S"
+  },
+  {
+   "id": "8668529",
+   "name": "Club Bridge Creek ent., Trenchards Inlet",
+   "lat": 32.335,
+   "lng": -80.5417,
+   "type": "S"
+  },
+  {
+   "id": "8668601",
+   "name": "Station Creek, County Landing",
+   "lat": 32.325,
+   "lng": -80.6017,
+   "type": "S"
+  },
+  {
+   "id": "8668619",
+   "name": "Colleton River Entrance",
+   "lat": 32.3217,
+   "lng": -80.7917,
+   "type": "S"
+  },
+  {
+   "id": "8668636",
+   "name": "Callawassie Creek, Colleton River",
+   "lat": 32.3167,
+   "lng": -80.8417,
+   "type": "S"
+  },
+  {
+   "id": "8668655",
+   "name": "Callawassie Island, south, Colleton River",
+   "lat": 32.3133,
+   "lng": -80.86,
+   "type": "S"
+  },
+  {
+   "id": "8668686",
+   "name": "Fort Fremont",
+   "lat": 32.3067,
+   "lng": -80.645,
+   "type": "S"
+  },
+  {
+   "id": "8668701",
+   "name": "Purrysburg Landing, S.C.",
+   "lat": 32.3033,
+   "lng": -81.1217,
+   "type": "S"
+  },
+  {
+   "id": "8668836",
+   "name": "Station Creek, west end",
+   "lat": 32.28,
+   "lng": -80.6383,
+   "type": "S"
+  },
+  {
+   "id": "8668837",
+   "name": "Capers Island, Trenchards Inlet",
+   "lat": 32.2733,
+   "lng": -80.585,
+   "type": "S"
+  },
+  {
+   "id": "8668918",
+   "name": "Skull Creek, north entrance, Hilton Head Island",
+   "lat": 32.2667,
+   "lng": -80.7367,
+   "type": "R"
+  },
+  {
+   "id": "8668944",
+   "name": "Pinckney Island, Mackay Creek, Chechessee River",
+   "lat": 32.26,
+   "lng": -80.7667,
+   "type": "S"
+  },
+  {
+   "id": "8669072",
+   "name": "Rt. 170 bridge",
+   "lat": 32.2367,
+   "lng": -81.0117,
+   "type": "S"
+  },
+  {
+   "id": "8669103",
+   "name": "Bluffton",
+   "lat": 32.23,
+   "lng": -80.8617,
+   "type": "S"
+  },
+  {
+   "id": "8669133",
+   "name": "Skull Creek, south entrance, Hilton Head Island",
+   "lat": 32.2233,
+   "lng": -80.7717,
+   "type": "S"
+  },
+  {
+   "id": "8669167",
+   "name": "Port Royal Plantation, Hilton Head Island",
+   "lat": 32.22,
+   "lng": -80.6683,
+   "type": "S"
+  },
+  {
+   "id": "8669246",
+   "name": "Brighton Beach. May River",
+   "lat": 32.2140998840332,
+   "lng": -80.84649658203125,
+   "type": "R"
+  },
+  {
+   "id": "8669262",
+   "name": "Bull Island North",
+   "lat": 32.2,
+   "lng": -80.815,
+   "type": "S"
+  },
+  {
+   "id": "8669277",
+   "name": "Cook Landing Cemetery",
+   "lat": 32.195,
+   "lng": -81,
+   "type": "S"
+  },
+  {
+   "id": "8669323",
+   "name": "Savage I., Savage Creek, Bull Creek",
+   "lat": 32.185,
+   "lng": -80.86,
+   "type": "S"
+  },
+  {
+   "id": "8669338",
+   "name": "Broad Creek, Hilton Head Island",
+   "lat": 32.185,
+   "lng": -80.7533,
+   "type": "S"
+  },
+  {
+   "id": "8669346",
+   "name": "Good Hope Landing, south of",
+   "lat": 32.1767,
+   "lng": -80.9667,
+   "type": "S"
+  },
+  {
+   "id": "8669369",
+   "name": "Moreland Cemetery",
+   "lat": 32.175,
+   "lng": -80.8917,
+   "type": "S"
+  },
+  {
+   "id": "8669414",
+   "name": "Bull Creek, Bull Island South, Cooper River",
+   "lat": 32.165,
+   "lng": -80.8567,
+   "type": "S"
+  },
+  {
+   "id": "8669415",
+   "name": "Little Back River, Hwy. 17, Back River, S.C.",
+   "lat": 32.165,
+   "lng": -81.13,
+   "type": "S"
+  },
+  {
+   "id": "8669464",
+   "name": "Calibogue Cay, Broad Creek, Hilton Head Island",
+   "lat": 32.1533,
+   "lng": -80.795,
+   "type": "S"
+  },
+  {
+   "id": "8669493",
+   "name": "Haig Point, Daufuskie Island, Cooper River",
+   "lat": 32.1467,
+   "lng": -80.8367,
+   "type": "S"
+  },
+  {
+   "id": "8669531",
+   "name": "Doughboy Island",
+   "lat": 32.1383,
+   "lng": -80.9317,
+   "type": "S"
+  },
+  {
+   "id": "8669575",
+   "name": "Turnbridge Landing, Salt Water Creek",
+   "lat": 32.1283,
+   "lng": -81.0117,
+   "type": "S"
+  },
+  {
+   "id": "8669601",
+   "name": "Pine Island, Ramshorn Creek, Cooper River",
+   "lat": 32.1217,
+   "lng": -80.8983,
+   "type": "S"
+  },
+  {
+   "id": "8669625",
+   "name": "Braddock Point, Hilton Head Island",
+   "lat": 32.1133,
+   "lng": -80.83,
+   "type": "S"
+  },
+  {
+   "id": "8669691",
+   "name": "Daufuskie Landing, Daufuskie Island",
+   "lat": 32.1033,
+   "lng": -80.895,
+   "type": "S"
+  },
+  {
+   "id": "8669722",
+   "name": "Hargray Pier, Daufuskie Island",
+   "lat": 32.0983,
+   "lng": -80.8983,
+   "type": "S"
+  },
+  {
+   "id": "8669801",
+   "name": "Bloody Point, Daufuskie Island",
+   "lat": 32.0817,
+   "lng": -80.8783,
+   "type": "S"
+  },
+  {
+   "id": "8669815",
+   "name": "Fields Cut, Wright River",
+   "lat": 32.0867,
+   "lng": -80.9333,
+   "type": "S"
+  }
+ ]
+}
