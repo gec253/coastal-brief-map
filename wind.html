@@ -26,9 +26,8 @@
 <body data-wind-view="viewer">
 <div class="helm">
   <header class="w-top">
-    <a class="w-brand" href="/"><span class="w-brand-a">The Coastal Brief</span><span class="w-brand-b">Wind</span></a>
+    <a class="w-brand" href="/"><img class="w-mono" src="/branding/favicon.svg?v=20261121" width="22" height="22" alt=""><span class="w-brand-text"><span class="w-brand-a">The Coastal Brief</span><span class="w-brand-b">Wind</span></span></a>
     <span class="w-badge" id="w-badge">Model forecast</span>
-    <span class="w-clock"><span class="w-k">Now</span> <time id="w-clock">--:-- ET</time></span>
     <button type="button" class="w-sta" id="w-sta" aria-pressed="false" aria-label="Show observed NOAA stations" title="Show observed NOAA stations">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-5.2-5.4-5.2-9.2A5.2 5.2 0 0112 6.6a5.2 5.2 0 015.2 5.2c0 3.8-5.2 9.2-5.2 9.2z"/><circle cx="12" cy="11.6" r="1.7"/></svg>
       <span class="w-lbl">Stations</span>
@@ -42,21 +41,43 @@
     <div class="w-cell"><span class="w-k" id="w-run-k">Model run</span><span class="w-v" id="w-run">—</span></div>
     <div class="w-cell"><span class="w-k">Valid</span><span class="w-v" id="w-valid">—</span></div>
     <div class="w-cell w-cell-fh"><span class="w-k">Fcst hour</span><span class="w-v" id="w-fh">—</span></div>
+    <div class="w-cell w-clock"><span class="w-k">Now</span><time id="w-clock" class="w-v">--:-- ET</time></div>
   </section>
   <main class="w-stage" id="w-stage">
     <div id="wmap" role="region" tabindex="-1" aria-label="Map of coastal North Carolina with animated NOAA GFS model wind. Tap or click the map to read the model wind at that point."></div>
+    <div id="w-labels" class="w-labels" aria-hidden="true"></div>
     <div class="w-legend" role="img" aria-label="Wind speed colour scale in knots, 0 to 35 and over">
       <canvas id="w-ramp" width="168" height="8" aria-hidden="true"></canvas>
       <span class="w-ticks" aria-hidden="true"><span>0</span><span>10</span><span>20</span><span>30</span><span>35+ kt</span></span>
     </div>
+    <div class="w-sta-leg" id="w-sta-leg" hidden>
+      <span><i class="w-leg-buoy"></i> Buoy</span>
+      <span title="C-MAN, pier, or tide gauge"><i class="w-leg-pier"></i> Coastal</span>
+      <span><i class="w-leg-air"></i> Airport</span>
+    </div>
     <div class="w-stack">
       <div class="w-read" id="w-read" hidden>
         <div id="w-read-body" aria-live="polite"></div>
+        <div class="w-cmp" id="w-cmp" hidden>
+          <button type="button" class="w-cmp-tog" id="w-cmp-tog" aria-pressed="true" aria-label="Hide wind compass">Compass</button>
+          <svg class="w-cmp-rose" viewBox="0 0 64 64" aria-hidden="true">
+            <circle cx="32" cy="32" r="28" fill="none" stroke="currentColor" stroke-width="1.25" opacity="0.45"/>
+            <text x="32" y="12" text-anchor="middle">N</text>
+            <text x="32" y="58" text-anchor="middle">S</text>
+            <text x="8" y="35" text-anchor="middle">W</text>
+            <text x="56" y="35" text-anchor="middle">E</text>
+            <g id="w-cmp-needle" class="w-cmp-needle" transform="rotate(0 32 32)">
+              <polygon points="32,10 36,36 32,32 28,36"/>
+            </g>
+          </svg>
+          <span class="w-cmp-k" id="w-cmp-k">FORECAST</span>
+          <span class="w-cmp-d" id="w-cmp-d"></span>
+        </div>
         <button type="button" class="w-read-x" id="w-read-x" aria-label="Dismiss forecast panel"><span aria-hidden="true">×</span></button>
       </div>
       <button type="button" class="w-retry" id="w-retry" hidden>Try again</button>
       <p class="w-sta-err" id="w-sta-err" hidden role="status"></p>
-      <p class="w-attrib">Wind: <a id="w-src" href="https://www.nco.ncep.noaa.gov/pmb/products/gfs/" rel="noopener">NOAA NCEP GFS</a> <span id="w-src-res">0.25° model forecast</span> · Coastline: U.S. Census Bureau, 2025 cartographic boundary file, 1:500,000 (not endorsed by the Census Bureau). <span id="w-disc">General information only: this is a model forecast and can be late or inaccurate for your location. Don’t rely on it alone for safety, marine or aviation decisions; check the National Weather Service.</span></p>
+      <p class="w-attrib">Wind: <a id="w-src" href="https://www.nco.ncep.noaa.gov/pmb/products/gfs/" rel="noopener">NOAA NCEP GFS</a> <span id="w-src-res">0.25° model forecast</span> · Coastline: U.S. Census Bureau (not endorsed). <span id="w-disc">Not for safety-critical use.</span></p>
     </div>
     <script>/* ?model=hrrr (private): name HRRR before first paint so the text doesn't reflow later; a GFS fallback relabels it */if(/[?&]model=hrrr\b/.test(location.search)){var s=document.getElementById("w-src");s.textContent="NOAA NCEP HRRR";s.href="https://rapidrefresh.noaa.gov/hrrr/";document.getElementById("w-src-res").textContent="3 km model forecast";}</script>
     <p class="w-status" id="w-status" role="status">Loading NOAA GFS model wind…</p>
@@ -65,7 +86,8 @@
       <div class="w-about-body">
         <p><strong>Model forecast, not measurements.</strong> Flow lines show the NOAA GFS computer forecast of 10&nbsp;m wind on a 0.25° grid (cells about 25&nbsp;km across), updated four times a day. Brighter, thicker and faster lines mean stronger wind.</p>
         <p>Values between grid points are interpolated, so harbors, inlets and the sounds are coarser than they look. Near the shore the model often reads lighter than stations such as Cape Lookout (CLKN7) and Beaufort (BFTN7). Check station and buoy readings before you go.</p>
-        <p>Times are Eastern (ET). Wind data: NOAA NCEP. Coastline: U.S. Census Bureau (shown at small scale; small creeks, marsh and inland lakes are not drawn).</p>
+        <p>Times are Eastern (ET). Wind data: NOAA NCEP GFS. Observed winds: NOAA NDBC, NOAA / NOS / CO-OPS, and the National Weather Service. These data were collected and made freely available by NOAA/NDBC.</p>
+        <p>Coastline: U.S. Census Bureau, 2025 cartographic boundary file, 1:500,000 (not endorsed by the Census Bureau). Shown at small scale; small creeks, marsh and inland lakes are not drawn.</p>
         <p>General information only: this is a model forecast and can be late or inaccurate for your location. Don’t rely on it alone for safety, marine or aviation decisions; check the National Weather Service.</p>
       </div>
     </details>

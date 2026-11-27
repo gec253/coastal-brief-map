@@ -18,7 +18,7 @@ for p in /lab/wind /lab/wind.js /lab/tiles "/wind?model=hrrr" "/api/wind-grid?mo
   check 404 "$p"
 done
 echo "-- 200 expected"
-for p in / /wind /wind.css /wind/viewer.js /wind/engine.js /wind/coast.js /wind/coast-lo.json /wind/coast-hi.json /api/wind-grid "/api/wind-grid?ahead=3" /radar /radar.css /radar/viewer.js /radar/player.js /api/radar-view /api/radar /dashboard; do
+for p in / /wind /wind.css /wind/viewer.js /wind/engine.js /wind/coast.js /wind/coast-lo.json /wind/coast-hi.json /wind/labels.json /api/wind-grid "/api/wind-grid?ahead=3" /radar /radar.css /radar/viewer.js /radar/player.js /api/radar-view /api/radar /dashboard; do
   check 200 "$p"
 done
 if [ "$fail" -ne 0 ]; then

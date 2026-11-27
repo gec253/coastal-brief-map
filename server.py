@@ -4212,7 +4212,7 @@ class Handler(SimpleHTTPRequestHandler):
             else:
                 cache_s = 60
             return self._send_json(g, cache_s=cache_s, status=200 if g.get("ok") else 502)
-        if parsed.path in ("/wind", "/wind.css", "/wind/viewer.js", "/wind/coast.js", "/wind/engine.js", "/wind/coast-lo.json", "/wind/coast-hi.json", "/wind/coast-enc.json"):
+        if parsed.path in ("/wind", "/wind.css", "/wind/viewer.js", "/wind/coast.js", "/wind/engine.js", "/wind/coast-lo.json", "/wind/coast-hi.json", "/wind/coast-enc.json", "/wind/labels.json"):
             qs = parse_qs(parsed.query)
             if parsed.path == "/wind" and (qs.get("model") or [""])[0] == "hrrr":
                 if not (_flag("WIND_PARTICLES_ENABLED") or self._preview_ok()):
@@ -4228,6 +4228,8 @@ class Handler(SimpleHTTPRequestHandler):
                 return self._send_bytes((ROOT / "wind-coast.js").read_bytes(), "text/javascript; charset=utf-8", cache_s=600)
             if parsed.path == "/wind/engine.js":
                 return self._send_bytes((ROOT / "wind-lab.js").read_bytes(), "text/javascript; charset=utf-8", cache_s=600)
+            if parsed.path == "/wind/labels.json":
+                return self._send_bytes((ROOT / "data" / "wind-labels.json").read_bytes(), "application/json; charset=utf-8", cache_s=86400)
             name = {"/wind/coast-lo.json": "lo.json", "/wind/coast-hi.json": "hi.json", "/wind/coast-enc.json": "enc.json"}[parsed.path]
             return self._send_bytes((ROOT / "wind-coast" / name).read_bytes(), "application/json; charset=utf-8", cache_s=86400)
 

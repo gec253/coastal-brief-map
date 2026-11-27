@@ -172,11 +172,13 @@ class PhaseB3Stations(unittest.TestCase):
 
     def test_badge_is_not_ellipsis_clipped(self):
         # The 7.4em ellipsis squeeze is forbidden: top-bar labels must show in full.
+        # B4 restores The Coastal Brief wordmark on mobile (no display:none).
         self.assertNotIn("7.4em", self.css)
+        self.assertNotIn(".w-brand-a{display:none}", self.css.replace(" ", ""))
+        self.assertIn("The Coastal Brief", self.html)
+        self.assertIn("text-overflow:clip", self.css)
         b3 = self.css.split("/* B3 stations", 1)[1]
         self.assertNotIn("text-overflow:ellipsis", b3)
-        self.assertIn("text-overflow:clip", b3)
-        self.assertIn(".w-brand-a{display:none}", b3.replace(" ", ""))
 
     def test_client_recomputes_age_and_freshness_from_observedAt(self):
         """Cached pack ageMin/status must not be painted; re-derive from observedAt vs now."""
@@ -270,7 +272,7 @@ class TopBarLayoutNoTruncation(unittest.TestCase):
         (430, 932, 0),
         (844, 390, 47),  # landscape with 47 px safe-area insets
     )
-    LABELS = ("#w-badge", ".w-clock time", ".w-brand-b", "#w-sta .w-lbl")
+    LABELS = ("#w-badge", ".w-clock time", ".w-brand-a", ".w-brand-b", "#w-sta .w-lbl")
 
     def test_top_bar_labels_are_not_truncated_at_phone_sizes(self):
         try:
@@ -282,12 +284,14 @@ class TopBarLayoutNoTruncation(unittest.TestCase):
             self.skipTest("google-chrome not installed")
         html = (ROOT / "wind.html").read_text()
         css = (ROOT / "wind.css").read_text()
-        top = html[html.index('<header class="w-top">'): html.index("</header>") + len("</header>")]
+        start = html.index('<header class="w-top">')
+        end = html.index("</section>", html.index('class="w-strip"')) + len("</section>")
+        bar = html[start:end]
         page_html = (
             "<!doctype html><html><head>"
             '<meta name="viewport" content="width=device-width, initial-scale=1">'
             "<style>" + css + "</style></head>"
-            '<body data-wind-view="viewer"><div class="helm">' + top +
+            '<body data-wind-view="viewer"><div class="helm">' + bar +
             "</div>"
             "<script>document.getElementById('w-clock').textContent='10:00 PM ET';</script>"
             "</body></html>"
