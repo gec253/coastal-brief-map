@@ -206,7 +206,8 @@ class StationsDefaultAndTypes(unittest.TestCase):
         self.assertIn("let cmpOn = true", self.js)
         self.assertIn('localStorage.getItem(CMP_STORE) === "off"', self.js)
         self.assertIn('st.mode === "observed" ? "OBSERVED" : "FORECAST"', self.js)
-        self.assertIn("° FROM °T", self.js)
+        self.assertIn('d.textContent = "FROM "', self.js)
+        self.assertIn('"°T"', self.js)
         self.assertIn("id=\"w-cmp-needle\"", self.html)
         self.assertEqual(self.html.count('id="w-cmp-needle"'), 1)
         self.assertIn("function cmpState", self.js)
@@ -456,29 +457,127 @@ class LiveLayoutAndBehavior(unittest.TestCase):
               window.__windView.readAt(ll, null, null);
             }""")
             page.wait_for_timeout(200)
-            st = page.evaluate("() => { const c = window.__windView.compass(); return {on:c.on, mode:c.mode, dir:c.dirDeg, needles: document.querySelectorAll('.w-cmp-needle').length, label: (document.getElementById('w-cmp-k')||{}).textContent, hidden: document.getElementById('w-cmp').hidden}; }")
+            st = page.evaluate("""() => {
+              const c = window.__windView.compass();
+              const el = document.getElementById('w-cmp-needle');
+              const tr = (el && el.getAttribute('transform')) || '';
+              const m = /rotate\(\s*([-0-9.]+)/.exec(tr);
+              return {on:c.on, mode:c.mode, dir:c.dirDeg, needles: document.querySelectorAll('.w-cmp-needle').length,
+                label: (document.getElementById('w-cmp-k')||{}).textContent,
+                text: (document.getElementById('w-cmp-d')||{}).textContent,
+                hidden: document.getElementById('w-cmp').hidden,
+                rot: m ? Number(m[1]) : null, dataDir: el && el.getAttribute('data-dir')};
+            }""")
             self.assertTrue(st["on"])
             self.assertEqual(st["needles"], 1)
             self.assertEqual(st["mode"], "forecast")
             self.assertEqual(st["label"], "FORECAST")
             self.assertFalse(st["hidden"])
             self.assertIsNotNone(st["dir"])
+            self.assertAlmostEqual(st["rot"], st["dir"], places=4)
+            self.assertEqual(st["text"], "FROM %d°T" % round(st["dir"]))
             # Select Cape Lookout: observed compass, same dir as the reading (240).
             page.evaluate("""() => {
               const s = window.__windView.stations.pack().stations.find(x => x.id === 'CLKN7');
               window.__windView.readAt({lat:s.lat, lng:s.lon}, null, s);
             }""")
             page.wait_for_timeout(200)
-            st = page.evaluate("() => { const c = window.__windView.compass(); return {on:c.on, mode:c.mode, dir:c.dirDeg, needles: document.querySelectorAll('.w-cmp-needle').length, label: (document.getElementById('w-cmp-k')||{}).textContent, text: (document.getElementById('w-cmp-d')||{}).textContent}; }")
+            st = page.evaluate("""() => {
+              const c = window.__windView.compass();
+              const el = document.getElementById('w-cmp-needle');
+              const tr = (el && el.getAttribute('transform')) || '';
+              const m = /rotate\(\s*([-0-9.]+)/.exec(tr);
+              return {on:c.on, mode:c.mode, dir:c.dirDeg, needles: document.querySelectorAll('.w-cmp-needle').length,
+                label: (document.getElementById('w-cmp-k')||{}).textContent,
+                text: (document.getElementById('w-cmp-d')||{}).textContent,
+                rot: m ? Number(m[1]) : null, dataDir: el && el.getAttribute('data-dir')};
+            }""")
             self.assertEqual(st["mode"], "observed")
             self.assertEqual(st["label"], "OBSERVED")
             self.assertEqual(st["needles"], 1)
             self.assertEqual(round(st["dir"]), 240)
-            self.assertIn("240", st["text"])
-            self.assertIn("FROM", st["text"])
+            self.assertAlmostEqual(st["rot"], 240, places=4)
+            self.assertAlmostEqual(st["rot"], st["dir"], places=4)
+            self.assertEqual(st["text"], "FROM 240°T")
         finally:
             browser.close()
             pw.stop()
+
+    def test_panel_side_by_side_except_when_cramped(self):
+        pw, browser = self._browser()
+        # Side-by-side at 390, 430, and landscape; stack at 375 and short 375.
+        cases = (
+            (390, 844, False, "390"),
+            (430, 932, False, "430"),
+            (844, 390, False, "landscape"),
+            (375, 667, True, "375"),
+            (375, 500, True, "375-short"),
+        )
+        problems = []
+        try:
+            for w, h, want_stack, tag in cases:
+                page = browser.new_page(viewport={"width": w, "height": h})
+                self._route(page)
+                page.goto(self.base + "/wind?theme=light&stations=1", wait_until="domcontentloaded")
+                page.wait_for_function("() => window.__windView && window.__windView.grid && window.__windView.grid()", timeout=20000)
+                page.wait_for_function("() => window.__windView.stations && window.__windView.stations.marks().length > 0", timeout=15000)
+                page.evaluate("""() => {
+                  const s = window.__windView.stations.pack().stations.find(x => x.id === 'CLKN7');
+                  window.__windView.readAt({lat:s.lat, lng:s.lon}, null, s);
+                }""")
+                page.wait_for_timeout(200)
+                # Long name must remain readable in the painted observed block.
+                page.evaluate("""() => {
+                  const k = document.querySelector('.w-obs .w-k');
+                  if (k) k.textContent = "OBSERVED · Wrightsville Beach, Johnnie Mercer's Pier  8658163";
+                  const sub = document.querySelector('.w-obs .w-sub');
+                  if (sub) sub.textContent = "Stale — last report Thu 9:50 PM ET";
+                }""")
+                geo = page.evaluate("""() => {
+                  const body = document.getElementById('w-read-body');
+                  const fcst = document.querySelector('.w-fcst');
+                  const obs = document.querySelector('.w-obs');
+                  const gust = document.querySelector('.w-gust');
+                  const strong = obs && obs.querySelector('strong');
+                  const cs = body ? getComputedStyle(body).gridTemplateColumns : '';
+                  const fr = fcst ? fcst.getBoundingClientRect() : null;
+                  const or_ = obs ? obs.getBoundingClientRect() : null;
+                  const k = document.querySelector('.w-obs .w-k');
+                  return {
+                    cols: cs, colCount: cs.trim() ? cs.trim().split(/\s+/).filter(Boolean).length : 0,
+                    fcst: fr && {t:fr.top,b:fr.bottom,l:fr.left,r:fr.right,w:fr.width,h:fr.height},
+                    obs: or_ && {t:or_.top,b:or_.bottom,l:or_.left,r:or_.right,w:or_.width,h:or_.height},
+                    k: k && {text:k.textContent, sw:k.scrollWidth, cw:k.clientWidth, ch:k.clientHeight, sh:k.scrollHeight},
+                    gustOn: !!(gust && getComputedStyle(gust).color),
+                    strongPx: strong ? parseFloat(getComputedStyle(strong).fontSize) : 0
+                  };
+                }""")
+                page.close()
+                stacked = False
+                if geo.get("fcst") and geo.get("obs"):
+                    stacked = geo["obs"]["t"] >= geo["fcst"]["b"] - 2
+                    side = geo["obs"]["l"] >= geo["fcst"]["r"] - 2 and abs(geo["obs"]["t"] - geo["fcst"]["t"]) < 24
+                else:
+                    problems.append("%s missing fcst/obs boxes: %s" % (tag, geo))
+                    continue
+                if want_stack and not stacked:
+                    problems.append("%s expected stack, cols=%s fcst=%s obs=%s" % (tag, geo.get("cols"), geo.get("fcst"), geo.get("obs")))
+                if not want_stack and not side:
+                    problems.append("%s expected side-by-side, cols=%s fcst=%s obs=%s" % (tag, geo.get("cols"), geo.get("fcst"), geo.get("obs")))
+                k = geo.get("k") or {}
+                # Wrapped text is taller than one line; clipped text has scrollWidth >> clientWidth with no height growth.
+                if k.get("ch", 0) < 8:
+                    problems.append("%s long name not visible: %s" % (tag, k))
+                if k.get("sw", 0) > k.get("cw", 0) + 2 and k.get("sh", 0) <= k.get("ch", 0) + 1:
+                    problems.append("%s long name clipped: %s" % (tag, k))
+                if not geo.get("gustOn"):
+                    problems.append("%s gust accent missing" % tag)
+                if geo.get("strongPx", 0) < 14:
+                    problems.append("%s sustained speed too small: %s" % (tag, geo.get("strongPx")))
+        finally:
+            browser.close()
+            pw.stop()
+        self.assertFalse(problems, "panel layout:\n  " + "\n  ".join(problems))
 
     def test_labels_do_not_collide_with_chrome_or_selection(self):
         pw, browser = self._browser()

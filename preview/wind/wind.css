@@ -58,7 +58,7 @@ canvas.wind-particles { pointer-events: none; }
 .w-read { position: relative; display: flex; align-items: stretch; gap: 8px; margin: 0 max(10px, env(safe-area-inset-right)) 0 max(10px, env(safe-area-inset-left)); width: calc(100% - max(10px, env(safe-area-inset-left)) - max(10px, env(safe-area-inset-right))); padding: 8px 44px 8px 12px; }
 #w-read-body { flex: 1; min-width: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 #w-read-body:not(:has(.w-obs)) { grid-template-columns: 1fr; }
-.w-read .w-k { display: block; margin: 0 0 1px; }
+.w-read .w-k { display: block; margin: 0 0 1px; overflow-wrap: anywhere; }
 .w-read strong { font-size: 17px; font-variant-numeric: tabular-nums; }
 .w-read .w-sub { display: block; font-size: 12px; color: var(--glass-ink); opacity: 0.85; }
 .w-gust { color: var(--gust); font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -167,13 +167,15 @@ body[data-wind-view="viewer"] .w-attrib a { font-weight: 700; }
 .w-mk .w-n.w-n-down{top:auto;bottom:2px}
 .w-mk.is-hide{visibility:hidden;pointer-events:none}
 @media (max-width:430px){
-  #w-read-body:has(.w-obs){grid-template-columns:1fr}
-  .w-obs{padding-left:0;border-left:0;padding-top:6px;border-top:1px solid var(--edge);margin-top:2px}
   .w-top{gap:4px}
   .w-badge{flex:none;overflow:visible;text-overflow:clip;max-width:none;letter-spacing:.04em}
   .w-cell{padding:5px 6px}
   .w-v,.w-clock time{font-size:12px}
   .w-clock{min-width:74px}
+}
+@media (max-width:375px){
+  #w-read-body:has(.w-obs){grid-template-columns:1fr}
+  .w-obs{padding-left:0;border-left:0;padding-top:6px;border-top:1px solid var(--edge);margin-top:2px}
 }
 .helm,.w-top{min-width:0}
 html,body,.helm{overflow-x:hidden}

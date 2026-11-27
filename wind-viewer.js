@@ -290,8 +290,11 @@
         return;
       }
       if (k) k.textContent = st.mode === "observed" ? "OBSERVED" : "FORECAST";
-      if (d) d.textContent = Math.round(st.dirDeg) + "° FROM °T";
-      if (needle) needle.setAttribute("transform", "rotate(" + st.dirDeg + " 32 32)");
+      if (d) d.textContent = "FROM " + Math.round(st.dirDeg) + "°T";
+      if (needle) {
+        needle.setAttribute("transform", "rotate(" + st.dirDeg + " 32 32)");
+        needle.setAttribute("data-dir", String(st.dirDeg));
+      }
     }
     function setCmpOn(on) {
       cmpOn = !!on;
