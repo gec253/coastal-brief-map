@@ -377,11 +377,13 @@ class RadarPreviewCoastAndPreload(unittest.TestCase):
     def test_radar_coast_covers_pannable_extent_without_clip_edge(self):
         doc = json.loads((ROOT / "preview" / "radar" / "coast-lo.json").read_text())
         clip = doc["clip"]
-        # West of the pannable bound (-86.5) so the clip edge is off-screen.
-        self.assertLessEqual(clip[0], -86.5)
-        self.assertGreaterEqual(clip[1], 30.0)
-        self.assertGreaterEqual(clip[2], -74.0)
-        self.assertGreaterEqual(clip[3], 38.0)
+        # Must extend beyond the worst-case visible extent at minZoom 5 on a
+        # 390x844 or 844x390 phone with the centre at a maxBounds corner.
+        # That view can reach about 51°N, 16°N, 105°W, 55°W.
+        self.assertLessEqual(clip[0], -105.0)
+        self.assertLessEqual(clip[1], 16.0)
+        self.assertGreaterEqual(clip[2], -55.5)
+        self.assertGreaterEqual(clip[3], 51.5)
         q = doc["q"]
 
         def decode(p):
@@ -425,6 +427,22 @@ class RadarPreviewCoastAndPreload(unittest.TestCase):
         self.assertTrue(pip(-77.44, 37.54), "Richmond VA")
         self.assertTrue(pip(-84.39, 33.75), "Atlanta")
         self.assertFalse(pip(-75.0, 34.5), "open ocean")
+        # North of the previous 40.5°N seam and south of the previous 30°N seam.
+        self.assertTrue(pip(-77.04, 38.91), "Washington DC")
+        self.assertTrue(pip(-76.88, 40.27), "Harrisburg PA")
+        self.assertTrue(pip(-80.00, 40.44), "Pittsburgh")
+        self.assertTrue(pip(-81.69, 41.50), "Cleveland")
+        self.assertTrue(pip(-79.38, 43.65), "Toronto")
+        self.assertTrue(pip(-80.00, 50.00), "northern land inside the lo clip")
+        self.assertTrue(pip(-80.19, 25.76), "Miami")
+        self.assertTrue(pip(-82.46, 27.95), "Tampa")
+        self.assertTrue(pip(-81.78, 24.55), "Key West")
+        self.assertTrue(pip(-82.00, 29.00), "inland Florida south of 30N")
+        self.assertTrue(pip(-90.05, 35.15), "Memphis")
+        self.assertTrue(pip(-104.0, 35.00), "western land inside the lo clip")
+        self.assertTrue(pip(-79.00, 22.00), "Cuba")
+        self.assertFalse(pip(-90.00, 25.00), "Gulf of Mexico")
+        self.assertFalse(pip(-70.00, 35.00), "open Atlantic")
         # West edge of land at mid-NC latitudes is the off-screen clip, not 84.3/85.
         def west_edge(lat):
             xs = []
@@ -436,8 +454,20 @@ class RadarPreviewCoastAndPreload(unittest.TestCase):
                         if (y1 > lat) != (y2 > lat):
                             xs.append((x2 - x1) * (lat - y1) / (y2 - y1) + x1)
             return min(xs) if xs else None
-        for lat in (35.0, 35.5, 36.0):
-            self.assertLessEqual(west_edge(lat), -86.5, lat)
+        for lat in (35.0, 35.5, 36.0, 40.0):
+            self.assertLessEqual(west_edge(lat), -105.0, lat)
+        def north_edge(lon):
+            ys = []
+            for p in polys:
+                for r in p["r"]:
+                    for i in range(len(r)):
+                        x1, y1 = r[i]
+                        x2, y2 = r[i - 1]
+                        if (x1 > lon) != (x2 > lon):
+                            ys.append((y2 - y1) * (lon - x1) / (x2 - x1) + y1)
+            return max(ys) if ys else None
+        # No artificial horizontal seam at the old 40.5°N clip; land continues well north.
+        self.assertGreaterEqual(north_edge(-80.0), 51.5)
 
         # Wind coast files were not used as a write target and stay at the production clip.
         wind = json.loads((ROOT / "wind-coast" / "lo.json").read_text())
@@ -454,7 +484,9 @@ class RadarPreviewCoastAndPreload(unittest.TestCase):
             self.assertIn((min(a, b), max(a, b)), pairs)
         # Lean: deferred border file should stay well under 80 KiB.
         self.assertLess((ROOT / "preview" / "radar" / "borders.json").stat().st_size, 80 * 1024)
-        self.assertLess((ROOT / "preview" / "radar" / "coast-lo.json").stat().st_size, 40 * 1024)
+        # lo is preloaded; keep it lean even with the wide clip (two-tier simplify).
+        self.assertLess((ROOT / "preview" / "radar" / "coast-lo.json").stat().st_size, 80 * 1024)
+        self.assertLess((ROOT / "preview" / "radar" / "coast-hi.json").stat().st_size, 120 * 1024)
 
     def test_preload_waits_for_first_observed_frame(self):
         js = (ROOT / "preview" / "radar" / "viewer.js").read_text()
