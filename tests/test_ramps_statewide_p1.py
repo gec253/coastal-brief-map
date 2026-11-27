@@ -178,7 +178,7 @@ class Data(unittest.TestCase):
         anchors = rules["anchors"]
         for r in self.sw["records"]:
             ar = r["area_rule"]
-            if "anchor_region" in ar:
+            if "anchor_region" in ar and not ar.get("exception"):
                 d = r["directions"]
                 dist = {k: miles(d["latitude"], d["longitude"], v["lat"], v["lon"]) for k, v in anchors.items()}
                 self.assertLessEqual(ar["anchor_distance_mi"], rules["region_radius_mi"])
@@ -186,7 +186,11 @@ class Data(unittest.TestCase):
         areas = self.sw["counts"]["by_area"]
         for a in ("wilmington", "topsail", "nags-head"):
             self.assertGreater(areas.get(a, 0), 0, a)
-        self.assertEqual(areas.get("hatteras", 0), 0)
+        hat = [r for r in self.sw["records"] if r["area"] == "hatteras"]
+        self.assertEqual([r["id"] for r in hat], ["baa-rodanthe"])  # only by the documented exception (t548u)
+        self.assertTrue(hat[0]["area_rule"].get("exception"))
+        self.assertGreater(miles(hat[0]["directions"]["latitude"], hat[0]["directions"]["longitude"],
+                                 anchors["hatteras"]["lat"], anchors["hatteras"]["lon"]), rules["region_radius_mi"])
 
     def test_neuse_split(self):
         ne = [r for r in self.sw["records"] if r["area"] == "neuse-river"]
@@ -219,24 +223,25 @@ class Pages(unittest.TestCase):
     def test_hatteras_is_honest(self):
         b = self.get(region="hatteras")
         self.assertIn('data-honest="hatteras"', b)
-        self.assertIn("No verified public launches are listed for the Hatteras area yet", b)
+        self.assertIn("Hatteras Island coverage is limited", b)
+        self.assertIn("documented exception", b)
         self.assertIn("baa-rodanthe", self.cards(b))
-        self.assertRegex(b, r"\d+ mi straight line from Cape Hatteras")
-        self.assertNotIn('data-section="trailer"', b)
+        self.assertRegex(b, r"\d+ mi straight line from Cape Hatteras")  # nearest launches outside the area
+        self.assertNotIn("National Park Service sound-side areas are listed", b)
 
     def test_new_regions_list_only_their_records(self):
         sw = ramp_statewide.load()
         for reg in ("wilmington", "topsail", "nags-head"):
-            want = sorted(r["id"] for r in sw["records"] if r["area"] == reg and r["listing_class"] == "general")
+            want = sorted(r["id"] for r in sw["records"] if r["area"] == reg)  # all types now shown, grouped by type
             got = sorted(self.cards(self.get(region=reg)))
             self.assertEqual(got, want, reg)
 
     def test_statewide_default_distinguishes_types(self):
         b = self.get()
-        for sec in ('data-section="trailer"', 'data-section="paddle"', 'data-section="closed"'):
+        for sec in ('data-section="trailer"', 'data-section="paddle"', 'data-section="limited"', 'data-section="needs_review"'):
             self.assertIn(sec, b)
         self.assertIn("Temporarily closed", b)
-        self.assertIn("limited-access", b)
+        self.assertIn("6 temporarily closed", b)  # status is its own dimension (t548u)
 
     def test_neuse_river_url_still_works_and_splits(self):
         b = self.get(region="neuse-river")
