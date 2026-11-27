@@ -275,7 +275,12 @@ class Overrides(unittest.TestCase):
         for q in ("/?photo=%s" % other, "/?date=2027-01-01", "/?region=crystal-coast&photo=%s" % other):
             s, b = self._get(q, cookie=True)
             self.assertEqual(s, 200)
-            self.assertEqual(self._photo(b), today, q)
+            # Overrides must not select another photograph. The Today figure may be omitted when the
+            # Marine & Water Tools ramp card already carries the default rotation photo (no duplicate).
+            today_fig = re.search(rb'<figure class="today"[^>]*data-photo="([^"]+)"', b)
+            if today_fig:
+                self.assertEqual(today_fig.group(1).decode(), today, q)
+            self.assertIsNone(re.search(rb'<figure class="today"[^>]*data-photo="%s"' % other.encode(), b), q)
 
     def test_preview_route_honours_overrides(self):
         s, b = self._get("/preview/home-hybrid?photo=cape-lookout-sunrise", cookie=True)

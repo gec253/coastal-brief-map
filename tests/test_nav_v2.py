@@ -150,16 +150,17 @@ class Homepage(Server):
         self.assertRegex(nav, rb'<a href="/\?region=crystal-coast" aria-current="page">Saltwater</a>')
         self.assertIn(b'>Morning Brief</a>', nav)
         self.assertIn(b'href="/ramps?region=crystal-coast">Find a Ramp</a>', nav)
-        g = re.search(rb'<div class="fr" id="fishing">.*?<p class="index" id="tools">.*?</p>', body, re.S).group(0)
-        self.assertIn(b'href="/reports/crystal-coast"', g)
-        self.assertIn(b'href="/ramps?region=crystal-coast"', g)
-        self.assertIn(b'href="/dashboard?region=crystal-coast"', g)
-        self.assertNotIn(b"not yet listed", g)
+        self.assertIn(b'id="fishing"', body)
+        self.assertIn(b'href="/reports/crystal-coast"', body)
+        tools = re.search(rb'<section class="mwt" id="tools".*?</section>', body, re.S).group(0)
+        self.assertIn(b'href="/ramps?region=crystal-coast"', tools)
+        self.assertIn(b'href="/dashboard?region=crystal-coast"', tools)
+        self.assertNotIn(b"not yet listed", tools)
 
     def test_uncovered_region_keeps_coverage_note(self):
         env = dict(LIVE, NAV_V2="1")
         _, body = self._req("/?region=wilmington", env=env)
-        g = re.search(rb'<p class="index" id="tools">.*?</p>', body, re.S).group(0)   # Signature Helm tools index
+        g = re.search(rb'<section class="mwt" id="tools".*?</section>', body, re.S).group(0)
         self.assertIn(b'href="/ramps"', g)
         self.assertIn(b"Ramps are not yet listed for this area", g)
 

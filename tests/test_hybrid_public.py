@@ -139,7 +139,8 @@ class HybridPublic(unittest.TestCase):
         self.assertIn(b'<html lang="en" data-helm data-water="fresh"', b)
         self.assertIn(b"/static/featured-photos/falls-lake-pier/falls-lake-pier-640", b)
         self.assertIn(b"Sergiy Galyonkin", b)
-        self.assertIn(b'href="/lake?region=falls-lake">Full lake &amp; river dashboard', b)
+        self.assertIn(b'href="/lake?region=falls-lake"', b)
+        self.assertIn(b'Lake &amp; River Gauges', b)
         self.assertIn(b'href="/brief?region=falls-lake"', b)
         self.assertIn(b'<a href="/?region=falls-lake" aria-current="page">Freshwater</a>', b)
         self._no_concept(b)
@@ -151,7 +152,8 @@ class HybridPublic(unittest.TestCase):
         self.assertIn(b'<html lang="en" data-helm data-water="fresh"', b)
         self.assertNotIn(b"falls-lake-pier", b)
         self.assertIn(b'id="hazards"', b)
-        self.assertIn(b'href="/lake?region=jordan-lake">Full lake &amp; river dashboard', b)
+        self.assertIn(b'href="/lake?region=jordan-lake"', b)
+        self.assertIn(b'Lake &amp; River Gauges', b)
         # Ed (Nov 19, t336u): Jordan's brief link opens its own unavailable page, never Falls Lake or Crystal Coast.
         foot = b.split(b'<a class="briefbox"')[1].split(b"</a>")[0]   # the page's Morning Brief entry
         self.assertIn(b'href="/brief?region=jordan-lake"', foot)
@@ -163,7 +165,8 @@ class HybridPublic(unittest.TestCase):
         s, _, b = self._fresh("neuse-river")
         self.assertEqual(s, 200)
         self.assertIn(b'<html lang="en" data-helm data-water="fresh"', b)
-        self.assertIn(b'href="/lake?region=neuse-river">Full lake &amp; river dashboard', b)
+        self.assertIn(b'href="/lake?region=neuse-river"', b)
+        self.assertIn(b'River Gauges', b)
         self._no_concept(b)
 
     def test_cape_fear_404_without_cookie(self):

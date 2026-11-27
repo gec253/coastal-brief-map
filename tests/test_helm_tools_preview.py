@@ -1,7 +1,7 @@
-"""Private /preview/helm-tools Marine & Water Tools variant (Ed t542u).
+"""Marine & Water Tools on the public homepage and gated /preview/helm-tools (Ed t543u/t544u).
 
-Preview-only: public routes must stay identical to production. Cookie-gated,
-noindex, no-store. Does not loosen any existing guard.
+The approved section is on public "/". /preview/helm-tools stays cookie-gated,
+noindex, no-store, and is listed on the gated /preview hub. Does not loosen any existing guard.
 """
 from __future__ import annotations
 
@@ -247,12 +247,35 @@ class Routes(unittest.TestCase):
         self.assertNotIn("/preview/helm-tools", self._get("/robots.txt")[2])
         self.assertEqual(self._get("/preview/helm/tools.css")[0], 404)
 
-    def test_public_home_does_not_load_tools_css_or_section(self):
-        st, _, body = self._get("/")
+    def test_public_home_includes_tools_section_without_preview_labels(self):
+        with mock.patch.dict(os.environ, {"PUBLIC_RAMPS": "1"}):
+            st, hdrs, body = self._get("/?region=crystal-coast")
         self.assertEqual(st, 200)
-        self.assertNotIn("mwt-ramp", body)
-        self.assertNotIn("id=\"mwt-css\"", body)
-        self.assertNotIn("All NC ramps", body)
+        self.assertIn('class="mwt"', body)
+        self.assertIn('id="mwt-css"', body)
+        self.assertIn("All NC ramps", body)
+        self.assertNotIn("Private preview", body)
+        self.assertNotIn('class="pvtag"', body)
+        self.assertNotIn("/preview/helm", body)
+        self.assertNotRegex(body, r'content="noindex')
+        # buried end-of-menu Find a Ramp is replaced by the early tools entry
+        import re
+        nav = re.search(r'<details class="allnav".*?</details>', body, re.S).group(0)
+        self.assertEqual(nav.count("Find a Ramp"), 1)
+        self.assertIn("Tide Charts", nav)
+        self.assertIn("Forecasts", nav)
+
+    def test_preview_hub_lists_tools_and_stays_gated(self):
+        self.assertEqual(self._get("/preview")[0], 404)
+        import signature_helm
+        ck = "%s=%s" % (self.server.PREVIEW_COOKIE, self.server._preview_cookie_value(KEY))
+        with mock.patch.dict(os.environ, {"PREVIEW_KEY": KEY}):
+            st, h, body = self._get("/preview", ck)
+        self.assertEqual(st, 200)
+        self.assertIn("noindex", h.get("X-Robots-Tag", "") + body)
+        self.assertIn("no-store", h.get("Cache-Control", ""))
+        self.assertIn('href="/preview/helm-tools"', body)
+        self.assertIn("Marine &amp; Water Tools", body)
 
 
 if __name__ == "__main__":

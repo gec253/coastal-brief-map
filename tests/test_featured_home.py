@@ -232,7 +232,7 @@ class Routes(unittest.TestCase):
         self.assertIn(b'height="1080"', body)
         self.assertIn(b'loading="lazy"', body)
         self.assertIn(b'decoding="async"', body)
-        feat_html = body[body.find(SECTION):body.find(b'<p class="index" id="tools"')]
+        feat_html = body[body.find(SECTION):body.find(b'<section class="chapter coast"')]
         self.assertNotIn(b"fetchpriority", feat_html)
         self.assertNotIn("cookie", (hdrs.get("vary") or "").lower())
         self.assertNotIn("noindex", (hdrs.get("x-robots-tag") or "").lower())
@@ -240,7 +240,7 @@ class Routes(unittest.TestCase):
         sc = body.find(b'id="showcase"')
         feat = body.find(SECTION)
         life = body.find(b'<a class="briefbox"')
-        self.assertTrue(0 < sc < feat < life < body.find(b'<p class="index" id="tools"'), (sc, feat, life))
+        self.assertTrue(0 < sc < feat < life < body.find(b'<section class="chapter coast"'), (sc, feat, life))
         # Existing homepage chrome is still there.
         self.assertIn(b'id="helm"', body)
         self.assertIn(b'<html lang="en" data-helm data-water="salt"', body)
@@ -255,7 +255,7 @@ class Routes(unittest.TestCase):
         self.assertNotIn("noindex", (hdrs.get("x-robots-tag") or "").lower())
         self.assertEqual(body.find(b'id="showcase"'), -1)
         self.assertLess(0, body.find(SECTION))
-        self.assertLess(body.find(SECTION), body.find(b'<p class="index" id="tools"'))
+        self.assertLess(body.find(SECTION), body.find(b'<section class="chapter coast"'))
 
     def test_freshwater_home_does_not_get_the_feature(self):
         os.environ["FRESHWATER_ENABLED"] = "1"
