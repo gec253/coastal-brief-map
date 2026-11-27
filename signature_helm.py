@@ -874,7 +874,7 @@ def nav_html(primary: list, rid: str, fresh: bool, dash_href: str, tools: bool =
             '<span aria-hidden="true">☰</span> Menu</summary><ul>%s</ul></details>') % (row, lis)
 
 
-# ---------------------------------------------------------------- Marine & Water Tools (private variant)
+# ---------------------------------------------------------------- Marine & Water Tools (public homepage + gated /preview/helm-tools)
 # Audited link map (/workspace/mwt-1127/audit.md, Nov 27 2026). Destinations only; no tool or data source changes.
 RAMP_PHOTO = {   # authentic photos; location is a photo place, never the launch being linked
     # credits are taken verbatim from photo-rotation.json "credit"
@@ -1127,7 +1127,7 @@ def build(rid: str | None, *, now: datetime | None = None, salt_payload=None, fr
         rh, rnote = ramps_entry(rid)
         tools += ' · <a href="%s">Find a Ramp</a>%s' % (_a(rh), (' <span class="rnote">(%s)</span>' % _e(rnote)) if rnote else "")
     gates = gates_html()
-    if mwt:   # private variant: the section sits between the helm panel and the gateways and absorbs the #tools line
+    if mwt:   # the section sits between the helm panel and the gateways and absorbs the compact #tools line
         gates = tools_html(rid, fresh) + "\n" + gates
         if fresh and rid in RAMP_PHOTO and _ramps_public():
             wphoto = ""   # the ramp card now carries this water's photograph; never the same photo twice
@@ -1322,11 +1322,16 @@ def _swap_gates(h: str, sc: str) -> str:
 
 def page(rid: str | None, public: bool = False, showcase_v: str | None = None, radar_meta=None, tools: bool = False, **kw) -> bytes:
     import theme_toggle
-    tools = bool(tools) and not public   # private variant only; public "/" never takes this path
-    html_ = build(rid, mwt=True, **kw) if tools else build(rid, **kw)
-    if tools:
-        html_ = html_.replace('"%s?' % ROUTE, '"%s?' % TOOLS_ROUTE).replace('"%s"' % ROUTE, '"%s"' % TOOLS_ROUTE)
+    # Public "/" and the gated /preview/helm-tools route share the approved section. /preview/helm stays the
+    # earlier gated helm preview without it. tools.css is inlined (same as helm.css) so the section cannot
+    # FOUC or shift; the file is small enough that a separate cached request would not pay for itself.
+    preview_tools = bool(tools) and not public
+    mwt = public or preview_tools
+    html_ = build(rid, mwt=mwt, **kw)
+    if mwt:
         html_ = html_.replace("</head>", '<style id="mwt-css">\n%s\n</style>\n</head>' % _asset("tools.css").replace("</", "<\\/"), 1)
+    if preview_tools:
+        html_ = html_.replace('"%s?' % ROUTE, '"%s?' % TOOLS_ROUTE).replace('"%s"' % ROUTE, '"%s"' % TOOLS_ROUTE)
         html_ = html_.replace("Private preview · Signature Helm</p>", "Private preview · Signature Helm · Marine &amp; Water Tools</p>", 1)
     feat = ""
     if showcase_v:
