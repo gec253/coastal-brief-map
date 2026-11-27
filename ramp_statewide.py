@@ -273,6 +273,7 @@ def _render_list(data, q) -> str:
     checked = meta.get("date_checked", "")
     refresh = meta.get("refresh") or {}
     honest = ""
+    nearest_html = ""
     unknown = bool(region and region not in REGION_LABELS)
     secs = {k: [] for k in TYPE_LABELS} if unknown else classify(data, f)
     shown = [r for k in TYPE_LABELS for r in secs[k]]
@@ -300,7 +301,7 @@ def _render_list(data, q) -> str:
                   'and other island launches are not listed until an official source verifies ownership, public access, '
                   'coordinates and restrictions.</p></aside>')
         if cards and not (f["q"] or f["type"] or f["water"] or f["status"]):
-            honest += (f'<section class="rf-section" data-section="nearest-outside"><h2>Nearest verified launches outside this area</h2>'
+            nearest_html = (f'<section class="rf-section" data-section="nearest-outside"><h2>Nearest verified launches outside this area</h2>'
                        f'<ul class="list">{"".join(cards)}</ul></section>')
     grouped = not region and not f["q"]
     body = []
@@ -316,7 +317,10 @@ def _render_list(data, q) -> str:
     ctx = ""
     if region in ("falls-lake", "jordan-lake"):
         ctx = rf.lake_context_html(data, region)
-    ctx = (rf.region_notice_html(data, region if region in ("jordan-lake",) else (None if not region else "x")) + ctx)
+    rechecked = (data.get("meta") or {}).get("notices_rechecked") or ""
+    if rechecked:
+        ctx = (f'<p class="sw-dims" data-notices-rechecked>Official closure notices (NC State Parks, NCWRC) rechecked '
+               f'{rf.esc(rechecked)}. Each launch shows its own official status and source.</p>') + ctx
     refresh_html = ""
     if refresh.get("status") == "kept_last_known_good":
         refresh_html = (f'<aside class="sw-refresh-bad" data-refresh="kept-last-known-good"><p>The latest official data refresh '
@@ -355,6 +359,7 @@ def _render_list(data, q) -> str:
 {count_line}
 {ctx}
 {"".join(body)}
+{nearest_html}
 {_about(data)}
 """, extra_head=EXTRA_CSS, extra_script=FIND_JS, public=False)
 

@@ -1,6 +1,6 @@
 {
  "meta": {
-  "title": "North Carolina Ramp Finder — statewide private preview (Phase 1)",
+  "title": "North Carolina Ramp Finder — statewide private preview (Phase 1.1)",
   "date_checked": "2026-11-27",
   "scope": "Statewide: the manually verified Ramp Finder inventory plus every NCWRC Boating Access Area.",
   "production_commit": "e2e427a",
@@ -76,6 +76,7 @@
    "Re-check the Falls Lake home-page banner and the Holly Point construction blog immediately before release. Official pages still disagree on post-November 16 status.",
    "Re-check NCDMF proclamations and What’s Biting? report dates on deploy day."
   ],
+  "notices_rechecked": "2026-11-27 6:20 PM ET",
   "ncwrc": {
    "layer": "https://services1.arcgis.com/YfqBAUM5nWR3yhGP/arcgis/rest/services/NCWRC_Boating_Access_Areas_view/FeatureServer/0",
    "record_count": 267,
@@ -124,7 +125,7 @@
   },
   "refresh": {
    "status": "ok",
-   "attempted_at": "2026-11-27T18:21-05:00",
+   "attempted_at": "2026-11-27T18:24-05:00",
    "data_from": "2026-11-27",
    "added": 0,
    "removed": 0,

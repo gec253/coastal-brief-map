@@ -668,8 +668,9 @@ def build(attrs: list, fields: list, edit_info: dict, *, checked: str, stations:
     unmatched_notices = [n["key"] for n in notices if not any(n["key"] in r["applied_notices"] for r in records)]
     meta = dict(inv["meta"])
     meta.update({
-        "title": "North Carolina Ramp Finder — statewide private preview (Phase 1)",
+        "title": "North Carolina Ramp Finder — statewide private preview (Phase 1.1)",
         "date_checked": checked,
+        "notices_rechecked": json.loads(NOTICES.read_text()).get("rechecked", ""),
         "scope": "Statewide: the manually verified Ramp Finder inventory plus every NCWRC Boating Access Area.",
         "ncwrc": {"layer": NCWRC_LAYER, "record_count": len(attrs), "data_last_edit": data_edit,
                   "license": "NCWRC: developed and maintained for free and unrestricted use; no warranty."},
