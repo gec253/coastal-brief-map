@@ -74,3 +74,11 @@ Missing data always means uncertainty. It's never shown as "open".
   *not determined*.
 - **Unknown regions.** `?region=<anything unknown>` shows an honest message and a statewide link, never every
   ramp.
+
+## Phase 1.1 refinements (Nov 27, 2026, Ed t548u)
+
+- **Documented geographic exception.** `GEO_EXCEPTIONS` in `scripts/build_ramps_statewide.py` lists records by NCWRC GlobalID that are assigned to an area outside the 20-mile rule. The only entry is Rodanthe BAA (GlobalID `06bbb31d-4a33-45a2-917c-7eecba2e1e1e`). It is on Hatteras Island, 24 miles from the Cape Hatteras anchor, so it is listed with Hatteras Island. The 20-mile rule itself is unchanged. Each exception records its reason in `area_rule.rule` and sets `exception: true`.
+- **Two independent dimensions.** `type_dimension` (trailer, paddle, limited, needs_review, unknown) comes only from the listing class and access type. Official status (`access_status.code`: listed_open, temporarily_closed, partially_open, conflicting, not_stated) is separate. A closed launch keeps its access type. `counts.by_type_dimension`, `counts.by_status` and `counts.type_by_status` each total every record.
+- **Official coordinates overlay.** `preview/ramp-finder/official_coordinates.json` holds access-area GPS points published by the owner (NC State Parks pages for Falls Lake and Jordan Lake). They are shown as "Official location point". `directions` are never changed, and addresses are never geocoded. Records the owner does not publish a point for are listed under `unresolved` and keep address-only directions.
+- **Notices.** `official_notices.json` carries the date and time each official page was last rechecked. NCWRC statuses show the NCWRC data edit date plus the recheck date. Where sources conflict, the status is "status unclear", never "open".
+- **Preview UI.** There is one search field (name, town, county, waterbody). The server-side GET search works without JavaScript, and a small inline script filters as you type. The statewide view groups launches by area in native `<details>`, collapsed by default. Each section shows an access-type line and a status line.

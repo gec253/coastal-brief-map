@@ -45,6 +45,7 @@ NOTICES = RF / "official_notices.json"
 NOAA_CACHE = RF / "noaa_tide_stations_nc.json"
 REPORT = RF / "refresh-report.json"
 REGIONS = ROOT / "data" / "regions.json"
+OFFICIAL_COORDS = RF / "official_coordinates.json"
 
 NCWRC_LAYER = ("https://services1.arcgis.com/YfqBAUM5nWR3yhGP/arcgis/rest/services/"
                "NCWRC_Boating_Access_Areas_view/FeatureServer/0")
@@ -71,6 +72,19 @@ FRESH_MIN_TIDE_MI = 15.0      # INLAND water farther than this from any NOAA tid
 TIDAL_MAX_TIDE_MI = 10.0      # COASTAL water within this of a NOAA tide station -> brackish or salt (inferred)
 NEUSE_UPPER_MAX_LON = -78.0   # at or upstream (west) of the NCWRC Goldsboro BAA (lon -78.0236)
 NS = "not stated"
+
+# Documented geographic exceptions (Ed t548u). Keyed by NCWRC GlobalID; they override the radius rule
+# for that one record only. The 20-mile rule itself is unchanged.
+GEO_EXCEPTIONS = {
+    "06bbb31d-4a33-45a2-917c-7eecba2e1e1e": {
+        "area": "hatteras",
+        "reason": "Rodanthe BAA (Dare County) is on Hatteras Island but 24 mi from the Cape Hatteras anchor; "
+                  "listed with Hatteras Island by explicit exception (Ed t548u).",
+    },
+}
+
+TYPE_DIMENSION = ("trailer", "paddle", "limited", "needs_review", "unknown")
+STATUS_DIMENSION = ("listed_open", "temporarily_closed", "partially_open", "conflicting", "not_stated")
 
 # Coastal homepage regions that can receive NCWRC records by the radius rule.
 # Emerald Isle has no list of its own: its ramps are listed with the Crystal Coast.
@@ -312,6 +326,9 @@ def anchors() -> dict:
 
 
 def assign_area(a: dict, anc: dict) -> dict:
+    exc = GEO_EXCEPTIONS.get(a.get("GlobalID"))
+    if exc:
+        return {"area": exc["area"], "rule": "Documented geographic exception: " + exc["reason"], "exception": True}
     w = (a.get("Water_Access") or "").upper()
     if w == "FALLS LAKE":
         return {"area": "falls-lake", "rule": "NCWRC waterbody is Falls Lake"}
@@ -630,8 +647,21 @@ def build(attrs: list, fields: list, edit_info: dict, *, checked: str, stations:
             r["neuse_segment_label"] = ("Upper Neuse: Falls Dam to Goldsboro (freshwater)" if upper else
                                         "Lower Neuse: below Goldsboro to Pamlico Sound (includes brackish and tidal launches)")
     for r in records:
-        apply_notices(r, notices, data_edit_date)
+        apply_notices(r, notices, f"{data_edit_date} (NCWRC data last edit; rechecked {checked})")
 
+    oc = json.loads(OFFICIAL_COORDS.read_text()) if OFFICIAL_COORDS.exists() else {"records": {}, "sources": {}}
+    for r in records:
+        r["type_dimension"] = type_dimension(r)
+        c = oc["records"].get(r["id"])
+        d = r.get("directions") or {}
+        if c and not isinstance(d.get("latitude"), (int, float)):
+            src = next((v for k, v in oc.get("sources", {}).items() if r["id"].startswith(k)), {})
+            r["official_coordinates"] = {"lat": c["lat"], "lon": c["lon"], "kind": "owner_access_area_gps",
+                                         "label": c.get("label", ""), "source_name": src.get("name", ""),
+                                         "source_url": src.get("url", ""), "checked": oc.get("checked", checked),
+                                         "note": "Owner's published access-area GPS point, not a surveyed ramp position. Directions use the address."}
+        elif r["id"] in oc.get("unresolved", {}):
+            r["coordinates_unresolved"] = oc["unresolved"][r["id"]]
     records.sort(key=lambda r: (r["area"], r["display_name"].lower()))
     new_cross = {"by_slug": {r["id"]: r["ncwrc"]["globalid"] for r in records if r.get("ncwrc")},
                  "note": "Stable slug <-> NCWRC GlobalID crosswalk. Slugs never change once assigned."}
@@ -656,7 +686,7 @@ def build(attrs: list, fields: list, edit_info: dict, *, checked: str, stations:
         "matches": report_matches, "near_duplicates_flagged": flags_near, "conflicts": conflicts,
         "unmatched_notices": unmatched_notices,
         "missing": {k: [r["id"] for r in records if not stated(v(r))] for k, v in {
-            "coordinates": lambda r: (r.get("directions") or {}).get("latitude"),
+            "coordinates": lambda r: "x" if has_point(r) else None,
             "lanes": lambda r: r.get("lanes"),
             "trailer_parking": lambda r: r.get("trailer_parking"),
             "fees": lambda r: None if (r.get("fees") or {}).get("summary", "").lower().startswith(("not stated", "no separate")) else "x",
@@ -666,13 +696,34 @@ def build(attrs: list, fields: list, edit_info: dict, *, checked: str, stations:
     return data, {"crosswalk": new_cross, "quality": quality}
 
 
+def type_dimension(r: dict) -> str:
+    """Access type from the listing and facility record only; never from operational status."""
+    if r.get("listing_class") == "needs_review":
+        return "needs_review"
+    if r.get("listing_class") == "limited":
+        return "limited"
+    if r.get("access_type") in ("trailer", "paddle"):
+        return r["access_type"]
+    return "unknown"
+
+
+def has_point(r: dict) -> bool:
+    return isinstance((r.get("directions") or {}).get("latitude"), (int, float)) or bool(r.get("official_coordinates"))
+
+
 def counts(records: list) -> dict:
     from collections import Counter
     c = {"total": len(records)}
     c["by_basis"] = dict(Counter(r["record_basis"] for r in records))
     c["by_access_type"] = dict(Counter(r["access_type"] for r in records))
     c["by_listing_class"] = dict(Counter(r["listing_class"] for r in records))
-    c["by_status"] = dict(Counter(r["access_status"]["code"] for r in records))
+    c["by_status"] = {k: sum(1 for r in records if r["access_status"]["code"] == k) for k in STATUS_DIMENSION}
+    c["by_type_dimension"] = {k: sum(1 for r in records if r["type_dimension"] == k) for k in TYPE_DIMENSION}
+    c["type_by_status"] = {t: {k: sum(1 for r in records if r["type_dimension"] == t and r["access_status"]["code"] == k)
+                               for k in STATUS_DIMENSION} for t in TYPE_DIMENSION}
+    c["coordinates"] = {"ncwrc_or_inventory": sum(1 for r in records if isinstance((r.get("directions") or {}).get("latitude"), (int, float))),
+                        "owner_access_area_gps": sum(1 for r in records if r.get("official_coordinates")),
+                        "none": sum(1 for r in records if not has_point(r))}
     c["by_regulatory"] = dict(Counter(r["regulatory_class"] for r in records))
     c["by_salinity"] = dict(Counter(f'{r["salinity"]["class"]}:{r["salinity"]["basis"]}' for r in records))
     c["by_area"] = dict(Counter(r["area"] for r in records))

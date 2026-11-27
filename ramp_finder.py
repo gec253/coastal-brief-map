@@ -398,6 +398,11 @@ def facility_rows(rec):
             ("Official status", f'{st.get("label", "")}. {st.get("detail", "")} As of {st.get("as_of") or "not stated"}.'.strip()),
             ("Listed under", rec.get("neuse_segment_label") or rec.get("area_label") or ""),
         ]
+        oc = rec.get("official_coordinates")
+        if oc:
+            rows.append(("Official location point", f'{oc["lat"]}, {oc["lon"]}: {oc["note"]} Source: {oc["source_name"]}, checked {oc["checked"]}.'))
+        elif rec.get("coordinates_unresolved"):
+            rows.append(("Map point", "None. " + rec["coordinates_unresolved"]))
         rows.append(("Record basis", "Manually verified Ramp Finder record (NCWRC fills only blank fields)"
                      if rec.get("record_basis") == "manual_verified" else
                      "NCWRC official listing; facility details exactly as NCWRC records them"))

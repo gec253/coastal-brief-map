@@ -124,7 +124,7 @@
   },
   "refresh": {
    "status": "ok",
-   "attempted_at": "2026-11-27T18:10-05:00",
+   "attempted_at": "2026-11-27T18:21-05:00",
    "data_from": "2026-11-27",
    "added": 0,
    "removed": 0,
@@ -271,7 +271,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-cedar-island",
@@ -412,7 +413,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-emerald-isle",
@@ -553,7 +555,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-gordon-s-myers-at-cedar-point",
@@ -694,7 +697,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-great-lake",
@@ -844,10 +848,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-haywood-landing",
@@ -988,7 +993,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "local-atlantic-beach-moonlight-drive",
@@ -1134,7 +1140,8 @@
     "as_of": "2026-11-22",
     "source": ""
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-morehead-city",
@@ -1275,7 +1282,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-newport",
@@ -1433,7 +1441,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-oyster-creek",
@@ -1574,7 +1583,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-salters-creek",
@@ -1715,7 +1725,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-shell-rock-landing",
@@ -1852,10 +1863,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "local-morehead-south-10th",
@@ -1995,7 +2007,8 @@
     "as_of": "2026-11-22",
     "source": ""
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "limited"
   },
   {
    "id": "baa-straits-landing",
@@ -2136,7 +2149,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-west-beaufort",
@@ -2277,7 +2291,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "local-atlantic-beach-west-bogue-sound",
@@ -2407,7 +2422,8 @@
     "as_of": "2026-11-22",
     "source": ""
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "needs_review"
   },
   {
    "id": "baa-willis-landing",
@@ -2557,10 +2573,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "parks-falls-bw-wells-campers",
@@ -2700,7 +2717,18 @@
     "as_of": "2026-11-22",
     "source": ""
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "limited",
+   "official_coordinates": {
+    "lat": 35.9861,
+    "lon": -78.6315,
+    "kind": "owner_access_area_gps",
+    "label": "B.W. Wells Campground, 1630 Bent Road",
+    "source_name": "N.C. State Parks, Falls Lake State Recreation Area (access GPS on the official park page)",
+    "source_url": "https://www.ncparks.gov/state-parks/falls-lake-state-recreation-area",
+    "checked": "2026-11-27",
+    "note": "Owner's published access-area GPS point, not a surveyed ramp position. Directions use the address."
+   }
   },
   {
    "id": "parks-falls-beaverdam",
@@ -2840,7 +2868,18 @@
     "as_of": "2026-11-22",
     "source": ""
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "limited",
+   "official_coordinates": {
+    "lat": 36.0362,
+    "lon": -78.685,
+    "kind": "owner_access_area_gps",
+    "label": "Beaverdam Access, 14600 Creedmoor Road",
+    "source_name": "N.C. State Parks, Falls Lake State Recreation Area (access GPS on the official park page)",
+    "source_url": "https://www.ncparks.gov/state-parks/falls-lake-state-recreation-area",
+    "checked": "2026-11-27",
+    "note": "Owner's published access-area GPS point, not a surveyed ramp position. Directions use the address."
+   }
   },
   {
    "id": "baa-eno-river",
@@ -2981,7 +3020,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-hickory-hill",
@@ -3122,7 +3162,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "parks-falls-highway-50",
@@ -3262,7 +3303,18 @@
     "as_of": "2026-11-22",
     "source": ""
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer",
+   "official_coordinates": {
+    "lat": 36.0216,
+    "lon": -78.6902,
+    "kind": "owner_access_area_gps",
+    "label": "Highway 50 Access, 13900 Creedmoor Road",
+    "source_name": "N.C. State Parks, Falls Lake State Recreation Area (access GPS on the official park page)",
+    "source_url": "https://www.ncparks.gov/state-parks/falls-lake-state-recreation-area",
+    "checked": "2026-11-27",
+    "note": "Owner's published access-area GPS point, not a surveyed ramp position. Directions use the address."
+   }
   },
   {
    "id": "parks-falls-holly-point-campers",
@@ -3353,7 +3405,7 @@
      "category": "current_dated_notice",
      "label": "Current official notice",
      "text": "N.C. State Parks reports Holly Point is currently closed for construction. All other Falls Lake areas are listed as open as normal.",
-     "as_of": "Nov 27, 2026 (official banner checked)",
+     "as_of": "Nov 27, 2026, 6:20 PM ET (official page rechecked)",
      "sources": [
       {
        "label": "N.C. State Parks, Falls Lake State Recreation Area",
@@ -3411,7 +3463,7 @@
     "code": "temporarily_closed",
     "label": "Temporarily closed (construction)",
     "detail": "N.C. State Parks reports Holly Point is currently closed for construction. All other Falls Lake areas are listed as open as normal.",
-    "as_of": "Nov 27, 2026 (official banner checked)",
+    "as_of": "Nov 27, 2026, 6:20 PM ET (official page rechecked)",
     "source": "N.C. State Parks, Falls Lake State Recreation Area",
     "source_url": "https://www.ncparks.gov/state-parks/falls-lake-state-recreation-area",
     "notice": "falls-holly-point-construction",
@@ -3419,7 +3471,18 @@
    },
    "applied_notices": [
     "falls-holly-point-construction"
-   ]
+   ],
+   "type_dimension": "needs_review",
+   "official_coordinates": {
+    "lat": 36.01,
+    "lon": -78.6575,
+    "kind": "owner_access_area_gps",
+    "label": "Holly Point Campground, 14424 New Light Road",
+    "source_name": "N.C. State Parks, Falls Lake State Recreation Area (access GPS on the official park page)",
+    "source_url": "https://www.ncparks.gov/state-parks/falls-lake-state-recreation-area",
+    "checked": "2026-11-27",
+    "note": "Owner's published access-area GPS point, not a surveyed ramp position. Directions use the address."
+   }
   },
   {
    "id": "baa-ledge-rock",
@@ -3560,7 +3623,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "parks-falls-rolling-view",
@@ -3700,7 +3764,18 @@
     "as_of": "2026-11-22",
     "source": ""
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer",
+   "official_coordinates": {
+    "lat": 36.0085,
+    "lon": -78.7291,
+    "kind": "owner_access_area_gps",
+    "label": "Rolling View Access, 4201 Baptist Road",
+    "source_name": "N.C. State Parks, Falls Lake State Recreation Area (access GPS on the official park page)",
+    "source_url": "https://www.ncparks.gov/state-parks/falls-lake-state-recreation-area",
+    "checked": "2026-11-27",
+    "note": "Owner's published access-area GPS point, not a surveyed ramp position. Directions use the address."
+   }
   },
   {
    "id": "baa-upper-bartons-creek",
@@ -3858,7 +3933,148 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
+  },
+  {
+   "id": "baa-rodanthe",
+   "official_name": "RODANTHE",
+   "display_name": "Rodanthe",
+   "alias": "not stated",
+   "area": "hatteras",
+   "area_label": "Hatteras Island",
+   "body_of_water": "PAMLICO SOUND",
+   "body_of_water_note": "",
+   "county": "Dare",
+   "city": "Rodanthe",
+   "street": "23170 MYRNA PETERS RD",
+   "zip": "27968",
+   "listing_class": "general",
+   "verification_status": "official_listing",
+   "record_class": "ncwrc_official_listing",
+   "suitable_for_trailered_motorboats": "yes",
+   "flags": {
+    "camper_only": false,
+    "non_gas_only": false,
+    "size_limited": false,
+    "no_parking": false,
+    "shallow_draft": false,
+    "limited_trailer_parking": false,
+    "hours_uncertain": false,
+    "fee_conflict": false,
+    "size_limit_note": "",
+    "motorboats_restricted": false
+   },
+   "managing_agency": "DARE COUNTY",
+   "program": "NCWRC Boating Access Area",
+   "site_status_official": "OPEN",
+   "site_status_note": "The official Site_Status field is a recorded dataset value, NCWRC data last edited 2026-11-06 2:58 PM ET, checked 2026-11-27. It is not a live open/closed confirmation.",
+   "lanes": 2,
+   "trailer_parking": 28,
+   "trailer_parking_ada": 2,
+   "nontrailer_parking": 3,
+   "nontrailer_parking_ada": 1,
+   "parking_surface": "PAVED",
+   "fixed_docks": "not stated",
+   "floating_docks": 1,
+   "courtesy_docks": "not stated",
+   "fishing_pier": "not stated",
+   "restrooms": "no",
+   "lighting": "yes",
+   "kiosk": "yes",
+   "trash_can": "no",
+   "ada_paved_walkway": "not stated",
+   "ada_dock_handrails": "not stated",
+   "motorboats_restricted": "no",
+   "non_motorized_access": "yes",
+   "shallow_draft_recommended": "not stated",
+   "vehicle_restrictions": "not stated in the NCWRC feature service",
+   "accessibility_notes": "not stated",
+   "restriction_notes": "not stated",
+   "caution_notes": "not stated",
+   "fishing_water_designation": "COASTAL",
+   "salinity_class": "tidal",
+   "phone": "252.475.5650",
+   "fees": {
+    "summary": "Not stated in the NCWRC feature service. Owner: DARE COUNTY. Check with the owner.",
+    "conflict": false,
+    "entries": []
+   },
+   "hours": {
+    "summary": "Not stated in the NCWRC feature service. Owner: DARE COUNTY. Check with the owner.",
+    "conflict": false,
+    "entries": []
+   },
+   "notices": [],
+   "directions": {
+    "mode": "coordinates",
+    "latitude": 35.59594135,
+    "longitude": -75.47026943,
+    "address": "23170 MYRNA PETERS RD, Rodanthe, NC, 27968",
+    "apple_url": "https://maps.apple.com/?daddr=35.59594135,-75.47026943",
+    "google_url": "https://www.google.com/maps/dir/?api=1&destination=35.59594135,-75.47026943",
+    "caveat": ""
+   },
+   "sources": [
+    {
+     "label": "Primary official source",
+     "url": "https://www.ncwildlife.gov/boating/boating-access-areas",
+     "detail": "Feature service data last edit 2026-11-06 2:58 PM ET",
+     "date_checked": "2026-11-27"
+    },
+    {
+     "label": "Related official page or dataset",
+     "url": "https://services1.arcgis.com/YfqBAUM5nWR3yhGP/arcgis/rest/services/NCWRC_Boating_Access_Areas_view/FeatureServer/0",
+     "detail": "",
+     "date_checked": "2026-11-27"
+    },
+    {
+     "label": "Feature-service item",
+     "url": "https://www.arcgis.com/home/item.html?id=825b21606e2040aabed210d878b2f3e5",
+     "detail": "",
+     "date_checked": "2026-11-27"
+    }
+   ],
+   "date_checked": "2026-11-27",
+   "notes": "",
+   "coordinates_source": "NCWRC Boating Access Areas feature service attributes (Latitude/Longitude), retrieved 2026-11-27",
+   "access_type": "trailer",
+   "access_type_label": "Trailer launch",
+   "regulatory_class": "COASTAL",
+   "regulatory_label": "Coastal fishing waters (NC Marine Fisheries rules)",
+   "salinity": {
+    "basis": "inferred",
+    "nearest_noaa_tide_station": "8653215",
+    "nearest_noaa_tide_station_mi": 0.1,
+    "class": "tidal",
+    "label": "Brackish or salt, tidal (inferred)",
+    "method": "NCWRC coastal fishing waters within 10 mi of a NOAA tide-prediction station"
+   },
+   "area_rule": {
+    "area": "hatteras",
+    "rule": "Documented geographic exception: Rodanthe BAA (Dare County) is on Hatteras Island but 24 mi from the Cape Hatteras anchor; listed with Hatteras Island by explicit exception (Ed t548u).",
+    "exception": true
+   },
+   "ncwrc": {
+    "globalid": "06bbb31d-4a33-45a2-917c-7eecba2e1e1e",
+    "objectid": 255,
+    "region": "COASTAL",
+    "closure_reason": "not stated",
+    "data_last_edit": "2026-11-06 2:58 PM ET"
+   },
+   "record_basis": "ncwrc_official_listing",
+   "field_sources": {
+    "*": "ncwrc:2026-11-27"
+   },
+   "access_status": {
+    "code": "listed_open",
+    "label": "Listed as open (not a live check)",
+    "detail": "Recorded official status, not a live open/closed confirmation.",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
+    "source": "NCWRC Boating Access Areas feature service"
+   },
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "parks-jordan-ebenezer",
@@ -4011,7 +4227,18 @@
     "as_of": "2026-11-22",
     "source": ""
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer",
+   "official_coordinates": {
+    "lat": 35.7082,
+    "lon": -79.0157,
+    "kind": "owner_access_area_gps",
+    "label": "Ebenezer Church Access, 2582 Beaver Creek Road",
+    "source_name": "N.C. State Parks, Jordan Lake State Recreation Area (access GPS on the official park page)",
+    "source_url": "https://www.ncparks.gov/state-parks/jordan-lake-state-recreation-area",
+    "checked": "2026-11-27",
+    "note": "Owner's published access-area GPS point, not a surveyed ramp position. Directions use the address."
+   }
   },
   {
    "id": "baa-farrington-point",
@@ -4169,7 +4396,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "parks-jordan-new-hope",
@@ -4309,7 +4537,18 @@
     "as_of": "2026-11-22",
     "source": ""
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer",
+   "official_coordinates": {
+    "lat": 35.6772,
+    "lon": -79.0454,
+    "kind": "owner_access_area_gps",
+    "label": "New Hope Overlook Access, 339 W.H. Jones Road",
+    "source_name": "N.C. State Parks, Jordan Lake State Recreation Area (access GPS on the official park page)",
+    "source_url": "https://www.ncparks.gov/state-parks/jordan-lake-state-recreation-area",
+    "checked": "2026-11-27",
+    "note": "Owner's published access-area GPS point, not a surveyed ramp position. Directions use the address."
+   }
   },
   {
    "id": "usace-jordan-poes-ridge",
@@ -4464,7 +4703,9 @@
     "as_of": "2026-11-22",
     "source": ""
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer",
+   "coordinates_unresolved": "USACE Wilmington District pages blocked automated requests (HTTP 403) on Nov 27, 2026. No other official coordinates found. Directions by address."
   },
   {
    "id": "parks-jordan-poplar-point-campers",
@@ -4604,7 +4845,18 @@
     "as_of": "2026-11-22",
     "source": ""
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "needs_review",
+   "official_coordinates": {
+    "lat": 35.7289,
+    "lon": -79.0044,
+    "kind": "owner_access_area_gps",
+    "label": "Poplar Point Access, 558 Beaver Creek Road",
+    "source_name": "N.C. State Parks, Jordan Lake State Recreation Area (access GPS on the official park page)",
+    "source_url": "https://www.ncparks.gov/state-parks/jordan-lake-state-recreation-area",
+    "checked": "2026-11-27",
+    "note": "Owner's published access-area GPS point, not a surveyed ramp position. Directions use the address."
+   }
   },
   {
    "id": "parks-jordan-seaforth",
@@ -4694,8 +4946,8 @@
     {
      "category": "current_dated_notice",
      "label": "Current official notice",
-     "text": "N.C. State Parks reports Seaforth has 1 ramp open for single-axle trailers due to low water levels.",
-     "as_of": "Nov 27, 2026 (official banner checked)",
+     "text": "N.C. State Parks reports Seaforth has 1 ramp open for single-axle trailers due to low water levels. The current published schedule lists the Seaforth day-use area as open year-round; it shows no Nov. 30 seasonal close for Seaforth.",
+     "as_of": "Nov 27, 2026, 6:20 PM ET (official page rechecked)",
      "sources": [
       {
        "label": "N.C. State Parks, Jordan Lake State Recreation Area",
@@ -4752,8 +5004,8 @@
    "access_status": {
     "code": "partially_open",
     "label": "Partly open: 1 ramp, single-axle trailers only",
-    "detail": "N.C. State Parks reports Seaforth has 1 ramp open for single-axle trailers due to low water levels.",
-    "as_of": "Nov 27, 2026 (official banner checked)",
+    "detail": "N.C. State Parks reports Seaforth has 1 ramp open for single-axle trailers due to low water levels. The current published schedule lists the Seaforth day-use area as open year-round; it shows no Nov. 30 seasonal close for Seaforth.",
+    "as_of": "Nov 27, 2026, 6:20 PM ET (official page rechecked)",
     "source": "N.C. State Parks, Jordan Lake State Recreation Area",
     "source_url": "https://www.ncparks.gov/state-parks/jordan-lake-state-recreation-area",
     "notice": "jordan-low-water-seaforth",
@@ -4761,7 +5013,18 @@
    },
    "applied_notices": [
     "jordan-low-water-seaforth"
-   ]
+   ],
+   "type_dimension": "trailer",
+   "official_coordinates": {
+    "lat": 35.7354,
+    "lon": -79.038,
+    "kind": "owner_access_area_gps",
+    "label": "Seaforth Access, Seaforth Beach Road",
+    "source_name": "N.C. State Parks, Jordan Lake State Recreation Area (access GPS on the official park page)",
+    "source_url": "https://www.ncparks.gov/state-parks/jordan-lake-state-recreation-area",
+    "checked": "2026-11-27",
+    "note": "Owner's published access-area GPS point, not a surveyed ramp position. Directions use the address."
+   }
   },
   {
    "id": "parks-jordan-vista-point-sailboat",
@@ -4847,8 +5110,8 @@
     {
      "category": "current_dated_notice",
      "label": "Current official notice",
-     "text": "N.C. State Parks reports the Vista Point boat ramp closed due to low water levels. Ebenezer Church and New Hope are listed as open alternatives.",
-     "as_of": "Nov 27, 2026 (official banner checked)",
+     "text": "N.C. State Parks reports the Vista Point boat ramp closed due to low water levels. Its published schedule also lists the Vista Point boat ramp season as March 2 to Nov. 30, 2026. Ebenezer Church and New Hope are listed as open alternatives.",
+     "as_of": "Nov 27, 2026, 6:20 PM ET (official page rechecked)",
      "sources": [
       {
        "label": "N.C. State Parks, Jordan Lake State Recreation Area",
@@ -4899,8 +5162,8 @@
    "access_status": {
     "code": "temporarily_closed",
     "label": "Temporarily closed (low water)",
-    "detail": "N.C. State Parks reports the Vista Point boat ramp closed due to low water levels. Ebenezer Church and New Hope are listed as open alternatives.",
-    "as_of": "Nov 27, 2026 (official banner checked)",
+    "detail": "N.C. State Parks reports the Vista Point boat ramp closed due to low water levels. Its published schedule also lists the Vista Point boat ramp season as March 2 to Nov. 30, 2026. Ebenezer Church and New Hope are listed as open alternatives.",
+    "as_of": "Nov 27, 2026, 6:20 PM ET (official page rechecked)",
     "source": "N.C. State Parks, Jordan Lake State Recreation Area",
     "source_url": "https://www.ncparks.gov/state-parks/jordan-lake-state-recreation-area",
     "notice": "jordan-low-water-vista-point",
@@ -4908,7 +5171,18 @@
    },
    "applied_notices": [
     "jordan-low-water-vista-point"
-   ]
+   ],
+   "type_dimension": "needs_review",
+   "official_coordinates": {
+    "lat": 35.7094,
+    "lon": -79.0592,
+    "kind": "owner_access_area_gps",
+    "label": "Vista Point Access, 2498 N. Pea Ridge Road",
+    "source_name": "N.C. State Parks, Jordan Lake State Recreation Area (access GPS on the official park page)",
+    "source_url": "https://www.ncparks.gov/state-parks/jordan-lake-state-recreation-area",
+    "checked": "2026-11-27",
+    "note": "Owner's published access-area GPS point, not a surveyed ramp position. Directions use the address."
+   }
   },
   {
    "id": "baa-avalon-beach",
@@ -5045,10 +5319,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-bowsertown-road",
@@ -5185,10 +5460,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-manns-harbor",
@@ -5325,10 +5601,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-mashoes",
@@ -5465,10 +5742,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-stumpy-point",
@@ -5605,10 +5883,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-washington-baum-bridge",
@@ -5745,10 +6024,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-brices-creek",
@@ -5891,7 +6171,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-bridgeton",
@@ -6034,7 +6315,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-cool-springs",
@@ -6177,7 +6459,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-cow-pen-landing",
@@ -6320,7 +6603,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-coxs-ferry",
@@ -6463,7 +6747,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-dawson-creek",
@@ -6606,7 +6891,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "local-newbern-glenburnie",
@@ -6748,7 +7034,9 @@
     "as_of": "2026-11-22",
     "source": ""
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer",
+   "coordinates_unresolved": "City of New Bern publishes the park address and a layout graphic with no coordinates. Directions by address."
   },
   {
    "id": "baa-goldsboro",
@@ -6891,7 +7179,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-kinston",
@@ -7034,7 +7323,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "local-newbern-lawson-creek-1",
@@ -7176,7 +7466,9 @@
     "as_of": "2026-11-22",
     "source": ""
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer",
+   "coordinates_unresolved": "City of New Bern publishes the park address and a layout graphic with no coordinates. Directions by address."
   },
   {
    "id": "local-newbern-lawson-creek-2",
@@ -7318,7 +7610,9 @@
     "as_of": "2026-11-22",
     "source": ""
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer",
+   "coordinates_unresolved": "City of New Bern publishes the park address and a layout graphic with no coordinates. Directions by address."
   },
   {
    "id": "baa-lees-landing",
@@ -7461,7 +7755,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-maple-cypress",
@@ -7604,7 +7899,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-oriental",
@@ -7747,7 +8043,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-percy-berry",
@@ -7907,7 +8204,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-pollocksville",
@@ -8050,7 +8348,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-prices-landing",
@@ -8193,7 +8492,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-richardsons-bridge",
@@ -8336,7 +8636,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-seven-springs",
@@ -8479,7 +8780,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-slocum-creek",
@@ -8622,7 +8924,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-smithfield",
@@ -8766,7 +9069,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-spring-garden",
@@ -8909,7 +9213,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-stevens-mill",
@@ -9052,7 +9357,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-trenton",
@@ -9195,7 +9501,8 @@
     "as_of": "2026-11-22",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "local-newbern-union-point",
@@ -9343,7 +9650,8 @@
     "as_of": "2026-11-22",
     "source": ""
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-astoria-landing",
@@ -9478,10 +9786,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-aurora",
@@ -9616,10 +9925,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-belhaven",
@@ -9754,10 +10064,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-big-flatty",
@@ -9905,10 +10216,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-blounts-creek",
@@ -10043,10 +10355,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-boardman",
@@ -10181,10 +10494,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-bricklanding-road",
@@ -10319,10 +10633,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-brumley-road",
@@ -10457,10 +10772,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-cannons-ferry",
@@ -10595,10 +10911,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-chinquapin",
@@ -10733,10 +11050,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-coinjock",
@@ -10871,10 +11189,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-columbia",
@@ -11009,10 +11328,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-conaby-creek",
@@ -11147,10 +11467,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-creswell",
@@ -11285,10 +11606,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-edenhouse-bridge",
@@ -11423,10 +11745,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-elwells-ferry",
@@ -11561,10 +11884,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-engelhard",
@@ -11699,10 +12023,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-ennis-bridge",
@@ -11837,10 +12162,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-fair-bluff",
@@ -11975,10 +12301,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-falkland",
@@ -12113,10 +12440,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-fayetteville",
@@ -12251,10 +12579,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-frying-pan",
@@ -12389,10 +12718,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-gatesville",
@@ -12527,10 +12857,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-gatlington-landing",
@@ -12665,10 +12996,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-greenville",
@@ -12803,10 +13135,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-grifton",
@@ -12941,10 +13274,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-gum-neck-landing",
@@ -13079,10 +13413,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-halls-creek",
@@ -13217,10 +13552,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-hamilton",
@@ -13368,10 +13704,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-harrellsville",
@@ -13506,10 +13843,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-havens-garden",
@@ -13644,10 +13982,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-hertford",
@@ -13782,10 +14121,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-high-hill",
@@ -13920,10 +14260,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-holden-beach",
@@ -14058,10 +14399,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-hookerton",
@@ -14196,10 +14538,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-hunts-bluff",
@@ -14334,10 +14677,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-hydeland-canal",
@@ -14472,10 +14816,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-ivanhoe",
@@ -14610,10 +14955,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-jacksonville-landing",
@@ -14748,10 +15094,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-kelly-n-davis",
@@ -14886,10 +15233,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-kenansville",
@@ -15024,10 +15372,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-lake-mattamuskeet",
@@ -15175,10 +15524,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "limited"
   },
   {
    "id": "baa-lake-rim",
@@ -15326,10 +15676,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "limited"
   },
   {
    "id": "baa-lake-waccamaw",
@@ -15464,10 +15815,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-lennons-bridge",
@@ -15602,10 +15954,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-lewiston-woodville",
@@ -15740,10 +16093,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-lillington",
@@ -15878,10 +16232,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-lock-and-dam-1",
@@ -16029,10 +16384,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-lock-and-dam-2",
@@ -16167,10 +16523,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-masons-landing",
@@ -16305,10 +16662,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-mcneils-bridge",
@@ -16443,10 +16801,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-midway-drive",
@@ -16581,10 +16940,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-murfreesboro",
@@ -16719,10 +17079,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-nc-hwy-45-bridge",
@@ -16857,10 +17218,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-oak-island",
@@ -16995,10 +17357,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-ocean-isle-beach",
@@ -17133,10 +17496,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-outfall-canal",
@@ -17271,10 +17635,11 @@
     "code": "temporarily_closed",
     "label": "Temporarily closed (NCWRC data)",
     "detail": "NCWRC lists this site as temporarily closed: VERY SMALL SITE WITH VERY LIMITED PARKING.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-perquimans",
@@ -17409,10 +17774,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-pireway",
@@ -17547,10 +17913,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-plymouth-water-street",
@@ -17698,10 +18065,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-poplar-branch",
@@ -17836,10 +18204,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-poyners-road",
@@ -17987,148 +18356,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
-  },
-  {
-   "id": "baa-rodanthe",
-   "official_name": "RODANTHE",
-   "display_name": "Rodanthe",
-   "alias": "not stated",
-   "area": "other-coastal",
-   "area_label": "Elsewhere: Coastal Plain",
-   "body_of_water": "PAMLICO SOUND",
-   "body_of_water_note": "",
-   "county": "Dare",
-   "city": "Rodanthe",
-   "street": "23170 MYRNA PETERS RD",
-   "zip": "27968",
-   "listing_class": "general",
-   "verification_status": "official_listing",
-   "record_class": "ncwrc_official_listing",
-   "suitable_for_trailered_motorboats": "yes",
-   "flags": {
-    "camper_only": false,
-    "non_gas_only": false,
-    "size_limited": false,
-    "no_parking": false,
-    "shallow_draft": false,
-    "limited_trailer_parking": false,
-    "hours_uncertain": false,
-    "fee_conflict": false,
-    "size_limit_note": "",
-    "motorboats_restricted": false
-   },
-   "managing_agency": "DARE COUNTY",
-   "program": "NCWRC Boating Access Area",
-   "site_status_official": "OPEN",
-   "site_status_note": "The official Site_Status field is a recorded dataset value, NCWRC data last edited 2026-11-06 2:58 PM ET, checked 2026-11-27. It is not a live open/closed confirmation.",
-   "lanes": 2,
-   "trailer_parking": 28,
-   "trailer_parking_ada": 2,
-   "nontrailer_parking": 3,
-   "nontrailer_parking_ada": 1,
-   "parking_surface": "PAVED",
-   "fixed_docks": "not stated",
-   "floating_docks": 1,
-   "courtesy_docks": "not stated",
-   "fishing_pier": "not stated",
-   "restrooms": "no",
-   "lighting": "yes",
-   "kiosk": "yes",
-   "trash_can": "no",
-   "ada_paved_walkway": "not stated",
-   "ada_dock_handrails": "not stated",
-   "motorboats_restricted": "no",
-   "non_motorized_access": "yes",
-   "shallow_draft_recommended": "not stated",
-   "vehicle_restrictions": "not stated in the NCWRC feature service",
-   "accessibility_notes": "not stated",
-   "restriction_notes": "not stated",
-   "caution_notes": "not stated",
-   "fishing_water_designation": "COASTAL",
-   "salinity_class": "tidal",
-   "phone": "252.475.5650",
-   "fees": {
-    "summary": "Not stated in the NCWRC feature service. Owner: DARE COUNTY. Check with the owner.",
-    "conflict": false,
-    "entries": []
-   },
-   "hours": {
-    "summary": "Not stated in the NCWRC feature service. Owner: DARE COUNTY. Check with the owner.",
-    "conflict": false,
-    "entries": []
-   },
-   "notices": [],
-   "directions": {
-    "mode": "coordinates",
-    "latitude": 35.59594135,
-    "longitude": -75.47026943,
-    "address": "23170 MYRNA PETERS RD, Rodanthe, NC, 27968",
-    "apple_url": "https://maps.apple.com/?daddr=35.59594135,-75.47026943",
-    "google_url": "https://www.google.com/maps/dir/?api=1&destination=35.59594135,-75.47026943",
-    "caveat": ""
-   },
-   "sources": [
-    {
-     "label": "Primary official source",
-     "url": "https://www.ncwildlife.gov/boating/boating-access-areas",
-     "detail": "Feature service data last edit 2026-11-06 2:58 PM ET",
-     "date_checked": "2026-11-27"
-    },
-    {
-     "label": "Related official page or dataset",
-     "url": "https://services1.arcgis.com/YfqBAUM5nWR3yhGP/arcgis/rest/services/NCWRC_Boating_Access_Areas_view/FeatureServer/0",
-     "detail": "",
-     "date_checked": "2026-11-27"
-    },
-    {
-     "label": "Feature-service item",
-     "url": "https://www.arcgis.com/home/item.html?id=825b21606e2040aabed210d878b2f3e5",
-     "detail": "",
-     "date_checked": "2026-11-27"
-    }
-   ],
-   "date_checked": "2026-11-27",
-   "notes": "",
-   "coordinates_source": "NCWRC Boating Access Areas feature service attributes (Latitude/Longitude), retrieved 2026-11-27",
-   "access_type": "trailer",
-   "access_type_label": "Trailer launch",
-   "regulatory_class": "COASTAL",
-   "regulatory_label": "Coastal fishing waters (NC Marine Fisheries rules)",
-   "salinity": {
-    "basis": "inferred",
-    "nearest_noaa_tide_station": "8653215",
-    "nearest_noaa_tide_station_mi": 0.1,
-    "class": "tidal",
-    "label": "Brackish or salt, tidal (inferred)",
-    "method": "NCWRC coastal fishing waters within 10 mi of a NOAA tide-prediction station"
-   },
-   "area_rule": {
-    "area": "other-coastal",
-    "rule": "Outside every regional radius; grouped by the NCWRC administrative region (Coastal)"
-   },
-   "ncwrc": {
-    "globalid": "06bbb31d-4a33-45a2-917c-7eecba2e1e1e",
-    "objectid": 255,
-    "region": "COASTAL",
-    "closure_reason": "not stated",
-    "data_last_edit": "2026-11-06 2:58 PM ET"
-   },
-   "record_basis": "ncwrc_official_listing",
-   "field_sources": {
-    "*": "ncwrc:2026-11-27"
-   },
-   "access_status": {
-    "code": "listed_open",
-    "label": "Listed as open (not a live check)",
-    "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
-    "source": "NCWRC Boating Access Areas feature service"
-   },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-rose-bay",
@@ -18263,10 +18495,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-sans-souci-ferry",
@@ -18401,10 +18634,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-sawpit-landing",
@@ -18539,10 +18773,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-sawyers-creek",
@@ -18690,10 +18925,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-shelter-creek",
@@ -18828,10 +19064,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-shingle-landing",
@@ -18966,10 +19203,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-shoups-landing",
@@ -19104,10 +19342,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-sloans-bridge",
@@ -19242,10 +19481,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-smiths-creek",
@@ -19380,10 +19620,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-snow-hill",
@@ -19518,10 +19759,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-sunset-beach",
@@ -19656,10 +19898,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-sunset-harbor",
@@ -19794,10 +20037,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-tar-heel",
@@ -19932,10 +20176,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-tory-hole",
@@ -20070,10 +20315,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-tunis",
@@ -20208,10 +20454,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-vandemere",
@@ -20346,10 +20593,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-wagram",
@@ -20484,10 +20732,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-waynes-landing",
@@ -20622,10 +20871,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-william-o-huske-lock-and-dam",
@@ -20760,10 +21010,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-williamston",
@@ -20911,10 +21162,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-windsor",
@@ -21049,10 +21301,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-wrights-creek",
@@ -21187,10 +21440,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-apalachia",
@@ -21338,10 +21592,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-avey-creek",
@@ -21476,10 +21731,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-barkers-creek",
@@ -21614,10 +21870,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-bear-creek",
@@ -21752,10 +22009,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-black-bear",
@@ -21890,10 +22148,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-bridgewater",
@@ -22041,10 +22300,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "paddle"
   },
   {
    "id": "baa-c-j-harris",
@@ -22179,10 +22439,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-cable-cove",
@@ -22317,10 +22578,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-castle-bridge",
@@ -22468,10 +22730,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-cedar-cliff",
@@ -22606,10 +22869,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-cheoah-point",
@@ -22744,10 +23008,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-choga-road",
@@ -22882,10 +23147,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-conley-creek",
@@ -23020,10 +23286,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-crater-park",
@@ -23171,10 +23438,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-craven-street-bridge",
@@ -23309,10 +23577,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-donnaha-park",
@@ -23460,10 +23729,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-dusty-ridge",
@@ -23598,10 +23868,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-flat-branch",
@@ -23736,10 +24007,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-grape-creek",
@@ -23874,10 +24146,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-gunpowder",
@@ -24012,10 +24285,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-hanging-dog",
@@ -24163,10 +24437,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-horse-shoe",
@@ -24301,10 +24576,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-jackrabbit",
@@ -24439,10 +24715,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-johns-river",
@@ -24577,10 +24854,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-lake-adger",
@@ -24728,10 +25006,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "limited"
   },
   {
    "id": "baa-lake-emory",
@@ -24866,10 +25145,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-ledfords-chapel",
@@ -25004,10 +25284,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-lemmons-branch",
@@ -25142,10 +25423,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-lewellyn-branch",
@@ -25293,10 +25575,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-linville-river",
@@ -25431,10 +25714,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-lovelady",
@@ -25569,10 +25853,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-luck-stone",
@@ -25720,10 +26005,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "paddle"
   },
   {
    "id": "baa-north-bend",
@@ -25858,10 +26144,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-old-288",
@@ -26009,10 +26296,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-oxford",
@@ -26147,10 +26435,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-penrose",
@@ -26285,10 +26574,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-pine-creek",
@@ -26423,10 +26713,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-pine-hall",
@@ -26561,10 +26852,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-piney-bluff",
@@ -26699,10 +26991,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-powerhouse",
@@ -26837,10 +27130,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-ramsey-bluff",
@@ -26975,10 +27269,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-ranger-station",
@@ -27113,10 +27408,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-rhodhiss",
@@ -27251,10 +27547,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-roaring-river",
@@ -27402,10 +27699,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-rocky-branch",
@@ -27540,10 +27838,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-south-point",
@@ -27678,10 +27977,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-todd",
@@ -27829,10 +28129,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "paddle"
   },
   {
    "id": "baa-tsali",
@@ -27967,10 +28268,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-us-221",
@@ -28105,10 +28407,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "paddle"
   },
   {
    "id": "baa-us-221a",
@@ -28243,10 +28546,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "paddle"
   },
   {
    "id": "baa-westfeldt-park",
@@ -28381,10 +28685,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-whittier",
@@ -28519,10 +28824,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-wittenburg",
@@ -28657,10 +28963,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-wolf-creek",
@@ -28808,10 +29115,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-avents-ferry-bridge",
@@ -28946,10 +29254,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-battle-park",
@@ -29084,10 +29393,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-beatties-ford",
@@ -29222,10 +29532,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-bells-bridge",
@@ -29373,10 +29684,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-blewetts-grave",
@@ -29524,10 +29836,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-bringle-ferry",
@@ -29675,10 +29988,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-circle-drive",
@@ -29813,10 +30127,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-clarks-creek",
@@ -29964,10 +30279,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-concord-church",
@@ -30102,10 +30418,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-cooleemee",
@@ -30240,10 +30557,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-county-line",
@@ -30319,7 +30637,7 @@
      "category": "current_dated_notice",
      "label": "Current official notice",
      "text": "N.C. State Parks reports most boat ramps at Kerr Lake closed due to low water levels. It lists its Kimball Point ramp and the NC Wildlife ramp at Hibernia as the only boat ramps open on the North Carolina side.",
-     "as_of": "Nov 27, 2026 (official banner checked)",
+     "as_of": "Nov 27, 2026, 6:20 PM ET (official page rechecked)",
      "sources": [
       {
        "label": "N.C. State Parks, Kerr Lake State Recreation Area",
@@ -30391,12 +30709,13 @@
     "code": "temporarily_closed",
     "label": "Temporarily closed (NCWRC data)",
     "detail": "NCWRC lists this site as temporarily closed: Closed due to low water.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
    "applied_notices": [
     "kerr-low-water"
-   ]
+   ],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-cross-point-landing",
@@ -30544,10 +30863,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-crowther",
@@ -30682,10 +31002,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-dan-river",
@@ -30820,10 +31141,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "paddle"
   },
   {
    "id": "baa-diggs",
@@ -30958,10 +31280,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-double-bluff",
@@ -31096,10 +31419,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "paddle"
   },
   {
    "id": "baa-draper-landing",
@@ -31234,10 +31558,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-dunbar-bridge",
@@ -31385,10 +31710,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-dutch-second",
@@ -31523,10 +31849,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-edwards-ferry",
@@ -31674,10 +32001,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-fifth-street-landing",
@@ -31812,10 +32140,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-flat-creek",
@@ -31950,10 +32279,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-flemingtown-landing",
@@ -32029,7 +32359,7 @@
      "category": "current_dated_notice",
      "label": "Current official notice",
      "text": "N.C. State Parks reports most boat ramps at Kerr Lake closed due to low water levels. It lists its Kimball Point ramp and the NC Wildlife ramp at Hibernia as the only boat ramps open on the North Carolina side.",
-     "as_of": "Nov 27, 2026 (official banner checked)",
+     "as_of": "Nov 27, 2026, 6:20 PM ET (official page rechecked)",
      "sources": [
       {
        "label": "N.C. State Parks, Kerr Lake State Recreation Area",
@@ -32101,12 +32431,13 @@
     "code": "temporarily_closed",
     "label": "Temporarily closed (NCWRC data)",
     "detail": "NCWRC lists this site as temporarily closed: Closed due to low water.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
    "applied_notices": [
     "kerr-low-water"
-   ]
+   ],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-gaston",
@@ -32241,10 +32572,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-grassy-island",
@@ -32392,10 +32724,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-hager-creek",
@@ -32530,10 +32863,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-harts",
@@ -32681,10 +33015,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "paddle"
   },
   {
    "id": "baa-hawtree-creek",
@@ -32819,10 +33154,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-henderson-point",
@@ -32898,7 +33234,7 @@
      "category": "current_dated_notice",
      "label": "Current official notice",
      "text": "N.C. State Parks reports most boat ramps at Kerr Lake closed due to low water levels. It lists its Kimball Point ramp and the NC Wildlife ramp at Hibernia as the only boat ramps open on the North Carolina side.",
-     "as_of": "Nov 27, 2026 (official banner checked)",
+     "as_of": "Nov 27, 2026, 6:20 PM ET (official page rechecked)",
      "sources": [
       {
        "label": "N.C. State Parks, Kerr Lake State Recreation Area",
@@ -32970,12 +33306,13 @@
     "code": "temporarily_closed",
     "label": "Temporarily closed (NCWRC data)",
     "detail": "NCWRC lists this site as temporarily closed: Closed due to low water.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
    "applied_notices": [
     "kerr-low-water"
-   ]
+   ],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-henrico",
@@ -33110,10 +33447,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-hibernia",
@@ -33201,7 +33539,7 @@
      "category": "current_dated_notice",
      "label": "Current official notice",
      "text": "N.C. State Parks reports most boat ramps at Kerr Lake closed due to low water levels. It lists its Kimball Point ramp and the NC Wildlife ramp at Hibernia as the only boat ramps open on the North Carolina side.",
-     "as_of": "Nov 27, 2026 (official banner checked)",
+     "as_of": "Nov 27, 2026, 6:20 PM ET (official page rechecked)",
      "sources": [
       {
        "label": "N.C. State Parks, Kerr Lake State Recreation Area",
@@ -33213,7 +33551,7 @@
      "category": "current_dated_notice",
      "label": "Official sources disagree",
      "text": "NCWRC data (last edited Nov 6, 2026) lists Hibernia as temporarily closed due to low water. The N.C. State Parks Kerr Lake banner checked Nov 27, 2026 lists the NC Wildlife ramp at Hibernia as open, and the same banner says the Hibernia area is closed for the season for construction. Check with the park before traveling.",
-     "as_of": "Nov 27, 2026 (both sources checked)",
+     "as_of": "Nov 27, 2026, 6:20 PM ET (both sources rechecked)",
      "sources": [
       {
        "label": "N.C. State Parks, Kerr Lake State Recreation Area",
@@ -33285,7 +33623,7 @@
     "code": "conflicting",
     "label": "Status unclear: official sources disagree",
     "detail": "NCWRC data (last edited Nov 6, 2026) lists Hibernia as temporarily closed due to low water. The N.C. State Parks Kerr Lake banner checked Nov 27, 2026 lists the NC Wildlife ramp at Hibernia as open, and the same banner says the Hibernia area is closed for the season for construction. Check with the park before traveling.",
-    "as_of": "Nov 27, 2026 (both sources checked)",
+    "as_of": "Nov 27, 2026, 6:20 PM ET (both sources rechecked)",
     "source": "N.C. State Parks, Kerr Lake State Recreation Area",
     "source_url": "https://www.ncparks.gov/state-parks/kerr-lake-state-recreation-area",
     "notice": "kerr-hibernia-conflict",
@@ -33294,7 +33632,8 @@
    "applied_notices": [
     "kerr-low-water",
     "kerr-hibernia-conflict"
-   ]
+   ],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-highwy-73",
@@ -33429,10 +33768,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-hollemans-crossing",
@@ -33580,10 +33920,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-hyco-afterbay",
@@ -33718,10 +34059,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-jessup-mill",
@@ -33869,10 +34211,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "paddle"
   },
   {
    "id": "baa-lakemont",
@@ -34007,10 +34350,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-leaksville",
@@ -34145,10 +34489,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-lillys-bridge",
@@ -34283,10 +34628,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-little-creek",
@@ -34421,10 +34767,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-long-island",
@@ -34559,10 +34906,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-lookout-shoals",
@@ -34697,10 +35045,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-lucia",
@@ -34848,10 +35197,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "limited"
   },
   {
    "id": "baa-mccrary-creek",
@@ -34986,10 +35336,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-milton",
@@ -35137,10 +35488,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-nc-hwy-109",
@@ -35275,10 +35627,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "paddle"
   },
   {
    "id": "baa-neck-road",
@@ -35413,10 +35766,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-norwood",
@@ -35564,11 +35918,12 @@
     "code": "conflicting",
     "label": "Status unclear: check before traveling",
     "detail": "NCWRC records Site_Status OPEN but also the closure reason “CLOSED FOR RENOVATION”.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service",
     "review": true
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-odom",
@@ -35703,10 +36058,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-old-sparta",
@@ -35854,10 +36210,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-pee-dee",
@@ -35992,10 +36349,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-pinnacle",
@@ -36130,10 +36488,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-red-hill",
@@ -36268,10 +36627,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-rhodes-pond",
@@ -36419,10 +36779,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-riverbend",
@@ -36557,10 +36918,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-rockingham",
@@ -36695,10 +37057,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-salmons-landing",
@@ -36833,10 +37196,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-sharon",
@@ -36971,10 +37335,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-shelby",
@@ -37122,10 +37487,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "paddle"
   },
   {
    "id": "baa-stony-mountain",
@@ -37260,10 +37626,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-summit",
@@ -37398,10 +37765,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-sunset-park",
@@ -37536,10 +37904,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-swift-island",
@@ -37674,10 +38043,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-thelma",
@@ -37825,10 +38195,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-triple-springs",
@@ -37976,10 +38347,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-troy",
@@ -38114,10 +38486,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-vultare",
@@ -38252,10 +38625,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-weldon",
@@ -38403,10 +38777,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-worthville-road",
@@ -38541,10 +38916,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-hampstead",
@@ -38681,10 +39057,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-holly-shelter",
@@ -38821,10 +39198,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-sneads-ferry",
@@ -38961,10 +39339,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-surf-city",
@@ -39114,10 +39493,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-turkey-creek",
@@ -39254,10 +39634,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-west-onslow-beach",
@@ -39394,10 +39775,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-castle-hayne",
@@ -39534,10 +39916,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-dram-tree-park",
@@ -39674,10 +40057,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-federal-point",
@@ -39814,10 +40198,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-rices-creek",
@@ -39954,10 +40339,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-snows-cut",
@@ -40094,10 +40480,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-sutton-lake",
@@ -40234,10 +40621,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-trails-end",
@@ -40374,10 +40762,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   },
   {
    "id": "baa-wrightsville-beach",
@@ -40527,10 +40916,11 @@
     "code": "listed_open",
     "label": "Listed as open (not a live check)",
     "detail": "Recorded official status, not a live open/closed confirmation.",
-    "as_of": "2026-11-06",
+    "as_of": "2026-11-06 (NCWRC data last edit; rechecked 2026-11-27)",
     "source": "NCWRC Boating Access Areas feature service"
    },
-   "applied_notices": []
+   "applied_notices": [],
+   "type_dimension": "trailer"
   }
  ],
  "counts": {
@@ -40551,10 +40941,59 @@
   },
   "by_status": {
    "listed_open": 261,
-   "not_stated": 15,
    "temporarily_closed": 6,
    "partially_open": 1,
-   "conflicting": 2
+   "conflicting": 2,
+   "not_stated": 15
+  },
+  "by_type_dimension": {
+   "trailer": 263,
+   "paddle": 11,
+   "limited": 7,
+   "needs_review": 4,
+   "unknown": 0
+  },
+  "type_by_status": {
+   "trailer": {
+    "listed_open": 246,
+    "temporarily_closed": 4,
+    "partially_open": 1,
+    "conflicting": 2,
+    "not_stated": 10
+   },
+   "paddle": {
+    "listed_open": 11,
+    "temporarily_closed": 0,
+    "partially_open": 0,
+    "conflicting": 0,
+    "not_stated": 0
+   },
+   "limited": {
+    "listed_open": 4,
+    "temporarily_closed": 0,
+    "partially_open": 0,
+    "conflicting": 0,
+    "not_stated": 3
+   },
+   "needs_review": {
+    "listed_open": 0,
+    "temporarily_closed": 2,
+    "partially_open": 0,
+    "conflicting": 0,
+    "not_stated": 2
+   },
+   "unknown": {
+    "listed_open": 0,
+    "temporarily_closed": 0,
+    "partially_open": 0,
+    "conflicting": 0,
+    "not_stated": 0
+   }
+  },
+  "coordinates": {
+   "ncwrc_or_inventory": 271,
+   "owner_access_area_gps": 10,
+   "none": 4
   },
   "by_regulatory": {
    "COASTAL": 40,
@@ -40573,10 +41012,11 @@
   "by_area": {
    "crystal-coast": 17,
    "falls-lake": 9,
+   "hatteras": 1,
    "jordan-lake": 7,
    "nags-head": 6,
    "neuse-river": 25,
-   "other-coastal": 85,
+   "other-coastal": 84,
    "other-mountain": 54,
    "other-piedmont": 68,
    "topsail": 6,

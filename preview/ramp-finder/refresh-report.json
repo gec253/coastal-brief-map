@@ -1,6 +1,6 @@
 {
  "status": "ok",
- "attempted_at": "2026-11-27T18:10-05:00",
+ "attempted_at": "2026-11-27T18:21-05:00",
  "ncwrc_count": 267,
  "previous_count": 267,
  "diff": {
@@ -26,10 +26,59 @@
   },
   "by_status": {
    "listed_open": 261,
-   "not_stated": 15,
    "temporarily_closed": 6,
    "partially_open": 1,
-   "conflicting": 2
+   "conflicting": 2,
+   "not_stated": 15
+  },
+  "by_type_dimension": {
+   "trailer": 263,
+   "paddle": 11,
+   "limited": 7,
+   "needs_review": 4,
+   "unknown": 0
+  },
+  "type_by_status": {
+   "trailer": {
+    "listed_open": 246,
+    "temporarily_closed": 4,
+    "partially_open": 1,
+    "conflicting": 2,
+    "not_stated": 10
+   },
+   "paddle": {
+    "listed_open": 11,
+    "temporarily_closed": 0,
+    "partially_open": 0,
+    "conflicting": 0,
+    "not_stated": 0
+   },
+   "limited": {
+    "listed_open": 4,
+    "temporarily_closed": 0,
+    "partially_open": 0,
+    "conflicting": 0,
+    "not_stated": 3
+   },
+   "needs_review": {
+    "listed_open": 0,
+    "temporarily_closed": 2,
+    "partially_open": 0,
+    "conflicting": 0,
+    "not_stated": 2
+   },
+   "unknown": {
+    "listed_open": 0,
+    "temporarily_closed": 0,
+    "partially_open": 0,
+    "conflicting": 0,
+    "not_stated": 0
+   }
+  },
+  "coordinates": {
+   "ncwrc_or_inventory": 271,
+   "owner_access_area_gps": 10,
+   "none": 4
   },
   "by_regulatory": {
    "COASTAL": 40,
@@ -48,10 +97,11 @@
   "by_area": {
    "crystal-coast": 17,
    "falls-lake": 9,
+   "hatteras": 1,
    "jordan-lake": 7,
    "nags-head": 6,
    "neuse-river": 25,
-   "other-coastal": 85,
+   "other-coastal": 84,
    "other-mountain": 54,
    "other-piedmont": 68,
    "topsail": 6,
@@ -294,17 +344,7 @@
   ],
   "missing": {
    "coordinates": [
-    "parks-falls-bw-wells-campers",
-    "parks-falls-beaverdam",
-    "parks-falls-highway-50",
-    "parks-falls-holly-point-campers",
-    "parks-falls-rolling-view",
-    "parks-jordan-ebenezer",
-    "parks-jordan-new-hope",
     "usace-jordan-poes-ridge",
-    "parks-jordan-poplar-point-campers",
-    "parks-jordan-seaforth",
-    "parks-jordan-vista-point-sailboat",
     "local-newbern-glenburnie",
     "local-newbern-lawson-creek-1",
     "local-newbern-lawson-creek-2"
@@ -360,6 +400,7 @@
     "parks-falls-beaverdam",
     "parks-falls-highway-50",
     "parks-falls-rolling-view",
+    "baa-rodanthe",
     "parks-jordan-ebenezer",
     "parks-jordan-new-hope",
     "parks-jordan-seaforth",
@@ -390,7 +431,6 @@
     "baa-oak-island",
     "baa-plymouth-water-street",
     "baa-poyners-road",
-    "baa-rodanthe",
     "baa-sawyers-creek",
     "baa-shingle-landing",
     "baa-sunset-beach",

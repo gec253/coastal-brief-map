@@ -1,0 +1,26 @@
+{
+ "note": "Official coordinates for records that had none, copied from the owner's official page. These are the owner's published access-area GPS points, not surveyed ramp positions, and are labeled that way. Never geocoded or approximated. Directions keep using the verified address.",
+ "checked": "2026-11-27",
+ "records": {
+  "parks-falls-beaverdam": {"lat": 36.0362, "lon": -78.6850, "label": "Beaverdam Access, 14600 Creedmoor Road"},
+  "parks-falls-highway-50": {"lat": 36.0216, "lon": -78.6902, "label": "Highway 50 Access, 13900 Creedmoor Road"},
+  "parks-falls-rolling-view": {"lat": 36.0085, "lon": -78.7291, "label": "Rolling View Access, 4201 Baptist Road"},
+  "parks-falls-bw-wells-campers": {"lat": 35.9861, "lon": -78.6315, "label": "B.W. Wells Campground, 1630 Bent Road"},
+  "parks-falls-holly-point-campers": {"lat": 36.0100, "lon": -78.6575, "label": "Holly Point Campground, 14424 New Light Road"},
+  "parks-jordan-ebenezer": {"lat": 35.7082, "lon": -79.0157, "label": "Ebenezer Church Access, 2582 Beaver Creek Road"},
+  "parks-jordan-new-hope": {"lat": 35.6772, "lon": -79.0454, "label": "New Hope Overlook Access, 339 W.H. Jones Road"},
+  "parks-jordan-poplar-point-campers": {"lat": 35.7289, "lon": -79.0044, "label": "Poplar Point Access, 558 Beaver Creek Road"},
+  "parks-jordan-seaforth": {"lat": 35.7354, "lon": -79.0380, "label": "Seaforth Access, Seaforth Beach Road"},
+  "parks-jordan-vista-point-sailboat": {"lat": 35.7094, "lon": -79.0592, "label": "Vista Point Access, 2498 N. Pea Ridge Road"}
+ },
+ "sources": {
+  "parks-falls-": {"name": "N.C. State Parks, Falls Lake State Recreation Area (access GPS on the official park page)", "url": "https://www.ncparks.gov/state-parks/falls-lake-state-recreation-area"},
+  "parks-jordan-": {"name": "N.C. State Parks, Jordan Lake State Recreation Area (access GPS on the official park page)", "url": "https://www.ncparks.gov/state-parks/jordan-lake-state-recreation-area"}
+ },
+ "unresolved": {
+  "usace-jordan-poes-ridge": "USACE Wilmington District pages blocked automated requests (HTTP 403) on Nov 27, 2026. No other official coordinates found. Directions by address.",
+  "local-newbern-glenburnie": "City of New Bern publishes the park address and a layout graphic with no coordinates. Directions by address.",
+  "local-newbern-lawson-creek-1": "City of New Bern publishes the park address and a layout graphic with no coordinates. Directions by address.",
+  "local-newbern-lawson-creek-2": "City of New Bern publishes the park address and a layout graphic with no coordinates. Directions by address."
+ }
+}
