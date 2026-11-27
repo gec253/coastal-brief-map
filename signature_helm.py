@@ -257,12 +257,14 @@ def water_cell(t: dict) -> str:
         off = t.get("off_read")
         extra = (' <span class="offr">offshore %s %s</span>' % (_e(off["num"]), _e(off["unit"]))) if off else ""
         body = '<p class="num sm">%s<small>%s</small>%s</p>' % (_e(t["num"]), _e(t["unit"]), extra)
-        if t.get("label"):
+        if t.get("label") and (t.get("offshore") or not off):
             body += '<p class="note">%s</p>' % _e(t["label"])
+        elif off:
+            body += '<p class="note">Inshore</p>'
         if t.get("sub") and not off:
             body += '<p class="sub">%s</p>' % _e(t["sub"])
         if off:
-            body += '<p class="sub">%s</p>' % _e("Offshore: %s%s" % (off["src"], (" · " + off["when"]) if off.get("when") else ""))
+            body += '<p class="src">%s</p>' % _e("Offshore: %s%s" % (off["src"], (" · " + off["when"]) if off.get("when") else ""))
     return '<div class="cell water" role="group" aria-label="Water temperature"><div class="lbl"><span>WATER</span>%s</div>%s%s</div>' % (
         kind_badge(t), body, src_line(t))
 
@@ -513,14 +515,17 @@ def gates_html() -> str:
                                            (70, 212, 34, 12, "#4fc3f7")])
     bar = ('<div class="vbar"><img src="/branding/favicon.svg" alt="" width="26" height="26" loading="lazy" decoding="async">'
            '<div><small>THE COASTAL BRIEF</small><b>%s</b></div><span class="chip">%s</span></div>')
-    sea = '<rect x="0" y="0" width="390" height="400" class="sea"/><path d="%s" class="land"/>' % coast
+    # Coastline and streak paths are written once and reused with <use> (smaller HTML).
+    defs = ('<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>'
+            '<path id="hm-coast" d="%s"/><path id="hm-streaks" d="%s"/></defs></svg>') % (coast, streaks)
+    sea = '<rect x="0" y="0" width="390" height="400" class="sea"/><use href="#hm-coast" class="land"/>'
     return """<section class="gates" id="gates" aria-labelledby="gates-h">
-<h2 id="gates-h" class="vh">Wind and Radar Viewers</h2>
+<h2 id="gates-h" class="vh">Wind and Radar Viewers</h2>%s
 <a class="gate wind" href="/wind">
   %s
   <p class="vfields">NOAA NCEP GFS model wind · animated over every sound and inlet · forecast, not a measurement</p>
   <div class="vmap"><svg viewBox="0 40 390 260" preserveAspectRatio="xMidYMid slice" aria-hidden="true">%s
-    <path d="%s" class="streak"/><path d="%s" class="streak hi"/>%s</svg>
+    <use href="#hm-streaks" class="streak"/><use href="#hm-streaks" class="streak hi"/>%s</svg>
     <div class="wleg" aria-hidden="true"><span class="wramp"></span><span class="wt"><i>0</i><i>10</i><i>20</i><i>30</i><i>35+ kt</i></span></div>
     %s</div>
   <div class="vcta"><b>Open the Wind Viewer</b><span>Chart Helm · live GFS model wind, run and valid times shown in the viewer</span><i aria-hidden="true">→</i></div>
@@ -536,7 +541,7 @@ def gates_html() -> str:
   <div class="vcta"><b>Open the Radar Viewer</b><span>Chart Helm · frame times and data age shown in the viewer</span><i aria-hidden="true">→</i></div>
 </a>
 <p class="fbrow"><button type="button" class="fb-open fb-chip" data-feedback-open aria-haspopup="dialog" aria-controls="fb-dlg">Feedback</button></p>
-</section>""" % (bar % ("Wind", "MODEL FORECAST"), sea, streaks, streaks, lab, ILL,
+</section>""" % (defs, bar % ("Wind", "MODEL FORECAST"), sea, lab, ILL,
                  bar % ("Radar", "RADAR"), sea, rain, lab, ",".join(RAMP), "".join("<i>%s</i>" % t for t in INH), ILL)
 
 
@@ -794,6 +799,7 @@ def shell(main: str, title: str, fresh: bool, nav: str) -> str:
 <meta name="description" content="Private homepage preview for The Coastal Brief. Not public.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#071C29">
+<link rel="preload" href="/static/night-strip/chart-560.webp" as="image" type="image/webp" fetchpriority="high">
 <link rel="preload" href="/fonts/fraunces-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/barlow-condensed-600.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/source-sans-3-var.woff2" as="font" type="font/woff2" crossorigin>

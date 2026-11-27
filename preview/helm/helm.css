@@ -187,7 +187,6 @@ a:focus-visible,button:focus-visible,select:focus-visible{outline:3px solid #C4A
 .flood{font-size:12px;font-weight:700;color:var(--haz);margin-top:3px}
 .gs{font-size:10.5px;color:var(--on2);margin-top:2px;line-height:1.2}
 .g-action{stroke:var(--adv);stroke-width:2}.g-minor{stroke:var(--haz);stroke-width:2}
-.cluster.fresh .side>.cell:first-child{grid-row:1/3}
 .ribbon svg{height:64px}
 .rb-ticks span.edge{opacity:.75}
 .notide{font-weight:700;color:var(--on)}
@@ -243,3 +242,9 @@ a:focus-visible,button:focus-visible,select:focus-visible{outline:3px solid #C4A
 .flag svg{width:15px;height:23px;display:block}
 .nextlow{flex-wrap:wrap}.nextlow .tnum{flex:1;min-width:0}.nextlow .tnum span{display:block}.nextlow .flood{flex-basis:100%;margin-top:0}
 .haz-rows .t,.haz-rows .ie{white-space:nowrap}.haz .area{font-size:11.5px;line-height:1.25}
+/* balance: compass spans two rows on the left; Seas (or Lake / River) over Water on the right */
+.dial-wrap{grid-column:1;grid-row:1/3}.side>.cell:first-child{grid-column:2;grid-row:1}.side>.cell+.cell{grid-column:2;grid-row:2}
+.cluster{gap:8px;padding:10px}.cell{padding:6px 8px}.dial{max-width:156px}.dial-read{top:56px}
+.dial-wrap .src,.cell .src{font-size:10.5px}.cell .sub{font-size:11.5px}.swell em{font-size:10.5px}
+.haz{padding:6px 9px;margin-bottom:8px}.haz-rows p{font-size:13px}.haz-rows b{font-size:14.5px}
+.edition{margin-bottom:5px}.pvtag{padding-bottom:4px}
