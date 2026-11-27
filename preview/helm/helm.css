@@ -274,3 +274,5 @@ a:focus-visible,button:focus-visible,select:focus-visible{outline:3px solid #C4A
 .gates,.chapter,.ft{content-visibility:auto}.gates{contain-intrinsic-size:auto 890px}.chapter.water{contain-intrinsic-size:auto 1350px}.chapter.coast{contain-intrinsic-size:auto 1200px}.ft{contain-intrinsic-size:auto 650px}
 .allnav li button{justify-content:flex-start}
 .haz-link{min-height:44px;align-items:center}
+.mosaic figcaption .eyebrow{display:inline-block;color:#F2D28B;background:rgba(7,28,41,.78);padding:1px 6px;border-radius:4px;margin-bottom:3px}
+.reps .scope{display:block;font-size:12px;color:var(--ink2)}

@@ -622,8 +622,9 @@ def report_rows(reg: dict | None, now: datetime) -> str:
             ago = "today" if age <= 0 else ("1 day old" if age == 1 else "%d days old" % age)
             old = age > OLDER_DAYS
             cls, tag = ("old", '<i class="k old">OLDER REPORT</i>') if old else ("", '<i class="k rep">DATED REPORT</i>')
-        out.append('<li%s><a href="%s" rel="noopener" target="_blank"><b>%s</b></a> %s<span>Report dated %s · %s</span></li>' % (
-            (' class="%s"' % cls) if cls else "", _a(r["source_url"]), _e(r["source_name"]), tag, _e(when), _e(ago)))
+        scope = (' <span class="scope">Covers: %s</span>' % _e(r["scope"])) if r.get("scope") else ""
+        out.append('<li%s><a href="%s" rel="noopener" target="_blank"><b>%s</b></a> %s<span>Report dated %s · %s</span>%s</li>' % (
+            (' class="%s"' % cls) if cls else "", _a(r["source_url"]), _e(r["source_name"]), tag, _e(when), _e(ago), scope))
     return "".join(out)
 
 
@@ -769,11 +770,16 @@ def mosaic_html(fresh: bool) -> str:
     if feat:
         fid = str(feat.get("id") or "").lower()
         picks = [feat] + [p for p in picks if p and str(p.get("id") or "").lower() != fid]
-    cells = []
+    cells, seen = [], set()
     for i, p in enumerate([p for p in picks if p][:3]):
         eb = '<span class="eyebrow">FEATURED ON THE CATCH WALL</span>' if (feat and p is feat) else ""
-        cells.append('<figure class="w%d">%s<figcaption>%s<b>%s</b>%s</figcaption></figure>' % (
-            i, sprint_home.img_html(p, "(max-width: 640px) 60vw, 400px"), eb, _e(sprint_home.caption(p)), _e(sprint_home.credit(p))))
+        cap = sprint_home.caption(p)
+        key = "".join(cap.split()).casefold()
+        if key in seen:   # same rule as the public mosaic: a repeated stored caption is shown once
+            cap = ""
+        seen.add(key)
+        cells.append('<figure class="w%d">%s<figcaption>%s%s%s</figcaption></figure>' % (
+            i, sprint_home.img_html(p, "(max-width: 640px) 60vw, 400px"), eb, ("<b>%s</b>" % _e(cap)) if cap else "", _e(sprint_home.credit(p))))
     if not cells:
         return '<p class="dek">Catch Wall photographs are not available right now.</p>'
     return '<div class="mosaic n%d">%s</div>' % (len(cells), "".join(cells))
