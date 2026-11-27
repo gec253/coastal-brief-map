@@ -3649,6 +3649,7 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 <a class="card" href="/wind"><b>Wind viewer</b><span>Dedicated animated model wind (NOAA GFS forecast), private review</span></a>
 <a class="card" href="/lab/wind"><b>Wind flow</b><span>Animated model wind (NOAA GFS forecast)</span></a>
 <a class="card" href="/preview/wind"><b>Wind viewer · Phase A</b><span>Private visual refinement: navy, Carolina blue and cyan flow, smoother trails, nautical light water. Same NOAA GFS model forecast; public /wind is unchanged.</span></a>
+<a class="card" href="/preview/radar"><b>Radar viewer · Chart Helm preview</b><span>Private full-screen observed radar (NOAA/NSSL MRMS precip rate via WeatherAPI). Play, scrub, Coast and Me. Public /radar is unchanged.</span></a>
 <a class="card" href="/lab/tiles"><b>Tile designs</b><span>The instrument tile prototype</span></a>
 <a class="card" href="/preview/masthead?c=c"><b>Masthead concepts</b><span>Three directions for a cinematic gold wave-to-masthead reveal (A editorial, B nautical, C hybrid). Replay from the bar at the bottom.</span></a>
 <a class="card" href="/preview/home"><b>Homepage (Ed's pick)</b><span>Classic Coastal Editorial masthead (A) with the Modern Coastal Magazine layout and the Bodie Island sunrise. Compare Cinematic and the other mastheads from the bar at the bottom.</span></a>
@@ -3776,6 +3777,27 @@ class Handler(SimpleHTTPRequestHandler):
             return self._send_private(ROOT / "preview" / "wind" / "engine.js", "text/javascript; charset=utf-8", extra=extra)
         return self.send_error(404, "not found")
 
+
+    def _radar_preview_route(self, parsed):
+        """Cookie-gated Radar Viewer preview. Public /radar is untouched."""
+        if not self._preview_ok():
+            return self.send_error(404, "not found")
+        self._static_cache = "private, no-store"
+        extra = [("Vary", "Cookie")]
+        if parsed.path == "/preview/radar":
+            data = (ROOT / "preview" / "radar" / "index.html").read_bytes()
+            try:
+                data = theme_toggle.paint(data)
+            except Exception as e:
+                sys.stderr.write("theme skipped: %s\n" % e)
+            return self._send_private(None, "text/html; charset=utf-8", data, extra=extra)
+        if parsed.path == "/preview/radar/radar.css":
+            return self._send_private(ROOT / "preview" / "radar" / "radar.css", "text/css; charset=utf-8", extra=extra)
+        if parsed.path == "/preview/radar/viewer.js":
+            return self._send_private(ROOT / "preview" / "radar" / "viewer.js", "text/javascript; charset=utf-8", extra=extra)
+        return self.send_error(404, "not found")
+
+
     def _preview_route(self, parsed):
         k = _preview_secret()
         if not k:
@@ -3853,6 +3875,10 @@ class Handler(SimpleHTTPRequestHandler):
             # Private Phase A wind visual preview (Ed t480u). Same cookie as /preview; 404 without it.
             # Public /wind, /wind.css and /wind/engine.js stay on production assets.
             return self._wind_phase_a_preview_route(parsed)
+        if parsed.path in ("/preview/radar", "/preview/radar/viewer.js", "/preview/radar/radar.css"):
+            # Private Radar Viewer Chart Helm preview (Ed t512u). Same cookie as /preview; 404 without it.
+            # Public /radar and its CSS/JS stay on production assets. Wind files are not modified.
+            return self._radar_preview_route(parsed)
         if parsed.path == "/preview/photos-check":
             if not self._preview_ok():
                 return self.send_error(404, "not found")

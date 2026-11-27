@@ -1,0 +1,100 @@
+/* Private /preview/radar. Chart Helm tokens come from public /wind.css (unchanged).
+   Layout follows Design's Chart Helm · Radar direction (design/radar-viewer-1127).
+   Forecast tokens are copied from /radar.css. The only new colour is --fc-label #8A4700,
+   Design's AA text tint for light-theme forecast labels on --surf. */
+:root { --fc: #B45F00; --fc-bg: #FFE3B8; --fc-ink: #3A2200; --fc-label: #8A4700; --ctl-h: 116px; }
+html[data-theme="dark"] { --fc: #FFB454; --fc-bg: #4A2E06; --fc-ink: #FFE3B8; }
+@media (min-width: 700px) { :root { --ctl-h: 116px; } }
+@media (max-height: 500px) { :root { --ctl-h: 108px; } }
+
+/* same light viewer surfaces as /wind (wind.css data-wind-view=viewer block), applied here so wind.css stays untouched */
+html:not([data-theme="dark"]) body[data-radar-view="viewer"] { --bg: #F3F6F8; --surf: #F8FBFC; --surf-2: #E6EEF2; }
+body[data-radar-view="viewer"] .w-v { font-weight: 800; }
+body[data-radar-view="viewer"] .w-attrib { font-size: 10px; color: var(--ink-2); }
+body[data-radar-view="viewer"] .w-attrib a { font-weight: 700; }
+html:not([data-theme="dark"]) body[data-radar-view="viewer"] .w-attrib a { color: #1F5C78; }
+
+#rmap { position: absolute; inset: 0; background: var(--map-bg); }
+.leaflet-radar-pane .r-frame { transition: opacity 160ms linear; }
+.leaflet-control-zoom { display: none; }
+
+.rv-badge { min-width: 86px; text-align: center; }
+html[data-frame="fc"] .rv-badge { background: var(--fc-bg); color: var(--fc-ink); outline: 2px dashed var(--fc); outline-offset: -2px; }
+.w-badge.is-test { background: #FFE14D; color: #1A1A1A; }
+
+.rv-strip { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) auto; }
+.rv-age { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; background: var(--accent); }
+.rv-age.is-stale { background: var(--fc); }
+html[data-frame="fc"] .rv-strip .w-cell:first-child { background: var(--fc-bg); }
+html[data-frame="fc"] .rv-strip .w-cell:first-child .w-k,
+html[data-frame="fc"] .rv-strip .w-cell:first-child .w-v { color: var(--fc-ink); }
+
+/* Stepped WeatherAPI rain-rate bins (not a dBZ ramp). Same glass card as the wind legend. */
+.rv-legend { width: 214px; height: 60px; padding: 5px 10px 5px; top: 10px; left: 10px; bottom: auto; }
+.rv-leg-k { display: block; font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; color: var(--ink-2); line-height: 1.1; margin-bottom: 3px; }
+.rv-leg-k b { color: var(--glass-ink); font-weight: 800; letter-spacing: 0.04em; text-transform: none; font-size: 10.5px; }
+.rv-ramp { display: flex; width: 194px; height: 9px; border-radius: 3px; overflow: hidden; box-shadow: inset 0 0 0 1px var(--edge); }
+.rv-ramp i { flex: 1 1 0; }
+.rv-ticks { position: relative; display: block; width: 194px; height: 13px; font-size: 10.5px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.rv-ticks span { position: absolute; top: 0; transform: translateX(-50%); }
+.rv-leg-fc { display: none; }
+html[data-frame="fc"] .rv-legend { height: 74px; border: 1.5px dashed var(--fc); }
+html[data-frame="fc"] .rv-leg-fc { display: flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; color: var(--glass-ink); margin-top: 1px; }
+.rv-leg-fc i { width: 16px; height: 9px; border-radius: 2px; border: 1px solid var(--fc); background: repeating-linear-gradient(-45deg, var(--fc) 0 2px, transparent 2px 4px); }
+
+html[data-frame="fc"] .rv-stage::after { content: ""; position: absolute; inset: 0; z-index: 605; border: 3px dashed var(--fc); pointer-events: none; }
+.rv-tag { position: absolute; z-index: 610; top: 80px; left: 10px; margin: 0; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; font-style: italic;
+  background: var(--fc-bg); color: var(--fc-ink); border: 2px dashed var(--fc); box-shadow: var(--shadow); white-space: nowrap; pointer-events: none; }
+.rv-tag[hidden] { display: none; }
+html[data-frame="fc"] .rv-tag[hidden] { display: none; }
+
+.r-load { position: absolute; z-index: 610; top: 80px; left: 10px; margin: 0; padding: 4px 9px; border-radius: 8px; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; background: var(--glass); color: var(--glass-ink); border: 1px solid var(--edge); box-shadow: var(--shadow); pointer-events: none; }
+html[data-frame="fc"] .r-load { top: 118px; }
+.r-load[hidden] { display: none; }
+.r-limit { position: absolute; z-index: 620; top: 10px; left: 50%; transform: translateX(-50%); width: min(420px, calc(100% - 24px)); margin: 0; padding: 8px 12px; border-radius: 8px; font-size: 12.5px; line-height: 1.35; font-weight: 600; text-align: center; background: var(--surf); color: var(--ink); border: 1px solid var(--edge); box-shadow: var(--shadow); }
+.r-limit[hidden] { display: none; }
+
+.rv-zoom { position: absolute; z-index: 620; right: 10px; bottom: 36px; display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; background: var(--glass); border: 1px solid var(--edge); box-shadow: var(--shadow); }
+.rv-zb { width: 44px; height: 44px; margin: 0; padding: 0; border: 0; background: transparent; color: var(--glass-ink); display: grid; place-items: center; cursor: pointer; }
+.rv-zb + .rv-zb { border-top: 1px solid var(--edge); }
+.rv-zb svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
+.rv-zb:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+
+.rv-stack { gap: 0; align-items: stretch; }
+.rv-attrib { text-align: center; padding: 3px 8px; }
+
+.r-test { position: absolute; z-index: 630; left: 10px; right: 10px; bottom: 36px; margin: 0; padding: 7px 10px; border-radius: 8px; text-align: center; font-size: 13px; font-weight: 800; letter-spacing: 0.06em; color: #1A1A1A; background: repeating-linear-gradient(-45deg, #FFE14D 0 14px, #FFD21F 14px 28px); border: 2px solid #1A1A1A; pointer-events: none; }
+.r-test[hidden], .r-unavail[hidden], .r-legend[hidden] { display: none; }
+.r-unavail { position: absolute; z-index: 640; left: 50%; top: 42%; transform: translate(-50%, -50%); width: min(330px, calc(100% - 28px)); padding: 16px 18px; border-radius: 14px; background: var(--surf); color: var(--ink); border: 1px solid var(--edge); box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.4; }
+.r-unavail strong { font-size: 16.5px; }
+
+.rv-ctl { flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 2px; padding-top: 4px; }
+.rv-tl { position: relative; height: 46px; }
+.rv-track { position: absolute; left: 14px; right: 14px; top: 10px; height: 10px; display: flex; align-items: center; gap: 0; pointer-events: none; }
+.rv-obs { position: relative; flex: 120 1 0; height: 8px; border-radius: 4px 0 0 4px; background: color-mix(in srgb, var(--accent) 22%, var(--surf-2)); box-shadow: inset 0 0 0 1px var(--edge); overflow: hidden; }
+.rv-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: var(--accent); }
+html:not([data-theme="dark"]) .rv-fill { background: #2B6F8F; }
+.rv-now { flex: none; width: 3px; height: 20px; border-radius: 2px; background: var(--ink); margin: 0 3px; }
+.rv-fcs { flex: 60 1 0; height: 8px; border-radius: 0 4px 4px 0; border: 1.5px dashed var(--fc); background: repeating-linear-gradient(-45deg, var(--fc) 0 3px, transparent 3px 6px); opacity: 0.9; }
+.rv-tl:not(.has-fc) .rv-obs { border-radius: 4px; flex: 1 1 0; }
+.rv-tl:not(.has-fc) .rv-now, .rv-tl:not(.has-fc) .rv-fcs, .rv-ends .rv-e3[hidden], .rv-now[hidden], .rv-fcs[hidden] { display: none; }
+.rv-thumb { position: absolute; top: 50%; left: 0; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 13px; background: var(--badge-bg); border: 3px solid var(--surf); box-shadow: var(--shadow); pointer-events: none; }
+html[data-frame="fc"] .rv-thumb { background: var(--fc); border-radius: 6px; transform: rotate(45deg) scale(0.86); }
+.rv-range { position: absolute; inset: 0 0 14px; width: 100%; height: 32px; margin: 0; opacity: 0; cursor: pointer; touch-action: none; background: transparent; -webkit-appearance: none; appearance: none; }
+.rv-ends { position: absolute; left: 14px; right: 14px; bottom: 0; height: 14px; font-size: 10.5px; font-weight: 700; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.rv-ends span { position: absolute; top: 0; white-space: nowrap; }
+.rv-e0 { left: 0; } .rv-e1 { left: 33.3%; transform: translateX(-50%); } .rv-e2 { left: 66.6%; transform: translateX(-50%); color: var(--ink); font-weight: 800; }
+.rv-tl.has-fc .rv-e2 { left: 66.6%; }
+.rv-tl:not(.has-fc) .rv-e2 { left: auto; right: 0; transform: none; }
+.rv-e3 { right: 0; color: var(--fc); }
+html:not([data-theme="dark"]) .rv-e3 { color: var(--fc-label); }
+.rv-row { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+.rv-row .w-btn { min-height: 52px; }
+.rv-rel { max-width: 104px; }
+html[data-frame="fc"] .rv-rel .w-hour-a, html[data-frame="fc"] .rv-rel .w-hour-b { color: var(--fc); }
+html:not([data-theme="dark"])[data-frame="fc"] .rv-rel .w-hour-a,
+html:not([data-theme="dark"])[data-frame="fc"] .rv-rel .w-hour-b { color: var(--fc-label); }
+
+@media (prefers-reduced-motion: reduce) { .leaflet-radar-pane .r-frame { transition: none; } }
+.rv-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.r-me-dot { stroke: #fff; stroke-width: 2.5; fill: var(--accent); }

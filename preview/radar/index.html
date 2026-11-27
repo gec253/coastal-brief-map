@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Private preview: observed weather radar for coastal North Carolina. Not a public page.">
+  <title>Radar preview · The Coastal Brief</title>
+  <meta name="theme-color" content="#071C29">
+  <link rel="icon" href="/favicon.ico?v=20261121" sizes="48x48">
+  <link rel="icon" href="/branding/favicon.svg?v=20261121" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261121" sizes="180x180">
+  <link rel="manifest" href="/site.webmanifest?v=20261121">
+  <script>
+    (function () { var d = document.documentElement, t = null;
+      try { var q = /[?&]theme=(light|dark)\b/.exec(location.search); t = q ? q[1] : localStorage.getItem("coastalBrief.theme"); } catch (e) {}
+      if (t !== "light" && t !== "dark") t = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      d.setAttribute("data-theme", t); if (t === "dark") d.setAttribute("data-night", "b");
+      d.setAttribute("data-frame", "obs"); })();
+  </script>
+  <link rel="preload" href="/vendor/leaflet/leaflet.js" as="script">
+  <link rel="preload" href="/api/radar-view" as="fetch" crossorigin="anonymous">
+  <link rel="preload" href="/wind/coast-lo.json" as="fetch" crossorigin="anonymous">
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="/wind.css">
+  <link rel="stylesheet" href="/preview/radar/radar.css">
+</head>
+<body data-radar-view="viewer">
+<div class="helm rv-helm">
+  <header class="w-top">
+    <h1 class="rv-sr">Radar: observed weather radar for coastal North Carolina (private preview)</h1>
+    <a class="w-brand" href="/"><img class="w-mono" src="/branding/favicon.svg?v=20261121" width="22" height="22" alt=""><span class="w-brand-text"><span class="w-brand-a">The Coastal Brief</span><span class="w-brand-b">Radar</span></span></a>
+    <span class="w-badge rv-badge" id="r-badge">Observed</span>
+    <button type="button" class="w-theme" id="w-theme" aria-label="Night mode" aria-pressed="false" title="Switch to night mode">
+      <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.6A8.2 8.2 0 019.4 4a8.2 8.2 0 1010.6 10.6z"/></svg>
+      <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.6M12 18.8v2.6M2.6 12h2.6M18.8 12h2.6M5.4 5.4l1.8 1.8M16.8 16.8l1.8 1.8M5.4 18.6l1.8-1.8M16.8 7.2l1.8-1.8"/></svg>
+    </button>
+  </header>
+  <section class="w-strip rv-strip" aria-label="Radar frame time, data age and current time, Eastern Time">
+    <div class="w-cell"><span class="w-k" id="r-seg">Observed</span><span class="w-v" id="r-time">—</span></div>
+    <div class="w-cell"><span class="w-k" id="r-age-k">Data age</span><span class="w-v" id="r-age"><i class="rv-age" id="r-age-dot" aria-hidden="true"></i>—</span></div>
+    <div class="w-cell w-clock"><span class="w-k">Now</span><time id="r-clock" class="w-v">--:-- ET</time></div>
+  </section>
+  <main class="w-stage r-stage rv-stage" id="r-stage">
+    <div id="rmap" role="region" tabindex="-1" aria-label="Map of coastal North Carolina with weather radar"></div>
+    <div id="r-labels" class="w-labels" aria-hidden="true"></div>
+    <p class="r-test" id="r-test" hidden>TEST DATA — not current radar</p>
+    <p class="rv-tag" id="r-tag" hidden></p>
+    <p class="r-load" id="r-load" role="status" aria-live="polite" hidden></p>
+    <p class="r-limit" id="r-limit" role="status" hidden>Radar is temporarily limited. Showing cached observed frames where available. Incomplete or forecast frames are not shown.</p>
+    <div class="w-legend rv-legend" id="r-legend" role="img" aria-label="Observed precipitation rate colour scale, millimetres per hour">
+      <span class="rv-leg-k">Precip rate <b>mm/h</b></span>
+      <span class="rv-ramp" id="r-ramp" aria-hidden="true"></span>
+      <span class="rv-ticks" id="r-ticks" aria-hidden="true"></span>
+      <span class="rv-leg-fc" id="r-leg-fc"><i></i>Hatched = forecast</span>
+    </div>
+    <div class="rv-zoom" role="group" aria-label="Zoom">
+      <button type="button" class="rv-zb" id="r-zin" aria-label="Zoom in"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button type="button" class="rv-zb" id="r-zout" aria-label="Zoom out"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+    </div>
+    <details class="w-about">
+      <summary aria-label="About this radar"><span aria-hidden="true">i</span></summary>
+      <div class="w-about-body">
+        <p><strong>Observed radar, not a forecast unless the timeline is in the forecast segment.</strong> Colour is precipitation rate in millimetres per hour from NOAA/NSSL Multi-Radar Multi-Sensor (MRMS) mosaics, about 1 km, delivered every 5 minutes for the last two hours via WeatherAPI.com. The colour bins are WeatherAPI’s published rain-rate legend, not an NWS reflectivity (dBZ) scale.</p>
+        <p>The loop starts on the latest observed scan, holds, then plays any nowcast. Nowcast frames are labelled FORECAST, drawn with a dashed amber frame and diagonal hatching, and are not observations. Missing data is uncertainty, never evidence of safety.</p>
+        <p>Times are Eastern (ET). Place labels are the Wind Viewer gazetteer (GNIS, Wikidata, and documented cartographic anchors). Coastline: U.S. Census Bureau, 2025 cartographic boundary file, 1:500,000 (not endorsed by the Census Bureau).</p>
+        <p id="r-credit-full">Radar credit: NOAA/NSSL MRMS via WeatherAPI.com.</p>
+        <p>General information only. Don’t rely on this alone for safety, marine or aviation decisions; check the National Weather Service.</p>
+      </div>
+    </details>
+    <div class="w-stack rv-stack">
+      <p class="w-attrib rv-attrib" id="r-attrib">Radar: <a href="https://www.nssl.noaa.gov/projects/mrms/" rel="noopener">NOAA/NSSL MRMS</a> via WeatherAPI.com · Coastline: U.S. Census Bureau (not endorsed). Not for safety-critical use.</p>
+    </div>
+    <div class="r-unavail" id="r-unavail" role="status" hidden><strong id="r-unavail-h">Radar unavailable on current data plan</strong><span id="r-unavail-b">The radar feed isn't included in our current weather-data plan, so no radar frames are shown. Nothing here is old or simulated radar.</span></div>
+    <p class="w-status" id="r-status" role="status">Loading radar…</p>
+    <script>/* Paint the honest "unavailable" state as soon as the (preloaded) frame list says so, before the map scripts run. */
+      fetch("/api/radar-view").then(function (r) { return r.json(); }).then(function (m) {
+        if (m && m.ok && m.frames && m.frames.length) {
+          if (m.limited) { var lim = document.getElementById("r-limit"); if (lim) { if (m.limit_message) lim.textContent = m.limit_message; lim.hidden = false; } }
+          return;
+        }
+        var plan = m && (m.reason === "plan" || m.reason === "coming_soon");
+        var quota = m && m.reason === "quota";
+        if (quota) { document.getElementById("r-unavail-h").textContent = "Radar is temporarily limited"; document.getElementById("r-unavail-b").textContent = (m.limit_message || m.message || "Radar is temporarily limited. Try again in a few minutes. No old frames are shown in their place."); }
+        else if (!plan) { document.getElementById("r-unavail-h").textContent = "Radar is unavailable right now"; document.getElementById("r-unavail-b").textContent = "We couldn't load radar frames. Try again in a few minutes. No old frames are shown in their place."; }
+        document.getElementById("r-unavail").hidden = false; document.getElementById("r-status").hidden = true;
+        document.getElementById("r-legend").hidden = true; document.getElementById("r-badge").textContent = "Radar off";
+      }).catch(function () {});</script>
+  </main>
+  <nav class="w-ctl rv-ctl" aria-label="Radar timeline controls">
+    <div class="rv-tl" id="r-tl">
+      <div class="rv-track" aria-hidden="true">
+        <span class="rv-obs" id="r-obs"><i class="rv-fill" id="r-fill"></i></span>
+        <span class="rv-now" id="r-now-mark" hidden></span>
+        <span class="rv-fcs" id="r-fcs" hidden></span>
+        <span class="rv-thumb" id="r-thumb"></span>
+      </div>
+      <input type="range" class="rv-range" id="r-scrub" min="0" max="0" value="0" step="1" aria-label="Radar frame time" disabled>
+      <div class="rv-ends" aria-hidden="true"><span class="rv-e0" id="r-t0">−2 h</span><span class="rv-e1" id="r-t-mid">−1 h</span><span class="rv-e2" id="r-t1">Latest</span><span class="rv-e3" id="r-t-fc" hidden>+1 h fcst</span></div>
+    </div>
+    <div class="rv-row">
+      <button type="button" class="w-btn w-play" id="r-play" aria-pressed="false" aria-label="Play radar loop" disabled>
+        <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+        <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
+        <span class="w-lbl" id="r-play-lbl">Play</span>
+      </button>
+      <div class="w-step" role="group" aria-label="Radar frame">
+        <button type="button" class="w-btn w-arrow" id="r-prev" aria-label="Earlier frame" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <output class="w-hour rv-rel" id="r-rel"><span class="w-hour-a" id="r-rel-a">Frame</span><span class="w-hour-b" id="r-rel-b">—</span></output>
+        <button type="button" class="w-btn w-arrow" id="r-next" aria-label="Later frame" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+      </div>
+      <button type="button" class="w-btn" id="r-center" aria-label="Recenter on the North Carolina coast">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6.5"/><path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4"/></svg>
+        <span class="w-lbl">Coast</span>
+      </button>
+      <button type="button" class="w-btn" id="r-locate" aria-label="Show radar at my location">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0113 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>
+        <span class="w-lbl">Me</span>
+      </button>
+    </div>
+  </nav>
+</div>
+<script src="/vendor/leaflet/leaflet.js" defer></script>
+<script src="/wind/coast.js" defer></script>
+<script src="/radar/player.js" defer></script>
+<script src="/preview/radar/viewer.js" defer></script>
+</body>
+</html>
