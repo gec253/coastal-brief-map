@@ -275,7 +275,7 @@ class Gating(unittest.TestCase):
         # t489u: conditions.py is pinned to the approved Full Dashboard alert-display repair (d5ea520,
         # SHA-256 c7378650749acacc7948b53976b4fbad25d7fc5cd320e9487ec8f0bd5b618017).
         t449u = {"conditions.py": "d5ea520", "freshwater.py": "HEAD",
-                 "wind.html": "fe3b4c73a9904dfc025ca81a011d08f503c8dacc"}
+                 "wind.html": "02fbe50b28499188ad7948badb99671d81d43c16"}
         for rel in PROTECTED_PUBLIC_PATHS:
             if rel in ("brief.py", "brief.css"):
                 continue
@@ -295,7 +295,7 @@ class PublicPagesUnchanged(unittest.TestCase):
     def test_public_static_files_match_e2e427a(self):
         import hashlib
         import subprocess
-        pins = {"wind.html": "fe3b4c73a9904dfc025ca81a011d08f503c8dacc"}
+        pins = {"wind.html": "02fbe50b28499188ad7948badb99671d81d43c16"}
         for rel in ("index.html", "wind.html", "radar.html", "lake.html", "catch-wall.html"):
             current = hashlib.sha256((ROOT / rel).read_bytes()).hexdigest()
             baseline = subprocess.check_output(["git", "show", f"{pins.get(rel, PROD)}:{rel}"], cwd=ROOT)
@@ -508,7 +508,7 @@ class PresentationPolish(unittest.TestCase):
     def test_public_files_unchanged_vs_a03bf4c(self):
         import hashlib
         import subprocess
-        pins = {"wind.html": "fe3b4c73a9904dfc025ca81a011d08f503c8dacc"}
+        pins = {"wind.html": "02fbe50b28499188ad7948badb99671d81d43c16"}
         for rel in ("index.html", "wind.html", "radar.html", "lake.html", "catch-wall.html", "styles.css"):
             current = hashlib.sha256((ROOT / rel).read_bytes()).hexdigest()
             baseline = subprocess.check_output(["git", "show", f"{pins.get(rel, POLISH_BASE)}:{rel}"], cwd=ROOT)

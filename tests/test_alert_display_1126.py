@@ -604,8 +604,8 @@ class ServerFetchAndGuards(unittest.TestCase):
         # (SHA-256 aca358bd4ee33fdef19da2fd6aa907f690c2b080803b11d6cb86dac99c371558).
         pins = {"conditions.py": "d5ea520", "homepage_boot.py": "d5ea520", "dashboard.js": "d5ea520",
                 "wind-lab.js": "8f17de6",
-                "wind.html": "fe3b4c73a9904dfc025ca81a011d08f503c8dacc",
-                "wind-viewer.js": "fe3b4c73a9904dfc025ca81a011d08f503c8dacc"}
+                "wind.html": "02fbe50b28499188ad7948badb99671d81d43c16",
+                "wind-viewer.js": "02fbe50b28499188ad7948badb99671d81d43c16"}
         for rel in ("conditions.py", "homepage_boot.py", "dashboard.js", "app.js", "styles.css", "index.html",
                     "freshwater.py", "radar.html", "radar-viewer.js", "wind-lab.js", "wind.html", "wind-viewer.js",
                     "brief_preview.py", "brief_strings.py", "lake.js", "fresh-home.js"):

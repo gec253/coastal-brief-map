@@ -156,6 +156,25 @@ class EasternTime(unittest.TestCase):
         self.assertEqual(r[2], "Thu, Nov 19, 7:00 AM ET")
         self.assertEqual(r[3], "Thu 11:30 PM ET")     # crosses midnight UTC -> still Thursday ET
 
+    def test_gfs_cycle_hours_convert_correctly_in_est_and_edt(self):
+        # Authentic GFS cycles are 00/06/12/18Z. Labels stay "ET" year-round.
+        r = _node(
+            "const M=require('./wind-lab.js');"
+            "const c=['2026-01-15T00:00Z','2026-01-15T06:00Z','2026-01-15T12:00Z','2026-01-15T18:00Z',"
+            "'2026-07-15T00:00Z','2026-07-15T06:00Z','2026-07-15T12:00Z','2026-07-15T18:00Z'];"
+            "console.log(JSON.stringify(c.map(M.etShort)));"
+        )
+        self.assertEqual(r, [
+            "Wed 7:00 PM ET",  # 00Z EST
+            "Thu 1:00 AM ET",  # 06Z EST
+            "Thu 7:00 AM ET",  # 12Z EST
+            "Thu 1:00 PM ET",  # 18Z EST
+            "Tue 8:00 PM ET",  # 00Z EDT
+            "Wed 2:00 AM ET",  # 06Z EDT
+            "Wed 8:00 AM ET",  # 12Z EDT
+            "Wed 2:00 PM ET",  # 18Z EDT
+        ])
+
 
 class PageCopyAndControls(unittest.TestCase):
     html = (ROOT / "wind.html").read_text()
@@ -255,8 +274,8 @@ class PageCopyAndControls(unittest.TestCase):
         self.assertNotIn("fonts.googleapis", self.html)
         own = sum((ROOT / f).stat().st_size for f in ("wind.html", "wind.css", "wind-viewer.js", "wind-lab.js", "wind-coast.js"))
         # Shared coastline module can opt in to ENC land (dashboard only); keep /wind lean.
-        self.assertLess(own, 55 * 1024, own)
-        self.assertLess((ROOT / "wind.css").stat().st_size, 12 * 1024)
+        self.assertLess(own, 70 * 1024, own)
+        self.assertLess((ROOT / "wind.css").stat().st_size, 15 * 1024)
         scripts = re.findall(r'<script src="([^"]+)"', self.html)
         self.assertEqual(scripts, ["/vendor/leaflet/leaflet.js", "/wind/engine.js", "/wind/coast.js", "/wind/viewer.js"])
         self.assertTrue(all("defer" in s for s in re.findall(r"<script src=[^>]+>", self.html)))

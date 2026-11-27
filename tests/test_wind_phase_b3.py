@@ -223,6 +223,13 @@ class PhaseB3Stations(unittest.TestCase):
                       "staleAfterMin": 75, "wind": {"speedKt": None, "gustKt": 36, "dirDeg": None}},
                 "want": "gust_only", "age": 28,
             },
+            # Gust only past staleAfterMin but under 12 h: still gust_only, never invent a speed.
+            {
+                "now": "2026-11-27T01:08:00Z",
+                "s": {"observedAt": "2026-11-26T23:38:00Z", "status": "fresh", "ageMin": 10,
+                      "staleAfterMin": 75, "wind": {"speedKt": None, "gustKt": 36, "dirDeg": None}},
+                "want": "gust_only", "age": 90,
+            },
         ]
         harness = textwrap.dedent("""
             const cases = %s;
@@ -240,6 +247,10 @@ class PhaseB3Stations(unittest.TestCase):
               }
               if (c.emptyWind && out.wind.speedKt != null) {
                 console.error("expected dropped wind", out);
+                process.exit(1);
+              }
+              if (c.want === "gust_only" && out.wind.speedKt != null) {
+                console.error("gust_only invented speed", out);
                 process.exit(1);
               }
             }
@@ -352,9 +363,9 @@ class TopBarLayoutNoTruncation(unittest.TestCase):
 class AssetBudgetNote(unittest.TestCase):
     def test_own_asset_total_is_reported_not_silently_capped(self):
         own = sum((ROOT / f).stat().st_size for f in ("wind.html", "wind.css", "wind-viewer.js", "wind-lab.js", "wind-coast.js"))
-        self.assertGreater(own, 55 * 1024)  # B3 exceeds the approved 55 KiB cap; a new cap needs Ed's approval.
-        # Do not raise the official cap in this commit.
-        self.assertGreater((ROOT / "wind.css").stat().st_size, 12 * 1024)
+        # Ed t507u: official caps raised to 70 KiB own-asset and 15 KiB CSS.
+        self.assertLess(own, 70 * 1024, own)
+        self.assertLess((ROOT / "wind.css").stat().st_size, 15 * 1024)
 
 
 
