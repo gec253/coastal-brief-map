@@ -1,4 +1,4 @@
-"""Private Radar Viewer Chart Helm preview (Ed t512u / t514u). Public /radar stays on production assets."""
+"""Private Radar Viewer Chart Helm preview (Ed t512u / t514u / t515u). Public /radar stays on production assets."""
 from __future__ import annotations
 
 import json
@@ -18,6 +18,7 @@ BASELINE = "d0b0953000e8c6da95e27a25f1216019b1065e7c"
 FROZEN = (
     "wind.html", "wind-viewer.js", "wind.css", "wind-lab.js", "wind-coast.js",
     "data/wind-labels.json",
+    "wind-coast/lo.json", "wind-coast/hi.json",
     "radar.html", "radar-viewer.js", "radar.css", "radar-player.js",
 )
 MM_PER_IN = 25.4
@@ -29,10 +30,29 @@ def _cookie():
     return "%s=%s" % (server.PREVIEW_COOKIE, server._preview_cookie_value(KEY))
 
 
+# Display ticks on the colour bar (Ed t515u). Colour mapping still uses exact from_mm_h.
+INH_TICK = {
+    0.1: "<0.01",
+    0.5: "0.02",
+    1.0: "0.04",
+    2.0: "0.08",
+    4.0: "0.15",
+    8.0: "0.3",
+    16.0: "0.6",
+    32.0: "1.25",
+    64.0: "2.5+",
+}
+
+
 def format_in_h(mm):
-    """Match preview/radar/viewer.js formatInh: 3 decimals below 1 in/h, 2 at or above."""
+    """Match preview/radar/viewer.js formatInh display ticks."""
+    return INH_TICK[mm]
+
+
+def format_in_h_exact(mm):
+    """Match preview/radar/viewer.js formatInhExact: 4 decimals below 1 in/h, 3 at or above."""
     inches = mm / MM_PER_IN
-    return ("%.2f" if inches >= 1 else "%.3f") % inches
+    return ("%.4f" if inches < 1 else "%.3f") % inches
 
 
 def classify_view(available=True, loading=False, fail=0, opaque=False):
@@ -58,32 +78,44 @@ def classify_coverage(available=True, stale=False, loading=False, fail=0, opaque
 class RadarUnitsAndCoverage(unittest.TestCase):
     def test_inch_conversion_preserves_provider_bin_edges(self):
         self.assertEqual(MM_PER_IN, 25.4)
-        expected = {
-            0.1: "0.004",
-            0.5: "0.020",
-            1.0: "0.039",
-            2.0: "0.079",
-            4.0: "0.157",
-            8.0: "0.315",
-            16.0: "0.630",
-            32.0: "1.26",
-            64.0: "2.52",
+        expected_tick = INH_TICK
+        expected_exact = {
+            0.1: "0.0039",
+            0.5: "0.0197",
+            1.0: "0.0394",
+            2.0: "0.0787",
+            4.0: "0.1575",
+            8.0: "0.3150",
+            16.0: "0.6299",
+            32.0: "1.260",
+            64.0: "2.520",
         }
         for mm in PROVIDER_BINS_MM:
-            self.assertEqual(format_in_h(mm), expected[mm], mm)
-            # Rounding must not jump a displayed tick onto a different provider bin.
+            self.assertEqual(format_in_h(mm), expected_tick[mm], mm)
+            exact = format_in_h_exact(mm)
+            self.assertEqual(exact, expected_exact[mm], mm)
+            # Exact About-panel values stay on the true bin edge (inches = mm / 25.4).
             inches = mm / MM_PER_IN
-            shown = float(format_in_h(mm))
-            self.assertLess(abs(shown - inches), 0.005, mm)
+            # Four decimals below 1 in/h, three at or above: stay within half a unit in the last place.
+            self.assertLess(abs(float(exact) - inches), 0.00005 if inches < 1 else 0.0005, mm)
+        # Display rounding is labels only; neighbouring bin ticks must stay distinct.
+        ticks = [format_in_h(mm) for mm in PROVIDER_BINS_MM]
+        self.assertEqual(len(ticks), len(set(ticks)))
         js = (ROOT / "preview" / "radar" / "viewer.js").read_text()
         self.assertIn("MM_PER_IN = 25.4", js)
-        self.assertIn("inches >= 1 ? inches.toFixed(2) : inches.toFixed(3)", js)
+        self.assertIn('0.1: "<0.01"', js)
+        self.assertIn('64: "2.5+"', js)
+        self.assertIn("function formatInhExact", js)
         self.assertIn("formatInh(v)", js)
+        self.assertIn("formatInhExact(mm)", js)
+        self.assertIn("Legend labels are rounded for reading", js)
         html = (ROOT / "preview" / "radar" / "index.html").read_text()
         self.assertIn("Precip rate <b>in/h</b>", html)
         self.assertIn('aria-label="Observed precipitation rate colour scale, inches per hour"', html)
         self.assertIn("id=\"r-bins\"", html)
         self.assertIn("millimetre-per-hour", html)
+        self.assertIn("Legend labels are rounded for reading", html)
+        self.assertIn("Exact millimetre-per-hour and inch-per-hour values are listed below", html)
         self.assertNotIn("Precip rate <b>mm/h</b>", html)
         self.assertNotIn("Reflectivity <b>dBZ</b>", html)
         self.assertIn("not an NWS reflectivity (dBZ) scale", html)
@@ -166,6 +198,45 @@ class RadarPreviewLabels(unittest.TestCase):
         baseline = subprocess.check_output(["git", "show", "%s:data/wind-labels.json" % BASELINE], cwd=ROOT)
         self.assertEqual(current, baseline)
 
+    def test_neighboring_state_context_labels_are_verified_and_not_crowded(self):
+        names = {p["n"] for p in self.places}
+        # North Carolina Greenville stays; the South Carolina city is explicitly suffixed.
+        self.assertIn("Greenville", names)
+        self.assertIn("Greenville, SC", names)
+        nc_g = self.by_name["Greenville"][0]
+        sc_g = self.by_name["Greenville, SC"][0]
+        self.assertEqual(nc_g["s"], "gnis:1023721")
+        self.assertEqual(sc_g["s"], "gnis:1245842")
+        self.assertGreater(nc_g["la"] - sc_g["la"], 0.5)
+        expected = {
+            "Knoxville, TN": ("gnis:1648562", 35.96166667, -83.92333333, 5),
+            "Atlanta, GA": ("gnis:351615", 33.75444444, -84.38972222, 5),
+            "Roanoke, VA": ("gnis:1498439", 37.27055556, -79.9425, 5),
+            "Columbia, SC": ("gnis:1245051", 34.00055556, -81.04416667, 6),
+            "Chattanooga, TN": ("gnis:1307240", 35.04555556, -85.26722222, 6),
+            "Charleston, SC": ("gnis:1221516", 32.78333333, -79.93194444, 6),
+            "Myrtle Beach, SC": ("gnis:1249770", 33.71, -78.88361111, 6.5),
+            "Greenville, SC": ("gnis:1245842", 34.84444444, -82.38555556, 6.5),
+            "Johnson City, TN": ("gnis:1328579", 36.31344444, -82.35347222, 7),
+            "Danville, VA": ("gnis:1498421", 36.587238, -79.404404, 7),
+            "Florence, SC": ("gnis:1222461", 34.18388889, -79.77416667, 7),
+        }
+        for n, (src, la, lo, z0) in expected.items():
+            self.assertEqual(len(self.by_name[n]), 1, n)
+            p = self.by_name[n][0]
+            self.assertEqual(p["s"], src, n)
+            self.assertAlmostEqual(p["la"], la, places=5, msg=n)
+            self.assertAlmostEqual(p["lo"], lo, places=5, msg=n)
+            self.assertEqual(p["z0"], z0, n)
+            self.assertIn(src, self.data["sources"])
+            self.assertIn(src.split(":")[1], self.data["sources"][src])
+        # Mid-zoom neighbors should not appear at the statewide default zoom.
+        self.assertGreaterEqual(sc_g["z0"], 6.5)
+        self.assertGreaterEqual(self.by_name["Johnson City, TN"][0]["z0"], 7)
+        # Atlanta is low-zoom context only, so it drops once the map is in on North Carolina.
+        self.assertLessEqual(self.by_name["Atlanta, GA"][0]["z1"], 7.5)
+        self.assertIn("neighboring-state", self.data["note"])
+
 
 class RadarPreview1127(unittest.TestCase):
     @classmethod
@@ -191,7 +262,8 @@ class RadarPreview1127(unittest.TestCase):
 
     def test_unauthenticated_preview_is_404(self):
         with mock.patch.dict(os.environ, {"PREVIEW_KEY": KEY}):
-            for p in ("/preview/radar", "/preview/radar/viewer.js", "/preview/radar/radar.css", "/preview/radar/labels.json"):
+            for p in ("/preview/radar", "/preview/radar/viewer.js", "/preview/radar/radar.css", "/preview/radar/labels.json",
+                       "/preview/radar/coast-lo.json", "/preview/radar/coast-hi.json", "/preview/radar/borders.json"):
                 st, _, body = self._get(p)
                 self.assertEqual(st, 404, p)
                 self.assertIn(b"not found", body.lower())
@@ -243,7 +315,7 @@ class RadarPreview1127(unittest.TestCase):
             self.assertIn(b"/preview/radar/labels.json", js)
             self.assertNotIn(b"/wind/labels.json", js)
             self.assertIn(b"setForecast", js)
-            self.assertIn(b"keepBuffer: 2", js)
+            self.assertIn(b"keepBuffer: 1", js)
             self.assertNotIn(b"if (shown && shown !== layers.get(f.time)) { shown.setOpacity(0); shown = null; }", js)
 
             st, h, lab = self._get("/preview/radar/labels.json", ck)
@@ -252,6 +324,17 @@ class RadarPreview1127(unittest.TestCase):
             self.assertEqual(lab, (ROOT / "preview" / "radar" / "labels.json").read_bytes())
             self.assertIn(b"Falls Lake", lab)
             self.assertIn(b"Jordan Lake", lab)
+
+            st, h, clo = self._get("/preview/radar/coast-lo.json", ck)
+            self.assertEqual(st, 200)
+            self.assertEqual(clo, (ROOT / "preview" / "radar" / "coast-lo.json").read_bytes())
+            st, _, brd = self._get("/preview/radar/borders.json", ck)
+            self.assertEqual(st, 200)
+            self.assertEqual(brd, (ROOT / "preview" / "radar" / "borders.json").read_bytes())
+            self.assertIn(b"/preview/radar/coast-", js)
+            self.assertNotIn(b"/wind/coast-", js)
+            self.assertIn(b"afterFirstPaint", js)
+            self.assertIn(b"backgroundPreload", js)
 
             st, _, hub = self._get("/preview", ck)
             self.assertEqual(st, 200)
@@ -288,6 +371,103 @@ class RadarPreview1127(unittest.TestCase):
             current = (ROOT / rel).read_bytes()
             baseline = subprocess.check_output(["git", "show", "%s:%s" % (BASELINE, rel)], cwd=ROOT)
             self.assertEqual(current, baseline, rel)
+
+
+class RadarPreviewCoastAndPreload(unittest.TestCase):
+    def test_radar_coast_covers_pannable_extent_without_clip_edge(self):
+        doc = json.loads((ROOT / "preview" / "radar" / "coast-lo.json").read_text())
+        clip = doc["clip"]
+        # West of the pannable bound (-86.5) so the clip edge is off-screen.
+        self.assertLessEqual(clip[0], -86.5)
+        self.assertGreaterEqual(clip[1], 30.0)
+        self.assertGreaterEqual(clip[2], -74.0)
+        self.assertGreaterEqual(clip[3], 38.0)
+        q = doc["q"]
+
+        def decode(p):
+            rings = []
+            for a in p["r"]:
+                out = []
+                x = y = 0
+                for i in range(0, len(a), 2):
+                    x += a[i]
+                    y += a[i + 1]
+                    out.append((x / q, y / q))
+                rings.append(out)
+            return {"b": [v / q for v in p["b"]], "r": rings}
+
+        polys = [decode(p) for p in doc["polys"]]
+
+        def pip(lon, lat):
+            for p in polys:
+                b = p["b"]
+                if lon < b[0] or lon > b[2] or lat < b[1] or lat > b[3]:
+                    continue
+                inside = False
+                for r in p["r"]:
+                    for i in range(len(r)):
+                        xi, yi = r[i]
+                        xj, yj = r[i - 1]
+                        if (yi > lat) != (yj > lat) and lon < (xj - xi) * (lat - yi) / (yj - yi) + xi:
+                            inside = not inside
+                if inside:
+                    return True
+            return False
+
+        # Land in NC and neighbouring states, including the western buffer.
+        self.assertTrue(pip(-78.64, 35.78), "Raleigh")
+        self.assertTrue(pip(-84.03, 35.09), "Murphy")
+        self.assertTrue(pip(-84.5, 35.1), "Tennessee just west of Murphy")
+        self.assertTrue(pip(-83.92, 35.96), "Knoxville")
+        self.assertTrue(pip(-86.0, 35.6), "western buffer")
+        self.assertTrue(pip(-86.4, 35.5), "western buffer near pan edge")
+        self.assertTrue(pip(-81.03, 34.00), "Columbia SC")
+        self.assertTrue(pip(-77.44, 37.54), "Richmond VA")
+        self.assertTrue(pip(-84.39, 33.75), "Atlanta")
+        self.assertFalse(pip(-75.0, 34.5), "open ocean")
+        # West edge of land at mid-NC latitudes is the off-screen clip, not 84.3/85.
+        def west_edge(lat):
+            xs = []
+            for p in polys:
+                for r in p["r"]:
+                    for i in range(len(r)):
+                        x1, y1 = r[i]
+                        x2, y2 = r[i - 1]
+                        if (y1 > lat) != (y2 > lat):
+                            xs.append((x2 - x1) * (lat - y1) / (y2 - y1) + x1)
+            return min(xs) if xs else None
+        for lat in (35.0, 35.5, 36.0):
+            self.assertLessEqual(west_edge(lat), -86.5, lat)
+
+        # Wind coast files were not used as a write target and stay at the production clip.
+        wind = json.loads((ROOT / "wind-coast" / "lo.json").read_text())
+        self.assertEqual(wind["clip"][0], -85.0)
+        baseline = subprocess.check_output(["git", "show", "%s:wind-coast/lo.json" % BASELINE], cwd=ROOT)
+        self.assertEqual((ROOT / "wind-coast" / "lo.json").read_bytes(), baseline)
+
+    def test_state_borders_include_nc_land_boundary(self):
+        doc = json.loads((ROOT / "preview" / "radar" / "borders.json").read_text())
+        neighbors = set(doc.get("nc_neighbors") or [])
+        self.assertEqual(neighbors, {"VA", "TN", "GA", "SC"})
+        pairs = {(min(x["a"], x["b"]), max(x["a"], x["b"])) for x in doc["lines"]}
+        for a, b in (("NC", "VA"), ("NC", "TN"), ("GA", "NC"), ("NC", "SC")):
+            self.assertIn((min(a, b), max(a, b)), pairs)
+        # Lean: deferred border file should stay well under 80 KiB.
+        self.assertLess((ROOT / "preview" / "radar" / "borders.json").stat().st_size, 80 * 1024)
+        self.assertLess((ROOT / "preview" / "radar" / "coast-lo.json").stat().st_size, 40 * 1024)
+
+    def test_preload_waits_for_first_observed_frame(self):
+        js = (ROOT / "preview" / "radar" / "viewer.js").read_text()
+        self.assertIn("afterFirstPaint", js)
+        self.assertIn("startBackgroundPreload", js)
+        self.assertIn("backgroundPreload", js)
+        self.assertIn("requestIdleCallback", js)
+        # Must not kick the full load-order pump at boot.
+        self.assertNotIn("pump(); setInterval", js)
+        html = (ROOT / "preview" / "radar" / "index.html").read_text()
+        self.assertIn("/preview/radar/coast-lo.json", html)
+        self.assertNotIn('href="/wind/coast-lo.json"', html)
+        self.assertNotIn("/preview/radar/labels.json", html.split("<body")[0])  # not preloaded
 
 
 if __name__ == "__main__":
