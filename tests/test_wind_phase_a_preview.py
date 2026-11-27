@@ -110,10 +110,11 @@ class PhaseAPreview(unittest.TestCase):
             self.assertIn(b"[75, 156, 211]", js)   # Carolina blue
             self.assertNotIn(b"[240, 95, 95]", js)  # old rainbow tip
 
-        # Protected page/viewer pins stay at the prior baseline; engine + css are the Phase A launch.
+        # Ed t502u: wind.html and wind-viewer.js pinned to the reviewed B1 fix commit fe3b4c73.
+        B1 = "fe3b4c73a9904dfc025ca81a011d08f503c8dacc"
         for rel in ("wind.html", "wind-viewer.js"):
             current = (ROOT / rel).read_bytes()
-            baseline = subprocess.check_output(["git", "show", "%s:%s" % (PROD, rel)], cwd=ROOT)
+            baseline = subprocess.check_output(["git", "show", "%s:%s" % (B1, rel)], cwd=ROOT)
             self.assertEqual(current, baseline, rel)
 
     def test_preview_engine_respawns_in_field_not_only_at_edges(self):
