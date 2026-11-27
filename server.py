@@ -3795,6 +3795,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self._send_private(ROOT / "preview" / "radar" / "radar.css", "text/css; charset=utf-8", extra=extra)
         if parsed.path == "/preview/radar/viewer.js":
             return self._send_private(ROOT / "preview" / "radar" / "viewer.js", "text/javascript; charset=utf-8", extra=extra)
+        if parsed.path == "/preview/radar/labels.json":
+            return self._send_private(ROOT / "preview" / "radar" / "labels.json", "application/json; charset=utf-8", extra=extra)
         return self.send_error(404, "not found")
 
 
@@ -3875,7 +3877,7 @@ class Handler(SimpleHTTPRequestHandler):
             # Private Phase A wind visual preview (Ed t480u). Same cookie as /preview; 404 without it.
             # Public /wind, /wind.css and /wind/engine.js stay on production assets.
             return self._wind_phase_a_preview_route(parsed)
-        if parsed.path in ("/preview/radar", "/preview/radar/viewer.js", "/preview/radar/radar.css"):
+        if parsed.path in ("/preview/radar", "/preview/radar/viewer.js", "/preview/radar/radar.css", "/preview/radar/labels.json"):
             # Private Radar Viewer Chart Helm preview (Ed t512u). Same cookie as /preview; 404 without it.
             # Public /radar and its CSS/JS stay on production assets. Wind files are not modified.
             return self._radar_preview_route(parsed)

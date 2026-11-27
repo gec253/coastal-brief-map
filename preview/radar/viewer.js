@@ -1,6 +1,7 @@
 /* Private /preview/radar viewer. Reuses CBRadarPlayer (/radar/player.js, unchanged) and
    CBCoast (/wind/coast.js, unchanged). OBSERVED radar for the last two hours; FORECAST
-   (nowcast) frames follow the observed loop, labelled and hatched. Times are America/New_York. */
+   (nowcast) frames follow the observed loop, labelled and subtly hatched. Default rate
+   unit is in/h from the provider's exact mm/h bins (1 in = 25.4 mm). Times are America/New_York. */
 (function () {
   "use strict";
   const P = window.CBRadarPlayer;
@@ -11,11 +12,31 @@
   const mm = (s) => !!(window.matchMedia && matchMedia(s).matches);
   const reduce = mm("(prefers-reduced-motion: reduce)") || /[?&]motion=off\b/.test(q);
   const AT = (/[?&]at=(-?\d{1,2}(?:\.\d{1,5})?),(-?\d{1,3}(?:\.\d{1,5})?)(?:&|$)/.exec(q) || []).slice(1).map(Number);
-  const HOME = AT.length === 2 && AT[0] >= 32.5 && AT[0] <= 37.5 && AT[1] >= -80 && AT[1] <= -73
+  const HOME = AT.length === 2 && AT[0] >= 32.5 && AT[0] <= 38 && AT[1] >= -86.5 && AT[1] <= -73
     ? L.latLngBounds([AT[0] - 0.9, AT[1] - 1.2], [AT[0] + 0.9, AT[1] + 1.2])
     : L.latLngBounds([33.75, -78.3], [36.55, -75.25]);
+  const MAX_BOUNDS = [[32.5, -86.5], [38.0, -74.0]];
   const yieldTask = () => new Promise((r) => (window.scheduler && scheduler.yield ? scheduler.yield().then(r) : setTimeout(r, 0)));
   const STALE_MIN = 15;
+  const MM_PER_IN = 25.4;
+  function mmhToInh(mm) { return mm / MM_PER_IN; }
+  function formatInh(mm) {
+    const inches = mm / MM_PER_IN;
+    return inches >= 1 ? inches.toFixed(2) : inches.toFixed(3);
+  }
+  function classifyView(s) {
+    if (!s || !s.available) return "unavailable";
+    if (s.loading) return "loading";
+    if (s.fail > 0) return "incomplete";
+    if (!s.opaque) return "clear";
+    return "precip";
+  }
+  function classifyCoverage(s) {
+    if (!s || !s.available) return "unavailable";
+    if (s.stale) return "stale";
+    return classifyView(s);
+  }
+  window.CBRadarPreview = { MM_PER_IN: MM_PER_IN, mmhToInh: mmhToInh, formatInh: formatInh, classifyView: classifyView, classifyCoverage: classifyCoverage, STALE_MIN: STALE_MIN };
 
   const clockF = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" });
   function tickClock() { $("r-clock").textContent = clockF.format(new Date()) + " ET"; }
@@ -51,15 +72,35 @@
   const play = $("r-play"), prev = $("r-prev"), next = $("r-next"), scrub = $("r-scrub"), status = $("r-status"), tl = $("r-tl"), stage = $("r-stage");
 
   function hatchImageData(ctx, w, h) {
+    /* Subtle texture on forecast precip only: every 4th diagonal sample is dimmed, not erased. */
     const img = ctx.getImageData(0, 0, w, h), d = img.data;
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
-        if (((x + y) % 3) !== 0) continue;
+        if (((x + y) % 4) !== 0) continue;
         const i = (y * w + x) * 4;
-        if (d[i + 3] > 0) d[i + 3] = 0;
+        if (d[i + 3] > 0) d[i + 3] = Math.max(1, Math.floor(d[i + 3] * 0.55));
       }
     }
     ctx.putImageData(img, 0, 0);
+  }
+  function canvasHasPrecip(ctx, w, h) {
+    const d = ctx.getImageData(0, 0, w, h).data;
+    for (let i = 3; i < d.length; i += 16) { if (d[i] > 8) return true; }
+    return false;
+  }
+  function paintMissing(ctx, w, h) {
+    /* Uncertainty texture — not a clear/no-rain tile. */
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = "rgba(110, 120, 130, 0.16)";
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = "rgba(70, 80, 90, 0.28)";
+    ctx.lineWidth = 1;
+    for (let i = -h; i < w; i += 10) {
+      ctx.beginPath();
+      ctx.moveTo(i, 0);
+      ctx.lineTo(i + h, h);
+      ctx.stroke();
+    }
   }
 
   const CanvasTiles = L.GridLayer.extend({
@@ -67,16 +108,18 @@
       const canvas = document.createElement("canvas"), sz = this.getTileSize(); canvas.width = sz.x; canvas.height = sz.y;
       const url = L.Util.template(this.options.url, { z: c.z, x: c.x, y: c.y });
       const onFeed = this.options.onFeed, hatch = !!this.options.hatch;
+      function failTile() {
+        const ctx = canvas.getContext("2d");
+        paintMissing(ctx, sz.x, sz.y);
+        canvas._radarFail = true;
+        canvas._radarOpaque = false;
+        done(null, canvas);
+      }
       fetch(url, { cache: "default" }).then(function (res) {
         if (onFeed && (res.status === 429 || (res.headers && res.headers.get("X-Radar-Cache") === "stale"))) {
           onFeed(res.status === 429 ? "rate_limit" : "stale", res);
         }
-        if (!res.ok) {
-          const err = new Error("tile " + res.status);
-          err.status = res.status;
-          done(err, canvas);
-          return null;
-        }
+        if (!res.ok) { failTile(); return null; }
         return res.blob();
       }).then(function (blob) {
         if (!blob) return;
@@ -86,12 +129,14 @@
           URL.revokeObjectURL(src);
           const ctx = canvas.getContext("2d");
           ctx.drawImage(img, 0, 0, sz.x, sz.y);
+          canvas._radarFail = false;
+          canvas._radarOpaque = canvasHasPrecip(ctx, sz.x, sz.y);
           if (hatch) hatchImageData(ctx, sz.x, sz.y);
           done(null, canvas);
         };
-        img.onerror = function () { URL.revokeObjectURL(src); done(new Error("tile decode"), canvas); };
+        img.onerror = function () { URL.revokeObjectURL(src); failTile(); };
         img.src = src;
-      }).catch(function () { done(new Error("tile network"), canvas); });
+      }).catch(function () { failTile(); });
       return canvas;
     },
   });
@@ -107,29 +152,37 @@
       i.style.background = row.color;
       ramp.appendChild(i);
     });
-    if (!ticks) return;
-    ticks.textContent = "";
-    const want = [0.1, 1, 8, 64];
-    const n = legend.length;
-    want.forEach(function (v) {
-      let idx = -1, best = 1e9;
-      legend.forEach(function (row, k) {
-        const d = Math.abs((row.from_mm_h || 0) - v);
-        if (d < best) { best = d; idx = k; }
+    if (ticks) {
+      ticks.textContent = "";
+      const want = [0.1, 1, 8, 64];
+      const n = legend.length;
+      want.forEach(function (v) {
+        let idx = -1, best = 1e9;
+        legend.forEach(function (row, k) {
+          const d = Math.abs((row.from_mm_h || 0) - v);
+          if (d < best) { best = d; idx = k; }
+        });
+        if (idx < 0) return;
+        const span = document.createElement("span");
+        span.textContent = formatInh(v);
+        const left = ((idx + 0.5) / n) * 100;
+        span.style.left = left + "%";
+        ticks.appendChild(span);
       });
-      if (idx < 0) return;
-      const span = document.createElement("span");
-      span.textContent = (v === 64 ? "64" : String(v));
-      const left = ((idx + 0.5) / n) * 100;
-      span.style.left = left + "%";
-      ticks.appendChild(span);
-    });
+    }
+    const bins = $("r-bins");
+    if (bins) {
+      bins.textContent = "Provider thresholds (exact colour bins): " + legend.map(function (row) {
+        const mm = row.from_mm_h;
+        return formatInh(mm) + " in/h (" + mm + " mm/h)";
+      }).join("; ") + ". Conversion is inches = millimetres ÷ 25.4.";
+    }
   }
 
   async function boot() {
     const metaP = fetch("/api/radar-view").then((r) => r.json()).catch(() => ({ ok: false, reason: "network" }));
     metaP.then(function (m) { if (!m.ok || !m.frames || !m.frames.length) unavailable(m); });
-    const map = L.map("rmap", { zoomControl: false, attributionControl: false, zoomSnap: 0.5, minZoom: 5, maxZoom: 9.5, maxBounds: [[30, -84], [40, -69]], fadeAnimation: false });
+    const map = L.map("rmap", { zoomControl: false, attributionControl: false, zoomSnap: 0.5, minZoom: 5, maxZoom: 9.5, maxBounds: MAX_BOUNDS, maxBoundsViscosity: 0.75, fadeAnimation: false });
     map.fitBounds(HOME);
     map.createPane("radar"); map.getPane("radar").style.zIndex = 350; map.getPane("radar").classList.add("leaflet-radar-pane");
     await yieldTask();
@@ -153,6 +206,7 @@
       addBox(box, $("r-tag"), 6);
       addBox(box, $("r-load"), 4);
       addBox(box, $("r-limit"), 6);
+      addBox(box, $("r-cover"), 4);
       addBox(box, document.querySelector(".rv-zoom"), 6);
       addBox(box, document.querySelector(".w-about summary"), 6);
       const about = document.querySelector(".w-about");
@@ -191,7 +245,7 @@
       });
       m.remove();
     }
-    fetch("/wind/labels.json").then(function (r) { return r.json(); }).then(function (d) { labData = d; paintLabels(); }).catch(function () {});
+    fetch("/preview/radar/labels.json").then(function (r) { return r.json(); }).then(function (d) { labData = d; paintLabels(); }).catch(function () {});
     map.on("moveend zoomend", function () { paintLabels(); });
     window.addEventListener("resize", paintLabels);
     const aboutEl = document.querySelector(".w-about");
@@ -241,7 +295,7 @@
       l = new CanvasTiles({ url: tmpl.replace("{time}", f.time) + (f.type === "forecast" ? "&v=" + issue : ""),
         pane: "radar", opacity: 0, className: "r-frame" + (f.type === "forecast" ? " r-frame-fc" : ""),
         tileSize: meta.tile_size || 256, maxNativeZoom: meta.max_native_zoom || meta.max_zoom || 7, minZoom: 5, maxZoom: 9.5,
-        updateWhenIdle: true, keepBuffer: 0, hatch: f.type === "forecast",
+        updateWhenIdle: true, keepBuffer: 2, hatch: f.type === "forecast",
         onFeed: function (kind) { showLimit(kind); },
       });
       l.once("load", function () { loaded.add(f.time); loadMs[f.time] = Math.round(performance.now() - t0); maybeAllLoaded(); updateFill(); });
@@ -262,7 +316,7 @@
     const inflight = new Set();
     let front = null;
     function pump() {
-      const list = player.frames(), lim = loaded.size ? 3 : 1;
+      const list = player.frames(), lim = loaded.size ? 4 : 1;
       const order = (front !== null ? [front] : []).concat(player.loadOrder());
       for (let k = 0; k < order.length && inflight.size < lim; k++) {
         const f = list[order[k]];
@@ -276,12 +330,61 @@
     function prefetch(i) { const f = player.frames()[i]; if (f && !layers.has(f.time)) front = i; pump(); }
     const loadEl = $("r-load");
     let loadTxt = "";
+    function viewStats(l) {
+      let ok = 0, fail = 0, loading = 0, current = 0, opaque = false;
+      if (!l || !l._tiles) return { ok: 0, fail: 0, loading: true, current: 0, opaque: false };
+      for (const k in l._tiles) {
+        const tl = l._tiles[k];
+        if (!tl.current) continue;
+        current++;
+        if (!tl.loaded) { loading++; continue; }
+        const el = tl.el;
+        if (el && el._radarFail) fail++;
+        else {
+          ok++;
+          if (el && el._radarOpaque) opaque = true;
+        }
+      }
+      return { ok: ok, fail: fail, loading: loading > 0 || current === 0, current: current, opaque: opaque };
+    }
+    function coverageUI() {
+      const el = $("r-cover");
+      if (!el) return;
+      const s = player.snapshot(), f = s.frame, lo = s.latestObserved;
+      const ageMin = lo ? Math.max(0, Math.round((Date.now() / 1000 - lo.epoch) / 60)) : 0;
+      const stale = !fixture && ageMin >= STALE_MIN;
+      const st = viewStats(f && layers.get(f.time));
+      const loading = !frameReady(f) || st.loading;
+      const payload = { available: true, stale: stale, loading: loading, fail: st.fail, opaque: st.opaque };
+      const kind = classifyCoverage(payload);
+      const view = classifyView(payload);
+      let text = "", cls = "";
+      if (view === "incomplete") { text = "Incomplete coverage. Missing tiles are not clear skies."; cls = "is-incomplete"; }
+      else if (view === "clear") { text = "No precipitation in view"; cls = "is-clear"; }
+      el.textContent = text;
+      el.className = "r-cover" + (cls ? " " + cls : "");
+      el.hidden = !text;
+      window.__radarCoverage = { kind: kind, view: view, stale: stale, fail: st.fail, ok: st.ok, opaque: st.opaque, loading: loading, ageMin: ageMin };
+    }
     function reveal() {
       const f = player.snapshot().frame, l = f && layers.get(f.time);
-      if (l && l !== shown && frameReady(f)) { if (shown) shown.setOpacity(0); l.setOpacity(f.type === "forecast" ? 0.72 : (dark ? 0.92 : 0.86)); shown = l; }
+      if (!l || !frameReady(f) || l === shown) return;
+      const op = f.type === "forecast" ? 0.72 : (dark ? 0.92 : 0.86);
+      const prev = shown;
+      l.setOpacity(op);
+      shown = l;
+      if (prev && prev !== l) {
+        if (reduce) prev.setOpacity(0);
+        else {
+          requestAnimationFrame(function () {
+            requestAnimationFrame(function () { if (shown !== prev) prev.setOpacity(0); });
+          });
+        }
+      }
     }
     function loadingUI() {
       reveal();
+      coverageUI();
       const list = player.frames(), s = player.snapshot();
       const n = list.filter(frameReady).length, total = list.length, cur = frameReady(s.frame);
       window.__radarLoading = { ready: n, total: total, current: cur };
@@ -331,8 +434,10 @@
     function render(s) {
       const f = s.frame; if (!f) return;
       layerFor(f);
-      if (shown && shown !== layers.get(f.time)) { shown.setOpacity(0); shown = null; }
       reveal();
+      prefetch(Math.max(0, s.index - 1));
+      prefetch(Math.min(s.count - 1, s.index + 1));
+      if (s.index + 2 < s.count) prefetch(s.index + 2);
       const fcNow = f.type === "forecast";
       const when = P.etTime(f.epoch);
       root.setAttribute("data-frame", fcNow ? "fc" : "obs");
@@ -441,7 +546,7 @@
     setInterval(refresh, 180000);
     document.addEventListener("visibilitychange", function () { if (!document.hidden) refresh(); });
     window.__radarRefresh = refresh;
-    window.__radarView = { map: map, player: player, loaded: loaded, layers: layers, fixture: fixture, reduce: reduce, labels: function () { return { data: labData, visible: labVis, paint: paintLabels, reserved: reserved }; }, preview: true };
+    window.__radarView = { map: map, player: player, loaded: loaded, layers: layers, fixture: fixture, reduce: reduce, labels: function () { return { data: labData, visible: labVis, paint: paintLabels, reserved: reserved }; }, preview: true, coverage: function () { return window.__radarCoverage; }, classifyCoverage: classifyCoverage, classifyView: classifyView, formatInh: formatInh, STALE_MIN: STALE_MIN, maxBounds: MAX_BOUNDS };
     pump(); setInterval(function () { if (loadTxt) loadingUI(); }, 500);
     map.on("moveend zoomend", function () { setTimeout(function () { loadingUI(); paintLabels(); }, 50); });
     if (!reduce) { player.play(); schedule(); }
@@ -453,9 +558,9 @@
       status.textContent = "Finding your location…"; status.hidden = false;
       navigator.geolocation.getCurrentPosition(function (p) {
         const ll = L.latLng(p.coords.latitude, p.coords.longitude);
-        const bounds = L.latLngBounds([30, -84], [40, -69]);
+        const bounds = L.latLngBounds(MAX_BOUNDS);
         if (!bounds.contains(ll)) {
-          status.textContent = "Your location is outside this map’s coastal Carolina coverage.";
+          status.textContent = "Your location is outside this map’s North Carolina coverage.";
           status.hidden = false;
           return;
         }

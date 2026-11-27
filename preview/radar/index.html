@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex, nofollow">
-  <meta name="description" content="Private preview: observed weather radar for coastal North Carolina. Not a public page.">
+  <meta name="description" content="Private preview: statewide North Carolina radar for freshwater and coastal anglers. Not a public page.">
   <title>Radar preview · The Coastal Brief</title>
   <meta name="theme-color" content="#071C29">
   <link rel="icon" href="/favicon.ico?v=20261121" sizes="48x48">
@@ -21,6 +21,7 @@
   <link rel="preload" href="/vendor/leaflet/leaflet.js" as="script">
   <link rel="preload" href="/api/radar-view" as="fetch" crossorigin="anonymous">
   <link rel="preload" href="/wind/coast-lo.json" as="fetch" crossorigin="anonymous">
+  <link rel="preload" href="/preview/radar/labels.json" as="fetch" crossorigin="anonymous">
   <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="/wind.css">
   <link rel="stylesheet" href="/preview/radar/radar.css">
@@ -28,7 +29,7 @@
 <body data-radar-view="viewer">
 <div class="helm rv-helm">
   <header class="w-top">
-    <h1 class="rv-sr">Radar: observed weather radar for coastal North Carolina (private preview)</h1>
+    <h1 class="rv-sr">Radar: observed and forecast precipitation for North Carolina (private preview)</h1>
     <a class="w-brand" href="/"><img class="w-mono" src="/branding/favicon.svg?v=20261121" width="22" height="22" alt=""><span class="w-brand-text"><span class="w-brand-a">The Coastal Brief</span><span class="w-brand-b">Radar</span></span></a>
     <span class="w-badge rv-badge" id="r-badge">Observed</span>
     <button type="button" class="w-theme" id="w-theme" aria-label="Night mode" aria-pressed="false" title="Switch to night mode">
@@ -42,14 +43,15 @@
     <div class="w-cell w-clock"><span class="w-k">Now</span><time id="r-clock" class="w-v">--:-- ET</time></div>
   </section>
   <main class="w-stage r-stage rv-stage" id="r-stage">
-    <div id="rmap" role="region" tabindex="-1" aria-label="Map of coastal North Carolina with weather radar"></div>
+    <div id="rmap" role="region" tabindex="-1" aria-label="Map of North Carolina with weather radar"></div>
     <div id="r-labels" class="w-labels" aria-hidden="true"></div>
     <p class="r-test" id="r-test" hidden>TEST DATA — not current radar</p>
     <p class="rv-tag" id="r-tag" hidden></p>
     <p class="r-load" id="r-load" role="status" aria-live="polite" hidden></p>
+    <p class="r-cover" id="r-cover" role="status" hidden></p>
     <p class="r-limit" id="r-limit" role="status" hidden>Radar is temporarily limited. Showing cached observed frames where available. Incomplete or forecast frames are not shown.</p>
-    <div class="w-legend rv-legend" id="r-legend" role="img" aria-label="Observed precipitation rate colour scale, millimetres per hour">
-      <span class="rv-leg-k">Precip rate <b>mm/h</b></span>
+    <div class="w-legend rv-legend" id="r-legend" role="img" aria-label="Observed precipitation rate colour scale, inches per hour">
+      <span class="rv-leg-k">Precip rate <b>in/h</b></span>
       <span class="rv-ramp" id="r-ramp" aria-hidden="true"></span>
       <span class="rv-ticks" id="r-ticks" aria-hidden="true"></span>
       <span class="rv-leg-fc" id="r-leg-fc"><i></i>Hatched = forecast</span>
@@ -61,9 +63,10 @@
     <details class="w-about">
       <summary aria-label="About this radar"><span aria-hidden="true">i</span></summary>
       <div class="w-about-body">
-        <p><strong>Observed radar, not a forecast unless the timeline is in the forecast segment.</strong> Colour is precipitation rate in millimetres per hour from NOAA/NSSL Multi-Radar Multi-Sensor (MRMS) mosaics, about 1 km, delivered every 5 minutes for the last two hours via WeatherAPI.com. The colour bins are WeatherAPI’s published rain-rate legend, not an NWS reflectivity (dBZ) scale.</p>
-        <p>The loop starts on the latest observed scan, holds, then plays any nowcast. Nowcast frames are labelled FORECAST, drawn with a dashed amber frame and diagonal hatching, and are not observations. Missing data is uncertainty, never evidence of safety.</p>
-        <p>Times are Eastern (ET). Place labels are the Wind Viewer gazetteer (GNIS, Wikidata, and documented cartographic anchors). Coastline: U.S. Census Bureau, 2025 cartographic boundary file, 1:500,000 (not endorsed by the Census Bureau).</p>
+        <p><strong>Observed radar, not a forecast unless the timeline is in the forecast segment.</strong> Colour is precipitation rate. The default scale is inches per hour, converted from the provider’s exact millimetre-per-hour thresholds (1 in = 25.4 mm) so bin edges are not moved. The original millimetre-per-hour values are listed below. The colour bins are WeatherAPI’s published rain-rate legend from NOAA/NSSL Multi-Radar Multi-Sensor (MRMS) mosaics, about 1 km, delivered every 5 minutes for the last two hours. This is not an NWS reflectivity (dBZ) scale.</p>
+        <p id="r-bins">Provider thresholds (in/h, with original mm/h): loaded with the legend.</p>
+        <p>The loop starts on the latest observed scan, holds, then plays any nowcast. Nowcast frames are labelled FORECAST, use an amber valid-time, a distinct hatched timeline segment, a Forecast · +N min readout, and subtle diagonal hatching on precipitation. They are not observations. Missing data is uncertainty, never evidence of safety. A quiet map with fully loaded tiles means no precipitation in view; missing tiles, incomplete coverage, stale data, and an unavailable feed are each labelled and are never shown as clear skies.</p>
+        <p>Times are Eastern (ET). Place labels are a radar-specific gazetteer (coastal places copied from the Wind gazetteer, plus verified inland cities, lakes and rivers). Falls Lake is not Jordan Lake. Sources are USGS GNIS, documented in /preview/radar/labels.json. Coastline: U.S. Census Bureau, 2025 cartographic boundary file, 1:500,000 (not endorsed by the Census Bureau).</p>
         <p id="r-credit-full">Radar credit: NOAA/NSSL MRMS via WeatherAPI.com.</p>
         <p>General information only. Don’t rely on this alone for safety, marine or aviation decisions; check the National Weather Service.</p>
       </div>
