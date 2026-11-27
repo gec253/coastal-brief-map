@@ -27,6 +27,7 @@ import sprint_home
 ROOT = Path(__file__).resolve().parent
 DIR = ROOT / "preview" / "helm"
 ROUTE = "/preview/helm"
+TOOLS_ROUTE = "/preview/helm-tools"   # private Marine & Water Tools variant (Ed, Nov 27); same PREVIEW_KEY gate
 ET = homepage_boot.ET
 FRESH_IDS = ("falls-lake", "jordan-lake", "neuse-river")
 
@@ -856,19 +857,106 @@ def _ramps_public() -> bool:
         return False
 
 
-def nav_html(primary: list, rid: str, fresh: bool, dash_href: str) -> str:
+def nav_html(primary: list, rid: str, fresh: bool, dash_href: str, tools: bool = False) -> str:
     """Primary row plus an "All sections" menu (native <details>, no script, in normal flow so it
     pushes content down and never covers it). Every link is a 44 px tap target."""
     row = "".join('<a href="%s"%s>%s</a>' % (_a(h), ' aria-current="page"' if c else "", _e(n)) for n, h, c in primary)
     allx = [("Conditions · Saltwater", "%s?region=crystal-coast" % ROUTE), ("Conditions · Freshwater", "%s?region=falls-lake" % ROUTE),
             ("Choose your water", "#rp")] + ([("Morning Brief", brief_href(rid))] if brief_on() else []) + [("Wind Viewer", "/wind"), ("Radar Viewer", "/radar"),
             ("Fishing Reports", "/reports"), ("Regulations", "#regs"), ("Marine &amp; Water Tools", "#tools"), ("Catch Wall", "/catch-wall"), ("Coastal Life", "/coastal-life"), ("All Photos", "/photos")]
-    if _ramps_public():   # PUBLIC_RAMPS launch flag, same entry points as the previous public homepage
+    if tools:   # Marine & Water Tools variant: tool entries directly after the conditions entries
+        allx[2:2] = [(n, h) for n, h, _d, _k in tools_links(rid, fresh)[0] if n in ("Find a Ramp", "Tide Charts", "Forecasts")]
+    elif _ramps_public():   # PUBLIC_RAMPS launch flag, same entry points as the previous public homepage
         allx.append(("Find a Ramp", ramps_entry(rid)[0]))
     lis = "".join('<li><a href="%s">%s</a></li>' % (_a(h), n) for n, h in allx)
     lis += '<li><button type="button" class="fb-open" data-feedback-open aria-haspopup="dialog" aria-controls="fb-dlg">Feedback</button></li>'
     return ('<div class="navrow">%s</div><details class="allnav"><summary aria-label="All sections menu">'
             '<span aria-hidden="true">☰</span> Menu</summary><ul>%s</ul></details>') % (row, lis)
+
+
+# ---------------------------------------------------------------- Marine & Water Tools (private variant)
+# Audited link map (/workspace/mwt-1127/audit.md, Nov 27 2026). Destinations only; no tool or data source changes.
+RAMP_PHOTO = {   # authentic photos, credits exactly as recorded in photo-rotation.json; salt never fresh, fresh never salt
+    "salt": ("swan-quarter-landing", "Swan Quarter Landing, NC"),
+    "falls-lake": ("falls-lake-pier", "Falls Lake, NC"),
+    "jordan-lake": ("jordan-lake-ebenezer", "Jordan Lake · Ebenezer Church area"),
+    "neuse-river": ("neuse-river-cliffs", "Neuse River · Cliffs of the Neuse"),
+}
+# Scope label, so it is clear at a glance whether the card opens region results or the statewide list (Ed, Nov 27)
+RAMP_DESC = {"crystal-coast": "Crystal Coast ramps", "emerald-isle": "Crystal Coast ramps",
+             "falls-lake": "Falls Lake ramps", "jordan-lake": "Jordan Lake ramps", "neuse-river": "Neuse River ramps"}
+
+
+def tools_ramp(rid: str, fresh: bool) -> tuple[str, str, str]:
+    """(href, description, note) for Find a Ramp, per the audited link map."""
+    if fresh:
+        note = "The Neuse list includes tidal lower-river launches, not only Falls Dam to Goldsboro." if rid == "neuse-river" else ""
+        return "/ramps?region=%s" % rid, RAMP_DESC[rid], note
+    if rid == "crystal-coast":
+        return "/ramps?region=crystal-coast", RAMP_DESC[rid], ""
+    if rid == "emerald-isle":
+        return "/ramps?region=crystal-coast", RAMP_DESC[rid], "Emerald Isle ramps are in the Crystal Coast list."
+    href, note = ramps_entry(rid)   # hatteras, wilmington, nags-head, topsail: bare /ramps plus the existing coverage note
+    return "/ramps", "Statewide ramp list", note
+
+
+def tools_links(rid: str, fresh: bool) -> tuple[list, list]:
+    """(primary, secondary). Primary: (name, href, description, kind); kind '' for Find a Ramp."""
+    pri = []
+    if _ramps_public():
+        h, d, _n = tools_ramp(rid, fresh)
+        pri.append(("Find a Ramp", h, d, ""))
+    if fresh:
+        dam = rid in GAUGES
+        pri += [("Forecasts", "/lake?region=%s#fw-fc" % rid, "NWS point forecast at the dam" if dam else "NWS point forecast", "FORECAST"),
+                ("Lake &amp; River Gauges" if dam else "River Gauges", "/lake?region=%s" % rid,
+                 "Pool level, dam release, inflows, river stages" if dam else "River stage and flow, NWS flood stages", "OBSERVED")]
+        sec = [("Fishing Reports", "/reports/%s" % rid), ("Regulations", "#regs")]
+    else:
+        dash = "/dashboard?region=%s" % rid
+        pri += [("Tide Charts", dash + "#tide-search", "NOAA tide predictions · highs, lows, curve", "PREDICTED"),
+                ("Forecasts", dash + "#forecast", "NWS marine zone and local forecast", "FORECAST")]
+        sec = [("Nautical Charts", dash + "#map-chart"), ("Full dashboard", dash)]
+    return pri, sec
+
+
+ICON = {   # 24px line icons, inline (no requests), aria-hidden
+    "Tide Charts": '<path d="M2 15c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2M2 20c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2M12 3v7m-3-3 3 3 3-3"/>',
+    "Forecasts": '<circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.6M2.6 8H1M3.9 3.9l1.1 1.1M12.1 3.9 11 5M7 20h11a4 4 0 0 0 0-8 5.5 5.5 0 0 0-10.4 1.6A3.2 3.2 0 0 0 7 20z"/>',
+    "Lake &amp; River Gauges": '<path d="M5 2v20M5 5h4M5 9h3M5 13h4M5 17h3M12 15c2 0 2-1.5 4-1.5s2 1.5 4 1.5M12 19c2 0 2-1.5 4-1.5s2 1.5 4 1.5"/>',
+}
+ICON["River Gauges"] = ICON["Lake &amp; River Gauges"]
+
+
+def tools_html(rid: str, fresh: bool) -> str:
+    pri, sec = tools_links(rid, fresh)
+    ramp = ""
+    if pri and pri[0][0] == "Find a Ramp":
+        _n, href, desc, _k = pri.pop(0)
+        note = tools_ramp(rid, fresh)[2]
+        pid, place = RAMP_PHOTO.get(rid if fresh else "salt", (None, ""))
+        ph = _rotation().get(pid) if pid else None
+        img = ""
+        if ph and (ROOT / "static" / "featured-photos" / pid / ("%s-640.webp" % pid)).is_file():
+            b = "/static/featured-photos/%s/%s" % (pid, pid)
+            img = ('<picture><source type="image/avif" srcset="%s-640.avif 640w, %s-1024.avif 1024w" sizes="(min-width: 600px) 560px, 100vw">'
+                   '<img src="%s-640.webp" srcset="%s-640.webp 640w, %s-1024.webp 1024w" sizes="(min-width: 600px) 560px, 100vw" alt="%s" '
+                   'width="640" height="400" loading="lazy" decoding="async" fetchpriority="low"></picture>') % (b, b, b, b, b, _a(ph.get("alt") or ""))
+            cap = '<figcaption class="mwt-cr">%s · %s</figcaption>' % (_e(place), _e(ph.get("credit") or ""))
+        else:
+            cap = ""
+        regional = href != "/ramps"
+        # exactly one <a> per card (whole surface tappable); the photo credit is a figcaption outside the anchor
+        ramp = ('<figure class="mwt-ramp%s"><a href="%s">%s<span class="mwt-rc"><span class="eyebrow">Public boat ramps</span>'
+                '<b>Find a Ramp <em>· North Carolina</em></b><span class="mwt-scope%s">%s</span></span><i aria-hidden="true">→</i></a>%s</figure>%s') % (
+            "" if img else " noimg", _a(href), img, " reg" if regional else "", _e(desc), cap, ('<p class="mwt-note">%s</p>' % _e(note)) if note else "")
+    cls = {"OBSERVED": "obs", "PREDICTED": "pred", "FORECAST": "fcst"}
+    tiles = "".join('<a class="mwt-t" href="%s"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">%s</svg>'
+                    '<b>%s</b><span>%s</span><i class="k %s">%s</i></a>' % (_a(h), ICON.get(n, ""), n, _e(d), cls.get(k, ""), k)
+                    for n, h, d, k in pri)
+    more = " ".join('<a href="%s">%s</a>' % (_a(h), n) for n, h in sec)
+    return ('<section class="mwt" id="tools" aria-labelledby="mwt-h">\n<h2 id="mwt-h" class="mwt-h"><span>Marine &amp; Water Tools</span></h2>\n'
+            '%s\n<div class="mwt-g">%s</div>\n<p class="mwt-s"><span class="eyebrow">More tools</span>%s</p>\n</section>') % (ramp, tiles, more)
 
 
 def brief_on() -> bool:
@@ -913,7 +1001,7 @@ def _attach_ends(m: dict, p: dict | None) -> None:
 
 
 def build(rid: str | None, *, now: datetime | None = None, salt_payload=None, fresh_payload=None, grid=None,
-          fetch: bool = True) -> str:
+          fetch: bool = True, mwt: bool = False) -> str:
     now = now or datetime.now(timezone.utc)
     rid = valid_region(rid)
     fresh = rid in FRESH_IDS
@@ -986,7 +1074,7 @@ def build(rid: str | None, *, now: datetime | None = None, salt_payload=None, fr
     upd = m.get("updated") or "—"
     nav_items = [("Saltwater", "%s?region=crystal-coast" % ROUTE, not fresh), ("Freshwater", "%s?region=falls-lake" % ROUTE, fresh),
                  ("Wind", "/wind", False), ("Radar", "/radar", False), ("Fishing Reports", "/reports", False)]
-    nav = nav_html(nav_items, rid, fresh, dash_href=("/lake?region=%s" % rid) if fresh else ("/dashboard?region=%s" % rid))
+    nav = nav_html(nav_items, rid, fresh, dash_href=("/lake?region=%s" % rid) if fresh else ("/dashboard?region=%s" % rid), tools=mwt)
     picker = "".join('<optgroup label="%s">%s</optgroup>' % (_a(label), "".join(
         '<option value="%s"%s>%s</option>' % (_a(r), " selected" if c else "", _e(n)) for r, n, c, _h in items))
         for label, items in sprint_home.public_region_groups(rid) if items)
@@ -1025,6 +1113,15 @@ def build(rid: str | None, *, now: datetime | None = None, salt_payload=None, fr
     if _ramps_public():
         rh, rnote = ramps_entry(rid)
         tools += ' · <a href="%s">Find a Ramp</a>%s' % (_a(rh), (' <span class="rnote">(%s)</span>' % _e(rnote)) if rnote else "")
+    gates = gates_html()
+    if mwt:   # private variant: the section sits between the helm panel and the gateways and absorbs the #tools line
+        gates = tools_html(rid, fresh) + "\n" + gates
+        if fresh and rid in RAMP_PHOTO and _ramps_public():
+            wphoto = ""   # the ramp card now carries this water's photograph; never the same photo twice
+        elif not fresh:
+            story = story.replace(fphoto("swan-quarter-landing", "", 427, "Swan Quarter Landing"), "")
+            if tid == "swan-quarter-landing":
+                today = ""
     test = '<p class="testbar" role="note">TEST DATA</p>' if (p or {}).get("testData") else ""
     main = """<section class="helm" id="helm" aria-labelledby="cg-h">%s
   <div class="edition"><div><h2 id="cg-h">Conditions at a Glance</h2>
@@ -1057,8 +1154,10 @@ def build(rid: str | None, *, now: datetime | None = None, salt_payload=None, fr
   %s
   <div class="ctas"><a class="cta" href="/catch-wall#share">Share yours on the Catch Wall</a><a class="cta2" href="/photos">All Photos →</a></div>
 </section>""" % (test, ROUTE, picker, _e(upd), hazards_html(m.get("alerts") or {}, m.get("alerts_raw")), "fresh " + water_kind if fresh else "salt",
-                  cluster, rib, ledger, gates_html(), reports_html(rid, fresh, now), forecast_quote(m.get("forecast"), fresh), water_index(rid), wphoto,
+                  cluster, rib, ledger, gates, reports_html(rid, fresh, now), forecast_quote(m.get("forecast"), fresh), water_index(rid), wphoto,
                   briefbox, tools, strip, today, story, mosaic_html(fresh))
+    if mwt:
+        main = main.replace('\n  <p class="index" id="tools"><b>MARINE &amp; WATER TOOLS</b> %s</p>' % tools, "", 1)
     if loading:   # first paint without readings: reserved slots, honest loading copy, filled asynchronously
         main = main.replace('<section class="helm" id="helm" aria-labelledby="cg-h">',
                             '<section class="helm" id="helm" aria-labelledby="cg-h" data-fresh-pending="1" aria-busy="true" data-fresh-region="%s">' % _a(rid), 1)
@@ -1208,9 +1307,14 @@ def _swap_gates(h: str, sc: str) -> str:
     return h.replace("</body>", '<script src="/showcase.js" defer></script>\n</body>', 1)
 
 
-def page(rid: str | None, public: bool = False, showcase_v: str | None = None, radar_meta=None, **kw) -> bytes:
+def page(rid: str | None, public: bool = False, showcase_v: str | None = None, radar_meta=None, tools: bool = False, **kw) -> bytes:
     import theme_toggle
-    html_ = build(rid, **kw)
+    tools = bool(tools) and not public   # private variant only; public "/" never takes this path
+    html_ = build(rid, mwt=True, **kw) if tools else build(rid, **kw)
+    if tools:
+        html_ = html_.replace('"%s?' % ROUTE, '"%s?' % TOOLS_ROUTE).replace('"%s"' % ROUTE, '"%s"' % TOOLS_ROUTE)
+        html_ = html_.replace("</head>", '<style id="mwt-css">\n%s\n</style>\n</head>' % _asset("tools.css").replace("</", "<\\/"), 1)
+        html_ = html_.replace("Private preview · Signature Helm</p>", "Private preview · Signature Helm · Marine &amp; Water Tools</p>", 1)
     feat = ""
     if showcase_v:
         html_ = _swap_gates(html_, showcase_block(showcase_v, rid or None, radar_meta))

@@ -3904,7 +3904,7 @@ class Handler(SimpleHTTPRequestHandler):
             return self._send_private(None, "text/html; charset=utf-8", brief_preview.page(b).encode())
         if parsed.path == "/preview/masthead" or parsed.path == "/preview/masthead.css":
             return self._masthead_preview_route(parsed)
-        if parsed.path == signature_helm.ROUTE:
+        if parsed.path in (signature_helm.ROUTE, signature_helm.TOOLS_ROUTE):
             return self._signature_helm_route(parsed)
         if parsed.path == "/preview/home" or parsed.path == "/preview/home.css" or parsed.path.startswith("/preview/home/photos/"):
             return self._home_preview_route(parsed)
@@ -4494,7 +4494,10 @@ class Handler(SimpleHTTPRequestHandler):
         q = parse_qs(parsed.query or "")
         rid = (q.get("region") or [""])[0].strip()[:40] or None
         try:
-            data = signature_helm.page(rid)
+            if parsed.path == signature_helm.TOOLS_ROUTE:   # private Marine & Water Tools variant, same gate
+                data = signature_helm.page(rid, tools=True)
+            else:
+                data = signature_helm.page(rid)
         except Exception as e:
             sys.stderr.write("signature helm preview failed: %s\n" % e)
             return self.send_error(500, "preview failed")
