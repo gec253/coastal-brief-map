@@ -110,11 +110,11 @@ class PhaseAPreview(unittest.TestCase):
             self.assertIn(b"[75, 156, 211]", js)   # Carolina blue
             self.assertNotIn(b"[240, 95, 95]", js)  # old rainbow tip
 
-        # Ed t507u: wind.html and wind-viewer.js pinned to the reviewed B3 commit 02fbe50.
-        B3 = "02fbe50b28499188ad7948badb99671d81d43c16"
+        # Ed t511u: wind.html and wind-viewer.js pinned to the reviewed B4 commit f05fb45.
+        B4 = "f05fb4539b2354132bf0d0c2b7828896d03c931a"
         for rel in ("wind.html", "wind-viewer.js"):
             current = (ROOT / rel).read_bytes()
-            baseline = subprocess.check_output(["git", "show", "%s:%s" % (B3, rel)], cwd=ROOT)
+            baseline = subprocess.check_output(["git", "show", "%s:%s" % (B4, rel)], cwd=ROOT)
             self.assertEqual(current, baseline, rel)
 
     def test_preview_engine_respawns_in_field_not_only_at_edges(self):

@@ -367,9 +367,9 @@ class TopBarLayoutNoTruncation(unittest.TestCase):
 class AssetBudgetNote(unittest.TestCase):
     def test_own_asset_total_is_reported_not_silently_capped(self):
         own = sum((ROOT / f).stat().st_size for f in ("wind.html", "wind.css", "wind-viewer.js", "wind-lab.js", "wind-coast.js"))
-        # Ed t507u: official caps raised to 70 KiB own-asset and 15 KiB CSS.
-        self.assertLess(own, 70 * 1024, own)
-        self.assertLess((ROOT / "wind.css").stat().st_size, 15 * 1024)
+        # Ed t511u: official caps raised to 80 KiB own-asset and 18 KiB CSS.
+        self.assertLess(own, 80 * 1024, own)
+        self.assertLess((ROOT / "wind.css").stat().st_size, 18 * 1024)
 
 
 
