@@ -2238,6 +2238,7 @@ import featured_home  # noqa: E402  (Featured in The Coastal Brief; public when 
 import launch_flags  # noqa: E402  (default-off public launch flags; t425u)
 import theme_toggle  # noqa: E402  (site-wide Light / Dark / Auto theme system, Ed t468u)
 import nav_v2  # noqa: E402  (t453u masthead + nav v2; NAV_V2 env or preview cookie, default off)
+import signature_helm  # noqa: E402  (Ed t529u: cookie-gated /preview/helm only; public routes untouched)
 import whats_biting  # noqa: E402  (private /reports preview; cookie-gated, not public)
 import ramp_finder  # noqa: E402  (private /preview/ramps data preview; cookie-gated, not public)
 import freshwater  # noqa: E402
@@ -3903,6 +3904,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self._send_private(None, "text/html; charset=utf-8", brief_preview.page(b).encode())
         if parsed.path == "/preview/masthead" or parsed.path == "/preview/masthead.css":
             return self._masthead_preview_route(parsed)
+        if parsed.path == signature_helm.ROUTE:
+            return self._signature_helm_route(parsed)
         if parsed.path == "/preview/home" or parsed.path == "/preview/home.css" or parsed.path.startswith("/preview/home/photos/"):
             return self._home_preview_route(parsed)
         if parsed.path == "/preview/identity" or parsed.path == "/preview/identity.css":
@@ -4465,6 +4468,20 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
         self.wfile.write(data)
+
+    def _signature_helm_route(self, parsed):
+        """Signature Helm homepage (Ed t529u): cookie-gated private preview. 404 without the cookie,
+        noindex (meta + X-Robots-Tag), no-store, Vary: Cookie. Public "/" is unchanged."""
+        if not self._preview_ok():
+            return self.send_error(404, "not found")
+        q = parse_qs(parsed.query or "")
+        rid = (q.get("region") or [""])[0].strip()[:40] or None
+        try:
+            data = signature_helm.page(rid)
+        except Exception as e:
+            sys.stderr.write("signature helm preview failed: %s\n" % e)
+            return self.send_error(500, "preview failed")
+        return self._send_private(None, "text/html; charset=utf-8", data, extra=[("Vary", "Cookie")])
 
     def _refine_b_route(self, parsed):
         """Concept B (Ed t390u/t391u): the real public homepage with hybrid-b.css, preview cookie only.
