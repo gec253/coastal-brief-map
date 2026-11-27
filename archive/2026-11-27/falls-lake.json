@@ -1,0 +1,110 @@
+{
+ "astro": {
+  "date": "2026-11-27",
+  "label": "Falls Lake Dam",
+  "lat": 35.9411,
+  "lon": -78.5833,
+  "moon": {
+   "fraction": 0.8622,
+   "illuminationPct": 86,
+   "name": "Waning Gibbous",
+   "waxing": false
+  },
+  "regionId": "falls-lake",
+  "source": "Computed locally from the NOAA Solar Calculator equations and Meeus (Astronomical Algorithms, ch. 48). Not a live USNO fetch.",
+  "status": "ok",
+  "sunrise": "2026-11-27T07:02:35.896674-05:00",
+  "sunriseEt": "7:02 AM",
+  "sunset": "2026-11-27T17:01:10.184136-05:00",
+  "sunsetEt": "5:01 PM",
+  "tz": "America/New_York"
+ },
+ "freshness": [
+  {
+   "label": "Lake level",
+   "stale": false,
+   "station": "02087182",
+   "time": "4:30 AM ET"
+  },
+  {
+   "label": "Water temp",
+   "stale": false,
+   "station": "02087182",
+   "time": "4:30 AM ET"
+  }
+ ],
+ "hazards": {
+  "current": [],
+  "line": "No NWS alerts at the dam.",
+  "status": "clear",
+  "upcoming": []
+ },
+ "issueDate": "2026-11-27",
+ "issuedAt": "2026-11-27T10:15:02.667700+00:00",
+ "issuedEt": "Fri Nov 27, 5:15 AM ET",
+ "items": [
+  [
+   "Alerts",
+   "No NWS alerts at the dam."
+  ],
+  [
+   "Lake level",
+   "245.64 ft (NGVD29), 5.86 ft below the 251.5 ft guide curve; +0.66 ft in 24 h."
+  ],
+  [
+   "Dam release",
+   "30 cfs below Falls Dam (regulated), below lowest daily mean for this date."
+  ],
+  [
+   "Inflows",
+   "Eno River near Durham 111 cfs, above normal; Flat River at Bahama 308 cfs, above normal."
+  ],
+  [
+   "Water temp",
+   "56°F at the dam sensor."
+  ],
+  [
+   "Rain",
+   "0.45 in last 24 h at the dam; NWS forecast 0.00 in in next 24 h."
+  ],
+  [
+   "Weather",
+   "Mostly Cloudy, high 54°F, wind SW 12 to 16 mph."
+  ]
+ ],
+ "missing": [],
+ "ok": true,
+ "reason": "scheduled",
+ "region": {
+  "anchor": {
+   "label": "Falls Lake Dam (USGS 02087182)",
+   "lat": 35.9411,
+   "lon": -78.5833
+  },
+  "area": "Neuse River basin · Wake, Durham & Granville counties",
+  "id": "falls-lake",
+  "instrumentSet": "freshwater-lake",
+  "name": "Falls Lake",
+  "waterType": "freshwater"
+ },
+ "regionId": "falls-lake",
+ "sources": "USGS, USACE Wilmington District, NWS",
+ "take": [
+  "The lake is 5.9 ft below its guide curve, so more shoreline is exposed than usual; check NCWRC ramp notices before launching.",
+  "Flow below the dam is very low for the date."
+ ],
+ "validation": {
+  "checkedAt": "2026-11-27T10:15:02.667700+00:00",
+  "checks": [
+   "region",
+   "location",
+   "issue date",
+   "timestamp",
+   "core readings"
+  ],
+  "missingCore": [],
+  "status": "ok"
+ },
+ "waterType": "freshwater",
+ "words": 114
+}
