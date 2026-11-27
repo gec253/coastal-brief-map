@@ -276,3 +276,11 @@ a:focus-visible,button:focus-visible,select:focus-visible{outline:3px solid #C4A
 .haz-link{min-height:44px;align-items:center}
 .mosaic figcaption .eyebrow{display:inline-block;color:#F2D28B;background:rgba(7,28,41,.78);padding:1px 6px;border-radius:4px;margin-bottom:3px}
 .reps .scope{display:block;font-size:12px;color:var(--ink2)}
+/* Public homepage carry-overs (t535u): Wind & Radar showcase in Helm tokens, freshwater loading state, ramp note. */
+[data-helm] .sc{--paper:var(--g1);--ink-2:var(--ink2);--line:var(--hair);--line-2:var(--cellbd);--accent:var(--carolina);--atlantic:var(--carolina);--link:var(--carolina);--f-num:"Barlow Condensed",sans-serif;--f-display:"Fraunces",serif;--obs-bg:rgba(31,110,74,.1);--pred-bg:rgba(29,83,129,.1);
+ max-width:560px;margin:0 auto;padding:14px 12px 6px;border-top:0}
+[data-helm] .sc-head h2{font:600 12px/1.2 "Barlow Condensed",sans-serif;letter-spacing:.16em;color:var(--ink2)}
+.cg-load{margin:6px 12px 0;font:600 13px/1.3 "Source Sans 3",Arial,sans-serif;color:var(--ink2)}
+.cg-retry{margin:8px 12px 0;min-height:44px;padding:0 16px;border-radius:22px;border:1px solid var(--brass);background:none;color:var(--ink);font:600 14px "Source Sans 3",Arial,sans-serif}
+.rnote{font-size:12.5px;color:var(--ink2)}
+.haz>:not(.haz-link):not(.flag){min-width:0;flex:1 1 auto}

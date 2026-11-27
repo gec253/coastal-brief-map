@@ -2238,7 +2238,7 @@ import featured_home  # noqa: E402  (Featured in The Coastal Brief; public when 
 import launch_flags  # noqa: E402  (default-off public launch flags; t425u)
 import theme_toggle  # noqa: E402  (site-wide Light / Dark / Auto theme system, Ed t468u)
 import nav_v2  # noqa: E402  (t453u masthead + nav v2; NAV_V2 env or preview cookie, default off)
-import signature_helm  # noqa: E402  (Ed t529u: cookie-gated /preview/helm only; public routes untouched)
+import signature_helm  # noqa: E402  (Ed t529u preview /preview/helm; Ed t534u public homepage / and /index.html)
 import whats_biting  # noqa: E402  (private /reports preview; cookie-gated, not public)
 import ramp_finder  # noqa: E402  (private /preview/ramps data preview; cookie-gated, not public)
 import freshwater  # noqa: E402
@@ -4444,7 +4444,24 @@ class Handler(SimpleHTTPRequestHandler):
 
 
     def _send_public_home(self, rid, sc=None):
-        """Public Hybrid homepage. If it cannot render, serve the dashboard so / never goes down."""
+        """Public homepage: Signature Helm in public mode (Ed t534u). If it cannot render, the previous
+        Hybrid homepage is served, and if that fails too, the dashboard, so / never goes down."""
+        try:
+            data = signature_helm.page(rid, public=True, showcase_v=sc, radar_meta=handle_radar_meta)
+        except Exception as e:
+            sys.stderr.write("signature helm home failed, serving hybrid: %s\n" % e)
+            data = None
+        if data is not None:
+            # Theme system, showcase (HOME_SHOWCASE) and featured section are built into the page by
+            # signature_helm.page; the NAV_V2 masthead rewrite targets the previous markup and is not applied.
+            self.send_response(200)
+            if sc:
+                self.send_header("Cache-Control", "no-store")
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+            return
         try:
             data = sprint_home.page("hybrid", rid, public=True)
         except Exception as e:

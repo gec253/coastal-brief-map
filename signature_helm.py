@@ -16,6 +16,7 @@ from __future__ import annotations
 import html
 import json
 import math
+import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -67,13 +68,31 @@ def _salt(rid):
     return None
 
 
-def _fresh(rid):
+def _fresh_state(rid):
+    """(payload, loading). Same first-paint rule as the public homepage (sprint_home.model): serve the
+    cached readings, or answer at once with the loading state and refresh in the background. The page
+    is then filled from /api/fresh-home (FRESH_JS). Never blocks the first response on USGS / NWS."""
     import freshwater
+    from unittest.mock import Mock
+    if isinstance(freshwater.assemble, Mock):   # tests that patch assemble() get their fixture immediately
+        status, p = freshwater.assemble(rid)
+        if status == 200 and (p or {}).get("ok"):
+            return p, False
     p = freshwater.peek(rid)
     if p and p.get("ok"):
-        return p
-    status, p = freshwater.assemble(rid)
-    return p if status == 200 and (p or {}).get("ok") else None
+        try:
+            _hit, age = freshwater.peek_age(rid)
+            if age is not None and age >= freshwater.ASSEMBLED_TTL:
+                freshwater.ensure_refresh(rid)
+        except Exception:
+            pass
+        return p, False
+    freshwater.ensure_refresh(rid)
+    return None, True
+
+
+def _fresh(rid):
+    return _fresh_state(rid)[0]
 
 
 def _grid():
@@ -104,6 +123,8 @@ def valid_region(rid: str | None) -> str | None:
 def kind_badge(t: dict) -> str:
     st = t.get("state")
     if st == "off":
+        if t.get("off") == sprint_home.LOADING_OFF:   # freshwater first paint: still loading, not failed
+            return '<i class="k off">LOADING</i>'
         return '<i class="k off">UNAVAILABLE</i>'
     k = (t.get("kind") or "").upper()
     cls = {"OBSERVED": "obs", "PREDICTED": "pred", "FORECAST": "fcst"}.get(k, "")
@@ -466,6 +487,31 @@ def ribbon(now: datetime, lat: float, lon: float, place: str, tide: dict | None,
 
 # ---------------------------------------------------------------- hazards
 
+def group_expiry(same: list) -> str:
+    """Collapsed-row wording from official NWS end times (each item's "ends", ISO). 'Until X' only when
+    every area shares one end time; otherwise 'Some areas until X' with the latest. Empty when any end
+    time is unknown for all areas (the expanded list still shows each area's own time)."""
+    ends = [homepage_boot._to_dt(it.get("ends")) for it in same if it.get("ends")]
+    ends = [e for e in ends if e is not None]
+    if not ends:
+        return ""
+    latest = max(ends)
+    txt = sprint_home.et_time(latest.isoformat())
+    if len(ends) == len(same) and len({e.timestamp() for e in ends}) == 1:
+        return "Until " + txt
+    return "Some areas until " + txt
+
+
+def _alert_group(sv: str, name: str, same: list, bits) -> str:
+    tag = bits(same[0])[0]
+    exp = group_expiry(same)
+    zones = "".join('<li>%s%s%s</li>' % bits(it) for it in same)
+    # The summary is the warning row itself: name, status and latest official expiration always visible;
+    # every area with its own exact expiration one tap away.
+    return ('<details class="ev ev-%s evg"><summary><b>%s</b>%s <span class="t">%s%d areas</span></summary><ul>%s</ul></details>') % (
+        sv, _e(name), tag, (_e(exp) + " · ") if exp else "", len(same), zones)
+
+
 def _alert_row(sv: str, name: str, same: list, compact: bool) -> str:
     """One row per NWS event name. Every event stays visible; several zones of the same event share
     the row, with each zone's own status, end time and area one tap away (never dropped)."""
@@ -476,9 +522,11 @@ def _alert_row(sv: str, name: str, same: list, compact: bool) -> str:
         return tag, meta, area
     first = same[0]
     tag, meta, area = bits(first)
+    if len(same) > 1:
+        return _alert_group(sv, name, same, bits)
     if len(same) == 1:
         return '<p class="ev ev-%s"><b>%s</b>%s%s%s</p>' % (sv, _e(name), tag, meta, area)
-    zones = "".join('<li>%s%s%s</li>' % bits(it) for it in same)
+    zones = "".join('<li>%s%s%s</li>' % bits(it) for it in same)   # (unreachable: groups use _alert_group)
     # The summary is the warning row itself: name and status always visible; zones one tap away.
     return ('<details class="ev ev-%s evg"><summary><b>%s</b>%s <span class="t">%d areas · end times</span></summary><ul>%s</ul></details>') % (
         sv, _e(name), tag, len(same), zones)
@@ -489,6 +537,11 @@ def hazards_html(a: dict, raw: dict | None) -> str:
     st = a.get("state")
     if st == "clear":
         return ('<div class="haz clear" id="hazards" role="status"><div class="haz-rows"><p><b>No NWS alerts right now</b></p></div>'
+                '<a class="haz-link" href="%s" rel="noopener">NWS details</a></div>') % _a(homepage_boot.NWS_DETAILS)
+    if st != "active" and (raw or {}).get("status") == "pending" and not a.get("items"):
+        # freshwater first paint: alerts are still being fetched; not clear, not failed
+        return ('<div class="haz unknown" id="hazards" role="status"><div class="haz-rows"><p><b>Checking NWS alerts…</b></p>'
+                '<p>Not yet confirmed. Do not assume there are none.</p></div>'
                 '<a class="haz-link" href="%s" rel="noopener">NWS details</a></div>') % _a(homepage_boot.NWS_DETAILS)
     if st != "active":
         it = (a.get("items") or [{}])[0]
@@ -634,6 +687,13 @@ def reports_html(rid: str | None, fresh: bool, now: datetime | None = None) -> s
     reg = next((r for r in wb.get("regions") or [] if r.get("id") == rid), None)
     notices = wb.get("notices") or {}
     href = "/reports/%s" % rid if reg else "/reports"
+    cover = ""
+    if not reg:
+        try:   # coverage note: nearest regional reports for an area without its own page (folio_entry rule)
+            import folio_entry
+            href, _l, cover = folio_entry.whats_biting_entry(rid or None)
+        except Exception:
+            pass
     rows = report_rows(reg, now)
     name = (reg or {}).get("short_name") or (reg or {}).get("name") or ""
     if rows:
@@ -641,7 +701,8 @@ def reports_html(rid: str | None, fresh: bool, now: datetime | None = None) -> s
     elif reg:
         line = "%s · no dated bite report on file; seasonal notes and official notices only." % name
     else:
-        line = "No dated report for this water yet. What's Biting? covers selected regions, each report with its source and date."
+        line = ("No dated report for this area right now. Nearest coverage: %s, each with its source and date." % cover) if cover and cover != "Regional reports index" else \
+            "No dated report for this area right now. Regional reports, each with its source and date, are listed on What's Biting?"
     keys = [k for k in ((reg or {}).get("notices") or []) if k in (FRESH_REGS + SALT_REGS)] or list(FRESH_REGS if fresh else SALT_REGS)
     if fresh and "ncwrc-inland-regs" not in keys:
         keys.insert(0, "ncwrc-inland-regs")
@@ -652,7 +713,7 @@ def reports_html(rid: str | None, fresh: bool, now: datetime | None = None) -> s
             links.append('<li><a href="%s" rel="noopener" target="_blank">%s</a> <span>%s · %s</span></li>' % (
                 _a(n["source_url"]), _e(n.get("title")), _e(n.get("source_name") or ""), _e(n.get("as_of_label") or "")))
     agency = "NC Wildlife Resources Commission" if fresh else "NC Division of Marine Fisheries"
-    return """<div class="fr">
+    return """<div class="fr" id="fishing">
   <a class="frow" href="%s"><span class="eyebrow">WHAT’S BITING? · FISHING REPORTS</span><b>Fishing Reports</b><span>%s</span><i aria-hidden="true">→</i></a>
   %s
   <section class="regs" id="regs" aria-labelledby="regs-h">
@@ -800,15 +861,30 @@ def nav_html(primary: list, rid: str, fresh: bool, dash_href: str) -> str:
     pushes content down and never covers it). Every link is a 44 px tap target."""
     row = "".join('<a href="%s"%s>%s</a>' % (_a(h), ' aria-current="page"' if c else "", _e(n)) for n, h, c in primary)
     allx = [("Conditions · Saltwater", "%s?region=crystal-coast" % ROUTE), ("Conditions · Freshwater", "%s?region=falls-lake" % ROUTE),
-            ("Choose your water", "#rp"), ("Morning Brief", brief_href(rid)), ("Wind Viewer", "/wind"), ("Radar Viewer", "/radar"),
-            ("Fishing Reports", "/reports"), ("Regulations", "#regs"), ("Map &amp; tides" if not fresh else "Lake &amp; river map", dash_href),
-            ("Toolbox · chart, tides, radar", "#tools"), ("Catch Wall", "/catch-wall"), ("Coastal Life", "/coastal-life"), ("All Photos", "/photos")]
-    if _ramps_public():   # same launch flag as the public nav; /ramps is not public yet
-        allx.append(("Find a Ramp", "/ramps"))
+            ("Choose your water", "#rp")] + ([("Morning Brief", brief_href(rid))] if brief_on() else []) + [("Wind Viewer", "/wind"), ("Radar Viewer", "/radar"),
+            ("Fishing Reports", "/reports"), ("Regulations", "#regs"), ("Marine &amp; Water Tools", "#tools"), ("Catch Wall", "/catch-wall"), ("Coastal Life", "/coastal-life"), ("All Photos", "/photos")]
+    if _ramps_public():   # PUBLIC_RAMPS launch flag, same entry points as the previous public homepage
+        allx.append(("Find a Ramp", ramps_entry(rid)[0]))
     lis = "".join('<li><a href="%s">%s</a></li>' % (_a(h), n) for n, h in allx)
     lis += '<li><button type="button" class="fb-open" data-feedback-open aria-haspopup="dialog" aria-controls="fb-dlg">Feedback</button></li>'
     return ('<div class="navrow">%s</div><details class="allnav"><summary aria-label="All sections menu">'
             '<span aria-hidden="true">☰</span> Menu</summary><ul>%s</ul></details>') % (row, lis)
+
+
+def brief_on() -> bool:
+    """MORNING_BRIEF_ENABLED kill switch, same flag as the public homepage (sprint_home._brief_on):
+    when it is off, every /brief link and entry point is left out of the page, menu included."""
+    return bool(sprint_home._brief_on())
+
+
+def ramps_entry(rid: str | None) -> tuple[str, str]:
+    """Find a Ramp entry (href, coverage note), same rule as the public homepage (folio_entry)."""
+    try:
+        import folio_entry
+        href, _label, note = folio_entry.ramps_entry(rid or None)
+        return href, note or ""
+    except Exception:
+        return "/ramps", ""
 
 
 def brief_href(rid: str) -> str:
@@ -821,15 +897,38 @@ def brief_href(rid: str) -> str:
         return "/brief"
 
 
+def _attach_ends(m: dict, p: dict | None) -> None:
+    """Model alert rows carry display text only; copy each row's official end time from the payload
+    (rows are built 1:1 in payload order). Nothing is attached if the lists don't line up exactly."""
+    a = m.get("alerts") or {}
+    src = (((p or {}).get("alerts") or {}).get("items")) or []
+    rows = a.get("items") or []
+    if a.get("state") != "active" or len(src) != len(rows):
+        return
+    if any((r.get("event") or "") != (x.get("event") or "") for r, x in zip(rows, src)):
+        return
+    for r, x in zip(rows, src):
+        if x.get("ends") and not r.get("ends"):
+            r["ends"] = x["ends"]
+
+
 def build(rid: str | None, *, now: datetime | None = None, salt_payload=None, fresh_payload=None, grid=None,
           fetch: bool = True) -> str:
     now = now or datetime.now(timezone.utc)
     rid = valid_region(rid)
     fresh = rid in FRESH_IDS
     if fresh:
-        p = fresh_payload if fresh_payload is not None else (_fresh(rid) if fetch else None)
+        loading = False
+        if fresh_payload is not None:
+            p = fresh_payload
+        elif fetch:
+            p, loading = _fresh_state(rid)
+        else:
+            p = None
         if p:
             m = sprint_home.fresh_model(p)
+        elif loading:
+            m = sprint_home.fresh_loading_model(rid)   # honest loading copy, no numerals
         else:
             m = sprint_home.fresh_loading_model(rid)
             m["pending"] = False
@@ -839,6 +938,7 @@ def build(rid: str | None, *, now: datetime | None = None, salt_payload=None, fr
             m["forecast"] = {"off": sprint_home.FRESH_POINT_OFF}
         region = (p or {}).get("region") or m.get("region") or {}
     else:
+        loading = False
         p = salt_payload if salt_payload is not None else (_salt(rid) if fetch else None)
         if p:
             m = sprint_home.salt_model(p)
@@ -847,6 +947,7 @@ def build(rid: str | None, *, now: datetime | None = None, salt_payload=None, fr
                  "alerts": {"state": "unknown", "items": [{"event": sprint_home.ALERTS_OFF[0], "meta": sprint_home.ALERTS_OFF[1]}]},
                  "forecast": {"off": sprint_home.MARINE_OFF}, "updated": ""}
         region = (p or {}).get("region") or {}
+    _attach_ends(m, p)
     rid = rid or region.get("id") or ""
     anchor = region.get("anchor") or {}
     lat, lon = anchor.get("lat"), anchor.get("lon")
@@ -919,6 +1020,11 @@ def build(rid: str | None, *, now: datetime | None = None, salt_payload=None, fr
         story = story if story.count("<figure") <= 2 else story[:story.index("<figure", story.index("<figure", 1) + 1)]
     tools = ('<a href="%s#map-chart">Nautical chart</a> · <a href="/radar">Radar</a> · <a href="%s#tide-search">Tide tables</a> · <a href="%s">Full dashboard</a>' % (_a(dash), _a(dash), _a(dash))) if not fresh else (
         '<a href="%s">Full lake &amp; river dashboard</a> · <a href="/radar">Radar</a> · <a href="/wind">Wind</a>' % _a(dash))
+    briefbox = ('<a class="briefbox" href="%s"><span class="eyebrow">EVERY MORNING</span><b>Today\'s Morning Brief</b>'
+                '<span>The whole morning on the water, on one page.</span></a>' % _a(brief_href(rid))) if brief_on() else ""
+    if _ramps_public():
+        rh, rnote = ramps_entry(rid)
+        tools += ' · <a href="%s">Find a Ramp</a>%s' % (_a(rh), (' <span class="rnote">(%s)</span>' % _e(rnote)) if rnote else "")
     test = '<p class="testbar" role="note">TEST DATA</p>' if (p or {}).get("testData") else ""
     main = """<section class="helm" id="helm" aria-labelledby="cg-h">%s
   <div class="edition"><div><h2 id="cg-h">Conditions at a Glance</h2>
@@ -938,8 +1044,8 @@ def build(rid: str | None, *, now: datetime | None = None, salt_payload=None, fr
   %s
   %s
   %s
-  <a class="briefbox" href="%s"><span class="eyebrow">EVERY MORNING</span><b>Today's Morning Brief</b><span>The whole morning on the water, on one page.</span></a>
-  <p class="index" id="tools"><b>TOOLBOX · MAP, CHART &amp; RADAR</b> %s</p>
+  <!--cb-featured-->%s
+  <p class="index" id="tools"><b>MARINE &amp; WATER TOOLS</b> %s</p>
 </section>
 <section class="chapter coast" aria-labelledby="cl-h">
   %s
@@ -952,9 +1058,35 @@ def build(rid: str | None, *, now: datetime | None = None, salt_payload=None, fr
   <div class="ctas"><a class="cta" href="/catch-wall#share">Share yours on the Catch Wall</a><a class="cta2" href="/photos">All Photos →</a></div>
 </section>""" % (test, ROUTE, picker, _e(upd), hazards_html(m.get("alerts") or {}, m.get("alerts_raw")), "fresh " + water_kind if fresh else "salt",
                   cluster, rib, ledger, gates_html(), reports_html(rid, fresh, now), forecast_quote(m.get("forecast"), fresh), water_index(rid), wphoto,
-                  _a(brief_href(rid)), tools, strip, today, story, mosaic_html(fresh))
+                  briefbox, tools, strip, today, story, mosaic_html(fresh))
+    if loading:   # first paint without readings: reserved slots, honest loading copy, filled asynchronously
+        main = main.replace('<section class="helm" id="helm" aria-labelledby="cg-h">',
+                            '<section class="helm" id="helm" aria-labelledby="cg-h" data-fresh-pending="1" aria-busy="true" data-fresh-region="%s">' % _a(rid), 1)
+        i = main.index('<p class="upd">')
+        j = main.index("</div>", i) + len("</div>")
+        main = main[:j] + '\n  <p class="cg-load" role="status" aria-live="polite">%s</p>' % _e(sprint_home.LOADING_OFF) + main[j:] + "\n" + FRESH_JS
     return shell(main, title, fresh, nav)
 
+
+
+# Freshwater fill, same contract as fresh-home.js on the previous homepage: poll /api/fresh-home every
+# 2 s for up to 60 s; once verified readings exist, re-read this page (rendered on the server from the
+# same cache, never invented) and replace only #helm. Ignore answers for a region the visitor left.
+# On timeout: "Readings unavailable" with a Retry button (retry=1 reuses the single-flight refresh).
+FRESH_JS = r"""<script>(function(){var P=2000,M=60000,busy=0;function H(){return document.getElementById("helm")}
+function R(e){return e?e.getAttribute("data-fresh-region")||"":""}
+function S(e,t){var s=e&&e.querySelector(".cg-load");if(s)s.textContent=t}
+function off(rid){var e=H();if(!e||R(e)!==rid||e.getAttribute("data-fresh-pending")!=="1")return;S(e,"Readings unavailable");e.removeAttribute("aria-busy");
+if(!e.querySelector(".cg-retry")){var b=document.createElement("button");b.type="button";b.className="cg-retry";b.textContent="Retry readings";var s=e.querySelector(".cg-load");(s?s.parentNode:e).insertBefore(b,s?s.nextSibling:null)}}
+function swap(rid){return fetch(location.pathname+"?region="+encodeURIComponent(rid),{credentials:"same-origin"}).then(function(r){return r.text()}).then(function(t){
+var e=H();if(!e||R(e)!==rid)return;var d=new DOMParser().parseFromString(t,"text/html"),n=d.getElementById("helm");if(n&&n.getAttribute("data-fresh-pending")!=="1"){e.replaceWith(document.importNode(n,true));
+var s=document.getElementById("rp");if(s)s.addEventListener("change",function(){location.href=location.pathname+"?region="+encodeURIComponent(s.value)})}})}
+function run(rid,retry){var t0=Date.now(),last="";busy=1;function tick(poll,rt){fetch("/api/fresh-home?region="+encodeURIComponent(rid)+"&public=1"+(rt?"&retry=1":"")+(poll?"&poll=1":""),{credentials:"same-origin"}).then(function(r){return r.json()}).then(function(d){
+var e=H();if(R(e)&&R(e)!==rid)return;var ready=d&&d.ok&&d.html&&d.html.indexOf('data-fresh-pending="1"')<0;var p=Promise.resolve();
+if(ready&&d.html!==last){last=d.html;p=swap(rid)}return p.then(function(){var done=d&&d.complete;if(!done&&Date.now()-t0<M)setTimeout(function(){tick(true,false)},P);else{busy=0;if(!done)off(rid)}})})
+.catch(function(){if(Date.now()-t0<M)setTimeout(function(){tick(true,false)},P);else{busy=0;off(rid)}})}tick(false,retry)}
+document.addEventListener("click",function(ev){var b=ev.target&&ev.target.closest&&ev.target.closest(".cg-retry");if(!b||busy)return;var e=H();if(!e)return;b.disabled=true;e.setAttribute("data-fresh-pending","1");S(e,"Loading official readings…");run(R(e),true)});
+var e=H();if(e&&e.getAttribute("data-fresh-pending")==="1"&&R(e))run(R(e),false)})();</script>"""
 
 
 def shell(main: str, title: str, fresh: bool, nav: str) -> str:
@@ -977,6 +1109,8 @@ def shell(main: str, title: str, fresh: bool, nav: str) -> str:
 <link rel="icon" href="/favicon.ico?v=20261121" sizes="48x48">
 <link rel="icon" href="/branding/favicon.svg?v=20261121" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261121" sizes="180x180">
+<link rel="manifest" href="/site.webmanifest?v=20261121">
+<link rel="preconnect" href="https://wgjoenkugzfrrfejmtvh.supabase.co" crossorigin>
 <style id="helm-css">
 %s
 </style>
@@ -1004,9 +1138,93 @@ def shell(main: str, title: str, fresh: bool, nav: str) -> str:
 """ % ("fresh" if fresh else "salt", _e(title), css, ROUTE, nav, main, sprint_home.PUBLIC_FOOTER, fb, ROUTE)
 
 
-def page(rid: str | None, **kw) -> bytes:
+PUBLIC_ROUTE = "/"
+
+
+def publicize(h: str, reports_public: bool) -> str:
+    """Public homepage mode (Ed t534u): no private-preview labels, no noindex, links to /?region=, the
+    public title / description / OG / Twitter / canonical tags (sprint_home._public_head, copied from
+    index.html). /reports links fall back to the on-page dated list when What's Biting? is not public."""
+    h = h.replace('<meta name="robots" content="noindex, nofollow">\n', "")
+    h = re.sub(r'<title>[^<]*</title>\n<meta name="description" content="[^"]*">\n', "", h, count=1)
+    h = h.replace('<meta name="theme-color" content="#071C29">\n', sprint_home._public_head() + "\n", 1)
+    h = h.replace('  <p class="pvtag">Private preview · Signature Helm</p>\n', "")
+    h = re.sub(r"/\* Signature Helm: private preview[^*]*\*/", "", h, count=1)
+    h = h.replace(ROUTE + "?region=", PUBLIC_ROUTE + "?region=").replace('href="%s"' % ROUTE, 'href="/"').replace('action="%s"' % ROUTE, 'action="/"')
+    if not reports_public:
+        h = re.sub(r'href="/reports(?:/[a-z-]+)?"', 'href="#fishing"', h)
+    return h
+
+
+def featured_block(rid: str | None) -> tuple[str, str]:
+    """The existing editor-selected 'Featured in The Coastal Brief' section (featured_home), carried over
+    from the previous public homepage under the same rule: saltwater only, only when What's Biting? is
+    public. Returns (css, section) or ("", "")."""
+    try:
+        import featured_home
+        if not featured_home.should_inject(rid):
+            return "", ""
+        feat = featured_home.load()
+        block = featured_home.section(feat) if feat else ""
+        if not block.strip():
+            return "", ""
+        return featured_home.CSS_PATH.read_text(encoding="utf-8"), block
+    except Exception:
+        return "", ""
+
+
+def showcase_block(v: str, rid: str | None, radar_meta=None) -> str:
+    """The existing Wind & Radar showcase (HOME_SHOWCASE), focused on this region exactly as on the previous
+    homepage (showcase.section). It takes the place of the illustrated Wind / Radar gateway cards, so the
+    page never carries both. Returns "" if it cannot be built (the gateway cards then stay)."""
+    try:
+        import showcase
+        attribution = disclaimer = ""
+        if radar_meta is not None:
+            try:
+                _, rp = radar_meta()
+                attribution, disclaimer = rp.get("attribution") or "", rp.get("disclaimer") or ""
+            except Exception:
+                pass
+        return showcase.section(v, attribution, disclaimer, rid)
+    except Exception:
+        return ""
+
+
+def _swap_gates(h: str, sc: str) -> str:
+    i = h.find('<section class="gates" id="gates"')
+    if i < 0 or not sc:
+        return h
+    j = h.index("</section>", i) + len("</section>")
+    fb = re.search(r'<p class="fbrow">.*?</p>', h[i:j], re.S)
+    try:
+        import showcase
+        css = (showcase.ROOT / "showcase.css").read_text(encoding="utf-8")
+    except Exception:
+        return h
+    h = h[:i] + sc + "\n" + (fb.group(0) if fb else "") + h[j:]
+    h = h.replace("</head>", '<style id="sc-css">%s</style>\n</head>' % css.replace("</", "<\\/"), 1)
+    h = h.replace("Gateway maps: U.S. Census Bureau coastline; illustrations, not live data. ", "", 1)
+    return h.replace("</body>", '<script src="/showcase.js" defer></script>\n</body>', 1)
+
+
+def page(rid: str | None, public: bool = False, showcase_v: str | None = None, radar_meta=None, **kw) -> bytes:
     import theme_toggle
-    data = build(rid, **kw).encode("utf-8")
+    html_ = build(rid, **kw)
+    feat = ""
+    if showcase_v:
+        html_ = _swap_gates(html_, showcase_block(showcase_v, rid or None, radar_meta))
+    if public:
+        import launch_flags
+        wb = launch_flags.whats_biting_public()
+        html_ = publicize(html_, wb)
+        if wb:   # Featured in The Coastal Brief: before the Morning Brief entry, as on the previous homepage
+            import featured_home
+            css, feat = featured_block(valid_region(rid) or "crystal-coast")
+            if feat:
+                html_ = html_.replace("</head>", '<style id="%s">%s</style>\n</head>' % (featured_home.CSS_ID, css.replace("</", "<\\/")), 1)
+    html_ = html_.replace("<!--cb-featured-->", (feat.strip() + "\n  ") if feat else "", 1)
+    data = html_.encode("utf-8")
     try:
         data = theme_toggle.paint(data)   # same Light / Dark / Auto system and storage key as public pages
     except Exception:

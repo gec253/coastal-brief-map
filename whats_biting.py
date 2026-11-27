@@ -397,7 +397,8 @@ def _badge(label: str | None) -> str:
     if not label:
         return ""
     slug = label.lower()
-    return f'<span class="badge badge-{esc(slug)}">{esc(label)}</span>'
+    shown = {"Aging": "Older report"}.get(label, label)   # Ed t534u: same wording as the homepage
+    return f'<span class="badge badge-{esc(slug)}">{esc(shown)}</span>'
 
 
 def _ex_badge() -> str:

@@ -23,6 +23,10 @@ FROZEN = ("wind.html", "wind-viewer.js", "wind.css", "wind-lab.js", "wind-coast.
           "sprint_home.py", "homepage_boot.py", "conditions.py", "freshwater.py")
 
 
+def _must_not_block(*a, **k):   # a plain function, not a Mock: the page must not call assemble() on first paint
+    raise AssertionError("first paint must not wait on assemble()")
+
+
 def _iso(dt):
     return dt.isoformat()
 
@@ -202,6 +206,87 @@ class Render(unittest.TestCase):
         self.assertIn('loading="lazy"', today.group(0))
         for img in re.findall(r"<img [^>]*>", h):
             self.assertIn("alt=", img)
+
+    def test_grouped_warning_expiration_wording(self):
+        """Ed t534u: collapsed summary shows the latest official expiration; 'Until' only when every area shares it."""
+        e1, e2 = _iso(NOW + timedelta(hours=8)), _iso(NOW + timedelta(hours=16))
+        mixed = [{"event": "Gale Warning", "tag": "In effect", "meta": "until A", "area": "Zone A", "ends": e1},
+                 {"event": "Gale Warning", "tag": "In effect", "meta": "until B", "area": "Zone B", "ends": e2}]
+        self.assertTrue(self.sh.group_expiry(mixed).startswith("Some areas until "))
+        latest = self.sh.sprint_home.et_time(e2)
+        self.assertEqual(self.sh.group_expiry(mixed), "Some areas until " + latest)
+        same = [dict(mixed[0]), dict(mixed[1], ends=e1)]
+        self.assertEqual(self.sh.group_expiry(same), "Until " + self.sh.sprint_home.et_time(e1))
+        part = [dict(mixed[0]), dict(mixed[1], ends=None)]
+        self.assertTrue(self.sh.group_expiry(part).startswith("Some areas until "))   # unknown end never implied shared
+        self.assertEqual(self.sh.group_expiry([dict(mixed[0], ends=None), dict(mixed[1], ends=None)]), "")
+        h = self.sh.hazards_html({"state": "active", "items": mixed}, None)
+        summ = re.search(r"<summary>.*?</summary>", h, re.S).group(0)
+        self.assertIn("Some areas until", summ)
+        self.assertIn("2 areas", summ)
+        for z in ("Zone A", "Zone B", "until A", "until B"):
+            self.assertIn(z, h)                              # every area and its exact time kept in details
+
+    def test_ends_attached_from_payload_in_order(self):
+        h = self.salt(alerts={"status": "ok", "zones": [], "items": [
+            {"event": "Gale Warning", "ends": _iso(NOW + timedelta(hours=10))},
+            {"event": "Gale Warning", "ends": _iso(NOW + timedelta(hours=20))},
+            {"event": "High Surf Advisory", "ends": _iso(NOW + timedelta(hours=4))}]})
+        self.assertIn("Some areas until", h)
+
+    def test_public_mode_has_no_private_labels(self):
+        h = self.sh.publicize(self.salt(), reports_public=True)
+        for bad in ("noindex", "Private preview", "private preview", "/preview/helm", "class=\"pvtag\""):
+            self.assertNotIn(bad, h)
+        self.assertIn('<link rel="canonical" href="https://thecoastalbrief.com/">', h)
+        self.assertIn('property="og:title"', h)
+        self.assertIn('name="twitter:card"', h)
+        self.assertIn('href="/?region=falls-lake"', h)
+        self.assertIn('action="/"', h)
+        self.assertIn('href="/reports', h)
+        self.assertEqual(h.count("<title>"), 1)
+        off = self.sh.publicize(self.salt(), reports_public=False)
+        self.assertNotRegex(off, r'href="/reports')
+        self.assertIn('href="#fishing"', off)
+        self.assertIn('id="fishing"', off)
+        self.assertIn("Marine &amp; Water Tools", h)
+        self.assertNotIn("Toolbox", h)
+
+    def test_public_carry_overs_brief_switch_ramps_manifest(self):
+        h = self.sh.publicize(self.salt(), reports_public=True)
+        self.assertIn('<link rel="manifest" href="/site.webmanifest?v=20261121">', h)
+        self.assertIn('<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261121" sizes="180x180">', h)
+        with mock.patch.dict(os.environ, {"MORNING_BRIEF_ENABLED": "0"}):
+            off = self.salt()
+        self.assertNotIn("/brief", off)
+        self.assertNotIn("Morning Brief", off)
+        self.assertIn("<!--cb-featured-->", off)   # featured slot survives without the brief entry
+        with mock.patch.dict(os.environ, {"PUBLIC_RAMPS": "1"}):
+            on = self.sh.build("hatteras", now=NOW, salt_payload=salt_payload(), fetch=False)
+        self.assertIn('href="/ramps">Find a Ramp</a> <span class="rnote">(Ramps are not yet listed for this area)</span>', on)
+        self.assertNotIn("/ramps?region=hatteras", on)
+        with mock.patch.dict(os.environ, {"PUBLIC_RAMPS": ""}):
+            self.assertNotIn("Find a Ramp", self.salt())
+
+    def test_freshwater_first_paint_is_loading_state_not_unavailable(self):
+        import freshwater
+        with mock.patch.object(freshwater, "peek", return_value=None), \
+                mock.patch.object(freshwater, "ensure_refresh") as er, \
+                mock.patch.object(freshwater, "assemble", new=_must_not_block):
+            h = self.sh.build("falls-lake", now=NOW, grid={"ok": False})
+        er.assert_called_once_with("falls-lake")
+        self.assertIn('data-fresh-pending="1"', h)
+        self.assertIn('data-fresh-region="falls-lake"', h)
+        self.assertIn("Loading official readings", h)
+        self.assertIn("/api/fresh-home?region=", h)
+        self.assertNotIn("Readings unavailable right now.", h)
+        self.assertNotRegex(h, r'class="num">\d')   # no numerals invented while loading
+
+    def test_reports_coverage_note_for_areas_without_a_page(self):
+        h = self.sh.reports_html("nags-head", False, NOW)
+        self.assertIn('href="/reports/hatteras"', h)
+        self.assertIn("Hatteras Island reports", h)
+        self.assertIn("No dated report for this area right now", h)
 
     def test_reports_and_regulations_prominent(self):
         h = self.salt()
