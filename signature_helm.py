@@ -187,11 +187,11 @@ def dial_html(t: dict, label: str = "Wind") -> str:
     note = ('<p class="sub">%s</p>' % _e(t["note"])) if t.get("note") else ""
     return ('<div class="dial-wrap" role="group" aria-label="%s, %s">'
             '<div class="lbl"><span>%s</span>%s</div>'
-            '<svg class="dial" viewBox="0 0 160 160" aria-hidden="true"><defs><radialGradient id="face" cx="50%%" cy="38%%" r="62%%">'
+            '<div class="dial-box"><svg class="dial" viewBox="0 0 160 160" aria-hidden="true"><defs><radialGradient id="face" cx="50%%" cy="38%%" r="62%%">'
             '<stop offset="0" class="f1"/><stop offset="1" class="f2"/></radialGradient></defs>'
             '<circle cx="80" cy="80" r="76" class="bezel"/><circle cx="80" cy="80" r="68" fill="url(#face)"/><g class="ticks">%s</g>'
             '<text x="80" y="20" class="card">N</text><text x="144" y="84" class="card">E</text>'
-            '<text x="80" y="148" class="card">S</text><text x="16" y="84" class="card">W</text>%s</svg>%s%s%s</div>') % (
+            '<text x="80" y="148" class="card">S</text><text x="16" y="84" class="card">W</text>%s</svg>%s</div>%s%s</div>') % (
         _a(label), _a((t.get("kind") or "unavailable").lower() if t.get("state") != "off" else "unavailable"),
         _e(label.upper()), kind_badge(t), TICKS, ptr, read, src_line(t), note)
 
@@ -303,10 +303,14 @@ def gauge_svg(value, g: dict) -> str:
     span = hi - lo
     gx = (g["guide"] - lo) / span * 150
     fill = ""
-    if _num(value):
-        x = max(0.0, min(150.0, (float(value) - lo) / span * 150))
+    try:   # tiles carry display strings ("245.76"); a missing or non-numeric reading draws no marker
+        v = float(str(value).replace(",", "")) if value is not None else None
+    except ValueError:
+        v = None
+    if v is not None and math.isfinite(v):
+        x = max(0.0, min(150.0, (v - lo) / span * 150))
         fill = '<rect x="0" y="12" width="%.1f" height="8" rx="4" class="g-fill"/><circle cx="%.1f" cy="16" r="5" class="g-now"/>' % (x, x)
-    return ('<svg class="gauge" viewBox="0 0 150 36" role="img" aria-label="Lake level gauge, %.1f to %.1f ft, guide curve %.1f ft">'
+    return ('<svg class="gauge" viewBox="0 -5 150 41" role="img" aria-label="Lake level gauge, %.1f to %.1f ft, guide curve %.1f ft">'
             '<rect x="0" y="12" width="150" height="8" rx="4" class="g-track"/>%s'
             '<line x1="%.1f" y1="5" x2="%.1f" y2="27" class="g-guide"/><text x="%.1f" y="4.5" class="g-t" text-anchor="middle">GUIDE %.1f</text>'
             '<text x="0" y="35" class="g-t">%.1f</text><text x="150" y="35" class="g-t" text-anchor="end">%.1f ft</text></svg>') % (
@@ -462,6 +466,24 @@ def ribbon(now: datetime, lat: float, lon: float, place: str, tide: dict | None,
 
 # ---------------------------------------------------------------- hazards
 
+def _alert_row(sv: str, name: str, same: list, compact: bool) -> str:
+    """One row per NWS event name. Every event stays visible; several zones of the same event share
+    the row, with each zone's own status, end time and area one tap away (never dropped)."""
+    def bits(it):
+        tag = (' <span class="ie">%s</span>' % _e(it["tag"])) if it.get("tag") else ""
+        meta = (' <span class="t">%s</span>' % _e(it["meta"])) if it.get("meta") else ""
+        area = (' <span class="area">%s</span>' % _e(it["area"])) if it.get("area") else ""
+        return tag, meta, area
+    first = same[0]
+    tag, meta, area = bits(first)
+    if len(same) == 1:
+        return '<p class="ev ev-%s"><b>%s</b>%s%s%s</p>' % (sv, _e(name), tag, meta, area)
+    zones = "".join('<li>%s%s%s</li>' % bits(it) for it in same)
+    # The summary is the warning row itself: name and status always visible; zones one tap away.
+    return ('<details class="ev ev-%s evg"><summary><b>%s</b>%s <span class="t">%d areas · end times</span></summary><ul>%s</ul></details>') % (
+        sv, _e(name), tag, len(same), zones)
+
+
 def hazards_html(a: dict, raw: dict | None) -> str:
     """Warnings first, then watches, advisories, statements. Unknown alert state is never shown as clear."""
     st = a.get("state")
@@ -475,22 +497,37 @@ def hazards_html(a: dict, raw: dict | None) -> str:
             _e(it.get("event") or sprint_home.ALERTS_OFF[0]), _e(it.get("meta") or sprint_home.ALERTS_OFF[1]), _a(homepage_boot.NWS_DETAILS))
     order = {"warn": 0, "watch": 1, "adv": 2, "stmt": 3}
     items = sorted(a["items"], key=lambda it: order.get(sprint_home.severity(it.get("event")), 9))
-    rows, last = [], None
-    for it in items:
-        sv = sprint_home.severity(it.get("event"))
-        if sv != last:
-            rows.append('<p class="sev sev-%s">%s</p>' % (sv, sprint_home.SEV_LABEL[sv].upper()))
-            last = sv
-        tag = (' <span class="ie">%s</span>' % _e(it["tag"])) if it.get("tag") else ""
-        meta = (' <span class="t">%s</span>' % _e(it["meta"])) if it.get("meta") else ""
-        area = (' <span class="area">%s</span>' % _e(it["area"])) if it.get("area") else ""
-        rows.append('<p class="ev ev-%s"><b>%s</b>%s%s%s</p>' % (sv, _e(it.get("event")), tag, meta, area))
+    top = sprint_home.severity(items[0].get("event")) if items else "stmt"
+    rows, low = [], []
+    for sv in ("warn", "watch", "adv", "stmt"):
+        grp = [it for it in items if sprint_home.severity(it.get("event")) == sv]
+        if not grp:
+            continue
+        # Warnings and watches are never collapsed. Advisories and statements collapse only when a
+        # higher tier is showing; the top tier on the page is always fully visible.
+        visible = sv in ("warn", "watch") or sv == top
+        out = rows if visible else low
+        out.append('<p class="sev sev-%s">%s</p>' % (sv, (sprint_home.SEV_LABEL[sv] + ("s" if len(grp) > 1 else "")).upper()))
+        names = []
+        for it in grp:
+            if it.get("event") not in names:
+                names.append(it.get("event"))
+        for name in names:
+            same = [it for it in grp if it.get("event") == name]
+            out.append(_alert_row(sv, name, same, compact=visible))
+    if low:
+        n = sum(1 for it in items if sprint_home.severity(it.get("event")) in ("adv", "stmt"))
+        names = []
+        for it in items:
+            if sprint_home.severity(it.get("event")) in ("adv", "stmt") and it.get("event") not in names:
+                names.append(it.get("event"))
+        rows.append('<details class="haz-more"><summary><span class="cnt">+%d</span> %s</summary>%s</details>' % (
+            n, _e(", ".join(names)), "".join(low)))
     kind = sprint_home.flag_for(raw)
     flag = ""
     if kind:
         # Official display only (exact NWS event names); brighter red so it reads on the warning band.
         flag = '<span class="flag">%s</span>' % sprint_home.flag_svg(kind).replace("#B3261E", "#FF6B5E")
-    top = sprint_home.severity(items[0].get("event")) if items else "stmt"
     return ('<div class="haz haz-%s" id="hazards" role="alert">%s<div class="haz-rows">%s</div>'
             '<a class="haz-link" href="%s" rel="noopener">NWS details</a></div>') % (
         top, flag, "".join(rows), _a(homepage_boot.NWS_DETAILS))
@@ -558,18 +595,52 @@ SALT_REGS = ("dmf-rec-guide", "dmf-proclamations")
 FRESH_REGS = ("ncwrc-inland-regs", "ncwrc-striped-bass")
 
 
-def reports_html(rid: str | None, fresh: bool) -> str:
+OLDER_DAYS = 7
+
+
+def report_age(as_of: str | None, now: datetime) -> tuple[str, int | None]:
+    """("Sun, Nov 15, 2026", age in days) from an ISO date; ("date not stated", None) otherwise."""
+    try:
+        d = datetime.strptime(str(as_of)[:10], "%Y-%m-%d").date()
+    except Exception:
+        return "date not stated", None
+    today = homepage_boot._to_dt(now).astimezone(ET).date() if hasattr(homepage_boot, "_to_dt") else now.date()
+    return d.strftime("%a, %b ") + str(d.day) + d.strftime(", %Y"), (today - d).days
+
+
+def report_rows(reg: dict | None, now: datetime) -> str:
+    """Every dated report with its real source and link, its date and its age. Reports older than
+    OLDER_DAYS are marked OLDER REPORT; nothing here says or implies that a report is current."""
+    out = []
+    for r in (reg or {}).get("reports") or []:
+        if not r.get("source_name") or not str(r.get("source_url") or "").startswith("https://"):
+            continue   # unattributed or unlinked reports are never shown
+        when, age = report_age(r.get("as_of"), now)
+        if age is None:
+            ago, cls, tag = "age unknown", "old", '<i class="k old">DATE NOT STATED</i>'
+        else:
+            ago = "today" if age <= 0 else ("1 day old" if age == 1 else "%d days old" % age)
+            old = age > OLDER_DAYS
+            cls, tag = ("old", '<i class="k old">OLDER REPORT</i>') if old else ("", '<i class="k rep">DATED REPORT</i>')
+        out.append('<li%s><a href="%s" rel="noopener" target="_blank"><b>%s</b></a> %s<span>Report dated %s · %s</span></li>' % (
+            (' class="%s"' % cls) if cls else "", _a(r["source_url"]), _e(r["source_name"]), tag, _e(when), _e(ago)))
+    return "".join(out)
+
+
+def reports_html(rid: str | None, fresh: bool, now: datetime | None = None) -> str:
+    now = now or datetime.now(timezone.utc)
     wb = _wb()
     reg = next((r for r in wb.get("regions") or [] if r.get("id") == rid), None)
     notices = wb.get("notices") or {}
     href = "/reports/%s" % rid if reg else "/reports"
-    if reg and reg.get("reports"):
-        r0 = reg["reports"][0]
-        line = "%s: %s, as of %s" % (reg.get("short_name") or reg.get("name"), r0.get("title") or r0.get("source_name"), r0.get("as_of") or "date not stated")
+    rows = report_rows(reg, now)
+    name = (reg or {}).get("short_name") or (reg or {}).get("name") or ""
+    if rows:
+        line = "%s · latest dated reports, each from its own source. Check the date: fishing changes day to day." % name
     elif reg:
-        line = "%s: seasonal notes and official notices (no dated bite report on file)" % (reg.get("short_name") or reg.get("name"))
+        line = "%s · no dated bite report on file; seasonal notes and official notices only." % name
     else:
-        line = "What's Biting? reports by region, each with its source and date"
+        line = "No dated report for this water yet. What's Biting? covers selected regions, each report with its source and date."
     keys = [k for k in ((reg or {}).get("notices") or []) if k in (FRESH_REGS + SALT_REGS)] or list(FRESH_REGS if fresh else SALT_REGS)
     if fresh and "ncwrc-inland-regs" not in keys:
         keys.insert(0, "ncwrc-inland-regs")
@@ -582,13 +653,14 @@ def reports_html(rid: str | None, fresh: bool) -> str:
     agency = "NC Wildlife Resources Commission" if fresh else "NC Division of Marine Fisheries"
     return """<div class="fr">
   <a class="frow" href="%s"><span class="eyebrow">WHAT’S BITING? · FISHING REPORTS</span><b>Fishing Reports</b><span>%s</span><i aria-hidden="true">→</i></a>
+  %s
   <section class="regs" id="regs" aria-labelledby="regs-h">
     <p class="eyebrow">OFFICIAL · LINKED, NOT RESTATED</p><h3 id="regs-h">Regulations</h3>
     <p class="dek">Size, bag and season rules come only from %s. We link them; we never restate limits.</p>
     <ul>%s</ul>
   </section>
   <p class="lic"><a href="https://license.gooutdoorsnorthcarolina.com/Licensing/CustomerLookup.aspx" rel="noopener" target="_blank">Buy an NC fishing or hunting license</a> · <a href="https://www.ncwildlife.gov/hunting/license-types-and-fees" rel="noopener" target="_blank">License types and fees</a> · NC Wildlife Resources Commission</p>
-</div>""" % (_a(href), _e(line), _e(agency), "".join(links))
+</div>""" % (_a(href), _e(line), ('<ul class="reps" aria-label="Dated fishing reports">%s</ul>' % rows) if rows else "", _e(agency), "".join(links))
 
 
 def forecast_quote(f: dict | None, fresh: bool) -> str:
@@ -636,22 +708,102 @@ def water_index(rid: str | None) -> str:
     return '<nav class="twin" aria-label="Choose your water">%s</nav>' % "".join(out)
 
 
+def _today_rotation(fresh: bool, now: datetime | None = None) -> dict | None:
+    """Today's photograph from the public rotation (photo_rotation): salt uses sprint_home._featured()
+    exactly as the public homepage does; fresh uses the same manifest's freshwater/inland pool."""
+    try:
+        import photo_rotation
+        if not fresh:
+            return sprint_home._featured()
+        man = photo_rotation.active()
+        if not man:
+            return None
+        pool = [e for e in man["photos"] if e.get("approved") and (e.get("category") == "freshwater" or photo_rotation.is_inland(e))]
+        shot = photo_rotation.pick(pool, photo_rotation.et_date(now)) if pool else None
+        return photo_rotation.resolve(shot, sprint_home.approved_photos()) if shot else None
+    except Exception:
+        return None
+
+
+def today_html(ph: dict | None, fallback: str) -> str:
+    if not ph:
+        return fallback
+    try:
+        import photo_rotation
+        srcs = ph.get("sources") or {}
+        fmts = [(f, m) for f, m in photo_rotation.FORMATS if srcs.get(f)]
+        if not fmts or not ph.get("alt"):
+            return fallback
+        sizes = "(max-width: 700px) 100vw, 700px"
+        parts = "".join('<source type="%s" srcset="%s" sizes="%s">' % (m, photo_rotation.srcset(srcs[f]), sizes) for f, m in fmts[:-1])
+        last = srcs[fmts[-1][0]]
+        fb = last[640] if 640 in last else (last[800] if 800 in last else last[min(last)])
+        title = ph.get("description") or ph.get("location") or ""
+        return ('<figure class="today" data-photo="%s"><picture>%s<img src="%s" srcset="%s" sizes="%s" alt="%s" width="%d" height="%d" '
+                'loading="lazy" decoding="async" fetchpriority="low"></picture><figcaption><span class="eyebrow">TODAY’S PHOTOGRAPH</span>'
+                '<b>%s</b> <span class="cr">%s</span></figcaption></figure>') % (
+            _a(ph.get("id") or ""), parts, _a(photo_rotation.src_url(fb)), photo_rotation.srcset(last), sizes, _a(ph["alt"]),
+            int(ph.get("width") or 1600), int(ph.get("height") or 1000), _e(title), photo_rotation.credit_html(ph))
+    except Exception:
+        return fallback
+
+
+def featured_catch() -> dict | None:
+    """The Catch Wall's own featured slot (admin flag, else newest approved fishing photo)."""
+    try:
+        import catch_wall_public
+        ph = sprint_home.approved_photos()
+        f, _rest = catch_wall_public.pick_featured(ph)
+        return catch_wall_public.localize_featured(f) if f else None
+    except Exception:
+        return None
+
+
 def mosaic_html(fresh: bool) -> str:
     try:
         P = sprint_home._photos()
     except Exception:
         P = {}
     picks = [P.get("fresh"), P.get("wide"), P.get("lead")] if fresh else [P.get("lead"), P.get("life"), P.get("life2")]
+    feat = featured_catch()
+    if feat:
+        fid = str(feat.get("id") or "").lower()
+        picks = [feat] + [p for p in picks if p and str(p.get("id") or "").lower() != fid]
     cells = []
     for i, p in enumerate([p for p in picks if p][:3]):
-        cells.append('<figure class="w%d">%s<figcaption><b>%s</b>%s</figcaption></figure>' % (
-            i, sprint_home.img_html(p, "(max-width: 640px) 60vw, 400px"), _e(sprint_home.caption(p)), _e(sprint_home.credit(p))))
+        eb = '<span class="eyebrow">FEATURED ON THE CATCH WALL</span>' if (feat and p is feat) else ""
+        cells.append('<figure class="w%d">%s<figcaption>%s<b>%s</b>%s</figcaption></figure>' % (
+            i, sprint_home.img_html(p, "(max-width: 640px) 60vw, 400px"), eb, _e(sprint_home.caption(p)), _e(sprint_home.credit(p))))
     if not cells:
         return '<p class="dek">Catch Wall photographs are not available right now.</p>'
     return '<div class="mosaic n%d">%s</div>' % (len(cells), "".join(cells))
 
 
 # ---------------------------------------------------------------- page
+
+def _ramps_public() -> bool:
+    try:
+        import launch_flags
+        return bool(launch_flags.ramps_public())
+    except Exception:
+        return False
+
+
+def nav_html(primary: list, rid: str, fresh: bool, dash_href: str) -> str:
+    """Primary row plus an "All sections" menu (native <details>, no script, in normal flow so it
+    pushes content down and never covers it). Every link is a 44 px tap target."""
+    row = "".join('<a href="%s"%s>%s</a>' % (_a(h), ' aria-current="page"' if c else "", _e(n)) for n, h, c in primary)
+    allx = [("Conditions · Saltwater", "%s?region=crystal-coast" % ROUTE), ("Conditions · Freshwater", "%s?region=falls-lake" % ROUTE),
+            ("Choose your water", "#rp"), ("Morning Brief", brief_href(rid)), ("Wind Viewer", "/wind"), ("Radar Viewer", "/radar"),
+            ("Fishing Reports", "/reports"), ("Regulations", "#regs"), ("Map &amp; tides" if not fresh else "Lake &amp; river map", dash_href),
+            ("Toolbox · chart, tides, radar", "#tools"), ("Catch Wall", "/catch-wall"), ("Coastal Life", "/coastal-life"), ("All Photos", "/photos")]
+    if _ramps_public():   # same launch flag as the public nav; /ramps is not public yet
+        allx.append(("Find a Ramp", "/ramps"))
+    lis = "".join('<li><a href="%s">%s</a></li>' % (_a(h), n) for n, h in allx)
+    lis += '<li><button type="button" class="fb-open" data-feedback-open aria-haspopup="dialog" aria-controls="fb-dlg">Feedback</button></li>'
+    return ('<div class="navrow">%s</div><details class="allnav"><summary aria-label="All sections menu">'
+            '<span aria-hidden="true">☰</span> Menu</summary><ul>%s</ul></details>') % (row, lis)
+
 
 def brief_href(rid: str) -> str:
     """Same rule as the public homepage: this region's own /brief page (site_chrome.brief_target)."""
@@ -726,10 +878,8 @@ def build(rid: str | None, *, now: datetime | None = None, salt_payload=None, fr
     rib = ribbon(now, lat, lon, place or title, (by.get("tide") if not fresh else None), water_kind) if _num(lat) and _num(lon) else ""
     upd = m.get("updated") or "—"
     nav_items = [("Saltwater", "%s?region=crystal-coast" % ROUTE, not fresh), ("Freshwater", "%s?region=falls-lake" % ROUTE, fresh),
-                 ("Fishing Reports", "/reports", False), ("Regulations", "#regs", False),
-                 ("Morning Brief", brief_href(rid), False), ("Catch Wall", "/catch-wall", False),
-                 ("Map", ("/lake?region=%s" % rid) if fresh else ("/dashboard?region=%s" % rid), False)]
-    nav = "".join('<a href="%s"%s>%s</a>' % (_a(h), ' aria-current="page"' if c else "", _e(n)) for n, h, c in nav_items)
+                 ("Wind", "/wind", False), ("Radar", "/radar", False), ("Fishing Reports", "/reports", False)]
+    nav = nav_html(nav_items, rid, fresh, dash_href=("/lake?region=%s" % rid) if fresh else ("/dashboard?region=%s" % rid))
     picker = "".join('<optgroup label="%s">%s</optgroup>' % (_a(label), "".join(
         '<option value="%s"%s>%s</option>' % (_a(r), " selected" if c else "", _e(n)) for r, n, c, _h in items))
         for label, items in sprint_home.public_region_groups(rid) if items)
@@ -737,16 +887,30 @@ def build(rid: str | None, *, now: datetime | None = None, salt_payload=None, fr
     if fresh:
         wphoto = fphoto("falls-lake-pier" if rid == "falls-lake" else ("jordan-lake-ebenezer" if rid == "jordan-lake" else "neuse-river-cliffs"), "wphoto", 427)
         strip = fphoto("neuse-river-cliffs" if rid != "neuse-river" else "fontana-lake-dock", "strip one", 250)
-        today = fphoto("mattamuskeet-sunset", "today", 427, "Sunset at Lake Mattamuskeet, North Carolina.", "TODAY’S PHOTOGRAPH")
-        story = fphoto("fontana-lake-dock", "", 427, "Still water, early light") + fphoto("nantahala-family", "", 427, "Rivers that raise families")
+        tph = _today_rotation(True, now)
+        today = today_html(tph, fphoto("mattamuskeet-sunset", "today", 427, "Sunset at Lake Mattamuskeet, North Carolina.", "TODAY’S PHOTOGRAPH"))
+        tid = (tph or {}).get("id") or "mattamuskeet-sunset"
+        # never the same photograph twice on a page: today's rotation pick replaces its fixed slot
+        if tid == "neuse-river-cliffs" and rid != "neuse-river":
+            strip = fphoto("fontana-lake-dock", "strip one", 250)
+        first = ("mattamuskeet-sunset", "Sunset at Lake Mattamuskeet") if tid == "fontana-lake-dock" else ("fontana-lake-dock", "Still water, early light")
+        if tid == "fontana-lake-dock" and rid == "neuse-river":
+            strip = fphoto("mattamuskeet-sunset", "strip one", 250)
+            first = ("neuse-river-cliffs", "Still water, early light") if False else ("jordan-lake-ebenezer", "Still water, early light")
+        second = ("nantahala-family", "Rivers that raise families") if tid != "nantahala-family" else ("mattamuskeet-sunset", "Sunset at Lake Mattamuskeet")
+        story = fphoto(first[0], "", 427, first[1]) + fphoto(second[0], "", 427, second[1])
     else:
         wphoto = fphoto("november-fishing-cape-point", "wphoto", 427)
         strip = ('<figure class="strip"><picture><source type="image/avif" srcset="/static/night-strip/docks-phone-l-390.avif 390w">'
                  '<img src="/static/night-strip/docks-phone-l-390.webp" alt="%s" width="195" height="88" loading="lazy" decoding="async"></picture>'
                  '<picture><source type="image/avif" srcset="/static/night-strip/docks-phone-r-390.avif 390w">'
                  '<img src="/static/night-strip/docks-phone-r-390.webp" alt="" width="195" height="88" loading="lazy" decoding="async"></picture></figure>') % _a(sprint_home.STRIP_ALT)
-        today = fphoto("swan-quarter-landing", "today", 427, "Swan Quarter Landing, North Carolina.", "TODAY’S PHOTOGRAPH")
-        story = fphoto("dawn-at-topsail", "", 427, "First light at Topsail") + fphoto("shrimp-boats-wanchese", "", 427, "The working harbor")
+        tph = _today_rotation(False, now)
+        today = today_html(tph, fphoto("swan-quarter-landing", "today", 427, "Swan Quarter Landing, North Carolina.", "TODAY’S PHOTOGRAPH"))
+        tid = (tph or {}).get("id") or "swan-quarter-landing"
+        story = "".join(fphoto(i, "", 427, c) for i, c in (("dawn-at-topsail", "First light at Topsail"), ("shrimp-boats-wanchese", "The working harbor"),
+                                                            ("swan-quarter-landing", "Swan Quarter Landing")) if i != tid and i != "november-fishing-cape-point")
+        story = story if story.count("<figure") <= 2 else story[:story.index("<figure", story.index("<figure", 1) + 1)]
     tools = ('<a href="%s#map-chart">Nautical chart</a> · <a href="/radar">Radar</a> · <a href="%s#tide-search">Tide tables</a> · <a href="%s">Full dashboard</a>' % (_a(dash), _a(dash), _a(dash))) if not fresh else (
         '<a href="%s">Full lake &amp; river dashboard</a> · <a href="/radar">Radar</a> · <a href="/wind">Wind</a>' % _a(dash))
     test = '<p class="testbar" role="note">TEST DATA</p>' if (p or {}).get("testData") else ""
@@ -769,7 +933,7 @@ def build(rid: str | None, *, now: datetime | None = None, salt_payload=None, fr
   %s
   %s
   <a class="briefbox" href="%s"><span class="eyebrow">EVERY MORNING</span><b>Today's Morning Brief</b><span>The whole morning on the water, on one page.</span></a>
-  <p class="index"><b>MAP, CHART &amp; RADAR</b> %s</p>
+  <p class="index" id="tools"><b>TOOLBOX · MAP, CHART &amp; RADAR</b> %s</p>
 </section>
 <section class="chapter coast" aria-labelledby="cl-h">
   %s
@@ -781,9 +945,10 @@ def build(rid: str | None, *, now: datetime | None = None, salt_payload=None, fr
   %s
   <div class="ctas"><a class="cta" href="/catch-wall#share">Share yours on the Catch Wall</a><a class="cta2" href="/photos">All Photos →</a></div>
 </section>""" % (test, ROUTE, picker, _e(upd), hazards_html(m.get("alerts") or {}, m.get("alerts_raw")), "fresh " + water_kind if fresh else "salt",
-                  cluster, rib, ledger, gates_html(), reports_html(rid, fresh), forecast_quote(m.get("forecast"), fresh), water_index(rid), wphoto,
+                  cluster, rib, ledger, gates_html(), reports_html(rid, fresh, now), forecast_quote(m.get("forecast"), fresh), water_index(rid), wphoto,
                   _a(brief_href(rid)), tools, strip, today, story, mosaic_html(fresh))
     return shell(main, title, fresh, nav)
+
 
 
 def shell(main: str, title: str, fresh: bool, nav: str) -> str:

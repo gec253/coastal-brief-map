@@ -126,7 +126,82 @@ class Render(unittest.TestCase):
         self.assertIn('href="/wind"', gates)
         self.assertIn('href="/radar"', gates)
         self.assertIn("data-feedback-open", gates)   # Feedback only after the instruments
-        self.assertLess(h.index('id="helm"'), h.index("data-feedback-open"))
+        # The visible Feedback chip sits after the instruments; the only earlier Feedback entry is inside the
+        # collapsed All-sections menu (in flow, never floating over content).
+        self.assertLess(h.index('id="helm"'), h.index('class="fb-open fb-chip"'))
+        menu = re.search(r'<details class="allnav">.*?</details>', h, re.S).group(0)
+        self.assertLess(h.index("data-feedback-open"), h.index('id="helm"'))
+        self.assertIn("data-feedback-open", menu)
+        self.assertNotIn("position:fixed", re.sub(r"\s", "", h.split('<style id="helm-css">')[1].split("</style>")[0]).replace(".fb-fab{position:fixed", ""))
+
+    def test_hazards_compact_warnings_never_collapsed(self):
+        """t532u: every warning event stays visible (several zones share one row); only lower tiers collapse."""
+        items = [{"event": "Small Craft Advisory", "tag": "In effect", "meta": "until Sat 9:00 AM ET"}]
+        items += [{"event": "Gale Warning", "tag": "In effect", "meta": "until %d PM" % i, "area": "Zone %d" % i} for i in range(4)]
+        items += [{"event": "Coastal Flood Warning", "tag": "In effect", "meta": "until 3:00 PM ET"}]
+        h = self.sh.hazards_html({"state": "active", "items": items}, None)
+        low = re.search(r'<details class="haz-more">.*?</details>', h, re.S).group(0)
+        visible = h.replace(low, "")
+        for ev in ("Gale Warning", "Coastal Flood Warning"):
+            self.assertIn(ev, visible)
+            self.assertNotIn(ev, low)
+        self.assertIn("4 areas", visible)
+        for i in range(4):
+            self.assertIn("Zone %d" % i, h)               # zone detail kept, one tap away
+        self.assertIn("+1", low)
+        self.assertIn("Small Craft Advisory", low.split("</summary>")[0])   # named in the summary, not hidden
+        self.assertLess(h.index("Coastal Flood Warning"), h.index("Small Craft Advisory"))
+        # advisories alone are the top tier: shown in full, nothing collapsed
+        only = self.sh.hazards_html({"state": "active", "items": items[:1]}, None)
+        self.assertNotIn("haz-more", only)
+        self.assertIn("Small Craft Advisory", only)
+
+    def test_all_sections_menu_reaches_every_destination(self):
+        h = self.salt()
+        menu = re.search(r'<details class="allnav">.*?</details>', h, re.S).group(0)
+        for href in ("/wind", "/radar", "/reports", "#regs", "/catch-wall", "/coastal-life", "/photos", "#tools", "#rp", "/brief?region="):
+            self.assertIn('href="%s' % href, menu)
+        self.assertIn('id="tools"', h)
+        self.assertIn('id="rp"', h)
+        self.assertIn("All sections", menu)
+
+    def test_reports_dated_and_older_marked(self):
+        h = self.sh.reports_html("crystal-coast", False, NOW)
+        if "reps" in h:
+            self.assertIn("Report dated", h)
+            self.assertRegex(h, r"\d+ days? old|today")
+        when, age = self.sh.report_age("2026-11-15", NOW)
+        self.assertEqual(age, 12)
+        r = self.sh.report_rows({"reports": [{"source_name": "Pier", "source_url": "https://example.org/r", "as_of": "2026-11-15"},
+                                             {"source_name": "Shop", "source_url": "https://example.org/s", "as_of": "2026-11-26"},
+                                             {"source_name": "", "source_url": "https://example.org/x", "as_of": "2026-11-26"},
+                                             {"source_name": "No date", "source_url": "https://example.org/n"}]}, NOW)
+        self.assertIn("OLDER REPORT", r.split("Shop")[0])
+        self.assertIn("1 day old", r)
+        self.assertNotIn("example.org/x", r)               # unattributed reports are never shown
+        self.assertIn("DATE NOT STATED", r)
+        for bad in ("current", "Current", "latest conditions", "right now"):
+            self.assertNotIn(bad, r)
+        self.assertNotIn("Fisherman", h)
+        fl = self.sh.reports_html("falls-lake", True, NOW)
+        self.assertNotIn("Jordan", fl)
+        self.assertIn("Falls Lake", fl)
+
+    def test_lake_gauge_marks_current_level(self):
+        g = self.sh.GAUGES["falls-lake"]
+        self.assertIn('class="g-now"', self.sh.gauge_svg("245.76", g))
+        self.assertIn('class="g-now"', self.sh.gauge_svg("1,245.76".replace("1,", ""), g))
+        self.assertNotIn('class="g-now"', self.sh.gauge_svg(None, g))       # missing reading: no marker, never a guess
+        self.assertNotIn('class="g-now"', self.sh.gauge_svg("—", g))
+
+    def test_today_photo_has_alt_and_credit(self):
+        h = self.salt()
+        today = re.search(r'<figure class="today".*?</figure>', h, re.S)
+        self.assertIsNotNone(today)
+        self.assertRegex(today.group(0), r'alt="[^"]+"')
+        self.assertIn('loading="lazy"', today.group(0))
+        for img in re.findall(r"<img [^>]*>", h):
+            self.assertIn("alt=", img)
 
     def test_reports_and_regulations_prominent(self):
         h = self.salt()
