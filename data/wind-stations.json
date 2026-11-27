@@ -1,0 +1,41 @@
+{
+  "bbox": {"south": 33.40, "north": 36.70, "west": -79.05, "east": -75.00},
+  "deduped": [
+    {"kept": "8651370", "dropped": "DUKN7", "name": "Duck Pier", "reason": "Same physical NOS CO-OPS / NDBC C-MAN site; keep the CO-OPS identity the rest of the site already uses."},
+    {"kept": "8652587", "dropped": "ORIN7", "name": "Oregon Inlet Marina", "reason": "Same physical NOS CO-OPS / NDBC C-MAN site; keep the CO-OPS identity."},
+    {"kept": "8654467", "dropped": "HCGN7", "name": "USCG Station Hatteras", "reason": "Same physical NOS CO-OPS / NDBC C-MAN site; keep the CO-OPS identity. Never a silent stand-in for 41025."},
+    {"kept": "8656483", "dropped": "BFTN7", "name": "Beaufort, Duke Marine Lab", "reason": "Same physical NOS CO-OPS / NDBC C-MAN site; keep the CO-OPS identity."},
+    {"kept": "8658163", "dropped": "JMPN7", "name": "Wrightsville Beach (Johnny Mercer's Pier)", "reason": "Same physical NOS CO-OPS / NDBC C-MAN site; keep the CO-OPS identity."},
+    {"kept": "8661070", "dropped": "MROS1", "name": "Springmaid Pier, Myrtle Beach, SC", "reason": "Same physical NOS CO-OPS / NDBC C-MAN site; optional SC-edge station uses the CO-OPS identity."},
+    {"kept": null, "dropped": ["WLON7", "8658120"], "name": "Wilmington (Battleship)", "reason": "CO-OPS met catalog lists this site but it has no wind product; omitted rather than shown as a wind station."}
+  ],
+  "excluded": ["44100", "44056", "44086", "44095", "41120", "41159", "41110", "41108", "8652226", "8657419", "8658559", "TEC2837"],
+  "stations": [
+    {"id": "41025", "name": "Diamond Shoals", "type": "ndbc", "kindWind": "wind", "lat": 35.026, "lon": -75.38, "url": "https://www.ndbc.noaa.gov/station_page.php?station=41025"},
+    {"id": "41064", "name": "Onslow Bay (CORMP)", "type": "ndbc", "kindWind": "wind", "lat": 34.207, "lon": -76.949, "staleAfterMin": 130, "url": "https://www.ndbc.noaa.gov/station_page.php?station=41064"},
+    {"id": "41038", "name": "Wrightsville / Masonboro (UNCW)", "type": "ndbc", "kindWind": "wind", "lat": 34.141, "lon": -77.715, "url": "https://www.ndbc.noaa.gov/station_page.php?station=41038"},
+    {"id": "41013", "name": "Frying Pan Shoals", "type": "ndbc", "kindWind": "wind", "lat": 33.436, "lon": -77.764, "url": "https://www.ndbc.noaa.gov/station_page.php?station=41013"},
+    {"id": "CLKN7", "name": "Cape Lookout", "type": "ndbc", "kindWind": "wind", "lat": 34.611, "lon": -76.528, "url": "https://www.ndbc.noaa.gov/station_page.php?station=CLKN7"},
+    {"id": "MBNN7", "name": "Masonboro Inlet North", "type": "ndbc", "kindWind": "wind", "lat": 34.171, "lon": -77.824, "url": "https://www.ndbc.noaa.gov/station_page.php?station=MBNN7"},
+    {"id": "MBIN7", "name": "Masonboro Inlet South", "type": "ndbc", "kindWind": "wind", "lat": 34.091, "lon": -77.868, "staleAfterMin": 130, "url": "https://www.ndbc.noaa.gov/station_page.php?station=MBIN7"},
+    {"id": "8651370", "name": "Duck Pier", "type": "coops", "kindWind": "wind", "lat": 36.1833, "lon": -75.7467, "url": "https://tidesandcurrents.noaa.gov/stationhome.html?id=8651370"},
+    {"id": "8652587", "name": "Oregon Inlet Marina", "type": "coops", "kindWind": "harborWind", "lat": 35.7957, "lon": -75.5482, "url": "https://tidesandcurrents.noaa.gov/stationhome.html?id=8652587"},
+    {"id": "8654467", "name": "USCG Station Hatteras", "type": "coops", "kindWind": "harborWind", "lat": 35.2086, "lon": -75.7042, "url": "https://tidesandcurrents.noaa.gov/stationhome.html?id=8654467"},
+    {"id": "8656483", "name": "Beaufort, Duke Marine Lab", "type": "coops", "kindWind": "harborWind", "lat": 34.7173, "lon": -76.6707, "url": "https://tidesandcurrents.noaa.gov/stationhome.html?id=8656483"},
+    {"id": "8658163", "name": "Wrightsville Beach, Johnnie Mercer's Pier", "type": "coops", "kindWind": "wind", "lat": 34.2133, "lon": -77.7867, "url": "https://tidesandcurrents.noaa.gov/stationhome.html?id=8658163"},
+    {"id": "8661070", "name": "Springmaid Pier, Myrtle Beach, SC", "type": "coops", "kindWind": "wind", "lat": 33.655, "lon": -78.9183, "optional": true, "url": "https://tidesandcurrents.noaa.gov/stationhome.html?id=8661070"},
+    {"id": "KONX", "name": "Currituck County, Barco", "type": "nws", "kindWind": "wind", "lat": 36.399, "lon": -76.016, "url": "https://api.weather.gov/stations/KONX"},
+    {"id": "KFFA", "name": "First Flight, Kill Devil Hills", "type": "nws", "kindWind": "wind", "lat": 36.023, "lon": -75.672, "url": "https://api.weather.gov/stations/KFFA"},
+    {"id": "KECG", "name": "Elizabeth City CGAS", "type": "nws", "kindWind": "wind", "lat": 36.261, "lon": -76.175, "optional": true, "url": "https://api.weather.gov/stations/KECG"},
+    {"id": "KMQI", "name": "Dare County Regional, Manteo", "type": "nws", "kindWind": "wind", "lat": 35.921, "lon": -75.696, "url": "https://api.weather.gov/stations/KMQI"},
+    {"id": "KHSE", "name": "Billy Mitchell Field, Hatteras / Frisco", "type": "nws", "kindWind": "wind", "lat": 35.2322, "lon": -75.6225, "url": "https://api.weather.gov/stations/KHSE"},
+    {"id": "KEWN", "name": "Coastal Carolina Regional, New Bern", "type": "nws", "kindWind": "wind", "lat": 35.073, "lon": -77.043, "url": "https://api.weather.gov/stations/KEWN"},
+    {"id": "KMRH", "name": "Michael J. Smith Field, Beaufort", "type": "nws", "kindWind": "wind", "lat": 34.7326, "lon": -76.6566, "url": "https://api.weather.gov/stations/KMRH"},
+    {"id": "KNCA", "name": "New River MCAS, Jacksonville", "type": "nws", "kindWind": "wind", "lat": 34.708, "lon": -77.44, "url": "https://api.weather.gov/stations/KNCA"},
+    {"id": "KILM", "name": "Wilmington International", "type": "nws", "kindWind": "wind", "lat": 34.271, "lon": -77.903, "url": "https://api.weather.gov/stations/KILM"},
+    {"id": "KSUT", "name": "Cape Fear Regional, Oak Island", "type": "nws", "kindWind": "wind", "lat": 33.931, "lon": -78.075, "url": "https://api.weather.gov/stations/KSUT"},
+    {"id": "KCRE", "name": "Grand Strand, North Myrtle Beach, SC", "type": "nws", "kindWind": "wind", "lat": 33.812, "lon": -78.724, "optional": true, "url": "https://api.weather.gov/stations/KCRE"},
+    {"id": "KNKT", "name": "Cherry Point MCAS", "type": "nws", "kindWind": "wind", "lat": 34.901, "lon": -76.881, "optional": true, "url": "https://api.weather.gov/stations/KNKT"},
+    {"id": "KNJM", "name": "Bogue Field MCALF", "type": "nws", "kindWind": "wind", "lat": 34.69403, "lon": -77.02945, "staleAfterMin": 150, "optional": true, "url": "https://api.weather.gov/stations/KNJM"}
+  ]
+}

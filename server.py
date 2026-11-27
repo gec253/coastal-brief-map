@@ -2230,6 +2230,7 @@ import photos  # noqa: E402
 import catch_wall_public  # noqa: E402
 import catch_wall_preview  # noqa: E402
 import windgrid  # noqa: E402
+import wind_stations  # noqa: E402
 import hrrrgrid  # noqa: E402
 import radarview  # noqa: E402
 import showcase  # noqa: E402  (homepage Wind & Radar section; HOME_SHOWCASE flag, default off)
@@ -4194,6 +4195,23 @@ class Handler(SimpleHTTPRequestHandler):
             if not g.get("ok"):
                 g = {"ok": False, "error": g.get("error") or "Model wind is unavailable right now."}
             return self._send_json(g, cache_s=600 if g.get("ok") else 60, status=200 if g.get("ok") else 502)
+        if parsed.path == "/api/wind-stations":
+            # Observed-station bundle (Phase B2). Isolated from /wind and /api/wind-grid:
+            # short per-source timeouts, a 3.5 s budget, last-good cache. Failures here
+            # do not touch the model grid. Rate-limit matches /api/wind-grid (30 / 60 s).
+            retry = self._rate_limit("wind-stations", API_WIND_GRID_LIMIT, API_WIND_GRID_WINDOW)
+            if retry is not None:
+                return self._send_rate_limited(retry)
+            try:
+                g = wind_stations.assemble()
+            except Exception:
+                g = {"ok": False, "kind": "observed",
+                     "error": "Observed stations unavailable right now."}
+            if g.get("ok"):
+                cache_s = 30 if g.get("staleCache") else wind_stations.HTTP_CACHE_S
+            else:
+                cache_s = 60
+            return self._send_json(g, cache_s=cache_s, status=200 if g.get("ok") else 502)
         if parsed.path in ("/wind", "/wind.css", "/wind/viewer.js", "/wind/coast.js", "/wind/engine.js", "/wind/coast-lo.json", "/wind/coast-hi.json", "/wind/coast-enc.json"):
             qs = parse_qs(parsed.query)
             if parsed.path == "/wind" and (qs.get("model") or [""])[0] == "hrrr":
