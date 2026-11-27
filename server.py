@@ -3649,7 +3649,7 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 <a class="card" href="/wind"><b>Wind viewer</b><span>Dedicated animated model wind (NOAA GFS forecast), private review</span></a>
 <a class="card" href="/lab/wind"><b>Wind flow</b><span>Animated model wind (NOAA GFS forecast)</span></a>
 <a class="card" href="/preview/wind"><b>Wind viewer · Phase A</b><span>Private visual refinement: navy, Carolina blue and cyan flow, smoother trails, nautical light water. Same NOAA GFS model forecast; public /wind is unchanged.</span></a>
-<a class="card" href="/preview/radar"><b>Radar viewer · Chart Helm preview</b><span>Private full-screen observed radar (NOAA/NSSL MRMS precip rate via WeatherAPI). Play, scrub, Coast and Me. Public /radar is unchanged.</span></a>
+<a class="card" href="/preview/radar"><b>Radar viewer · Chart Helm preview</b><span>Cookie-gated copy of the Chart Helm radar (NOAA/NSSL MRMS precip rate via WeatherAPI). The same viewer is public at /radar.</span></a>
 <a class="card" href="/lab/tiles"><b>Tile designs</b><span>The instrument tile prototype</span></a>
 <a class="card" href="/preview/masthead?c=c"><b>Masthead concepts</b><span>Three directions for a cinematic gold wave-to-masthead reveal (A editorial, B nautical, C hybrid). Replay from the bar at the bottom.</span></a>
 <a class="card" href="/preview/home"><b>Homepage (Ed's pick)</b><span>Classic Coastal Editorial masthead (A) with the Modern Coastal Magazine layout and the Bodie Island sunrise. Compare Cinematic and the other mastheads from the bar at the bottom.</span></a>
@@ -3779,7 +3779,7 @@ class Handler(SimpleHTTPRequestHandler):
 
 
     def _radar_preview_route(self, parsed):
-        """Cookie-gated Radar Viewer preview. Public /radar is untouched."""
+        """Cookie-gated Radar Viewer preview. Public /radar serves the same viewer without the gate."""
         if not self._preview_ok():
             return self.send_error(404, "not found")
         self._static_cache = "private, no-store"
@@ -3885,7 +3885,7 @@ class Handler(SimpleHTTPRequestHandler):
             return self._wind_phase_a_preview_route(parsed)
         if parsed.path in ("/preview/radar", "/preview/radar/viewer.js", "/preview/radar/radar.css", "/preview/radar/labels.json", "/preview/radar/coast-lo.json", "/preview/radar/coast-hi.json", "/preview/radar/borders.json"):
             # Private Radar Viewer Chart Helm preview (Ed t512u). Same cookie as /preview; 404 without it.
-            # Public /radar and its CSS/JS stay on production assets. Wind files are not modified.
+            # Public /radar is served later in do_GET. These preview paths stay cookie-gated.
             return self._radar_preview_route(parsed)
         if parsed.path == "/preview/photos-check":
             if not self._preview_ok():
@@ -4179,13 +4179,35 @@ class Handler(SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
             return
+        if parsed.path in (
+            "/radar/app.css", "/radar/app.js",
+            "/radar/labels.json", "/radar/coast-lo.json", "/radar/coast-hi.json", "/radar/borders.json",
+        ):
+            # Public Chart Helm radar assets. Wind files are not modified.
+            rel, ctype = {
+                "/radar/app.css": ("preview/radar/radar.css", "text/css; charset=utf-8"),
+                "/radar/app.js": ("preview/radar/viewer.js", "text/javascript; charset=utf-8"),
+                "/radar/labels.json": ("preview/radar/labels.json", "application/json; charset=utf-8"),
+                "/radar/coast-lo.json": ("preview/radar/coast-lo.json", "application/json; charset=utf-8"),
+                "/radar/coast-hi.json": ("preview/radar/coast-hi.json", "application/json; charset=utf-8"),
+                "/radar/borders.json": ("preview/radar/borders.json", "application/json; charset=utf-8"),
+            }[parsed.path]
+            return self._send_bytes((ROOT / rel).read_bytes(), ctype, cache_s=600)
         if parsed.path in ("/radar", "/radar.css", "/radar/viewer.js", "/radar/player.js", "/api/radar-view"):
-            # Public viewer (noindex until the homepage showcase is launched). Fixtures stay private.
+            # Public Chart Helm viewer at /radar. Legacy /radar.css and /radar/viewer.js stay
+            # as the previous public files (byte-identical to d0b0953) so SHA pins stay put.
+            # Fixtures stay private.
             if parsed.path == "/radar":
-                _st, _rp = radarview.view_payload(handle_radar_meta, allow_fixture=False)
-                _rp = _apply_feed_status(_rp)
-                page = radarview.page_html((ROOT / "radar.html").read_text(encoding="utf-8"), _rp)
-                return self._send_public_view(None, "text/html; charset=utf-8", page.encode("utf-8"))
+                data = (ROOT / "preview" / "radar" / "index.html").read_bytes()
+                try:
+                    data = theme_toggle.paint(data)
+                except Exception as e:
+                    sys.stderr.write("theme skipped: %s\n" % e)
+                data = data.replace(
+                    b'name="robots" content="noindex, nofollow"',
+                    b'name="robots" content="index, follow"',
+                )
+                return self._send_public_view(None, "text/html; charset=utf-8", data)
             if parsed.path == "/radar.css":
                 return self._send_bytes((ROOT / "radar.css").read_bytes(), "text/css; charset=utf-8", cache_s=600)
             if parsed.path == "/radar/viewer.js":

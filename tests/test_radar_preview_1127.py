@@ -192,8 +192,9 @@ class RadarPreviewLabels(unittest.TestCase):
 
     def test_wind_labels_file_is_not_used_or_modified(self):
         js = (ROOT / "preview" / "radar" / "viewer.js").read_text()
-        self.assertIn("/preview/radar/labels.json", js)
+        self.assertIn("/radar/labels.json", js)
         self.assertNotIn("/wind/labels.json", js)
+        self.assertNotIn("/preview/radar/labels.json", js)
         current = (ROOT / "data" / "wind-labels.json").read_bytes()
         baseline = subprocess.check_output(["git", "show", "%s:data/wind-labels.json" % BASELINE], cwd=ROOT)
         self.assertEqual(current, baseline)
@@ -279,8 +280,8 @@ class RadarPreview1127(unittest.TestCase):
             robots = (h.get("X-Robots-Tag") or h.get("x-robots-tag") or "").lower()
             self.assertIn("noindex", robots)
             self.assertIn(b'content="noindex, nofollow"', body)
-            self.assertIn(b'href="/preview/radar/radar.css"', body)
-            self.assertIn(b'src="/preview/radar/viewer.js"', body)
+            self.assertIn(b'href="/radar/app.css"', body)
+            self.assertIn(b'src="/radar/app.js"', body)
             self.assertIn(b'src="/radar/player.js"', body)
             self.assertIn(b'href="/wind.css"', body)
             self.assertIn(b'src="/wind/coast.js"', body)
@@ -312,7 +313,7 @@ class RadarPreview1127(unittest.TestCase):
             self.assertEqual(st, 200)
             self.assertIn("javascript", h.get("Content-Type") or h.get("content-type") or "")
             self.assertEqual(js, (ROOT / "preview" / "radar" / "viewer.js").read_bytes())
-            self.assertIn(b"/preview/radar/labels.json", js)
+            self.assertIn(b"/radar/labels.json", js)
             self.assertNotIn(b"/wind/labels.json", js)
             self.assertIn(b"setForecast", js)
             self.assertIn(b"keepBuffer: 1", js)
@@ -331,7 +332,7 @@ class RadarPreview1127(unittest.TestCase):
             st, _, brd = self._get("/preview/radar/borders.json", ck)
             self.assertEqual(st, 200)
             self.assertEqual(brd, (ROOT / "preview" / "radar" / "borders.json").read_bytes())
-            self.assertIn(b"/preview/radar/coast-", js)
+            self.assertIn(b"/radar/coast-", js)
             self.assertNotIn(b"/wind/coast-", js)
             self.assertIn(b"afterFirstPaint", js)
             self.assertIn(b"backgroundPreload", js)
@@ -357,16 +358,52 @@ class RadarPreview1127(unittest.TestCase):
         self.assertIn("width: 44px; height: 44px", css)
         self.assertIn("-86.5", js)
 
-    def test_public_radar_and_frozen_wind_files_are_unchanged(self):
+    def test_public_radar_serves_chart_helm_and_frozen_files_stay_pinned(self):
         with mock.patch.dict(os.environ, {"PREVIEW_KEY": KEY}):
-            st, _, html = self._get("/radar")
+            st, h, html = self._get("/radar")
             self.assertEqual(st, 200)
-            self.assertIn(b'href="/radar.css"', html)
-            self.assertIn(b'src="/radar/viewer.js"', html)
+            tag = (h.get("X-Robots-Tag") or h.get("x-robots-tag") or "").lower()
+            self.assertIn("index", tag)
+            self.assertNotIn("noindex", tag)
+            self.assertIn(b'content="index, follow"', html)
+            self.assertNotIn(b'content="noindex, nofollow"', html)
+            self.assertIn(b'href="/radar/app.css"', html)
+            self.assertIn(b'src="/radar/app.js"', html)
+            self.assertIn(b'src="/radar/player.js"', html)
+            self.assertIn(b'href="/wind.css"', html)
+            self.assertIn(b'src="/wind/coast.js"', html)
+            self.assertIn(b'href="/radar/coast-lo.json"', html)
             self.assertNotIn(b"/preview/radar", html)
+            self.assertNotIn(b'href="/radar.css"', html)
+            self.assertNotIn(b'src="/radar/viewer.js"', html)
+            self.assertIn(b'data-radar-view="viewer"', html)
+            self.assertIn(b'id="r-test" hidden', html)
+            # Public assets, no cookie.
+            assets = {
+                "/radar/app.css": (ROOT / "preview" / "radar" / "radar.css", "css"),
+                "/radar/app.js": (ROOT / "preview" / "radar" / "viewer.js", "javascript"),
+                "/radar/labels.json": (ROOT / "preview" / "radar" / "labels.json", "json"),
+                "/radar/coast-lo.json": (ROOT / "preview" / "radar" / "coast-lo.json", "json"),
+                "/radar/coast-hi.json": (ROOT / "preview" / "radar" / "coast-hi.json", "json"),
+                "/radar/borders.json": (ROOT / "preview" / "radar" / "borders.json", "json"),
+            }
+            for path, (file, needle) in assets.items():
+                st, h, body = self._get(path)
+                self.assertEqual(st, 200, path)
+                self.assertIn(needle, (h.get("Content-Type") or h.get("content-type") or "").lower(), path)
+                self.assertEqual(body, file.read_bytes(), path)
+            # Legacy public paths remain the d0b0953 files (pins stay put).
             st, _, css = self._get("/radar.css")
             self.assertEqual(st, 200)
             self.assertEqual(css, (ROOT / "radar.css").read_bytes())
+            st, _, js = self._get("/radar/viewer.js")
+            self.assertEqual(st, 200)
+            self.assertEqual(js, (ROOT / "radar-viewer.js").read_bytes())
+            st, _, player = self._get("/radar/player.js")
+            self.assertEqual(st, 200)
+            self.assertEqual(player, (ROOT / "radar-player.js").read_bytes())
+            # Preview route stays gated.
+            self.assertEqual(self._get("/preview/radar")[0], 404)
         for rel in FROZEN:
             current = (ROOT / rel).read_bytes()
             baseline = subprocess.check_output(["git", "show", "%s:%s" % (BASELINE, rel)], cwd=ROOT)
@@ -497,9 +534,10 @@ class RadarPreviewCoastAndPreload(unittest.TestCase):
         # Must not kick the full load-order pump at boot.
         self.assertNotIn("pump(); setInterval", js)
         html = (ROOT / "preview" / "radar" / "index.html").read_text()
-        self.assertIn("/preview/radar/coast-lo.json", html)
+        self.assertIn("/radar/coast-lo.json", html)
         self.assertNotIn('href="/wind/coast-lo.json"', html)
-        self.assertNotIn("/preview/radar/labels.json", html.split("<body")[0])  # not preloaded
+        self.assertNotIn("/radar/labels.json", html.split("<body")[0])  # not preloaded
+        self.assertNotIn("/preview/radar/labels.json", html.split("<body")[0])
 
 
 if __name__ == "__main__":

@@ -20,10 +20,10 @@
   </script>
   <link rel="preload" href="/vendor/leaflet/leaflet.js" as="script">
   <link rel="preload" href="/api/radar-view" as="fetch" crossorigin="anonymous">
-  <link rel="preload" href="/preview/radar/coast-lo.json" as="fetch" crossorigin="use-credentials">
+  <link rel="preload" href="/radar/coast-lo.json" as="fetch" crossorigin="anonymous">
   <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="/wind.css">
-  <link rel="stylesheet" href="/preview/radar/radar.css">
+  <link rel="stylesheet" href="/radar/app.css">
 </head>
 <body data-radar-view="viewer">
 <div class="helm rv-helm">
@@ -65,7 +65,7 @@
         <p><strong>Observed radar, not a forecast unless the timeline is in the forecast segment.</strong> Colour is precipitation rate. The default scale is inches per hour. Legend labels are rounded for reading; colours still change at the provider’s exact millimetre-per-hour thresholds (1 in = 25.4 mm). Exact millimetre-per-hour and inch-per-hour values are listed below. The colour bins are WeatherAPI’s published rain-rate legend from NOAA/NSSL Multi-Radar Multi-Sensor (MRMS) mosaics, about 1 km, delivered every 5 minutes for the last two hours. This is not an NWS reflectivity (dBZ) scale.</p>
         <p id="r-bins">Provider thresholds (exact mm/h and in/h, with the rounded legend label): loaded with the legend.</p>
         <p>The loop starts on the latest observed scan, holds, then plays any nowcast. Nowcast frames are labelled FORECAST, use an amber valid-time, a distinct hatched timeline segment, a Forecast · +N min readout, and subtle diagonal hatching on precipitation. They are not observations. Missing data is uncertainty, never evidence of safety. A quiet map with fully loaded tiles means no precipitation in view; missing tiles, incomplete coverage, stale data, and an unavailable feed are each labelled and are never shown as clear skies.</p>
-        <p>Times are Eastern (ET). Place labels are a radar-specific gazetteer (coastal places copied from the Wind gazetteer, plus verified inland cities, lakes and rivers). Falls Lake is not Jordan Lake. Sources are USGS GNIS, documented in /preview/radar/labels.json. Land and water are drawn from the U.S. Census Bureau 2025 cartographic boundary file, State and Equivalent Entities, 1:500,000, unioned with Natural Earth land 1:50m (public domain) so Canada, Mexico and the Caribbean stay land. The lo coastline is clipped well beyond any view the map can show at minimum zoom, in every direction, so no artificial rectangle appears on the map (not endorsed by the Census Bureau or Natural Earth). State boundary lines use the same Census file around North Carolina.</p>
+        <p>Times are Eastern (ET). Place labels are a radar-specific gazetteer (coastal places copied from the Wind gazetteer, plus verified inland cities, lakes and rivers). Falls Lake is not Jordan Lake. Sources are USGS GNIS, documented in /radar/labels.json. Land and water are drawn from the U.S. Census Bureau 2025 cartographic boundary file, State and Equivalent Entities, 1:500,000, unioned with Natural Earth land 1:50m (public domain) so Canada, Mexico and the Caribbean stay land. The lo coastline is clipped well beyond any view the map can show at minimum zoom, in every direction, so no artificial rectangle appears on the map (not endorsed by the Census Bureau or Natural Earth). State boundary lines use the same Census file around North Carolina.</p>
         <p id="r-credit-full">Radar credit: NOAA/NSSL MRMS via WeatherAPI.com.</p>
         <p>General information only. Don’t rely on this alone for safety, marine or aviation decisions; check the National Weather Service.</p>
       </div>
@@ -125,6 +125,6 @@
 <script src="/vendor/leaflet/leaflet.js" defer></script>
 <script src="/wind/coast.js" defer></script>
 <script src="/radar/player.js" defer></script>
-<script src="/preview/radar/viewer.js" defer></script>
+<script src="/radar/app.js" defer></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-/* Private /preview/radar viewer. Reuses CBRadarPlayer (/radar/player.js, unchanged) and
+/* Public /radar viewer. Reuses CBRadarPlayer (/radar/player.js, unchanged) and
    CBCoast (/wind/coast.js, unchanged). OBSERVED radar for the last two hours; FORECAST
    (nowcast) frames follow the observed loop, labelled and subtly hatched. Default rate
    unit is in/h from the provider's exact mm/h bins (1 in = 25.4 mm). Times are America/New_York. */
@@ -217,7 +217,7 @@
     map.createPane("borders");
     map.getPane("borders").style.zIndex = 250;
     const project = window.CBCoastMath.project;
-    const dataP = fetch("/preview/radar/borders.json").then(function (r) { return r.json(); }).then(decodeBorderLines);
+    const dataP = fetch("/radar/borders.json").then(function (r) { return r.json(); }).then(decodeBorderLines);
     const Borders = L.GridLayer.extend({
       createTile: function (c, done) {
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -257,7 +257,7 @@
     map.createPane("radar"); map.getPane("radar").style.zIndex = 350; map.getPane("radar").classList.add("leaflet-radar-pane");
     await yieldTask();
     const coastStyle = () => { const c = getComputedStyle(root); return { land: c.getPropertyValue("--coast-land").trim(), line: c.getPropertyValue("--coast-line").trim(), lineWidth: dark ? 1 : 0.9 }; };
-    const coast = window.CBCoast.layer(Object.assign({ base: "/preview/radar/coast-" }, coastStyle())).addTo(map);
+    const coast = window.CBCoast.layer(Object.assign({ base: "/radar/coast-" }, coastStyle())).addTo(map);
     let borderLayer = null;
     onTheme = function () { coast.restyle(coastStyle()); if (borderLayer && borderLayer.redraw) borderLayer.redraw(); paintLabels(); };
 
@@ -317,7 +317,7 @@
       m.remove();
     }
     function loadLabels() {
-      fetch("/preview/radar/labels.json").then(function (r) { return r.json(); }).then(function (d) { labData = d; paintLabels(); }).catch(function () {});
+      fetch("/radar/labels.json").then(function (r) { return r.json(); }).then(function (d) { labData = d; paintLabels(); }).catch(function () {});
     }
     if (window.requestIdleCallback) requestIdleCallback(loadLabels, { timeout: 1500 }); else setTimeout(loadLabels, 400);
     map.on("moveend zoomend", function () { paintLabels(); });
