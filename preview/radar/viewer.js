@@ -20,9 +20,32 @@
   const STALE_MIN = 15;
   const MM_PER_IN = 25.4;
   function mmhToInh(mm) { return mm / MM_PER_IN; }
-  function formatInh(mm) {
+  /* Exact inches from a provider mm/h threshold. Used in the About panel. */
+  function formatInhExact(mm) {
     const inches = mm / MM_PER_IN;
-    return inches >= 1 ? inches.toFixed(2) : inches.toFixed(3);
+    if (inches < 1) return inches.toFixed(4);
+    return inches.toFixed(3);
+  }
+  /* Rounded legend labels. Colour mapping still uses the exact from_mm_h edges. */
+  const INH_TICK = { 0.1: "<0.01", 0.5: "0.02", 1: "0.04", 2: "0.08", 4: "0.15", 8: "0.3", 16: "0.6", 32: "1.25", 64: "2.5+" };
+  function formatInh(mm) {
+    const keys = Object.keys(INH_TICK);
+    let best = keys[0], d = 1e9;
+    for (let i = 0; i < keys.length; i++) {
+      const k = Number(keys[i]), dk = Math.abs(k - mm);
+      if (dk < d) { d = dk; best = keys[i]; }
+    }
+    if (d < 1e-6) return INH_TICK[best];
+    const inches = mm / MM_PER_IN;
+    if (inches < 0.01) return "<0.01";
+    if (inches >= 2.5) return "2.5+";
+    if (inches < 0.1) return String(Math.round(inches * 100) / 100);
+    if (inches < 1) {
+      const tenth = Math.round(inches * 10) / 10;
+      if (Math.abs(inches - tenth) < 0.04) return String(tenth);
+      return (Math.round(inches * 100) / 100).toFixed(2);
+    }
+    return (Math.round(inches * 20) / 20).toFixed(2);
   }
   function classifyView(s) {
     if (!s || !s.available) return "unavailable";
@@ -36,7 +59,7 @@
     if (s.stale) return "stale";
     return classifyView(s);
   }
-  window.CBRadarPreview = { MM_PER_IN: MM_PER_IN, mmhToInh: mmhToInh, formatInh: formatInh, classifyView: classifyView, classifyCoverage: classifyCoverage, STALE_MIN: STALE_MIN };
+  window.CBRadarPreview = { MM_PER_IN: MM_PER_IN, mmhToInh: mmhToInh, formatInh: formatInh, formatInhExact: formatInhExact, INH_TICK: INH_TICK, classifyView: classifyView, classifyCoverage: classifyCoverage, STALE_MIN: STALE_MIN };
 
   const clockF = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" });
   function tickClock() { $("r-clock").textContent = clockF.format(new Date()) + " ET"; }
@@ -172,11 +195,58 @@
     }
     const bins = $("r-bins");
     if (bins) {
-      bins.textContent = "Provider thresholds (exact colour bins): " + legend.map(function (row) {
+      bins.textContent = "Legend labels are rounded for reading; colours still change at the provider’s exact millimetre-per-hour edges (inches = millimetres ÷ 25.4). Exact values: " + legend.map(function (row) {
         const mm = row.from_mm_h;
-        return formatInh(mm) + " in/h (" + mm + " mm/h)";
-      }).join("; ") + ". Conversion is inches = millimetres ÷ 25.4.";
+        return mm + " mm/h = " + formatInhExact(mm) + " in/h (legend " + formatInh(mm) + ")";
+      }).join("; ") + ".";
     }
+  }
+
+
+  function decodeBorderLines(doc) {
+    const q = doc.q || 10000;
+    return (doc.lines || []).map(function (ln) {
+      const a = ln.r, out = new Float64Array(a.length);
+      let x = 0, y = 0;
+      for (let i = 0; i < a.length; i += 2) { x += a[i]; y += a[i + 1]; out[i] = x / q; out[i + 1] = y / q; }
+      return out;
+    });
+  }
+  function addBorderLayer(map) {
+    if (!window.CBCoastMath || !window.L) return null;
+    map.createPane("borders");
+    map.getPane("borders").style.zIndex = 250;
+    const project = window.CBCoastMath.project;
+    const dataP = fetch("/preview/radar/borders.json").then(function (r) { return r.json(); }).then(decodeBorderLines);
+    const Borders = L.GridLayer.extend({
+      createTile: function (c, done) {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const t = document.createElement("canvas");
+        t.width = t.height = Math.round(256 * dpr);
+        dataP.then(function (lines) {
+          const ctx = t.getContext("2d");
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          const ox = c.x * 256, oy = c.y * 256;
+          ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue("--rv-border").trim() || "rgba(28,48,60,0.42)";
+          ctx.lineWidth = c.z >= 8 ? 1.15 : 1;
+          ctx.lineJoin = "round";
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          for (let i = 0; i < lines.length; i++) {
+            const r = lines[i];
+            for (let j = 0; j < r.length; j += 2) {
+              const pt = project(r[j], r[j + 1], c.z);
+              if (j === 0) ctx.moveTo(pt[0] - ox, pt[1] - oy);
+              else ctx.lineTo(pt[0] - ox, pt[1] - oy);
+            }
+          }
+          ctx.stroke();
+          done(null, t);
+        }, function (e) { done(e, t); });
+        return t;
+      },
+    });
+    return new Borders({ pane: "borders", updateWhenIdle: true, keepBuffer: 1, attribution: "" }).addTo(map);
   }
 
   async function boot() {
@@ -187,8 +257,9 @@
     map.createPane("radar"); map.getPane("radar").style.zIndex = 350; map.getPane("radar").classList.add("leaflet-radar-pane");
     await yieldTask();
     const coastStyle = () => { const c = getComputedStyle(root); return { land: c.getPropertyValue("--coast-land").trim(), line: c.getPropertyValue("--coast-line").trim(), lineWidth: dark ? 1 : 0.9 }; };
-    const coast = window.CBCoast.layer(Object.assign({ base: "/wind/coast-" }, coastStyle())).addTo(map);
-    onTheme = function () { coast.restyle(coastStyle()); paintLabels(); };
+    const coast = window.CBCoast.layer(Object.assign({ base: "/preview/radar/coast-" }, coastStyle())).addTo(map);
+    let borderLayer = null;
+    onTheme = function () { coast.restyle(coastStyle()); if (borderLayer && borderLayer.redraw) borderLayer.redraw(); paintLabels(); };
 
     let labData = null, labVis = [];
     const labRoot = $("r-labels");
@@ -245,7 +316,10 @@
       });
       m.remove();
     }
-    fetch("/preview/radar/labels.json").then(function (r) { return r.json(); }).then(function (d) { labData = d; paintLabels(); }).catch(function () {});
+    function loadLabels() {
+      fetch("/preview/radar/labels.json").then(function (r) { return r.json(); }).then(function (d) { labData = d; paintLabels(); }).catch(function () {});
+    }
+    if (window.requestIdleCallback) requestIdleCallback(loadLabels, { timeout: 1500 }); else setTimeout(loadLabels, 400);
     map.on("moveend zoomend", function () { paintLabels(); });
     window.addEventListener("resize", paintLabels);
     const aboutEl = document.querySelector(".w-about");
@@ -295,7 +369,7 @@
       l = new CanvasTiles({ url: tmpl.replace("{time}", f.time) + (f.type === "forecast" ? "&v=" + issue : ""),
         pane: "radar", opacity: 0, className: "r-frame" + (f.type === "forecast" ? " r-frame-fc" : ""),
         tileSize: meta.tile_size || 256, maxNativeZoom: meta.max_native_zoom || meta.max_zoom || 7, minZoom: 5, maxZoom: 9.5,
-        updateWhenIdle: true, keepBuffer: 2, hatch: f.type === "forecast",
+        updateWhenIdle: true, keepBuffer: 1, hatch: f.type === "forecast",
         onFeed: function (kind) { showLimit(kind); },
       });
       l.once("load", function () { loaded.add(f.time); loadMs[f.time] = Math.round(performance.now() - t0); maybeAllLoaded(); updateFill(); });
@@ -315,9 +389,18 @@
     }
     const inflight = new Set();
     let front = null;
+    let backgroundPreload = false;
     function pump() {
-      const list = player.frames(), lim = loaded.size ? 4 : 1;
-      const order = (front !== null ? [front] : []).concat(player.loadOrder());
+      const list = player.frames();
+      const cur = player.snapshot().frame;
+      const lim = backgroundPreload ? 2 : 1;
+      const order = [];
+      if (front !== null) order.push(front);
+      if (cur) {
+        const ci = list.findIndex(function (f) { return f.time === cur.time; });
+        if (ci >= 0) order.push(ci);
+      }
+      if (backgroundPreload) Array.prototype.push.apply(order, player.loadOrder());
       for (let k = 0; k < order.length && inflight.size < lim; k++) {
         const f = list[order[k]];
         if (!f || layers.has(f.time)) continue;
@@ -327,7 +410,22 @@
       const ff = front !== null && list[front];
       if (!ff || layers.has(ff.time)) front = null;
     }
-    function prefetch(i) { const f = player.frames()[i]; if (f && !layers.has(f.time)) front = i; pump(); }
+    function prefetch(i) {
+      const f = player.frames()[i];
+      if (f && !layers.has(f.time)) front = i;
+      if (backgroundPreload || (player.snapshot().frame && f && f.time === player.snapshot().frame.time)) pump();
+    }
+    function startBackgroundPreload() {
+      if (backgroundPreload) return;
+      backgroundPreload = true;
+      window.__radarBackgroundPreload = true;
+      pump();
+    }
+    function afterFirstPaint() {
+      function go() { startBackgroundPreload(); if (!borderLayer) borderLayer = addBorderLayer(map); if (!reduce) { player.play(); schedule(); } }
+      if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 600 });
+      else setTimeout(go, 0);
+    }
     const loadEl = $("r-load");
     let loadTxt = "";
     function viewStats(l) {
@@ -435,9 +533,11 @@
       const f = s.frame; if (!f) return;
       layerFor(f);
       reveal();
-      prefetch(Math.max(0, s.index - 1));
-      prefetch(Math.min(s.count - 1, s.index + 1));
-      if (s.index + 2 < s.count) prefetch(s.index + 2);
+      if (backgroundPreload) {
+        prefetch(Math.max(0, s.index - 1));
+        prefetch(Math.min(s.count - 1, s.index + 1));
+        if (s.index + 2 < s.count) prefetch(s.index + 2);
+      }
       const fcNow = f.type === "forecast";
       const when = P.etTime(f.epoch);
       root.setAttribute("data-frame", fcNow ? "fc" : "obs");
@@ -546,10 +646,20 @@
     setInterval(refresh, 180000);
     document.addEventListener("visibilitychange", function () { if (!document.hidden) refresh(); });
     window.__radarRefresh = refresh;
-    window.__radarView = { map: map, player: player, loaded: loaded, layers: layers, fixture: fixture, reduce: reduce, labels: function () { return { data: labData, visible: labVis, paint: paintLabels, reserved: reserved }; }, preview: true, coverage: function () { return window.__radarCoverage; }, classifyCoverage: classifyCoverage, classifyView: classifyView, formatInh: formatInh, STALE_MIN: STALE_MIN, maxBounds: MAX_BOUNDS };
-    pump(); setInterval(function () { if (loadTxt) loadingUI(); }, 500);
+    window.__radarView = { map: map, player: player, loaded: loaded, layers: layers, fixture: fixture, reduce: reduce, labels: function () { return { data: labData, visible: labVis, paint: paintLabels, reserved: reserved }; }, preview: true, coverage: function () { return window.__radarCoverage; }, classifyCoverage: classifyCoverage, classifyView: classifyView, formatInh: formatInh, STALE_MIN: STALE_MIN, maxBounds: MAX_BOUNDS, backgroundPreload: function () { return backgroundPreload; } };
+    setInterval(function () { if (loadTxt) loadingUI(); }, 500);
     map.on("moveend zoomend", function () { setTimeout(function () { loadingUI(); paintLabels(); }, 50); });
-    if (!reduce) { player.play(); schedule(); }
+    (function waitFirst() {
+      const first = player.snapshot().latestObserved || player.snapshot().frame;
+      if (first) layerFor(first);
+      if (first && frameReady(first)) {
+        status.hidden = true;
+        reveal();
+        requestAnimationFrame(function () { requestAnimationFrame(afterFirstPaint); });
+        return;
+      }
+      requestAnimationFrame(waitFirst);
+    })();
 
     $("r-center").addEventListener("click", function () { map.flyToBounds(HOME, { duration: reduce ? 0 : 0.6 }); });
     let meDot = null;

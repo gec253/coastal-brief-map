@@ -20,8 +20,7 @@
   </script>
   <link rel="preload" href="/vendor/leaflet/leaflet.js" as="script">
   <link rel="preload" href="/api/radar-view" as="fetch" crossorigin="anonymous">
-  <link rel="preload" href="/wind/coast-lo.json" as="fetch" crossorigin="anonymous">
-  <link rel="preload" href="/preview/radar/labels.json" as="fetch" crossorigin="anonymous">
+  <link rel="preload" href="/preview/radar/coast-lo.json" as="fetch" crossorigin="use-credentials">
   <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="/wind.css">
   <link rel="stylesheet" href="/preview/radar/radar.css">
@@ -63,10 +62,10 @@
     <details class="w-about">
       <summary aria-label="About this radar"><span aria-hidden="true">i</span></summary>
       <div class="w-about-body">
-        <p><strong>Observed radar, not a forecast unless the timeline is in the forecast segment.</strong> Colour is precipitation rate. The default scale is inches per hour, converted from the provider’s exact millimetre-per-hour thresholds (1 in = 25.4 mm) so bin edges are not moved. The original millimetre-per-hour values are listed below. The colour bins are WeatherAPI’s published rain-rate legend from NOAA/NSSL Multi-Radar Multi-Sensor (MRMS) mosaics, about 1 km, delivered every 5 minutes for the last two hours. This is not an NWS reflectivity (dBZ) scale.</p>
-        <p id="r-bins">Provider thresholds (in/h, with original mm/h): loaded with the legend.</p>
+        <p><strong>Observed radar, not a forecast unless the timeline is in the forecast segment.</strong> Colour is precipitation rate. The default scale is inches per hour. Legend labels are rounded for reading; colours still change at the provider’s exact millimetre-per-hour thresholds (1 in = 25.4 mm). Exact millimetre-per-hour and inch-per-hour values are listed below. The colour bins are WeatherAPI’s published rain-rate legend from NOAA/NSSL Multi-Radar Multi-Sensor (MRMS) mosaics, about 1 km, delivered every 5 minutes for the last two hours. This is not an NWS reflectivity (dBZ) scale.</p>
+        <p id="r-bins">Provider thresholds (exact mm/h and in/h, with the rounded legend label): loaded with the legend.</p>
         <p>The loop starts on the latest observed scan, holds, then plays any nowcast. Nowcast frames are labelled FORECAST, use an amber valid-time, a distinct hatched timeline segment, a Forecast · +N min readout, and subtle diagonal hatching on precipitation. They are not observations. Missing data is uncertainty, never evidence of safety. A quiet map with fully loaded tiles means no precipitation in view; missing tiles, incomplete coverage, stale data, and an unavailable feed are each labelled and are never shown as clear skies.</p>
-        <p>Times are Eastern (ET). Place labels are a radar-specific gazetteer (coastal places copied from the Wind gazetteer, plus verified inland cities, lakes and rivers). Falls Lake is not Jordan Lake. Sources are USGS GNIS, documented in /preview/radar/labels.json. Coastline: U.S. Census Bureau, 2025 cartographic boundary file, 1:500,000 (not endorsed by the Census Bureau).</p>
+        <p>Times are Eastern (ET). Place labels are a radar-specific gazetteer (coastal places copied from the Wind gazetteer, plus verified inland cities, lakes and rivers). Falls Lake is not Jordan Lake. Sources are USGS GNIS, documented in /preview/radar/labels.json. Land, water and state boundary lines are drawn from the U.S. Census Bureau 2025 cartographic boundary file, State and Equivalent Entities, 1:500,000, clipped beyond the pannable extent so no artificial rectangle appears on the map (not endorsed by the Census Bureau).</p>
         <p id="r-credit-full">Radar credit: NOAA/NSSL MRMS via WeatherAPI.com.</p>
         <p>General information only. Don’t rely on this alone for safety, marine or aviation decisions; check the National Weather Service.</p>
       </div>

@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "note": "Radar-specific gazetteer for the private /preview/radar viewer. Coastal places are copied from data/wind-labels.json (that file is not modified). Inland cities, lakes and rivers were added from USGS GNIS coordinates, retrieved 2026-11-27, with sources documented below. Falls Lake (GNIS 999761) is not Jordan Lake (GNIS 980401).",
+  "note": "Radar-specific gazetteer for the private /preview/radar viewer. Coastal places are copied from data/wind-labels.json (that file is not modified). Inland North Carolina cities, lakes and rivers, and a modest set of neighboring-state context cities (Tennessee, Virginia, South Carolina, Georgia), were added from USGS GNIS coordinates, retrieved 2026-11-27, with sources documented below. Neighboring-state labels use a state abbreviation and conservative zoom ranges so they do not crowd North Carolina labels. Falls Lake (GNIS 999761) is not Jordan Lake (GNIS 980401).",
   "places": [
     {
       "n": "Atlantic Ocean",
@@ -901,6 +901,116 @@
       "z1": 9.5,
       "p": 54,
       "s": "gnis:1306463"
+    },
+    {
+      "n": "Knoxville, TN",
+      "k": "twn",
+      "la": 35.96166667,
+      "lo": -83.92333333,
+      "z0": 5,
+      "z1": 9,
+      "p": 86,
+      "s": "gnis:1648562"
+    },
+    {
+      "n": "Atlanta, GA",
+      "k": "twn",
+      "la": 33.75444444,
+      "lo": -84.38972222,
+      "z0": 5,
+      "z1": 7.5,
+      "p": 80,
+      "s": "gnis:351615"
+    },
+    {
+      "n": "Roanoke, VA",
+      "k": "twn",
+      "la": 37.27055556,
+      "lo": -79.9425,
+      "z0": 5,
+      "z1": 8,
+      "p": 78,
+      "s": "gnis:1498439"
+    },
+    {
+      "n": "Columbia, SC",
+      "k": "twn",
+      "la": 34.00055556,
+      "lo": -81.04416667,
+      "z0": 6,
+      "z1": 9,
+      "p": 77,
+      "s": "gnis:1245051"
+    },
+    {
+      "n": "Chattanooga, TN",
+      "k": "twn",
+      "la": 35.04555556,
+      "lo": -85.26722222,
+      "z0": 6,
+      "z1": 9,
+      "p": 75,
+      "s": "gnis:1307240"
+    },
+    {
+      "n": "Charleston, SC",
+      "k": "twn",
+      "la": 32.78333333,
+      "lo": -79.93194444,
+      "z0": 6,
+      "z1": 8.5,
+      "p": 74,
+      "s": "gnis:1221516"
+    },
+    {
+      "n": "Myrtle Beach, SC",
+      "k": "twn",
+      "la": 33.71,
+      "lo": -78.88361111,
+      "z0": 6.5,
+      "z1": 9,
+      "p": 72,
+      "s": "gnis:1249770"
+    },
+    {
+      "n": "Greenville, SC",
+      "k": "twn",
+      "la": 34.84444444,
+      "lo": -82.38555556,
+      "z0": 6.5,
+      "z1": 9,
+      "p": 70,
+      "s": "gnis:1245842"
+    },
+    {
+      "n": "Johnson City, TN",
+      "k": "twn",
+      "la": 36.31344444,
+      "lo": -82.35347222,
+      "z0": 7,
+      "z1": 9.5,
+      "p": 62,
+      "s": "gnis:1328579"
+    },
+    {
+      "n": "Danville, VA",
+      "k": "twn",
+      "la": 36.587238,
+      "lo": -79.404404,
+      "z0": 7,
+      "z1": 9.5,
+      "p": 60,
+      "s": "gnis:1498421"
+    },
+    {
+      "n": "Florence, SC",
+      "k": "twn",
+      "la": 34.18388889,
+      "lo": -79.77416667,
+      "z0": 7,
+      "z1": 9.5,
+      "p": 58,
+      "s": "gnis:1222461"
     }
   ],
   "sources": {
@@ -964,6 +1074,17 @@
     "carto:cape-fear-mid": "Label anchor on the Cape Fear River mid-reach north of Fayetteville, about 35.20, -78.83, along USGS GNIS 1023879. The official GNIS/Wikidata point (35.59583333, -79.05277778) is the Haw/Deep confluence next to Jordan Lake and would collide with that lake label. Retrieved 2026-11-27.",
     "carto:catawba-nc": "Label anchor on the Catawba River in North Carolina between Hickory and Lake Norman, about 35.66, -81.12, along USGS GNIS 1010097. The official GNIS/Wikidata point (34.46694444, -80.88888889) is in South Carolina, south of the viewer’s usual freshwater reach. Retrieved 2026-11-27.",
     "carto:roanoke-nc": "Label anchor on the Roanoke River in North Carolina near Williamston, about 35.85, -76.98, along USGS GNIS 1502110. The official GNIS/Wikidata point (37.2376, -80.2137) is in Virginia, at the head of the river. Retrieved 2026-11-27.",
-    "carto:pee-dee-nc": "Label anchor on the Pee Dee River near the North Carolina / South Carolina line, 34.72111111, -79.88166667 (Wikipedia / Wikidata published point for the NC reach of Q2061230). The official GNIS 1251573 point (33.35666667, -79.27027778) is near the South Carolina mouth. Retrieved 2026-11-27."
+    "carto:pee-dee-nc": "Label anchor on the Pee Dee River near the North Carolina / South Carolina line, 34.72111111, -79.88166667 (Wikipedia / Wikidata published point for the NC reach of Q2061230). The official GNIS 1251573 point (33.35666667, -79.27027778) is near the South Carolina mouth. Retrieved 2026-11-27.",
+    "gnis:1648562": "USGS GNIS 1648562 Knoxville (populated place), Knox County, Tennessee, 35.96166667, -83.92333333, NAD83 (via Wikidata P590/P625 Q185582). Retrieved 2026-11-27. Neighboring-state context for weather approaching North Carolina from the west.",
+    "gnis:351615": "USGS GNIS 351615 Atlanta (populated place), Fulton County, Georgia, 33.75444444, -84.38972222, NAD83 (via Wikidata P590/P625 Q23556). Retrieved 2026-11-27. Low-zoom southwestern context only.",
+    "gnis:1498439": "USGS GNIS 1498439 Roanoke (populated place), Virginia, 37.27055556, -79.9425, NAD83 (via Wikidata P590/P625 Q501796). Retrieved 2026-11-27. Neighboring-state context north of the North Carolina line.",
+    "gnis:1245051": "USGS GNIS 1245051 Columbia (populated place), Richland County, South Carolina, 34.00055556, -81.04416667, NAD83 (via Wikidata P590/P625 Q38453). Retrieved 2026-11-27.",
+    "gnis:1307240": "USGS GNIS 1307240 Chattanooga (populated place), Hamilton County, Tennessee, 35.04555556, -85.26722222, NAD83 (via Wikidata P590/P625 Q186702). Retrieved 2026-11-27. Western-buffer context, well west of Murphy.",
+    "gnis:1221516": "USGS GNIS 1221516 Charleston (populated place), Charleston County, South Carolina, 32.78333333, -79.93194444, NAD83 (via Wikidata P590/P625 Q47716). Retrieved 2026-11-27. Coastal context near the southern edge of the pannable extent.",
+    "gnis:1249770": "USGS GNIS 1249770 Myrtle Beach (populated place), Horry County, South Carolina, 33.71, -78.88361111, NAD83 (via Wikidata P590/P625 Q839805). Retrieved 2026-11-27.",
+    "gnis:1245842": "USGS GNIS 1245842 Greenville (populated place), Greenville County, South Carolina, 34.84444444, -82.38555556, NAD83 (via Wikidata P590/P625 Q574192). Retrieved 2026-11-27. Labelled ‘Greenville, SC’ so it is not confused with Greenville, North Carolina (GNIS 1023721).",
+    "gnis:1328579": "USGS GNIS 1328579 Johnson City (populated place), Washington County, Tennessee, 36.31344444, -82.35347222, NAD83 (via Wikidata P590/P625 Q770571). Retrieved 2026-11-27. Mid-zoom context for weather approaching the North Carolina mountains from northeast Tennessee. Kingsport is omitted to avoid crowding this label.",
+    "gnis:1498421": "USGS GNIS 1498421 Danville (populated place), Virginia, 36.587238, -79.404404, NAD83 (via Wikidata P590/P625 Q511922). Retrieved 2026-11-27. Mid-zoom southside Virginia context just north of the North Carolina line.",
+    "gnis:1222461": "USGS GNIS 1222461 Florence (populated place), Florence County, South Carolina, 34.18388889, -79.77416667, NAD83 (via Wikidata P590/P625 Q597842). Retrieved 2026-11-27."
   }
 }

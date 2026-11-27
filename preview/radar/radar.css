@@ -2,8 +2,8 @@
    Layout follows Design's Chart Helm · Radar direction (design/radar-viewer-1127).
    Forecast tokens are copied from /radar.css. The only new colour is --fc-label #8A4700,
    Design's AA text tint for light-theme forecast labels on --surf. */
-:root { --fc: #B45F00; --fc-bg: #FFE3B8; --fc-ink: #3A2200; --fc-label: #8A4700; --ctl-h: 116px; }
-html[data-theme="dark"] { --fc: #FFB454; --fc-bg: #4A2E06; --fc-ink: #FFE3B8; }
+:root { --fc: #B45F00; --fc-bg: #FFE3B8; --fc-ink: #3A2200; --fc-label: #8A4700; --ctl-h: 116px; --rv-border: rgba(28, 48, 60, 0.42); }
+html[data-theme="dark"] { --fc: #FFB454; --fc-bg: #4A2E06; --fc-ink: #FFE3B8; --rv-border: rgba(230, 236, 240, 0.32); }
 @media (min-width: 700px) { :root { --ctl-h: 116px; } }
 @media (max-height: 500px) { :root { --ctl-h: 108px; } }
 
