@@ -142,13 +142,15 @@ class Homepage(Server):
         env = dict(LIVE, NAV_V2="1")
         status, body = self._req("/?region=crystal-coast", env=env)
         self.assertEqual(status, 200)
-        self.assertIn(b'<header class="mh mh-hybrid">', body)  # homepage masthead is the reference, kept
+        # Signature Helm masthead and Menu (t534u) replace the Hybrid masthead and the cbn / cbg blocks.
+        self.assertIn(b'<header class="bridge">', body)
         self.assertNotIn(b'<nav class="mh-sec"', body)
         self.assertNotIn(b'class="folio-guides"', body)
-        nav = re.search(rb'<nav class="cbn".*?</nav>', body, re.S).group(0)
-        self.assertRegex(nav, rb'class="cbn-a cbn-conditions" href="/\?region=crystal-coast" aria-current="page"')
-        self.assertIn(b'id="nav-brief"', nav)
-        g = re.search(rb'<section class="cbg".*?</section>', body, re.S).group(0)
+        nav = re.search(rb'<nav class="nav" aria-label="Sections">.*?</nav>', body, re.S).group(0)
+        self.assertRegex(nav, rb'<a href="/\?region=crystal-coast" aria-current="page">Saltwater</a>')
+        self.assertIn(b'>Morning Brief</a>', nav)
+        self.assertIn(b'href="/ramps?region=crystal-coast">Find a Ramp</a>', nav)
+        g = re.search(rb'<div class="fr" id="fishing">.*?<p class="index" id="tools">.*?</p>', body, re.S).group(0)
         self.assertIn(b'href="/reports/crystal-coast"', g)
         self.assertIn(b'href="/ramps?region=crystal-coast"', g)
         self.assertIn(b'href="/dashboard?region=crystal-coast"', g)
@@ -157,7 +159,7 @@ class Homepage(Server):
     def test_uncovered_region_keeps_coverage_note(self):
         env = dict(LIVE, NAV_V2="1")
         _, body = self._req("/?region=wilmington", env=env)
-        g = re.search(rb'<section class="cbg".*?</section>', body, re.S).group(0)
+        g = re.search(rb'<p class="index" id="tools">.*?</p>', body, re.S).group(0)   # Signature Helm tools index
         self.assertIn(b'href="/ramps"', g)
         self.assertIn(b"Ramps are not yet listed for this area", g)
 
@@ -175,31 +177,34 @@ class WaterChoice(Server):
 
     def _water(self, rid):
         _, body = self._req("/?region=%s" % rid, env=dict(LIVE, NAV_V2="1"))
-        m = re.search(rb'<section class="cbw".*?</section>', body, re.S)
+        # Signature Helm: Saltwater / Freshwater choice in the section row, area picker in the panel (t534u).
+        row = re.search(rb'<div class="navrow">.*?</div>', body, re.S)
+        m = re.search(rb'<select id="rp" name="region" class="region">.*?</select>', body, re.S)
+        self.assertIsNotNone(row, rid)
         self.assertIsNotNone(m, rid)
-        return body, m.group(0)
+        return body, row.group(0) + m.group(0)
 
     def test_salt_region_marks_saltwater_and_offers_freshwater(self):
         body, w = self._water("hatteras")
-        self.assertIn(b'class="cbw-s cbw-saltwater" href="/?region=hatteras" aria-current="true"', w)
-        self.assertIn(b'class="cbw-s cbw-freshwater" href="/?region=falls-lake">', w)
+        self.assertIn(b'<a href="/?region=crystal-coast" aria-current="page">Saltwater</a>', w)
+        self.assertIn(b'<a href="/?region=falls-lake">Freshwater</a>', w)
         self.assertIn(b'<option value="hatteras" selected>', w)
-        self.assertLess(body.find(b'<section class="cbw"'), body.find(b'<section class="cg'))
+        self.assertLess(body.find(b'<select id="rp"'), body.find(b'<div class="cluster'))
 
     def test_fresh_region_marks_freshwater_and_offers_saltwater(self):
         _, w = self._water("jordan-lake")
-        self.assertIn(b'class="cbw-s cbw-freshwater" href="/?region=jordan-lake" aria-current="true"', w)
-        self.assertIn(b'class="cbw-s cbw-saltwater" href="/">', w)
+        self.assertIn(b'<a href="/?region=falls-lake" aria-current="page">Freshwater</a>', w)
+        self.assertIn(b'<a href="/?region=crystal-coast">Saltwater</a>', w)
         self.assertIn(b'<option value="jordan-lake" selected>', w)
 
     def test_picker_lists_exactly_the_public_regions_from_the_page(self):
         body, w = self._water("crystal-coast")
-        rr = re.search(rb'<nav class="rr".*?</nav>', body, re.S).group(0)
+        rr = re.search(rb'<nav class="twin".*?</nav>', body, re.S).group(0)
         listed = re.findall(rb'href="/\?region=([a-z-]+)"', rr)
         opts = re.findall(rb'<option value="([a-z-]+)"', w)
         self.assertEqual(opts, listed)
         self.assertEqual(len(opts), 9)
-        self.assertIn(b'<form class="cbw-pick" action="/" method="get">', w)
+        self.assertIn(b'<form class="picker" action="/" method="get">', body)
         self.assertIn(b'name="region"', w)
 
     def test_water_choice_only_with_nav_v2(self):

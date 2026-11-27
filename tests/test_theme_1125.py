@@ -102,6 +102,10 @@ class Server(unittest.TestCase):
                 self.assertIn(b"<title>", body, path)
             self._check(path, body, state)
             if nav_expected and path not in ("/wind", "/radar"):
+                if b"<html lang=\"en\" data-helm" in body:   # Signature Helm homepage: its own masthead and Menu
+                    self.assertIn(b'<header class="bridge">', body, path)
+                    self.assertIn(b'<nav class="nav" aria-label="Sections">', body, path)
+                    continue
                 self.assertIn(b'class="cbn"', body, "%s [%s] NAV_V2 masthead missing" % (path, state))
 
 
@@ -129,9 +133,9 @@ class EveryPublicRoute(Server):
     def test_homepage_control_in_masthead_ear(self):
         for env in (LIVE, dict(LIVE, NAV_V2="1")):
             _, body = self._req("/", env=env)
-            ear = body.index(b'<div class="mh-ear-in">')
+            ear = body.index(b'<div class="cbm-tools">')   # Signature Helm masthead tools (t534u)
             self.assertLess(ear, body.index(CONTROL))
-            self.assertLess(body.index(CONTROL), body.index(b'<div class="mh-plate'))
+            self.assertLess(body.index(CONTROL), body.index(b"</header>", ear))
 
     def test_viewers_use_compact_menu(self):
         for path in ("/wind", "/radar"):

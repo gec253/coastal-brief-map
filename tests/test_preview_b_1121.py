@@ -31,7 +31,9 @@ class PreviewB(_Base):
             self.assertNotIn(B_MARK, b, path)
             self.assertNotIn(b"Concept B", b, path)
             # Ed t468u: inline dark blocks are rewritten by the shared theme system (theme_toggle.paint).
-            self.assertIn(theme_toggle._rewrite_styles(sprint_home._CSS_COMMENT.sub("", sprint_home.style_tag("hybrid")).encode()), b, path)
+            # The public homepage is Signature Helm (t534u), so its stylesheet is the one painted.
+            self.assertIn(b'<style id="helm-css">', b, path)
+            self.assertIn(b"<script data-cb-theme>", b, path)
         s, h, b = self._get("/", cookie=True)          # the cookie alone never changes "/"
         self.assertNotIn(B_MARK, b)
 
@@ -63,7 +65,8 @@ class PreviewB(_Base):
         self.assertNotIn(b"nowhere", b)
 
     def test_b_page_text_matches_public_apart_from_css(self):
-        _, _, pub = self._get("/")
+        # Preview B is a variant of the previous Hybrid homepage (still the fallback renderer for "/").
+        pub = sprint_home.page("hybrid", None, public=True)
         _, _, prv = self._get("/preview/home-b", cookie=True)
         strip = lambda d: d[d.index(b"<main"):d.index(b"</main>")].replace(b'href="/preview/home-b?region=', b'href="/?region=')
         self.assertEqual(strip(pub), strip(prv))

@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import featured_home  # noqa: E402
 import server  # noqa: E402
 import showcase  # noqa: E402
+import signature_helm  # noqa: E402
 import sprint_home  # noqa: E402
 import theme_toggle  # noqa: E402
 
@@ -153,11 +154,10 @@ class Routes(unittest.TestCase):
         return "valid"
 
     def _public_pipeline(self, rid=None, query=None):
-        data = sprint_home.page("hybrid", rid, public=True)
+        # Public homepage is Signature Helm (Ed t534u/t535u); showcase, featured and the shared theme
+        # system (theme_toggle.paint) are built in by signature_helm.page.
         sc = showcase.variant(query or {}, rid)
-        if sc:
-            data = showcase.inject(data, sc, radar_meta=server.handle_radar_meta)
-        return theme_toggle.paint(data), sc  # Ed t468u: shared theme system on every public page
+        return signature_helm.page(rid, public=True, showcase_v=sc, radar_meta=server.handle_radar_meta), sc
 
     def test_no_cookie_section_absent_and_body_matches_pipeline(self):
         os.environ["HOME_SHOWCASE"] = "1"
@@ -232,18 +232,18 @@ class Routes(unittest.TestCase):
         self.assertIn(b'height="1080"', body)
         self.assertIn(b'loading="lazy"', body)
         self.assertIn(b'decoding="async"', body)
-        feat_html = body[body.find(SECTION):body.find(b'<aside class="cb-life"')]
+        feat_html = body[body.find(SECTION):body.find(b'<p class="index" id="tools"')]
         self.assertNotIn(b"fetchpriority", feat_html)
         self.assertNotIn("cookie", (hdrs.get("vary") or "").lower())
         self.assertNotIn("noindex", (hdrs.get("x-robots-tag") or "").lower())
-        # Placement: after Wind & Radar, before the lifestyle aside.
+        # Placement: after Wind & Radar, before the Morning Brief entry and the tools index (Signature Helm).
         sc = body.find(b'id="showcase"')
         feat = body.find(SECTION)
-        life = body.find(b'<aside class="cb-life"')
-        self.assertTrue(0 < sc < feat < life, (sc, feat, life))
+        life = body.find(b'<a class="briefbox"')
+        self.assertTrue(0 < sc < feat < life < body.find(b'<p class="index" id="tools"'), (sc, feat, life))
         # Existing homepage chrome is still there.
-        self.assertIn(b'id="conditions"', body)
-        self.assertIn(b'data-sprint="hybrid"', body)
+        self.assertIn(b'id="helm"', body)
+        self.assertIn(b'<html lang="en" data-helm data-water="salt"', body)
         self.assertIn(b"More than the forecast", body)
 
     def test_flag_on_without_showcase_still_sits_before_lifestyle(self):
@@ -254,7 +254,8 @@ class Routes(unittest.TestCase):
         self.assertNotIn("cookie", (hdrs.get("vary") or "").lower())
         self.assertNotIn("noindex", (hdrs.get("x-robots-tag") or "").lower())
         self.assertEqual(body.find(b'id="showcase"'), -1)
-        self.assertLess(body.find(SECTION), body.find(b'<aside class="cb-life"'))
+        self.assertLess(0, body.find(SECTION))
+        self.assertLess(body.find(SECTION), body.find(b'<p class="index" id="tools"'))
 
     def test_freshwater_home_does_not_get_the_feature(self):
         os.environ["FRESHWATER_ENABLED"] = "1"

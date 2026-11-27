@@ -391,11 +391,11 @@ class GatingHttp(unittest.TestCase):
         self.assertIn(b"The Coastal Brief", body)
 
     def test_home_freshwater_query_renders_hybrid_dashboard_redirects(self):
-        # "/" renders the Hybrid page in freshwater mode; /dashboard still sends lakes to /lake.
+        # "/" renders the Signature Helm homepage in freshwater mode; /dashboard still sends lakes to /lake.
         for rid in ("falls-lake", "jordan-lake", "neuse-river"):
             status, body, _ = self._req("/?region=" + rid)
             self.assertEqual(status, 200, rid)
-            self.assertIn(b'data-sprint="hybrid"', body, rid)
+            self.assertIn(b'<html lang="en" data-helm data-water="fresh"', body, rid)
             status, _, headers = self._req("/dashboard?region=" + rid)
             self.assertEqual(status, 303, rid)
             self.assertEqual(headers.get("location"), "/lake?region=" + rid)

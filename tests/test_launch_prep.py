@@ -187,7 +187,7 @@ class LaunchPrepRoutes(unittest.TestCase):
         # Homepage entry + featured, no noindex / cookie vary.
         status, hdrs, body = self._req("/")
         self.assertEqual(status, 200)
-        self.assertIn(b"folio-guides", body)
+        self.assertIn(b'<div class="fr" id="fishing">', body)   # Signature Helm reports entry (was folio-guides)
         self.assertIn(b'href="/reports/crystal-coast"', body)
         self.assertNotIn(b"Find a Ramp", body)
         self.assertIn(b"featured-in-the-coastal-brief", body)

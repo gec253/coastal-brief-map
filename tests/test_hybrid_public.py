@@ -77,7 +77,7 @@ class HybridPublic(unittest.TestCase):
     def test_home_is_public_hybrid_without_concept_chrome(self):
         s, h, b = self._get("/")
         self.assertEqual(s, 200)
-        self.assertIn(b'data-sprint="hybrid"', b)
+        self.assertIn(b'<html lang="en" data-helm data-water="salt"', b)   # Signature Helm public homepage (t534u)
         for bad in (b"Private concept", b"private concept", b"concept notes", b"noindex", b"Not public", b'class="pv-flag"',
                     b'id="sys-h"', b'="/preview/', b"/preview/sprint-home", b'class="test-banner"', b"TEST DATA"):
             self.assertNotIn(bad, b, bad)
@@ -94,14 +94,13 @@ class HybridPublic(unittest.TestCase):
         self.assertIn(b"not weather, surf, or fishing advice", b)
         self.assertIn(b"not affiliated", b)
         self.assertIn(b"location is never requested", b)
-        self.assertIn(b"data-wave-intro", b)
         self.assertIn(b'href="/dashboard?region=crystal-coast">Full dashboard', b)
         self.assertNotIn(b'href="/?region=crystal-coast">Full dashboard', b)
-        self.assertIn(b'<link rel="preload" as="image"', b)   # the daily featured photo (photo_rotation)
-        self.assertIn(b'<section class="hz hz-rot"', b)
+        self.assertIn(b'<link rel="preload" href="/static/night-strip/chart-560.webp" as="image"', b)   # above-the-fold image
+        self.assertIn(b'id="hazards"', b)
 
     def test_index_html_path_is_hybrid_too(self):
-        self.assertIn(b'data-sprint="hybrid"', self._get("/index.html")[2])
+        self.assertIn(b'<html lang="en" data-helm data-water="salt"', self._get("/index.html")[2])
 
     def test_dashboard_serves_previous_homepage(self):
         s, h, b = self._get("/dashboard?region=hatteras")
@@ -137,10 +136,10 @@ class HybridPublic(unittest.TestCase):
     def test_falls_lake_renders_fresh_hybrid_with_pier_hero(self):
         s, h, b = self._fresh("falls-lake")
         self.assertEqual(s, 200)
-        self.assertIn(b'data-sprint="hybrid" data-water="fresh"', b)
-        self.assertIn(b"/home-photos/falls-lake-pier-800", b)
+        self.assertIn(b'<html lang="en" data-helm data-water="fresh"', b)
+        self.assertIn(b"/static/featured-photos/falls-lake-pier/falls-lake-pier-640", b)
         self.assertIn(b"Sergiy Galyonkin", b)
-        self.assertIn(b'href="/lake?region=falls-lake">Full dashboard', b)
+        self.assertIn(b'href="/lake?region=falls-lake">Full lake &amp; river dashboard', b)
         self.assertIn(b'href="/brief?region=falls-lake"', b)
         self.assertIn(b'<a href="/?region=falls-lake" aria-current="page">Freshwater</a>', b)
         self._no_concept(b)
@@ -149,12 +148,12 @@ class HybridPublic(unittest.TestCase):
     def test_jordan_lake_has_no_falls_lake_photo(self):
         s, _, b = self._fresh("jordan-lake")
         self.assertEqual(s, 200)
-        self.assertIn(b'data-sprint="hybrid" data-water="fresh"', b)
+        self.assertIn(b'<html lang="en" data-helm data-water="fresh"', b)
         self.assertNotIn(b"falls-lake-pier", b)
-        self.assertIn(b'class="hz-none"', b)
-        self.assertIn(b'href="/lake?region=jordan-lake">Full dashboard', b)
+        self.assertIn(b'id="hazards"', b)
+        self.assertIn(b'href="/lake?region=jordan-lake">Full lake &amp; river dashboard', b)
         # Ed (Nov 19, t336u): Jordan's brief link opens its own unavailable page, never Falls Lake or Crystal Coast.
-        foot = b.split(b'class="cg-foot"')[1].split(b"</section>")[0]
+        foot = b.split(b'<a class="briefbox"')[1].split(b"</a>")[0]   # the page's Morning Brief entry
         self.assertIn(b'href="/brief?region=jordan-lake"', foot)
         self.assertNotIn(b'href="/brief?region=falls-lake"', foot)
         self.assertNotIn(b'href="/brief?region=crystal-coast"', foot)
@@ -163,8 +162,8 @@ class HybridPublic(unittest.TestCase):
     def test_neuse_renders(self):
         s, _, b = self._fresh("neuse-river")
         self.assertEqual(s, 200)
-        self.assertIn(b'data-sprint="hybrid" data-water="fresh"', b)
-        self.assertIn(b'href="/lake?region=neuse-river">Full dashboard', b)
+        self.assertIn(b'<html lang="en" data-helm data-water="fresh"', b)
+        self.assertIn(b'href="/lake?region=neuse-river">Full lake &amp; river dashboard', b)
         self._no_concept(b)
 
     def test_cape_fear_404_without_cookie(self):

@@ -439,8 +439,9 @@ class FirstPaintHttp(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertLess(elapsed, 2.0, "HTTP first HTML %.3fs" % elapsed)
         self.assertIn(b"Loading official readings", body)
-        self.assertIn(b'data-sprint="hybrid"', body)
-        self.assertIn(b"/fresh-home.js", body)
+        self.assertIn(b'<html lang="en" data-helm data-water="fresh"', body)
+        self.assertIn(b'data-fresh-pending="1"', body)           # filled asynchronously
+        self.assertIn(b"/api/fresh-home?region=", body)
 
     def test_fresh_home_js_and_api_routes(self):
         status, body, _ = self._req("/fresh-home.js")
