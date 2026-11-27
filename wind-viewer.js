@@ -31,7 +31,8 @@
   // ET clock (now), not the model's valid time.
   const clockF = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" });
   let onTick = null;
-  function tick() { $("w-clock").textContent = clockF.format(new Date()) + " ET"; if (onTick) onTick(); }
+  function nowMs() { return (typeof window.__windNow === "function") ? window.__windNow() : Date.now(); }
+  function tick() { $("w-clock").textContent = clockF.format(new Date(nowMs())) + " ET"; if (onTick) onTick(); }
   tick(); setInterval(tick, 15000);
 
   function ramp() { const c = $("w-ramp"), x = c.getContext("2d"); for (let i = 0; i < c.width; i++) { x.fillStyle = "rgb(" + M.rgb(i / c.width * 36, dark).join(",") + ")"; x.fillRect(i, 0, 1, c.height); } }
@@ -105,7 +106,7 @@
     });
     window.__windStats = wind.stats;
     onTheme = function () { coast.restyle(coastStyle()); wind.setDark(dark); };
-    window.__windView = { map: map, wind: wind, fps: fps, phone: phone, motion: () => motion, grid: () => grid, dark: () => dark };
+    window.__windView = { map: map, wind: wind, fps: fps, phone: phone, motion: () => motion, grid: () => grid, dark: () => dark, tick: tick };
 
     if (dark !== bootDark) onTheme();     // theme switched while the map was starting
     play.addEventListener("click", function () {
@@ -134,6 +135,19 @@
     function staKind(s) { return s.type === "nws" ? "air" : (s.type === "coops" || /[A-Z]/.test(s.id)) ? "pier" : "buoy"; }
     function staPri(s) { if (staSel && s.id === staSel) return 1000; if (PRI_HI.indexOf(s.id) >= 0) return /410/.test(s.id) ? 80 : 70; return s.optional ? 10 : 40; }
     function ageTxt(m) { if (m == null || !isFinite(m)) return ""; return m >= 120 ? Math.round(m / 60) + " h ago" : Math.round(m) + " min ago"; }
+    // Recompute status and age from observedAt vs now so a cached payload cannot stay "Fresh".
+    function classifySta(s, now) {
+      now = now || nowMs();
+      const t = Date.parse(String(s.observedAt || "").replace("Z", "+00:00"));
+      const age = isFinite(t) ? (now - t) / 6e4 : null;
+      const w = s.wind || {};
+      const staleAfter = s.staleAfterMin != null ? s.staleAfterMin : 75;
+      const empty = { speedKt: null, gustKt: null, dirDeg: null, dirCompass: null };
+      if (age == null || age > 720) return { status: "unavailable", ageMin: age, wind: empty };
+      if (w.speedKt == null && w.gustKt != null) return { status: "gust_only", ageMin: age, wind: w };
+      if (w.speedKt == null) return { status: "unavailable", ageMin: age, wind: empty };
+      return { status: age <= staleAfter ? "fresh" : "stale", ageMin: age, wind: w };
+    }
     function setStaErr(msg) { if (!staErrEl) return; staErrEl.textContent = msg || ""; staErrEl.hidden = !msg; }
     function syncRetry() { if (retryBtn) retryBtn.hidden = !(!grid && !loading); }
 
@@ -163,20 +177,20 @@
       }
     }
     function obsBody(s) {
-      const w = s.wind || {}, t = s.observedAt ? M.etShort(s.observedAt) : "";
+      const c = classifySta(s), w = c.wind, t = s.observedAt ? M.etShort(s.observedAt) : "";
       const head = "<span class=\"w-k\">OBSERVED · " + esc(s.name) + "  " + esc(s.id) + "</span>";
       const src = "<span class=\"w-sub\">" + esc(s.source || "") + "</span>";
-      if (s.status === "gust_only") {
+      if (c.status === "gust_only") {
         return head + "<strong>Wind speed unavailable</strong>" +
           (w.gustKt != null ? "<span class=\"w-sub\">Gust " + Math.round(w.gustKt) + " kt" + (t ? " · " + t : "") + "</span>" : (t ? "<span class=\"w-sub\">" + t + "</span>" : "")) + src;
       }
-      if (s.status === "unavailable") {
+      if (c.status === "unavailable") {
         return head + "<strong>Unavailable" + (t ? " — last report " + t : "") + "</strong>" + src;
       }
       let num = (w.speedKt != null ? Math.round(w.speedKt) + " kt" : "");
       if (w.gustKt != null) num += (num ? ", gust " : "gust ") + Math.round(w.gustKt);
       if (w.dirDeg != null) num += " from " + (w.dirCompass || M.compass(w.dirDeg)) + " (" + Math.round(w.dirDeg) + "°)";
-      const line = s.status === "stale" ? ("Stale — last report " + t) : (t + (s.ageMin != null ? " · " + ageTxt(s.ageMin) : "") + " · Fresh");
+      const line = c.status === "stale" ? ("Stale — last report " + t) : (t + (c.ageMin != null ? " · " + ageTxt(c.ageMin) : "") + " · Fresh");
       return head + "<strong>" + num + "</strong><span class=\"w-sub\">" + line + "</span>" + src;
     }
     function staRow(id) { return staPack && (staPack.stations || []).filter(function (s) { return s.id === id; })[0]; }
@@ -186,7 +200,7 @@
       if (row) latlng = L.latLng(row.lat, row.lon);
       if (!dot) dot = L.circleMarker(latlng, { radius: 7, className: "w-dot", interactive: false }).addTo(map); else dot.setLatLng(latlng);
       let body = "<div class=\"w-fcst\">" + fcstBody(latlng, label) + "</div>";
-      if (row) body += "<div class=\"w-obs is-" + esc(row.status) + "\">" + obsBody(row) + "</div>";
+      if (row) body += "<div class=\"w-obs is-" + esc(classifySta(row).status) + "\">" + obsBody(row) + "</div>";
       if (live.innerHTML !== body) live.innerHTML = body;
       read.hidden = false;
       syncRetry();
@@ -212,6 +226,14 @@
         const on = !!(staSel && m._sta && m._sta.id === staSel);
         const el = m.getElement();
         if (el) el.classList.toggle("on", on);
+      });
+    }
+    function restyleMarks() {
+      staMarks.forEach(function (m) {
+        if (!m._sta) return;
+        const el = m.getElement(); if (!el) return;
+        const st = classifySta(m._sta).status;
+        el.className = el.className.replace(/\bis-(?:fresh|stale|unavailable|gust_only)\b/g, "").trim() + " is-" + st;
       });
     }
     function declutter() {
@@ -266,7 +288,7 @@
       if (!staOn || !staPack || !staPack.stations) return;
       staPack.stations.forEach(function (s) {
         if (s.lat == null || s.lon == null) return;
-        const kind = staKind(s), st = s.status || "unavailable";
+        const kind = staKind(s), st = classifySta(s).status || "unavailable";
         const ic = L.divIcon({ className: "w-mk w-mk-" + kind + " is-" + st, iconSize: [44, 44], iconAnchor: [22, 22],
           html: "<button type=\"button\" class=\"w-mk-h\" aria-label=\"" + esc(s.name) + ", observed\"><i></i></button>" });
         const m = L.marker([s.lat, s.lon], { icon: ic, keyboard: false, riseOnHover: true });
@@ -336,7 +358,7 @@
     window.__windView.stations = {
       on: function () { return staOn; }, set: setStaOn, pack: function () { return staPack; },
       selected: function () { return staSel; }, marks: function () { return staMarks; },
-      err: function () { return staErr; }, load: loadStations
+      err: function () { return staErr; }, load: loadStations, classify: classifySta
     };
 
     $("w-locate").addEventListener("click", function () {
@@ -362,6 +384,7 @@
       if (bEl.textContent !== lo) bEl.textContent = lo;
     }
     onTick = function () {
+      if (staOn) restyleMarks();
       if (!grid) return;
       setHour();
       if (read && !read.hidden && dot) readAt(dot.getLatLng());

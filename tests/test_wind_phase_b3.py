@@ -5,9 +5,17 @@ Does not raise the 55 KiB asset cap or rewrite protected-file SHA pins.
 from __future__ import annotations
 
 import hashlib
+import json
 import re
+import subprocess
+import textwrap
 import unittest
 from pathlib import Path
+from datetime import datetime, timezone
+from unittest import mock
+from http.server import ThreadingHTTPServer
+import time
+import threading
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -100,10 +108,10 @@ class PhaseB3Stations(unittest.TestCase):
         self.assertIn("last report ", self.js)
         self.assertIn("Gust ", self.js)
         # Gust-only path does not print a speed in knots as the headline.
-        gust = self.js.split('s.status === "gust_only"', 1)[1].split("if (s.status", 1)[0]
+        gust = self.js.split('c.status === "gust_only"', 1)[1].split("if (c.status", 1)[0]
         self.assertIn("Wind speed unavailable", gust)
         self.assertNotIn("speedKt) + \" kt\"", gust)
-        unav = self.js.split('s.status === "unavailable"', 1)[1].split("let num", 1)[0]
+        unav = self.js.split('c.status === "unavailable"', 1)[1].split("let num", 1)[0]
         self.assertIn("Unavailable", unav)
         self.assertNotIn("speedKt", unav)
 
@@ -161,12 +169,347 @@ class PhaseB3Stations(unittest.TestCase):
         self.assertIn("safe-area-inset-left", top)
 
 
+
+    def test_badge_is_not_ellipsis_clipped(self):
+        # The 7.4em ellipsis squeeze is forbidden: top-bar labels must show in full.
+        self.assertNotIn("7.4em", self.css)
+        b3 = self.css.split("/* B3 stations", 1)[1]
+        self.assertNotIn("text-overflow:ellipsis", b3)
+        self.assertIn("text-overflow:clip", b3)
+        self.assertIn(".w-brand-a{display:none}", b3.replace(" ", ""))
+
+    def test_client_recomputes_age_and_freshness_from_observedAt(self):
+        """Cached pack ageMin/status must not be painted; re-derive from observedAt vs now."""
+        self.assertIn("function classifySta", self.js)
+        obs = self.js.split("function obsBody", 1)[1].split("function show", 1)[0]
+        self.assertIn("classifySta(s)", obs)
+        self.assertNotIn("s.ageMin", obs)
+        self.assertNotIn("s.status", obs)
+        self.assertIn("c.ageMin", obs)
+        self.assertIn("c.status", obs)
+        self.assertIn("staleAfterMin", self.js)
+        # classifySta must not trust the payload status when age is past staleAfterMin.
+        import subprocess, textwrap, json
+        src = self.js
+        start = src.index("function classifySta(s, now)")
+        end = src.index("function obsBody", start)
+        fn = src[start:end]
+        cases = [
+            # Pack claims Fresh / 47 min, but observedAt is ~3.6 h old at 8:08 PM ET.
+            {
+                "now": "2026-11-27T01:08:00Z",
+                "s": {"observedAt": "2026-11-26T21:30:00Z", "status": "fresh", "ageMin": 47,
+                      "staleAfterMin": 75, "wind": {"speedKt": 18, "gustKt": 28, "dirDeg": 230}},
+                "want": "stale", "age": 218,
+            },
+            # Within the 75-min window: still Fresh.
+            {
+                "now": "2026-11-27T01:08:00Z",
+                "s": {"observedAt": "2026-11-27T00:50:00Z", "status": "stale", "ageMin": 200,
+                      "staleAfterMin": 75, "wind": {"speedKt": 12, "gustKt": 16, "dirDeg": 40}},
+                "want": "fresh", "age": 18,
+            },
+            # Older than 12 h: Unavailable and numbers dropped.
+            {
+                "now": "2026-11-27T01:08:00Z",
+                "s": {"observedAt": "2026-11-26T10:00:00Z", "status": "fresh", "ageMin": 10,
+                      "staleAfterMin": 75, "wind": {"speedKt": 9, "gustKt": 12, "dirDeg": 90}},
+                "want": "unavailable", "age": 908, "emptyWind": True,
+            },
+            # Gust only, age still fresh: keep gust_only.
+            {
+                "now": "2026-11-27T01:08:00Z",
+                "s": {"observedAt": "2026-11-27T00:40:00Z", "status": "fresh", "ageMin": 5,
+                      "staleAfterMin": 75, "wind": {"speedKt": None, "gustKt": 36, "dirDeg": None}},
+                "want": "gust_only", "age": 28,
+            },
+        ]
+        harness = textwrap.dedent("""
+            const cases = %s;
+            %s
+            for (const c of cases) {
+              const now = Date.parse(c.now);
+              const out = classifySta(c.s, now);
+              if (out.status !== c.want) {
+                console.error("status", c.want, out);
+                process.exit(1);
+              }
+              if (Math.abs(out.ageMin - c.age) > 1) {
+                console.error("age", c.age, out);
+                process.exit(1);
+              }
+              if (c.emptyWind && out.wind.speedKt != null) {
+                console.error("expected dropped wind", out);
+                process.exit(1);
+              }
+            }
+            console.log("classifySta-ok");
+        """) % (json.dumps(cases), fn)
+        r = subprocess.run(["node", "-e", harness], capture_output=True, text=True, timeout=10)
+        self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
+        self.assertIn("classifySta-ok", r.stdout)
+
+
+class TopBarLayoutNoTruncation(unittest.TestCase):
+    """Rendered scrollWidth > clientWidth is a truncation failure for top-bar labels."""
+
+    VIEWPORTS = (
+        (375, 667, 0),
+        (390, 844, 0),
+        (430, 932, 0),
+        (844, 390, 47),  # landscape with 47 px safe-area insets
+    )
+    LABELS = ("#w-badge", ".w-clock time", ".w-brand-b", "#w-sta .w-lbl")
+
+    def test_top_bar_labels_are_not_truncated_at_phone_sizes(self):
+        try:
+            from playwright.sync_api import sync_playwright
+        except ImportError:
+            self.skipTest("playwright not installed")
+        chrome = Path("/usr/bin/google-chrome")
+        if not chrome.exists():
+            self.skipTest("google-chrome not installed")
+        html = (ROOT / "wind.html").read_text()
+        css = (ROOT / "wind.css").read_text()
+        top = html[html.index('<header class="w-top">'): html.index("</header>") + len("</header>")]
+        page_html = (
+            "<!doctype html><html><head>"
+            '<meta name="viewport" content="width=device-width, initial-scale=1">'
+            "<style>" + css + "</style></head>"
+            '<body data-wind-view="viewer"><div class="helm">' + top +
+            "</div>"
+            "<script>document.getElementById('w-clock').textContent='10:00 PM ET';</script>"
+            "</body></html>"
+        )
+        problems = []
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                executable_path=str(chrome),
+                args=["--headless=new", "--no-sandbox", "--disable-gpu"],
+            )
+            try:
+                for w, h, inset in self.VIEWPORTS:
+                    page = browser.new_page(viewport={"width": w, "height": h})
+                    page.set_content(page_html, wait_until="load")
+                    if inset:
+                        page.add_style_tag(content=(
+                            ".w-top{padding-left:max(10px, %dpx)!important;"
+                            "padding-right:max(10px, %dpx)!important}" % (inset, inset)
+                        ))
+                    page.wait_for_timeout(50)
+                    metrics = page.evaluate(
+                        """(sels) => {
+                          const out = {doc: {
+                            scrollWidth: document.documentElement.scrollWidth,
+                            clientWidth: document.documentElement.clientWidth,
+                            innerWidth: window.innerWidth
+                          }, labels: {}};
+                          for (const sel of sels) {
+                            const el = document.querySelector(sel);
+                            if (!el) { out.labels[sel] = {missing: true}; continue; }
+                            out.labels[sel] = {
+                              text: (el.textContent || "").trim(),
+                              scrollWidth: el.scrollWidth,
+                              clientWidth: el.clientWidth,
+                              overflow: getComputedStyle(el).overflow,
+                              textOverflow: getComputedStyle(el).textOverflow
+                            };
+                          }
+                          const sta = document.getElementById("w-sta");
+                          const r = sta ? sta.getBoundingClientRect() : null;
+                          out.sta = r ? {w: r.width, h: r.height} : null;
+                          return out;
+                        }""",
+                        list(self.LABELS),
+                    )
+                    page.close()
+                    tag = "%sx%s inset=%s" % (w, h, inset)
+                    if metrics["doc"]["scrollWidth"] > metrics["doc"]["innerWidth"] + 1:
+                        problems.append("%s document scrollWidth %s > innerWidth %s" % (
+                            tag, metrics["doc"]["scrollWidth"], metrics["doc"]["innerWidth"]))
+                    for sel, m in metrics["labels"].items():
+                        if m.get("missing"):
+                            problems.append("%s missing %s" % (tag, sel))
+                            continue
+                        if m["scrollWidth"] > m["clientWidth"] + 1:
+                            problems.append("%s %s truncated scroll=%s client=%s text=%r overflow=%s/%s" % (
+                                tag, sel, m["scrollWidth"], m["clientWidth"], m["text"],
+                                m.get("overflow"), m.get("textOverflow")))
+                    if not metrics.get("sta") or metrics["sta"]["w"] < 44 - 0.5 or metrics["sta"]["h"] < 44 - 0.5:
+                        problems.append("%s stations toggle not 44px: %s" % (tag, metrics.get("sta")))
+                    badge = metrics["labels"].get("#w-badge", {})
+                    if badge.get("text", "").upper().find("…") >= 0 or (
+                        badge.get("text") and "MODEL" in badge["text"].upper()
+                        and "FORECAST" not in badge["text"].upper()
+                        and "GFS" not in badge["text"].upper()
+                    ):
+                        problems.append("%s badge text looks clipped: %r" % (tag, badge.get("text")))
+            finally:
+                browser.close()
+        self.assertFalse(problems, "top-bar truncation:\n  " + "\n  ".join(problems))
+
+
 class AssetBudgetNote(unittest.TestCase):
     def test_own_asset_total_is_reported_not_silently_capped(self):
         own = sum((ROOT / f).stat().st_size for f in ("wind.html", "wind.css", "wind-viewer.js", "wind-lab.js", "wind-coast.js"))
         self.assertGreater(own, 55 * 1024)  # B3 exceeds the approved 55 KiB cap; a new cap needs Ed's approval.
         # Do not raise the official cap in this commit.
         self.assertGreater((ROOT / "wind.css").stat().st_size, 12 * 1024)
+
+
+
+class ClientAgeFromCachedPayload(unittest.TestCase):
+    """Age and freshness come from observedAt vs the client clock, even for a cached pack.
+
+    A later serve of the same JSON (90 s server cache or HTTP cache) must not freeze
+    the painted age. Freshness re-evaluates on tick with no new network call.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        import server
+        import windgrid
+        fix = ROOT / "tests/fixtures/gfs_uv10m_ncbox.grb2"
+        windgrid._cache.clear()
+        with mock.patch.object(windgrid, "_fetch", return_value=fix.read_bytes()), \
+             mock.patch.object(windgrid.time, "time", return_value=1795122000.0):
+            cls.grid = dict(windgrid.latest_grid(ahead=0))
+        cls.grid["ok"] = True
+        cls.grid["run"] = "2026-11-26T18:00Z"
+        cls.grid["valid"] = "2026-11-27T00:00Z"
+        cls.grid["forecastHour"] = 6
+        cls._ads = (ROOT / "data" / "ads.json").read_bytes()
+        cls.httpd = ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
+        threading.Thread(target=cls.httpd.serve_forever, daemon=True).start()
+        cls.base = "http://127.0.0.1:%d" % cls.httpd.server_address[1]
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.httpd.shutdown()
+        cls.httpd.server_close()
+        ads = ROOT / "data" / "ads.json"
+        if ads.read_bytes() != cls._ads:
+            ads.write_bytes(cls._ads)
+
+    def _pack(self, observed_at, age_min, status, stale_after=75):
+        return {
+            "ok": True,
+            "kind": "observed",
+            "generatedAt": "2026-11-26T22:17:00Z",
+            "stations": [{
+                "id": "CLKN7",
+                "name": "Cape Lookout",
+                "type": "ndbc",
+                "lat": 34.622,
+                "lon": -76.525,
+                "source": "NOAA NDBC",
+                "observedAt": observed_at,
+                "ageMin": age_min,
+                "status": status,
+                "staleAfterMin": stale_after,
+                "wind": {"speedKt": 18, "gustKt": 28, "dirDeg": 230, "dirCompass": "SW"},
+            }],
+        }
+
+    def _browser(self):
+        from playwright.sync_api import sync_playwright
+        chrome = Path("/usr/bin/google-chrome")
+        if not chrome.exists():
+            self.skipTest("google-chrome not installed")
+        pw = sync_playwright().start()
+        browser = pw.chromium.launch(
+            executable_path=str(chrome),
+            args=["--headless=new", "--no-sandbox", "--disable-gpu"],
+        )
+        return pw, browser
+
+    def _open(self, page, pack, t0_ms):
+        hits = {"stations": 0}
+
+        def on_req(req):
+            if "/api/wind-stations" in req.url:
+                hits["stations"] += 1
+
+        page.on("request", on_req)
+        page.route("**/api/wind-grid**", lambda r: r.fulfill(
+            status=200, content_type="application/json", body=json.dumps(self.grid)))
+        # Same body on every request: models a 90 s / HTTP cached payload.
+        body = json.dumps(pack)
+        page.route("**/api/wind-stations**", lambda r: r.fulfill(
+            status=200, content_type="application/json",
+            headers={"Cache-Control": "public, max-age=90"}, body=body))
+        page.add_init_script("window.__windNow = () => %d;" % t0_ms)
+        page.goto(self.base + "/wind?theme=light&stations=1", wait_until="domcontentloaded")
+        page.wait_for_function("() => window.__windView && window.__windView.grid && window.__windView.grid()", timeout=20000)
+        page.wait_for_function("() => window.__windView.stations && window.__windView.stations.marks().length > 0", timeout=15000)
+        page.evaluate("""() => {
+          const s = window.__windView.stations.pack().stations.find(x => x.id === 'CLKN7');
+          window.__windView.map.setView([s.lat, s.lon], 8.5, {animate:false});
+          window.__windView.readAt({lat:s.lat, lng:s.lon}, null, s);
+        }""")
+        page.wait_for_function("() => /OBSERVED/.test((document.getElementById('w-read-body')||{}).innerText||'')", timeout=8000)
+        return hits
+
+    def test_cached_payload_served_later_increases_painted_age(self):
+        # Pack claims Fresh / 5 min, but observedAt is 20 min before t0.
+        t0 = int(datetime(2026, 11, 27, 1, 8, tzinfo=timezone.utc).timestamp() * 1000)  # 2026-11-27T01:08:00Z
+        observed = "2026-11-27T00:48:00Z"  # 20 min earlier
+        pack = self._pack(observed, age_min=5, status="fresh", stale_after=75)
+        try:
+            from playwright.sync_api import sync_playwright  # noqa: F401
+        except ImportError:
+            self.skipTest("playwright not installed")
+        pw, browser = self._browser()
+        try:
+            page = browser.new_page(viewport={"width": 390, "height": 844})
+            hits = self._open(page, pack, t0)
+            text0 = page.locator("#w-read-body").inner_text()
+            self.assertIn("Fresh", text0)
+            self.assertIn("20 min ago", text0)
+            self.assertNotIn("5 min ago", text0)
+            first_hits = hits["stations"]
+            self.assertGreaterEqual(first_hits, 1)
+            # Same cached JSON, clock jumps 15 minutes, no requirement for a new fetch.
+            page.evaluate("window.__windNow = () => %d;" % (t0 + 15 * 60 * 1000))
+            page.evaluate("window.__windView.tick()")
+            text1 = page.locator("#w-read-body").inner_text()
+            self.assertIn("35 min ago", text1)
+            self.assertIn("Fresh", text1)
+            self.assertNotIn("20 min ago", text1)
+            self.assertEqual(hits["stations"], first_hits)
+        finally:
+            browser.close()
+            pw.stop()
+
+    def test_fresh_becomes_stale_on_tick_at_station_threshold_without_refetch(self):
+        t0 = int(datetime(2026, 11, 27, 1, 8, tzinfo=timezone.utc).timestamp() * 1000)  # 2026-11-27T01:08:00Z
+        # 74 min old at t0, threshold 75: Fresh. Two minutes later: Stale.
+        observed = "2026-11-26T23:54:00Z"
+        pack = self._pack(observed, age_min=10, status="fresh", stale_after=75)
+        try:
+            from playwright.sync_api import sync_playwright  # noqa: F401
+        except ImportError:
+            self.skipTest("playwright not installed")
+        pw, browser = self._browser()
+        try:
+            page = browser.new_page(viewport={"width": 390, "height": 844})
+            hits = self._open(page, pack, t0)
+            text0 = page.locator("#w-read-body").inner_text()
+            self.assertIn("Fresh", text0)
+            self.assertIn("74 min ago", text0)
+            self.assertNotIn("Stale", text0)
+            first_hits = hits["stations"]
+            page.evaluate("window.__windNow = () => %d;" % (t0 + 2 * 60 * 1000))
+            page.evaluate("window.__windView.tick()")
+            text1 = page.locator("#w-read-body").inner_text()
+            self.assertIn("Stale — last report", text1)
+            self.assertNotIn("Fresh", text1)
+            self.assertIn("is-stale", page.locator(".w-obs").get_attribute("class"))
+            self.assertEqual(hits["stations"], first_hits)
+        finally:
+            browser.close()
+            pw.stop()
+
 
 
 if __name__ == "__main__":
