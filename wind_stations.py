@@ -81,12 +81,23 @@ def dropped_ids() -> set[str]:
     return out
 
 
+# Single-flight for a cold assemble: one upstream run, waiters share it.
+# Waiters that exceed the budget fall back to last-good or an honest error
+# rather than starting a second NOAA fetch.
+_FLIGHT: dict | None = None
+FLIGHT_SLACK_S = 0.5
+
+
 def reset_cache() -> None:
     """Test helper: drop in-memory assembled / last-good snapshots."""
-    global _ASSEMBLED, _LAST_GOOD
+    global _ASSEMBLED, _LAST_GOOD, _FLIGHT
     with _LOCK:
         _ASSEMBLED = None
         _LAST_GOOD = None
+        flight = _FLIGHT
+        _FLIGHT = None
+    if flight:
+        flight["ev"].set()
 
 
 # ---------- short-timeout fetch (does not use the 45 s saltwater default) ----------
@@ -372,14 +383,37 @@ def _fetch_one_nws(sid: str) -> tuple[str, dict | None]:
     return sid, parse_nws_obs(raw, url) if raw else None
 
 
+
+def _waiter_fallback(now: datetime) -> dict:
+    """What a single-flight waiter returns if the leader is too slow or errors."""
+    with _LOCK:
+        if _ASSEMBLED:
+            return _refresh_ages(_ASSEMBLED[1], now)
+        if _LAST_GOOD:
+            payload = dict(_refresh_ages(_LAST_GOOD[1], now))
+            payload["staleCache"] = True
+            return payload
+    return {
+        "ok": False,
+        "kind": "observed",
+        "error": "Observed stations unavailable right now.",
+        "generatedAt": conditions.iso(now),
+        "staleCache": False,
+        "elapsedMs": 0,
+        "stations": [],
+    }
+
+
 def assemble(now: datetime | None = None, catalog: list[dict] | None = None,
              fetch=None, budget_s: float = BUDGET_S) -> dict:
     """Build the observed-stations bundle. Safe to call from the request thread.
 
     `fetch`, if set, is a test hook (url) -> (status, body). `budget_s` caps
     how long this call waits on upstreams; last-good rows fill the rest.
+    Simultaneous cold callers share one in-flight assemble (single-flight);
+    waiters that exceed budget_s + slack fall back to last-good or an error.
     """
-    global _ASSEMBLED, _LAST_GOOD, _fetch_override
+    global _FLIGHT
     now = now or datetime.now(timezone.utc)
     if now.tzinfo is None:
         now = now.replace(tzinfo=timezone.utc)
@@ -390,7 +424,51 @@ def assemble(now: datetime | None = None, catalog: list[dict] | None = None,
         if hit and (time.time() - hit[0]) < conditions.ASSEMBLED_TTL and fetch is None:
             # Recompute ages/status from stored observation times so labels stay honest.
             return _refresh_ages(hit[1], now)
+        flight = _FLIGHT
+        lead = False
+        if flight is not None:
+            ev = flight["ev"]
+        else:
+            ev = threading.Event()
+            flight = {"ev": ev, "result": None}
+            _FLIGHT = flight
+            lead = True
 
+    if not lead:
+        if ev.wait(timeout=max(0.05, budget_s + FLIGHT_SLACK_S)):
+            result = flight.get("result")
+            if result is not None:
+                if result.get("ok") and fetch is None:
+                    return _refresh_ages(result, now)
+                return result
+            with _LOCK:
+                hit = _ASSEMBLED
+            if hit:
+                return _refresh_ages(hit[1], now)
+        return _waiter_fallback(now)
+
+    try:
+        payload = _assemble_run(now, stations_meta, fetch, budget_s)
+        flight["result"] = payload
+        return payload
+    except Exception:
+        ev.set()
+        with _LOCK:
+            if _FLIGHT is flight:
+                _FLIGHT = None
+        raise
+    finally:
+        with _LOCK:
+            if _FLIGHT is flight:
+                _FLIGHT = None
+        ev.set()
+
+
+def _assemble_run(now: datetime, stations_meta: list[dict],
+                  fetch, budget_s: float) -> dict:
+    """One uncached assemble (leader path)."""
+    global _ASSEMBLED, _LAST_GOOD, _fetch_override
+    global _ASSEMBLED, _LAST_GOOD, _fetch_override
     prev_override = _fetch_override
     if fetch is not None:
         _fetch_override = fetch

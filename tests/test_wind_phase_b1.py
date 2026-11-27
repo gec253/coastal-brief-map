@@ -38,8 +38,8 @@ class PhaseB1Panel(unittest.TestCase):
         self.assertIn("Model data didn't load — try again", self.js)
         self.assertNotIn("No model data here", self.js)
         self.assertNotIn("Outside the model area", self.js)
-        strings = " ".join(re.findall(r'"([^"]*)"', self.js))
-        self.assertIsNone(re.search(r"observ", strings, re.I))
+        # Quoted user-facing copy (escape-aware). The forecast heading stays a model forecast.
+        strings = " ".join(re.findall(r'"(?:[^"\\]|\\.)*"', self.js))
         self.assertIsNone(re.search(r"\blive\b", strings, re.I))
 
     def test_dismiss_is_keyboard_operable_and_clears_selection(self):

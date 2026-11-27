@@ -171,12 +171,14 @@ class PageCopyAndControls(unittest.TestCase):
         self.assertRegex(self.html, r'<span class="w-badge" id="w-badge">Model forecast</span>')
         self.assertRegex(self.css, r"\.w-badge \{[^}]*text-transform: uppercase")
         self.assertIn("Model forecast, not measurements", self.html)
-        strings = " ".join(re.findall(r'"([^"]*)"', self.js))   # JS string literals = UI copy
-        attrs = re.sub(r'aria-live="[^"]*"', "", self.html)          # attribute name, not copy
+        # B3 adds a clearly separated OBSERVED block; the page remains a model forecast
+        # and still must not describe observations as "live".
+        self.assertIn(" FORECAST", self.js)
+        self.assertIn("OBSERVED · ", self.js)
+        strings = " ".join(re.findall(r'"(?:[^"\\]|\\.)*"', self.js))
+        attrs = re.sub(r'aria-live="[^"]*"', "", self.html)
         for copy in (self.visible_text(), attrs, strings):
-            self.assertIsNone(re.search(r"observ", copy, re.I))
             self.assertIsNone(re.search(r"\blive\b", copy, re.I))
-        self.assertIn(" FORECAST", strings)                     # tap panel heading is "{model} FORECAST"
         self.assertIn("Outside model coverage", strings)
         self.assertIn("Model data didn't load", strings)
 

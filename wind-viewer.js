@@ -126,42 +126,219 @@
       return "";
     }
     function fcstTag(g) { return g && g.forecastHour != null ? "F" + String(g.forecastHour).padStart(3, "0") : ""; }
+    const staBtn = $("w-sta"), retryBtn = $("w-retry"), staErrEl = $("w-sta-err");
+    let staOn = false, staSel = null, staPack = null, staErr = null, staReq = 0, staAt = 0, staTimer = 0, staMarks = [];
+    const STA_TTL = 90e3;
+    const PRI_HI = "41025 41013 41064 41038 CLKN7 8651370 8652587 8654467 8656483 8658163 KHSE KILM KSUT";
+    function esc(x) { return String(x == null ? "" : x).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").split(String.fromCharCode(34)).join("&quot;"); }
+    function staKind(s) { return s.type === "nws" ? "air" : (s.type === "coops" || /[A-Z]/.test(s.id)) ? "pier" : "buoy"; }
+    function staPri(s) { if (staSel && s.id === staSel) return 1000; if (PRI_HI.indexOf(s.id) >= 0) return /410/.test(s.id) ? 80 : 70; return s.optional ? 10 : 40; }
+    function ageTxt(m) { if (m == null || !isFinite(m)) return ""; return m >= 120 ? Math.round(m / 60) + " h ago" : Math.round(m) + " min ago"; }
+    function setStaErr(msg) { if (!staErrEl) return; staErrEl.textContent = msg || ""; staErrEl.hidden = !msg; }
+    function syncRetry() { if (retryBtn) retryBtn.hidden = !(!grid && !loading); }
+
     function dismissRead() {
       if (dot) { map.removeLayer(dot); dot = null; }
+      staSel = null;
+      markSel();
       if (live) live.innerHTML = "";
       read.hidden = true;
+      syncRetry();
       const el = $("wmap"); if (el) el.focus();
     }
-    function readAt(latlng, label) {
-      if (!dot) dot = L.circleMarker(latlng, { radius: 7, className: "w-dot", interactive: false }).addTo(map); else dot.setLatLng(latlng);
+    function fcstBody(latlng, label) {
       const kind = modelName + " FORECAST";
       const s = grid ? wind.sample(latlng.lat, latlng.lng) : null;
-      let body;
       if (!grid) {
         const msg = loading ? "Loading model wind…" : "Model data didn't load — try again";
-        body = "<span class=\"w-k\">" + kind + "</span><strong>" + msg + "</strong>";
+        return "<span class=\"w-k\">" + kind + "</span><strong>" + msg + "</strong>";
       } else if (!s || !isFinite(s.kt) || !isFinite(s.from)) {
-        body = "<span class=\"w-k\">" + kind + "</span><strong>Outside model coverage — no GFS data for this spot</strong><span class=\"w-sub\">This viewer loads GFS wind for 32.5–37.5°N, 73–80°W.</span>";
+        return "<span class=\"w-k\">" + kind + "</span><strong>Outside model coverage — no GFS data for this spot</strong><span class=\"w-sub\">This viewer loads GFS wind for 32.5–37.5°N, 73–80°W.</span>";
       } else {
         const rel = relValid(grid.valid), behind = rel.indexOf("ago") >= 0;
         const tline = "Valid " + M.etShort(grid.valid) + (rel ? (behind ? " — " + rel + " · Behind current time" : " · " + rel) : " · " + (fcstTag(grid) || "interpolated"));
-        body = "<span class=\"w-k\">" + kind + "</span><strong>" + Math.round(s.kt) + " kt</strong> from " + M.compass(s.from) + " (" + Math.round(s.from) + "°)" +
+        return "<span class=\"w-k\">" + kind + "</span><strong>" + Math.round(s.kt) + " kt</strong> from " + M.compass(s.from) + " (" + Math.round(s.from) + "°)" +
           "<span class=\"w-sub\">" + tline + "</span>" +
-          "<span class=\"w-sub\">" + (label ? label + " · " : "") + latlng.lat.toFixed(2) + "°N " + Math.abs(latlng.lng).toFixed(2) + "°W · interpolated, 0.25° grid (~25 km)</span>";
+          "<span class=\"w-sub w-grid\">" + (label ? label + " · " : "") + latlng.lat.toFixed(2) + "°N " + Math.abs(latlng.lng).toFixed(2) + "°W · interpolated, 0.25° grid (~25 km)</span>";
       }
+    }
+    function obsBody(s) {
+      const w = s.wind || {}, t = s.observedAt ? M.etShort(s.observedAt) : "";
+      const head = "<span class=\"w-k\">OBSERVED · " + esc(s.name) + "  " + esc(s.id) + "</span>";
+      const src = "<span class=\"w-sub\">" + esc(s.source || "") + "</span>";
+      if (s.status === "gust_only") {
+        return head + "<strong>Wind speed unavailable</strong>" +
+          (w.gustKt != null ? "<span class=\"w-sub\">Gust " + Math.round(w.gustKt) + " kt" + (t ? " · " + t : "") + "</span>" : (t ? "<span class=\"w-sub\">" + t + "</span>" : "")) + src;
+      }
+      if (s.status === "unavailable") {
+        return head + "<strong>Unavailable" + (t ? " — last report " + t : "") + "</strong>" + src;
+      }
+      let num = (w.speedKt != null ? Math.round(w.speedKt) + " kt" : "");
+      if (w.gustKt != null) num += (num ? ", gust " : "gust ") + Math.round(w.gustKt);
+      if (w.dirDeg != null) num += " from " + (w.dirCompass || M.compass(w.dirDeg)) + " (" + Math.round(w.dirDeg) + "°)";
+      const line = s.status === "stale" ? ("Stale — last report " + t) : (t + (s.ageMin != null ? " · " + ageTxt(s.ageMin) : "") + " · Fresh");
+      return head + "<strong>" + num + "</strong><span class=\"w-sub\">" + line + "</span>" + src;
+    }
+    function staRow(id) { return staPack && (staPack.stations || []).filter(function (s) { return s.id === id; })[0]; }
+    function readAt(latlng, label, station) {
+      if (arguments.length >= 3) staSel = station ? station.id : null;
+      const row = staSel ? staRow(staSel) : null;
+      if (row) latlng = L.latLng(row.lat, row.lon);
+      if (!dot) dot = L.circleMarker(latlng, { radius: 7, className: "w-dot", interactive: false }).addTo(map); else dot.setLatLng(latlng);
+      let body = "<div class=\"w-fcst\">" + fcstBody(latlng, label) + "</div>";
+      if (row) body += "<div class=\"w-obs is-" + esc(row.status) + "\">" + obsBody(row) + "</div>";
       if (live.innerHTML !== body) live.innerHTML = body;
       read.hidden = false;
+      syncRetry();
+      markSel();
     }
     $("w-read-x").addEventListener("click", dismissRead);
+    if (retryBtn) retryBtn.addEventListener("click", function () { load(ai); });
     document.addEventListener("keydown", function (e) {
       if (e.key !== "Escape") return;
       const about = document.querySelector(".w-about");
       if (about && about.open) { about.open = false; e.preventDefault(); return; }
       if (read && !read.hidden) { e.preventDefault(); dismissRead(); }
     });
-    map.on("click", function (e) { readAt(e.latlng); });
+    map.on("click", function (e) { readAt(e.latlng, null, null); });
     window.__windView.readAt = readAt;
     window.__windView.dismiss = dismissRead;
+    function clearMarks() {
+      staMarks.forEach(function (m) { staLayer.removeLayer(m); });
+      staMarks = [];
+    }
+    function markSel() {
+      staMarks.forEach(function (m) {
+        const on = !!(staSel && m._sta && m._sta.id === staSel);
+        const el = m.getElement();
+        if (el) el.classList.toggle("on", on);
+      });
+    }
+    function declutter() {
+      if (!staMarks.length) return;
+      const z = map.getZoom(), maxZ = map.getMaxZoom(), hidden = {};
+      const items = staMarks.map(function (m) { return { m: m, s: m._sta, p: map.latLngToLayerPoint(m.getLatLng()), pri: staPri(m._sta) }; });
+      items.sort(function (a, b) { return b.pri - a.pri; });
+      const kept = [];
+      items.forEach(function (it) {
+        const hit = kept.filter(function (k) { const dx = k.p.x - it.p.x, dy = k.p.y - it.p.y; return dx * dx + dy * dy < 32 * 32; })[0];
+        const el = it.m.getElement();
+        const btn = el && el.querySelector(".w-mk-h");
+        let hide = false;
+        if (hit && !(staSel && it.s.id === staSel)) {
+          if (z >= maxZ - 0.01) {
+            const n = (hit.cluster = (hit.cluster || [hit])).length;
+            const ang = (n * 2.2);
+            const pt = L.point(hit.p.x + Math.cos(ang) * 18, hit.p.y + Math.sin(ang) * 18);
+            it.m.setLatLng(map.layerPointToLatLng(pt));
+            hit.cluster.push(it);
+          } else {
+            hide = true;
+            (hit.cluster = hit.cluster || [hit]).push(it);
+          }
+        }
+        if (el) {
+          el.classList.toggle("is-hide", hide);
+          let badge = el.querySelector(".w-n");
+          if (!hide && hit && hit.cluster && hit.m === it.m) {
+            /* shown later */
+          }
+        }
+        if (btn) btn.tabIndex = hide ? -1 : 0;
+        if (!hide) kept.push(it);
+        else hidden[it.s.id] = 1;
+      });
+      kept.forEach(function (k) {
+        const el = k.m.getElement(); if (!el) return;
+        let badge = el.querySelector(".w-n");
+        const n = k.cluster ? k.cluster.length : 0;
+        if (n > 1 && map.getZoom() < map.getMaxZoom() - 0.01) {
+          if (!badge) { badge = document.createElement("span"); badge.className = "w-n"; badge.tabIndex = 0; el.appendChild(badge); }
+          badge.textContent = "+" + (n - 1);
+          badge.onclick = function (e) { L.DomEvent.stop(e); const b = L.latLngBounds(k.cluster.map(function (c) { return c.m.getLatLng(); })); map.fitBounds(b.pad(0.4), { maxZoom: Math.min(map.getMaxZoom(), map.getZoom() + 2), animate: !osReduce }); };
+        } else if (badge) { badge.remove(); }
+      });
+      /* restore spiderfied markers' true coords when leaving max zoom is handled on redraw */
+    }
+    const staLayer = L.layerGroup().addTo(map);
+    function drawSta() {
+      clearMarks();
+      if (!staOn || !staPack || !staPack.stations) return;
+      staPack.stations.forEach(function (s) {
+        if (s.lat == null || s.lon == null) return;
+        const kind = staKind(s), st = s.status || "unavailable";
+        const ic = L.divIcon({ className: "w-mk w-mk-" + kind + " is-" + st, iconSize: [44, 44], iconAnchor: [22, 22],
+          html: "<button type=\"button\" class=\"w-mk-h\" aria-label=\"" + esc(s.name) + ", observed\"><i></i></button>" });
+        const m = L.marker([s.lat, s.lon], { icon: ic, keyboard: false, riseOnHover: true });
+        m._sta = s;
+        m._home = L.latLng(s.lat, s.lon);
+        m.on("click", function (e) { L.DomEvent.stop(e); readAt(m.getLatLng(), null, s); });
+        staLayer.addLayer(m);
+        staMarks.push(m);
+      });
+      markSel();
+      // Home positions (in case a previous spiderfy moved them)
+      staMarks.forEach(function (m) { if (m._home) m.setLatLng(m._home); });
+      setTimeout(declutter, 0);
+    }
+    function stopStaTimer() { if (staTimer) { clearInterval(staTimer); staTimer = 0; } }
+    async function loadStations(force) {
+      if (!staOn) return;
+      const my = ++staReq;
+      if (!force && staPack && (Date.now() - staAt) < STA_TTL) { drawSta(); return; }
+      try {
+        const res = await fetch("/api/wind-stations");
+        let data = {};
+        try { data = await res.json(); } catch (err) { data = {}; }
+        if (my !== staReq || !staOn) return;
+        if (!res.ok || !data.ok) {
+          staErr = (data && data.error) || "Observed stations unavailable right now.";
+          setStaErr(staErr);
+          if (!staPack) clearMarks();
+          if (read && !read.hidden) readAt(dot ? dot.getLatLng() : map.getCenter());
+          return;
+        }
+        staErr = null; setStaErr(""); staPack = data; staAt = Date.now();
+        drawSta();
+        if (read && !read.hidden && (staSel || dot)) readAt(dot ? dot.getLatLng() : map.getCenter());
+        stopStaTimer();
+        staTimer = setInterval(function () { if (staOn && !document.hidden) loadStations(); }, STA_TTL);
+      } catch (e) {
+        if (my !== staReq || !staOn) return;
+        staErr = "Observed stations unavailable right now.";
+        setStaErr(staErr);
+        if (!staPack) clearMarks();
+      }
+    }
+    function setStaOn(on) {
+      staOn = !!on;
+      if (staBtn) {
+        staBtn.setAttribute("aria-pressed", String(staOn));
+        staBtn.title = staOn ? "Hide observed NOAA stations" : "Show observed NOAA stations";
+        staBtn.setAttribute("aria-label", staOn ? "Hide observed NOAA stations" : "Show observed NOAA stations");
+      }
+      if (staOn) loadStations();
+      else {
+        staReq++;
+        stopStaTimer();
+        clearMarks();
+        setStaErr("");
+        if (staSel) { staSel = null; if (dot) readAt(dot.getLatLng(), null, null); }
+      }
+    }
+    if (staBtn) staBtn.addEventListener("click", function () { setStaOn(!staOn); });
+    if (/[?&]stations=1\b/.test(q)) setStaOn(true);
+    map.on("zoomend moveend", function () {
+      if (!staOn || !staMarks.length) return;
+      staMarks.forEach(function (m) { if (m._home) m.setLatLng(m._home); });
+      declutter();
+    });
+    window.__windView.stations = {
+      on: function () { return staOn; }, set: setStaOn, pack: function () { return staPack; },
+      selected: function () { return staSel; }, marks: function () { return staMarks; },
+      err: function () { return staErr; }, load: loadStations
+    };
+
     $("w-locate").addEventListener("click", function () {
       if (!navigator.geolocation) { status.textContent = "Location isn't available in this browser."; status.hidden = false; return; }
       status.textContent = "Finding your location…"; status.hidden = false;
@@ -214,12 +391,13 @@
     }
     const memo = {};
     function loadFail(msg) {
-      loading = false; status.textContent = msg;
+      loading = false; status.textContent = msg; status.hidden = false;
+      syncRetry();
       if (dot && !grid) readAt(dot.getLatLng());
     }
     async function load(i) {
       const my = ++req, a = AHEAD[i];
-      loading = true;
+      loading = true; syncRetry();
       status.textContent = a ? "Loading model wind +" + a + " h…" : "Loading NOAA " + modelName + " model wind…"; status.hidden = false;
       try {
         const qs = [a ? "ahead=" + a : "", wantHrrr ? "model=hrrr" : ""].filter(Boolean).join("&");
@@ -235,7 +413,7 @@
         loading = false;
         memo[a] = g; ai = i;
         await yieldTask();
-        show(g); status.hidden = true;
+        show(g); status.hidden = true; syncRetry();
       } catch (e) { if (my === req) loadFail("Model wind is unavailable right now."); }
     }
     $("w-prev").addEventListener("click", function () { if (ai > 0) load(ai - 1); });

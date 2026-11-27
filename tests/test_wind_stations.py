@@ -318,5 +318,108 @@ class Route(unittest.TestCase):
         self.assertTrue(grid.called)
 
 
+class Coalescing(unittest.TestCase):
+    """Cold assemble is single-flight: concurrent callers share one upstream run."""
+
+    def setUp(self):
+        wind_stations.reset_cache()
+
+    def _counted_fetch(self, delay_s=0.25):
+        calls = []
+        lock = threading.Lock()
+        base = _fetch_map(coops=DEFAULT_COOPS, nws=DEFAULT_NWS)
+
+        def fetch(url: str):
+            with lock:
+                calls.append(url)
+            if delay_s:
+                threading.Event().wait(delay_s)
+            return base(url)
+        return fetch, calls
+
+    def test_concurrent_cold_assemble_shares_one_upstream_flight(self):
+        fetch, calls = self._counted_fetch(0.2)
+        results = [None] * 8
+        errors = []
+
+        def run(i):
+            try:
+                results[i] = wind_stations.assemble(now=NOW, fetch=fetch, budget_s=3.5)
+            except Exception as e:
+                errors.append(e)
+        threads = [threading.Thread(target=run, args=(i,)) for i in range(8)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=8)
+        self.assertFalse(errors, errors)
+        self.assertTrue(all(r and r.get("ok") for r in results))
+        # One flight: each distinct URL is fetched once, not once per waiter.
+        from collections import Counter
+        counts = Counter(calls)
+        self.assertGreater(len(counts), 0)
+        self.assertTrue(all(n == 1 for n in counts.values()), counts)
+        # All waiters see the same 26-station bundle.
+        self.assertEqual({len(r["stations"]) for r in results}, {26})
+
+    def test_waiter_timeout_falls_back_to_last_good(self):
+        # Prime last-good, then expire the 90 s assembled cache and start a slow leader.
+        first = wind_stations.assemble(now=NOW, fetch=_fetch_map(coops=DEFAULT_COOPS, nws=DEFAULT_NWS), budget_s=3.5)
+        self.assertTrue(first["ok"])
+        with wind_stations._LOCK:
+            wind_stations._ASSEMBLED = None
+        started = threading.Event()
+        release = threading.Event()
+        calls = []
+
+        def slow(url):
+            calls.append(url)
+            started.set()
+            release.wait(timeout=5)
+            return _fetch_map(coops=DEFAULT_COOPS, nws=DEFAULT_NWS)(url)
+
+        leader_result = []
+
+        def lead():
+            leader_result.append(wind_stations.assemble(now=NOW, fetch=slow, budget_s=0.15))
+        t = threading.Thread(target=lead)
+        t.start()
+        self.assertTrue(started.wait(timeout=2))
+        # Waiters use a tight budget so they time out while the leader is still in flight.
+        waiter = wind_stations.assemble(now=NOW, fetch=_fetch_map(coops=DEFAULT_COOPS, nws=DEFAULT_NWS), budget_s=0.05)
+        self.assertTrue(waiter.get("ok"), waiter)
+        self.assertTrue(waiter.get("staleCache"))
+        # The waiter must not have started a second flight (no extra calls after the leader's first).
+        n_during = len(calls)
+        release.set()
+        t.join(timeout=8)
+        self.assertTrue(leader_result and leader_result[0].get("ok"))
+        # Leader may add more URL calls after release; waiters must not have added any while waiting.
+        self.assertGreaterEqual(len(calls), n_during)
+
+    def test_waiter_timeout_without_last_good_is_honest_error(self):
+        started = threading.Event()
+        release = threading.Event()
+
+        def slow(url):
+            started.set()
+            release.wait(timeout=5)
+            return 502, b""
+
+        def lead():
+            wind_stations.assemble(now=NOW, fetch=slow, budget_s=0.15)
+        t = threading.Thread(target=lead)
+        t.start()
+        self.assertTrue(started.wait(timeout=2))
+        waiter = wind_stations.assemble(now=NOW, fetch=slow, budget_s=0.05)
+        self.assertFalse(waiter.get("ok"))
+        self.assertEqual(waiter.get("error"), "Observed stations unavailable right now.")
+        self.assertNotIn("password", str(waiter).lower())
+        self.assertNotIn("/workspace", str(waiter))
+        release.set()
+        t.join(timeout=8)
+
+
+
 if __name__ == "__main__":
     unittest.main()

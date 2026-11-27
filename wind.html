@@ -29,6 +29,10 @@
     <a class="w-brand" href="/"><span class="w-brand-a">The Coastal Brief</span><span class="w-brand-b">Wind</span></a>
     <span class="w-badge" id="w-badge">Model forecast</span>
     <span class="w-clock"><span class="w-k">Now</span> <time id="w-clock">--:-- ET</time></span>
+    <button type="button" class="w-sta" id="w-sta" aria-pressed="false" aria-label="Show observed NOAA stations" title="Show observed NOAA stations">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-5.2-5.4-5.2-9.2A5.2 5.2 0 0112 6.6a5.2 5.2 0 015.2 5.2c0 3.8-5.2 9.2-5.2 9.2z"/><circle cx="12" cy="11.6" r="1.7"/></svg>
+      <span class="w-lbl">Stations</span>
+    </button>
     <button type="button" class="w-theme" id="w-theme" aria-label="Night mode" aria-pressed="false" title="Switch to night mode">
       <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.6A8.2 8.2 0 019.4 4a8.2 8.2 0 1010.6 10.6z"/></svg>
       <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.6M12 18.8v2.6M2.6 12h2.6M18.8 12h2.6M5.4 5.4l1.8 1.8M16.8 16.8l1.8 1.8M5.4 18.6l1.8-1.8M16.8 7.2l1.8-1.8"/></svg>
@@ -50,6 +54,8 @@
         <div id="w-read-body" aria-live="polite"></div>
         <button type="button" class="w-read-x" id="w-read-x" aria-label="Dismiss forecast panel"><span aria-hidden="true">×</span></button>
       </div>
+      <button type="button" class="w-retry" id="w-retry" hidden>Try again</button>
+      <p class="w-sta-err" id="w-sta-err" hidden role="status"></p>
       <p class="w-attrib">Wind: <a id="w-src" href="https://www.nco.ncep.noaa.gov/pmb/products/gfs/" rel="noopener">NOAA NCEP GFS</a> <span id="w-src-res">0.25° model forecast</span> · Coastline: U.S. Census Bureau, 2025 cartographic boundary file, 1:500,000 (not endorsed by the Census Bureau). <span id="w-disc">General information only: this is a model forecast and can be late or inaccurate for your location. Don’t rely on it alone for safety, marine or aviation decisions; check the National Weather Service.</span></p>
     </div>
     <script>/* ?model=hrrr (private): name HRRR before first paint so the text doesn't reflow later; a GFS fallback relabels it */if(/[?&]model=hrrr\b/.test(location.search)){var s=document.getElementById("w-src");s.textContent="NOAA NCEP HRRR";s.href="https://rapidrefresh.noaa.gov/hrrr/";document.getElementById("w-src-res").textContent="3 km model forecast";}</script>
