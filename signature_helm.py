@@ -876,11 +876,12 @@ def nav_html(primary: list, rid: str, fresh: bool, dash_href: str, tools: bool =
 
 # ---------------------------------------------------------------- Marine & Water Tools (private variant)
 # Audited link map (/workspace/mwt-1127/audit.md, Nov 27 2026). Destinations only; no tool or data source changes.
-RAMP_PHOTO = {   # authentic photos, credits exactly as recorded in photo-rotation.json; salt never fresh, fresh never salt
-    "salt": ("swan-quarter-landing", "Swan Quarter Landing, NC"),
-    "falls-lake": ("falls-lake-pier", "Falls Lake, NC"),
-    "jordan-lake": ("jordan-lake-ebenezer", "Jordan Lake · Ebenezer Church area"),
-    "neuse-river": ("neuse-river-cliffs", "Neuse River · Cliffs of the Neuse"),
+RAMP_PHOTO = {   # authentic photos; location is a photo place, never the launch being linked
+    # credits are taken verbatim from photo-rotation.json "credit"
+    "salt": ("swan-quarter-landing", "Swan Quarter Landing, Hyde County"),
+    "falls-lake": ("falls-lake-pier", "Falls Lake, North Carolina"),
+    "jordan-lake": ("jordan-lake-ebenezer", "Jordan Lake State Recreation Area, Ebenezer Church area"),
+    "neuse-river": ("neuse-river-cliffs", "Cliffs of the Neuse State Park, North Carolina"),
 }
 # Scope label, so it is clear at a glance whether the card opens region results or the statewide list (Ed, Nov 27)
 RAMP_DESC = {"crystal-coast": "Crystal Coast ramps", "emerald-isle": "Crystal Coast ramps",
@@ -942,19 +943,31 @@ def tools_html(rid: str, fresh: bool) -> str:
             img = ('<picture><source type="image/avif" srcset="%s-640.avif 640w, %s-1024.avif 1024w" sizes="(min-width: 600px) 560px, 100vw">'
                    '<img src="%s-640.webp" srcset="%s-640.webp 640w, %s-1024.webp 1024w" sizes="(min-width: 600px) 560px, 100vw" alt="%s" '
                    'width="640" height="400" loading="lazy" decoding="async" fetchpriority="low"></picture>') % (b, b, b, b, b, _a(ph.get("alt") or ""))
-            cap = '<figcaption class="mwt-cr">%s · %s</figcaption>' % (_e(place), _e(ph.get("credit") or ""))
+            # "Photo: <location>" plus the repo credit string verbatim; location is not the launch
+            cap = '<figcaption class="mwt-cr">Photo: %s · %s</figcaption>' % (_e(place), _e(ph.get("credit") or ""))
         else:
             cap = ""
         regional = href != "/ramps"
-        # exactly one <a> per card (whole surface tappable); the photo credit is a figcaption outside the anchor
-        ramp = ('<figure class="mwt-ramp%s"><a href="%s">%s<span class="mwt-rc"><span class="eyebrow">Public boat ramps</span>'
-                '<b>Find a Ramp <em>· North Carolina</em></b><span class="mwt-scope%s">%s</span></span><i aria-hidden="true">→</i></a>%s</figure>%s') % (
-            "" if img else " noimg", _a(href), img, " reg" if regional else "", _e(desc), cap, ('<p class="mwt-note">%s</p>' % _e(note)) if note else "")
+        # exactly one <a> on the card (whole surface tappable); credit is a figcaption outside the anchor
+        fig = ('<figure class="mwt-ramp%s"><a href="%s">%s<span class="mwt-rc"><span class="eyebrow">Public boat ramps</span>'
+               '<b>Find a Ramp <em>· North Carolina</em></b><span class="mwt-scope%s">%s</span></span><i aria-hidden="true">→</i></a>%s</figure>') % (
+            "" if img else " noimg", _a(href), img, " reg" if regional else "", _e(desc), cap)
+        # Statewide list is already an "All areas" chip on /ramps?region=X; add a sibling 44px link anyway
+        # so regional cards have an obvious path to every listed NC ramp. Not nested in the card anchor.
+        allnc = '<a class="mwt-all" href="/ramps">All NC ramps</a>' if regional else ""
+        wrap = ('<div class="mwt-rwrap">%s%s</div>' % (fig, allnc)) if allnc else fig
+        ramp = wrap + ((' <p class="mwt-note">%s</p>' % _e(note)) if note else "")
     cls = {"OBSERVED": "obs", "PREDICTED": "pred", "FORECAST": "fcst"}
     tiles = "".join('<a class="mwt-t" href="%s"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">%s</svg>'
                     '<b>%s</b><span>%s</span><i class="k %s">%s</i></a>' % (_a(h), ICON.get(n, ""), n, _e(d), cls.get(k, ""), k)
                     for n, h, d, k in pri)
-    more = " ".join('<a href="%s">%s</a>' % (_a(h), n) for n, h in sec)
+    CHART_ICON = '<path d="M3 7.5 12 3l9 4.5v9L12 21 3 16.5zM12 3v18M3 7.5l9 4.5 9-4.5"/>'
+    def _sec(n, h):
+        if n == "Nautical Charts":
+            return ('<a class="mwt-chart" href="%s"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">%s</svg>'
+                    '<span class="mwt-chart-l"><b>Nautical Charts</b><span>NOAA ENC</span></span></a>' % (_a(h), CHART_ICON))
+        return '<a href="%s">%s</a>' % (_a(h), n)
+    more = " ".join(_sec(n, h) for n, h in sec)
     return ('<section class="mwt" id="tools" aria-labelledby="mwt-h">\n<h2 id="mwt-h" class="mwt-h"><span>Marine &amp; Water Tools</span></h2>\n'
             '%s\n<div class="mwt-g">%s</div>\n<p class="mwt-s"><span class="eyebrow">More tools</span>%s</p>\n</section>') % (ramp, tiles, more)
 
