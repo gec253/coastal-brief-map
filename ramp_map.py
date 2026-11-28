@@ -27,7 +27,7 @@ SUFFIXES = ("", ".css", ".js", ".json", "/geo-lo.json", "/geo-hi.json")
 def render_html(*, public: bool = False) -> str:
     base = PUBLIC_BASE if public else PRIVATE_BASE
     directory = "/ramps" if public else "/preview/ramps-statewide"
-    robots = '<meta name="robots" content="index, follow">\n' if public else '<meta name="robots" content="noindex, nofollow">\n'
+    robots = ('<meta name="robots" content="index, follow">\n<meta name="description" content="Interactive map of 285 public boating access sites across North Carolina, from official sources only. Search, filter, and get directions. Not a live open/closed board.">\n') if public else '<meta name="robots" content="noindex, nofollow">\n'
     tag = "" if public else '<span class="tag">Private preview</span>'
     b = html.escape(base, quote=True)
     d = html.escape(directory, quote=True)
