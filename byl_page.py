@@ -478,7 +478,8 @@ def resolve_request(path):
         d = byl_data.assemble(sid, sites=sites, records=records)
         import json
         return 200, "application/json; charset=utf-8", json.dumps({"id": sid, "generated": d["generated"], "withheld": d["withheld"],
-                                                                     "cards": d["cards"], "fragments": fragments(d)}, default=str)
+                                                                     "cards": d["cards"], "fragments": fragments(d),
+                                                                     "pending": d.get("pending") or []}, default=str)
     if sub not in sites or "/" in sub:
         return 404, "", b""
     return 200, "text/html; charset=utf-8", render(sub, sites, records)

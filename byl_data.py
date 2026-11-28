@@ -17,7 +17,7 @@ import re
 import threading
 import time
 import urllib.request
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, wait as _wait
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -27,6 +27,10 @@ import brief_astro
 ROOT = Path(__file__).resolve().parent
 ET = ZoneInfo("America/New_York")
 UA = "TheCoastalBrief/1.0 (thecoastalbrief.com; Before You Launch preview)"
+
+# Seconds one .json response waits for its sources. Slower sources keep running in the background, fill the shared
+# cache, and are reported as "pending" so the page asks again instead of timing out (production USGS took 16-22 s).
+BUDGET = 9.0
 
 # ttl: seconds a good response is reused; timeout: per request; backoff: first wait after a failure (doubles, capped)
 # lkg: how long a last-known-good response may be served when the source fails (0 = never; alerts must be current)
@@ -72,6 +76,7 @@ class Fetcher:
         self.clock = clock
         self.calls = []
         self.lkg_used = set()
+        self.inflight = {}
 
     @staticmethod
     def _open(url, timeout):
@@ -90,6 +95,26 @@ class Fetcher:
             f = self.fail.get(source)
             if f and now < f[1]:
                 return self._lkg(source, url, now, "%s backing off after a failure" % source)
+            ev = self.inflight.get(url)
+            mine = ev is None
+            if mine:
+                ev = self.inflight[url] = threading.Event()
+        if not mine:
+            # The same URL is already being fetched (for example by warm()): wait for that one request.
+            ev.wait(cfg["timeout"] + 1)
+            with self.lock:
+                hit = self.cache.get(url)
+                if hit and self.clock() - hit[0] < cfg["ttl"]:
+                    return hit[1]
+                return self._lkg(source, url, now, "%s did not answer" % source)
+        try:
+            return self._fetch(source, url, parse, cfg, now)
+        finally:
+            with self.lock:
+                self.inflight.pop(url, None)
+            ev.set()
+
+    def _fetch(self, source, url, parse, cfg, now):
         if not self.sem[source].acquire(timeout=cfg["timeout"]):
             raise SourceDown("%s busy" % source)
         try:
@@ -542,7 +567,7 @@ def warm(f=FETCH):
 
 
 # ---------- assemble
-def assemble(site_id, f=FETCH, now=None, sites=None, records=None, coastal=None):
+def assemble(site_id, f=FETCH, now=None, sites=None, records=None, coastal=None, budget=None):
     sites = sites or load_sites()
     records = records or load_records()
     coastal = load_coastal() if coastal is None else coastal
@@ -625,19 +650,28 @@ def assemble(site_id, f=FETCH, now=None, sites=None, records=None, coastal=None)
     else:
         withheld = ("Water readings are withheld for this ramp until its water classification is confirmed (%s). Forecasts and alerts do not depend on it."
                     % site["class_basis"])
-    with ThreadPoolExecutor(max_workers=len(jobs)) as ex:
-        futs = {k: ex.submit(fn) for k, fn in jobs.items()}
-        for k, fu in futs.items():
-            try:
-                r = fu.result(timeout=25)
-            except Exception:
-                r = None if k == "_hourly" else _unav(k, k.title(), "This source did not answer in time.")
-            if k == "_hourly" or r is None:
-                continue
-            for c in (r if isinstance(r, list) else [r]):
-                cards[c["key"]] = c
+    # Wait at most `budget` seconds in total. Unfinished jobs are not cancelled: they keep running, fill the shared
+    # cache, and are listed in "pending" so the page asks again. Nothing is filled in for them.
+    ex = ThreadPoolExecutor(max_workers=len(jobs))
+    futs = {k: ex.submit(fn) for k, fn in jobs.items()}
+    _wait(list(futs.values()), timeout=BUDGET if budget is None else budget)
+    ex.shutdown(wait=False)
+    pending = []
+    for k, fu in futs.items():
+        if not fu.done():
+            if k != "_hourly":
+                pending.append(k)
+            continue
+        try:
+            r = fu.result()
+        except Exception:
+            r = None if k == "_hourly" else _unav(k, k.title(), "This source did not answer in time.")
+        if k == "_hourly" or r is None:
+            continue
+        for c in (r if isinstance(r, list) else [r]):
+            cards[c["key"]] = c
     if hourly.get("h") and cards.get("forecast", {}).get("kind") in ("fcst", "stale"):
         cards["forecast"]["hourly"] = hourly["h"]
     lkg = sorted(u for u in f.lkg_used)
     return {"id": site_id, "generated": now.isoformat(), "water_class": site["water_class"], "tide_policy": site["tide_policy"],
-            "withheld": withheld, "cards": cards, "last_known_good": bool(lkg)}
+            "withheld": withheld, "cards": cards, "last_known_good": bool(lkg), "pending": sorted(pending)}
