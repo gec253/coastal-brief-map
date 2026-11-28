@@ -1,0 +1,1459 @@
+{
+ "reviewer": "Coastal Brief Scout",
+ "date": "2026-11-28",
+ "_about": "Human review decisions for the 79 pilot ramps (Ed, Nov 28, 2026). Readings never live here.",
+ "operators": {
+  "duke": {
+   "name": "Duke Energy",
+   "levels_url": "https://www.duke-energy.com/Community/Lakes/Lake-Levels",
+   "terms_url": "https://www.duke-energy.com/legal/terms-of-use",
+   "clause": "“All content on this Site ... is intended solely for your own internal residential or business use ... You may not reproduce (except as noted above), publish, transmit, distribute, display, modify, create derivative works from, sell or participate in any sale of or exploit in any way, in whole or in part, any Content or the Site.” (Terms of Use, last updated April 3, 2023)",
+   "verdict": "unavailable",
+   "reason": "No commercial-use or republication permission; automated access is also restricted. Show unavailable plus the official link."
+  },
+  "dominion": {
+   "name": "Dominion Energy",
+   "levels_url": "https://www.dominionenergy.com/about/lakes-and-recreation/lake-gaston-and-roanoke-rapids-lake-nc/gaston-dam-projected-flow-release",
+   "terms_url": null,
+   "clause": "Terms of use page not retrievable on 2026-11-28 (dominionenergy.com/legal/terms-of-use returned 404). The lake page says: “Current and historic flow release data can be obtained from the U.S. Geological Survey and U.S. Army Corps of Engineers.”",
+   "verdict": "unavailable",
+   "reason": "Permission not confirmed. Use public-domain USGS gauges where they exist (reviewed separately), otherwise unavailable plus the official link."
+  },
+  "tva": {
+   "name": "Tennessee Valley Authority",
+   "levels_url": "https://www.tva.com/environment/lake-levels",
+   "terms_url": "https://www.tva.com/Information",
+   "clause": "Listed on data.gov as dataset TVA-DATA-000002 “Lake Levels” (contact opendata@tva.gov). The site terms page (“Important Information Regarding the Use of This TVA Website”) could not be retrieved, so no reuse clause was confirmed.",
+   "verdict": "unavailable_pending",
+   "reason": "Likely usable (federal agency, open-data listing), but reuse terms are not yet confirmed in writing. Ask opendata@tva.gov before use. No pilot ramps affected."
+  },
+  "cube": {
+   "name": "Cube Hydro Carolinas (Yadkin Project)",
+   "levels_url": "https://cubecarolinas.com/lake-levels/",
+   "terms_url": null,
+   "clause": "No terms of use found (cubecarolinas.com/terms-of-use returned 404). The page says the information “is designed to provide accurate and timely information regarding current lake levels; however, this information is subject to change.”",
+   "verdict": "unavailable",
+   "reason": "No permission located. Show unavailable plus the official link. No pilot ramps affected."
+  }
+ },
+ "sites": {
+  "baa-eno-river": {
+   "decisions": [
+    {
+     "source": "USGS",
+     "id": "02087182",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "Falls Lake above dam: lake-wide pool elevation (62614 NGVD29 / 62615 NAVD88)."
+    },
+    {
+     "source": "USGS",
+     "id": "02087182",
+     "type": "water_temp",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "Water temperature at the dam, on the same lake."
+    },
+    {
+     "source": "USACE",
+     "id": "SAW-FALLS",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "USACE Wilmington District official midnight elevation (ft-msl, NGVD29); guide curve 251.5 ft. Validated read-only 2026-11-28.",
+     "name": "Falls Lake (USACE Wilmington District)"
+    },
+    {
+     "source": "USGS",
+     "id": "02087183",
+     "type": "below_dam_release",
+     "relation": "below_dam_release",
+     "status": "reviewed",
+     "note": "Release below Falls Dam. Separate reading; never lake elevation.",
+     "name": "NEUSE RIVER BELOW FALLS DAM NR FALLS, NC"
+    }
+   ],
+   "note": "Falls Lake ramp. Lake-wide gauge and USACE pool on the same lake; Eno River and other inflow gauges rejected.",
+   "reject_unlisted": "Not representative of this lake."
+  },
+  "baa-hickory-hill": {
+   "decisions": [
+    {
+     "source": "USGS",
+     "id": "02087182",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "Falls Lake above dam: lake-wide pool elevation (62614 NGVD29 / 62615 NAVD88)."
+    },
+    {
+     "source": "USGS",
+     "id": "02087182",
+     "type": "water_temp",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "Water temperature at the dam, on the same lake."
+    },
+    {
+     "source": "USACE",
+     "id": "SAW-FALLS",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "USACE Wilmington District official midnight elevation (ft-msl, NGVD29); guide curve 251.5 ft. Validated read-only 2026-11-28.",
+     "name": "Falls Lake (USACE Wilmington District)"
+    },
+    {
+     "source": "USGS",
+     "id": "02087183",
+     "type": "below_dam_release",
+     "relation": "below_dam_release",
+     "status": "reviewed",
+     "note": "Release below Falls Dam. Separate reading; never lake elevation.",
+     "name": "NEUSE RIVER BELOW FALLS DAM NR FALLS, NC"
+    }
+   ],
+   "note": "Falls Lake ramp. Lake-wide gauge and USACE pool on the same lake; Eno River and other inflow gauges rejected.",
+   "reject_unlisted": "Not representative of this lake."
+  },
+  "baa-ledge-rock": {
+   "decisions": [
+    {
+     "source": "USGS",
+     "id": "02087182",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "Falls Lake above dam: lake-wide pool elevation (62614 NGVD29 / 62615 NAVD88)."
+    },
+    {
+     "source": "USGS",
+     "id": "02087182",
+     "type": "water_temp",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "Water temperature at the dam, on the same lake."
+    },
+    {
+     "source": "USACE",
+     "id": "SAW-FALLS",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "USACE Wilmington District official midnight elevation (ft-msl, NGVD29); guide curve 251.5 ft. Validated read-only 2026-11-28.",
+     "name": "Falls Lake (USACE Wilmington District)"
+    },
+    {
+     "source": "USGS",
+     "id": "02087183",
+     "type": "below_dam_release",
+     "relation": "below_dam_release",
+     "status": "reviewed",
+     "note": "Release below Falls Dam. Separate reading; never lake elevation.",
+     "name": "NEUSE RIVER BELOW FALLS DAM NR FALLS, NC"
+    }
+   ],
+   "note": "Falls Lake ramp. Lake-wide gauge and USACE pool on the same lake; Eno River and other inflow gauges rejected.",
+   "reject_unlisted": "Not representative of this lake."
+  },
+  "baa-upper-bartons-creek": {
+   "decisions": [
+    {
+     "source": "USGS",
+     "id": "02087182",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "Falls Lake above dam: lake-wide pool elevation (62614 NGVD29 / 62615 NAVD88)."
+    },
+    {
+     "source": "USGS",
+     "id": "02087182",
+     "type": "water_temp",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "Water temperature at the dam, on the same lake."
+    },
+    {
+     "source": "USACE",
+     "id": "SAW-FALLS",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "USACE Wilmington District official midnight elevation (ft-msl, NGVD29); guide curve 251.5 ft. Validated read-only 2026-11-28.",
+     "name": "Falls Lake (USACE Wilmington District)"
+    },
+    {
+     "source": "USGS",
+     "id": "02087183",
+     "type": "below_dam_release",
+     "relation": "below_dam_release",
+     "status": "reviewed",
+     "note": "Release below Falls Dam. Separate reading; never lake elevation.",
+     "name": "NEUSE RIVER BELOW FALLS DAM NR FALLS, NC"
+    }
+   ],
+   "note": "Falls Lake ramp. Lake-wide gauge and USACE pool on the same lake; Eno River and other inflow gauges rejected.",
+   "reject_unlisted": "Not representative of this lake."
+  },
+  "parks-falls-bw-wells-campers": {
+   "decisions": [
+    {
+     "source": "USGS",
+     "id": "02087182",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "Falls Lake above dam: lake-wide pool elevation (62614 NGVD29 / 62615 NAVD88)."
+    },
+    {
+     "source": "USGS",
+     "id": "02087182",
+     "type": "water_temp",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "Water temperature at the dam, on the same lake."
+    },
+    {
+     "source": "USACE",
+     "id": "SAW-FALLS",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "USACE Wilmington District official midnight elevation (ft-msl, NGVD29); guide curve 251.5 ft. Validated read-only 2026-11-28.",
+     "name": "Falls Lake (USACE Wilmington District)"
+    },
+    {
+     "source": "USGS",
+     "id": "02087183",
+     "type": "below_dam_release",
+     "relation": "below_dam_release",
+     "status": "reviewed",
+     "note": "Release below Falls Dam. Separate reading; never lake elevation.",
+     "name": "NEUSE RIVER BELOW FALLS DAM NR FALLS, NC"
+    }
+   ],
+   "note": "Falls Lake ramp. Lake-wide gauge and USACE pool on the same lake; Eno River and other inflow gauges rejected.",
+   "reject_unlisted": "Not representative of this lake."
+  },
+  "parks-falls-highway-50": {
+   "decisions": [
+    {
+     "source": "USGS",
+     "id": "02087182",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "Falls Lake above dam: lake-wide pool elevation (62614 NGVD29 / 62615 NAVD88)."
+    },
+    {
+     "source": "USGS",
+     "id": "02087182",
+     "type": "water_temp",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "Water temperature at the dam, on the same lake."
+    },
+    {
+     "source": "USACE",
+     "id": "SAW-FALLS",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "USACE Wilmington District official midnight elevation (ft-msl, NGVD29); guide curve 251.5 ft. Validated read-only 2026-11-28.",
+     "name": "Falls Lake (USACE Wilmington District)"
+    },
+    {
+     "source": "USGS",
+     "id": "02087183",
+     "type": "below_dam_release",
+     "relation": "below_dam_release",
+     "status": "reviewed",
+     "note": "Release below Falls Dam. Separate reading; never lake elevation.",
+     "name": "NEUSE RIVER BELOW FALLS DAM NR FALLS, NC"
+    }
+   ],
+   "note": "Falls Lake ramp. Lake-wide gauge and USACE pool on the same lake; Eno River and other inflow gauges rejected.",
+   "reject_unlisted": "Not representative of this lake."
+  },
+  "parks-falls-holly-point-campers": {
+   "decisions": [
+    {
+     "source": "USGS",
+     "id": "02087182",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "Falls Lake above dam: lake-wide pool elevation (62614 NGVD29 / 62615 NAVD88)."
+    },
+    {
+     "source": "USGS",
+     "id": "02087182",
+     "type": "water_temp",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "Water temperature at the dam, on the same lake."
+    },
+    {
+     "source": "USACE",
+     "id": "SAW-FALLS",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "USACE Wilmington District official midnight elevation (ft-msl, NGVD29); guide curve 251.5 ft. Validated read-only 2026-11-28.",
+     "name": "Falls Lake (USACE Wilmington District)"
+    },
+    {
+     "source": "USGS",
+     "id": "02087183",
+     "type": "below_dam_release",
+     "relation": "below_dam_release",
+     "status": "reviewed",
+     "note": "Release below Falls Dam. Separate reading; never lake elevation.",
+     "name": "NEUSE RIVER BELOW FALLS DAM NR FALLS, NC"
+    }
+   ],
+   "note": "Falls Lake ramp. Lake-wide gauge and USACE pool on the same lake; Eno River and other inflow gauges rejected.",
+   "reject_unlisted": "Not representative of this lake.",
+   "jurisdiction": "inland",
+   "jurisdiction_basis": "Outside every coastal and joint polygon (retried query), Wake County: inland fishing waters."
+  },
+  "parks-falls-rolling-view": {
+   "decisions": [
+    {
+     "source": "USGS",
+     "id": "02087182",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "Falls Lake above dam: lake-wide pool elevation (62614 NGVD29 / 62615 NAVD88)."
+    },
+    {
+     "source": "USGS",
+     "id": "02087182",
+     "type": "water_temp",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "Water temperature at the dam, on the same lake."
+    },
+    {
+     "source": "USACE",
+     "id": "SAW-FALLS",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "USACE Wilmington District official midnight elevation (ft-msl, NGVD29); guide curve 251.5 ft. Validated read-only 2026-11-28.",
+     "name": "Falls Lake (USACE Wilmington District)"
+    },
+    {
+     "source": "USGS",
+     "id": "02087183",
+     "type": "below_dam_release",
+     "relation": "below_dam_release",
+     "status": "reviewed",
+     "note": "Release below Falls Dam. Separate reading; never lake elevation.",
+     "name": "NEUSE RIVER BELOW FALLS DAM NR FALLS, NC"
+    }
+   ],
+   "note": "Falls Lake ramp. Lake-wide gauge and USACE pool on the same lake; Eno River and other inflow gauges rejected.",
+   "reject_unlisted": "Not representative of this lake."
+  },
+  "parks-falls-beaverdam": {
+   "decisions": [
+    {
+     "source": "USGS",
+     "id": "02087182",
+     "type": "lake_elevation",
+     "relation": "related",
+     "status": "rejected",
+     "note": "",
+     "reject_reason": "Beaverdam Lake is a separate impoundment behind its own dam; the Falls Lake pool would cross a dam."
+    },
+    {
+     "source": "USGS",
+     "id": "02087182",
+     "type": "water_temp",
+     "relation": "related",
+     "status": "rejected",
+     "note": "",
+     "reject_reason": "Different impoundment (crosses the Beaverdam dam)."
+    },
+    {
+     "source": "USGS",
+     "id": "0208706575",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "Beaverdam Creek at dam: Beaverdam Lake pool elevation (62615, NAVD88).",
+     "datum": "NAVD88"
+    }
+   ],
+   "note": "Beaverdam Lake is separated from Falls Lake by a dam; only its own gauge is used.",
+   "reject_unlisted": "Not representative of Beaverdam Lake."
+  },
+  "baa-farrington-point": {
+   "decisions": [
+    {
+     "source": "USGS",
+     "id": "02098197",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "Jordan Lake at dam: lake-wide pool elevation. No water temperature sensor."
+    },
+    {
+     "source": "USACE",
+     "id": "SAW-JORDAN",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "USACE Wilmington District official midnight elevation (ft-msl, NGVD29); guide curve 216.0 ft. Validated read-only 2026-11-28.",
+     "name": "B. Everett Jordan Lake (USACE Wilmington District)"
+    },
+    {
+     "source": "USGS",
+     "id": "02098206",
+     "type": "below_dam_release",
+     "relation": "below_dam_release",
+     "status": "reviewed",
+     "note": "Below Jordan Dam: release plus local runoff, not official gate outflow. Separate reading; never lake elevation.",
+     "name": "HAW RIVER NEAR MONCURE, NC"
+    }
+   ],
+   "note": "Jordan Lake ramp. Lake-wide gauge and USACE pool; New Hope Creek and Haw River inflow gauges rejected for the lake.",
+   "reject_unlisted": "Not representative of this lake."
+  },
+  "parks-jordan-ebenezer": {
+   "decisions": [
+    {
+     "source": "USGS",
+     "id": "02098197",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "Jordan Lake at dam: lake-wide pool elevation. No water temperature sensor."
+    },
+    {
+     "source": "USACE",
+     "id": "SAW-JORDAN",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "USACE Wilmington District official midnight elevation (ft-msl, NGVD29); guide curve 216.0 ft. Validated read-only 2026-11-28.",
+     "name": "B. Everett Jordan Lake (USACE Wilmington District)"
+    },
+    {
+     "source": "USGS",
+     "id": "02098206",
+     "type": "below_dam_release",
+     "relation": "below_dam_release",
+     "status": "reviewed",
+     "note": "Below Jordan Dam: release plus local runoff, not official gate outflow. Separate reading; never lake elevation.",
+     "name": "HAW RIVER NEAR MONCURE, NC"
+    }
+   ],
+   "note": "Jordan Lake ramp. Lake-wide gauge and USACE pool; New Hope Creek and Haw River inflow gauges rejected for the lake.",
+   "reject_unlisted": "Not representative of this lake."
+  },
+  "parks-jordan-new-hope": {
+   "decisions": [
+    {
+     "source": "USGS",
+     "id": "02098197",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "Jordan Lake at dam: lake-wide pool elevation. No water temperature sensor."
+    },
+    {
+     "source": "USACE",
+     "id": "SAW-JORDAN",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "USACE Wilmington District official midnight elevation (ft-msl, NGVD29); guide curve 216.0 ft. Validated read-only 2026-11-28.",
+     "name": "B. Everett Jordan Lake (USACE Wilmington District)"
+    },
+    {
+     "source": "USGS",
+     "id": "02098206",
+     "type": "below_dam_release",
+     "relation": "below_dam_release",
+     "status": "reviewed",
+     "note": "Below Jordan Dam: release plus local runoff, not official gate outflow. Separate reading; never lake elevation.",
+     "name": "HAW RIVER NEAR MONCURE, NC"
+    }
+   ],
+   "note": "Jordan Lake ramp. Lake-wide gauge and USACE pool; New Hope Creek and Haw River inflow gauges rejected for the lake.",
+   "reject_unlisted": "Not representative of this lake."
+  },
+  "parks-jordan-poplar-point-campers": {
+   "decisions": [
+    {
+     "source": "USGS",
+     "id": "02098197",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "Jordan Lake at dam: lake-wide pool elevation. No water temperature sensor."
+    },
+    {
+     "source": "USACE",
+     "id": "SAW-JORDAN",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "USACE Wilmington District official midnight elevation (ft-msl, NGVD29); guide curve 216.0 ft. Validated read-only 2026-11-28.",
+     "name": "B. Everett Jordan Lake (USACE Wilmington District)"
+    },
+    {
+     "source": "USGS",
+     "id": "02098206",
+     "type": "below_dam_release",
+     "relation": "below_dam_release",
+     "status": "reviewed",
+     "note": "Below Jordan Dam: release plus local runoff, not official gate outflow. Separate reading; never lake elevation.",
+     "name": "HAW RIVER NEAR MONCURE, NC"
+    }
+   ],
+   "note": "Jordan Lake ramp. Lake-wide gauge and USACE pool; New Hope Creek and Haw River inflow gauges rejected for the lake.",
+   "reject_unlisted": "Not representative of this lake.",
+   "jurisdiction": "inland",
+   "jurisdiction_basis": "Outside every coastal and joint polygon (retried query), Chatham County: inland fishing waters."
+  },
+  "parks-jordan-seaforth": {
+   "decisions": [
+    {
+     "source": "USGS",
+     "id": "02098197",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "Jordan Lake at dam: lake-wide pool elevation. No water temperature sensor."
+    },
+    {
+     "source": "USACE",
+     "id": "SAW-JORDAN",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "USACE Wilmington District official midnight elevation (ft-msl, NGVD29); guide curve 216.0 ft. Validated read-only 2026-11-28.",
+     "name": "B. Everett Jordan Lake (USACE Wilmington District)"
+    },
+    {
+     "source": "USGS",
+     "id": "02098206",
+     "type": "below_dam_release",
+     "relation": "below_dam_release",
+     "status": "reviewed",
+     "note": "Below Jordan Dam: release plus local runoff, not official gate outflow. Separate reading; never lake elevation.",
+     "name": "HAW RIVER NEAR MONCURE, NC"
+    }
+   ],
+   "note": "Jordan Lake ramp. Lake-wide gauge and USACE pool; New Hope Creek and Haw River inflow gauges rejected for the lake.",
+   "reject_unlisted": "Not representative of this lake."
+  },
+  "parks-jordan-vista-point-sailboat": {
+   "decisions": [
+    {
+     "source": "USGS",
+     "id": "02098197",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "Jordan Lake at dam: lake-wide pool elevation. No water temperature sensor."
+    },
+    {
+     "source": "USACE",
+     "id": "SAW-JORDAN",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "USACE Wilmington District official midnight elevation (ft-msl, NGVD29); guide curve 216.0 ft. Validated read-only 2026-11-28.",
+     "name": "B. Everett Jordan Lake (USACE Wilmington District)"
+    },
+    {
+     "source": "USGS",
+     "id": "02098206",
+     "type": "below_dam_release",
+     "relation": "below_dam_release",
+     "status": "reviewed",
+     "note": "Below Jordan Dam: release plus local runoff, not official gate outflow. Separate reading; never lake elevation.",
+     "name": "HAW RIVER NEAR MONCURE, NC"
+    }
+   ],
+   "note": "Jordan Lake ramp. Lake-wide gauge and USACE pool; New Hope Creek and Haw River inflow gauges rejected for the lake.",
+   "reject_unlisted": "Not representative of this lake."
+  },
+  "usace-jordan-poes-ridge": {
+   "decisions": [
+    {
+     "source": "USGS",
+     "id": "02098197",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "Jordan Lake at dam: lake-wide pool elevation. No water temperature sensor."
+    },
+    {
+     "source": "USACE",
+     "id": "SAW-JORDAN",
+     "type": "lake_elevation",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "note": "USACE Wilmington District official midnight elevation (ft-msl, NGVD29); guide curve 216.0 ft. Validated read-only 2026-11-28.",
+     "name": "B. Everett Jordan Lake (USACE Wilmington District)"
+    },
+    {
+     "source": "USGS",
+     "id": "02098206",
+     "type": "below_dam_release",
+     "relation": "below_dam_release",
+     "status": "reviewed",
+     "note": "Below Jordan Dam: release plus local runoff, not official gate outflow. Separate reading; never lake elevation.",
+     "name": "HAW RIVER NEAR MONCURE, NC"
+    }
+   ],
+   "jurisdiction": "inland",
+   "jurisdiction_basis": "Jordan Lake, Chatham County, far from any coastal or joint boundary: inland fishing waters.",
+   "note": "Address-only listing: lake-wide stations apply by waterbody; no NWS point until official coordinates exist."
+  },
+  "baa-coxs-ferry": {
+   "accept": [
+    "02088119",
+    "02089000"
+   ],
+   "note": "River ramp: Same named river, no dam between ramp and gauge, within 25 miles.",
+   "reject_unlisted": "Farther gauge on the same river; the nearer gauges on each side are used."
+  },
+  "baa-goldsboro": {
+   "accept": [
+    "02089000"
+   ],
+   "note": "River ramp: Same named river, no dam between ramp and gauge, within 25 miles.",
+   "reject_unlisted": "Farther gauge on the same river; the nearer gauges on each side are used."
+  },
+  "baa-kinston": {
+   "accept": [
+    "02089500"
+   ],
+   "note": "River ramp: Same named river, no dam between ramp and gauge, within 25 miles.",
+   "reject_unlisted": "Farther gauge on the same river; the nearer gauges on each side are used."
+  },
+  "baa-prices-landing": {
+   "accept": [
+    "02089000",
+    "02088119"
+   ],
+   "note": "River ramp: Same named river, no dam between ramp and gauge, within 25 miles.",
+   "reject_unlisted": "Farther gauge on the same river; the nearer gauges on each side are used."
+  },
+  "baa-richardsons-bridge": {
+   "accept": [
+    "02088119",
+    "02089000"
+   ],
+   "note": "River ramp: Same named river, no dam between ramp and gauge, within 25 miles.",
+   "reject_unlisted": "Farther gauge on the same river; the nearer gauges on each side are used."
+  },
+  "baa-seven-springs": {
+   "accept": [
+    "02089000"
+   ],
+   "note": "River ramp: Same named river, no dam between ramp and gauge, within 25 miles.",
+   "reject_unlisted": "Farther gauge on the same river; the nearer gauges on each side are used."
+  },
+  "baa-smithfield": {
+   "accept": [
+    "02087500",
+    "02087570"
+   ],
+   "note": "River ramp: Same named river, no dam between ramp and gauge, within 25 miles.",
+   "reject_unlisted": "Farther gauge on the same river; the nearer gauges on each side are used."
+  },
+  "baa-stevens-mill": {
+   "accept": [
+    "02088119",
+    "02089000"
+   ],
+   "note": "River ramp: Same named river, no dam between ramp and gauge, within 25 miles.",
+   "reject_unlisted": "Farther gauge on the same river; the nearer gauges on each side are used."
+  },
+  "baa-pollocksville": {
+   "accept": [
+    "02092554"
+   ],
+   "note": "River ramp: Same named river, no dam between ramp and gauge, within 25 miles.",
+   "reject_unlisted": "Farther gauge on the same river; the nearer gauges on each side are used."
+  },
+  "baa-trenton": {
+   "accept": [
+    "02092500",
+    "02092554"
+   ],
+   "note": "River ramp: Same named river, no dam between ramp and gauge, within 25 miles.",
+   "reject_unlisted": "Farther gauge on the same river; the nearer gauges on each side are used."
+  },
+  "baa-maple-cypress": {
+   "accept": [
+    "02091814"
+   ],
+   "note": "River ramp: Same named river, no dam between ramp and gauge, within 25 miles.",
+   "reject_unlisted": "Farther gauge on the same river; the nearer gauges on each side are used.",
+   "water_class": "river",
+   "class_basis": "Neuse River at the Fort Barnwell gauge, above the wind-driven estuary; inland fishing waters.",
+   "tide_policy": "omit_freshwater",
+   "tide_basis": "Freshwater river reach; no CO-OPS station on this reach."
+  },
+  "baa-beaufort": {
+   "water_class": "tidal_lunar",
+   "class_basis": "Inlet-connected water with regular lunar tides: Taylor Creek at Beaufort.",
+   "tide_policy": "predictions",
+   "tide_basis": "Same-water CO-OPS station; predicted range 2.84 ft.",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656518",
+     "name": "Beaufort, Taylor Creek",
+     "type": "tide_predictions",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "distance_mi": 0.8,
+     "note": "Taylor Creek at Beaufort. CO-OPS subordinate station; predicted mean range 2.84 ft (Nov 28 to Dec 4, 2026)."
+    }
+   ],
+   "note": "Tide station on the same water body."
+  },
+  "baa-castle-hayne": {
+   "water_class": "tidal_lunar",
+   "class_basis": "Inlet-connected water with regular lunar tides: Northeast Cape Fear River at Castle Hayne.",
+   "tide_policy": "predictions",
+   "tide_basis": "Same-water CO-OPS station; predicted range 1.89 ft.",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "TEC2863",
+     "name": "Castle Hayne, Northeast River",
+     "type": "tide_predictions",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "distance_mi": 2.3,
+     "note": "Northeast Cape Fear River at Castle Hayne. CO-OPS subordinate station; predicted mean range 1.89 ft (Nov 28 to Dec 4, 2026)."
+    }
+   ],
+   "note": "Tide station on the same water body."
+  },
+  "baa-dram-tree-park": {
+   "water_class": "tidal_lunar",
+   "class_basis": "Inlet-connected water with regular lunar tides: Cape Fear River at Wilmington.",
+   "tide_policy": "predictions",
+   "tide_basis": "Same-water CO-OPS station; predicted range 4.51 ft.",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658120",
+     "name": "Wilmington",
+     "type": "tide_predictions",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "distance_mi": 0.2,
+     "note": "Cape Fear River at Wilmington. CO-OPS harmonic reference station; predicted mean range 4.51 ft (Nov 28 to Dec 4, 2026)."
+    }
+   ],
+   "note": "Tide station on the same water body."
+  },
+  "baa-gordon-s-myers-at-cedar-point": {
+   "water_class": "tidal_lunar",
+   "class_basis": "Inlet-connected water with regular lunar tides: White Oak River mouth / ICW at Swansboro.",
+   "tide_policy": "predictions",
+   "tide_basis": "Same-water CO-OPS station; predicted range 1.49 ft.",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656613",
+     "name": "Swansboro, East Corbett Ave. Bridge",
+     "type": "tide_predictions",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "distance_mi": 0.8,
+     "note": "White Oak River mouth / ICW at Swansboro. CO-OPS harmonic reference station; predicted mean range 1.49 ft (Nov 28 to Dec 4, 2026)."
+    }
+   ],
+   "note": "Tide station on the same water body."
+  },
+  "baa-morehead-city": {
+   "water_class": "tidal_lunar",
+   "class_basis": "Inlet-connected water with regular lunar tides: Bogue Sound / ICW at Morehead City.",
+   "tide_policy": "predictions",
+   "tide_basis": "Same-water CO-OPS station; predicted range 1.97 ft.",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "TEC2831",
+     "name": "N.C. State Fisheries",
+     "type": "tide_predictions",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "distance_mi": 0.4,
+     "note": "Bogue Sound / ICW at Morehead City. CO-OPS subordinate station; predicted mean range 1.97 ft (Nov 28 to Dec 4, 2026)."
+    }
+   ],
+   "note": "Tide station on the same water body."
+  },
+  "baa-oyster-creek": {
+   "water_class": "tidal_lunar",
+   "class_basis": "Inlet-connected water with regular lunar tides: Core Sound at Davis.",
+   "tide_policy": "predictions",
+   "tide_basis": "Same-water CO-OPS station; predicted range 1.05 ft.",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656201",
+     "name": "Davis, Core Sound",
+     "type": "tide_predictions",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "distance_mi": 1.5,
+     "note": "Core Sound at Davis. CO-OPS harmonic reference station; predicted mean range 1.05 ft (Nov 28 to Dec 4, 2026)."
+    }
+   ],
+   "note": "Tide station on the same water body."
+  },
+  "baa-sneads-ferry": {
+   "water_class": "tidal_lunar",
+   "class_basis": "Inlet-connected water with regular lunar tides: New River at Sneads Ferry; small range, shown as predicted only.",
+   "tide_policy": "predictions",
+   "tide_basis": "Same-water CO-OPS station; predicted range 0.55 ft.",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8657002",
+     "name": "Sneads Ferry, New River",
+     "type": "tide_predictions",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "distance_mi": 1.1,
+     "note": "New River at Sneads Ferry; small range, shown as predicted only. CO-OPS harmonic reference station; predicted mean range 0.55 ft (Nov 28 to Dec 4, 2026)."
+    }
+   ],
+   "note": "Tide station on the same water body."
+  },
+  "baa-trails-end": {
+   "water_class": "tidal_lunar",
+   "class_basis": "Inlet-connected water with regular lunar tides: ICW, same reach as Shinn Point.",
+   "tide_policy": "predictions",
+   "tide_basis": "Same-water CO-OPS station; predicted range 3.95 ft.",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658145",
+     "name": "Shinn Point, ICWW",
+     "type": "tide_predictions",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "distance_mi": 5.0,
+     "note": "ICW, same reach as Shinn Point. CO-OPS harmonic reference station; predicted mean range 3.95 ft (Nov 28 to Dec 4, 2026)."
+    }
+   ],
+   "note": "Tide station on the same water body."
+  },
+  "baa-west-beaufort": {
+   "water_class": "tidal_lunar",
+   "class_basis": "Inlet-connected water with regular lunar tides: Newport River / Gallant Channel.",
+   "tide_policy": "predictions",
+   "tide_basis": "Same-water CO-OPS station; predicted range 3.02 ft.",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656451",
+     "name": "Gallant Channel",
+     "type": "tide_predictions",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "distance_mi": 0.3,
+     "note": "Newport River / Gallant Channel. CO-OPS subordinate station; predicted mean range 3.02 ft (Nov 28 to Dec 4, 2026)."
+    }
+   ],
+   "note": "Tide station on the same water body."
+  },
+  "baa-wrightsville-beach": {
+   "water_class": "tidal_lunar",
+   "class_basis": "Inlet-connected water with regular lunar tides: ICW at Shinn Point.",
+   "tide_policy": "predictions",
+   "tide_basis": "Same-water CO-OPS station; predicted range 3.95 ft.",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658145",
+     "name": "Shinn Point, ICWW",
+     "type": "tide_predictions",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "distance_mi": 0.1,
+     "note": "ICW at Shinn Point. CO-OPS harmonic reference station; predicted mean range 3.95 ft (Nov 28 to Dec 4, 2026)."
+    }
+   ],
+   "note": "Tide station on the same water body."
+  },
+  "local-atlantic-beach-moonlight-drive": {
+   "water_class": "tidal_lunar",
+   "class_basis": "Inlet-connected water with regular lunar tides: Bogue Sound at the Atlantic Beach bridge.",
+   "tide_policy": "predictions",
+   "tide_basis": "Same-water CO-OPS station; predicted range 2.39 ft.",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656499",
+     "name": "Atlantic Beach Bridge",
+     "type": "tide_predictions",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "distance_mi": 0.7,
+     "note": "Bogue Sound at the Atlantic Beach bridge. CO-OPS subordinate station; predicted mean range 2.39 ft (Nov 28 to Dec 4, 2026)."
+    }
+   ],
+   "note": "Tide station on the same water body."
+  },
+  "local-atlantic-beach-west-bogue-sound": {
+   "water_class": "tidal_lunar",
+   "class_basis": "Inlet-connected water with regular lunar tides: Bogue Sound at the Atlantic Beach bridge.",
+   "tide_policy": "predictions",
+   "tide_basis": "Same-water CO-OPS station; predicted range 2.39 ft.",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656499",
+     "name": "Atlantic Beach Bridge",
+     "type": "tide_predictions",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "distance_mi": 1.1,
+     "note": "Bogue Sound at the Atlantic Beach bridge. CO-OPS subordinate station; predicted mean range 2.39 ft (Nov 28 to Dec 4, 2026)."
+    }
+   ],
+   "note": "Tide station on the same water body."
+  },
+  "baa-federal-point": {
+   "water_class": "tidal_lunar",
+   "class_basis": "Inlet-connected water with regular lunar tides: Cape Fear River at Federal Point.",
+   "tide_policy": "predictions",
+   "tide_basis": "Same-water CO-OPS station; predicted range 4.24 ft.",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658715",
+     "name": "Federal Point",
+     "type": "tide_predictions",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "distance_mi": 0.2,
+     "note": "Cape Fear River at Federal Point. CO-OPS subordinate station; predicted mean range 4.24 ft (Nov 28 to Dec 4, 2026)."
+    }
+   ],
+   "note": "Tide station on the same water body."
+  },
+  "baa-straits-landing": {
+   "water_class": "tidal_lunar",
+   "class_basis": "Inlet-connected water with regular lunar tides: The Straits at the Harkers Island bridge.",
+   "tide_policy": "predictions",
+   "tide_basis": "Same-water CO-OPS station; predicted range 1.56 ft.",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656503",
+     "name": "Harkers Island Bridge",
+     "type": "tide_predictions",
+     "relation": "same_waterbody",
+     "status": "reviewed",
+     "distance_mi": 0.5,
+     "note": "The Straits at the Harkers Island bridge. CO-OPS subordinate station; predicted mean range 1.56 ft (Nov 28 to Dec 4, 2026)."
+    }
+   ],
+   "note": "Tide station on the same water body."
+  },
+  "baa-avalon-beach": {
+   "water_class": "estuary_wind_driven",
+   "class_basis": "Kitty Hawk Bay (Albemarle system). Albemarle-Pamlico system: small lunar tides, wind dominates water level (USGS WRI 79-46; APNEP).",
+   "tide_policy": "omit_wind_driven",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8651605",
+     "name": "Kitty Hawk (ocean)",
+     "type": "tide_predictions",
+     "relation": "related",
+     "status": "rejected",
+     "distance_mi": 4.8,
+     "note": "CO-OPS subordinate station; predicted mean range 3.09 ft (Nov 28 to Dec 4, 2026).",
+     "reject_reason": "Ocean station on the other side of the barrier island: different water."
+    }
+   ],
+   "note": "Wind-driven water: no tide tables; observed water level and wind are prioritized in Phase 3B.",
+   "reject_unlisted": "Upstream freshwater stream gauge; not the estuary's local water level.",
+   "tide_basis": "Nearest CO-OPS prediction station 8651605 (Kitty Hawk (ocean)) predicts a mean range of 3.09 ft; predictions not shown on wind-driven water."
+  },
+  "baa-bowsertown-road": {
+   "water_class": "estuary_wind_driven",
+   "class_basis": "Croatan Sound. Albemarle-Pamlico system: small lunar tides, wind dominates water level (USGS WRI 79-46; APNEP).",
+   "tide_policy": "omit_wind_driven",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8652437",
+     "name": "Oyster Creek, Croatan Sound",
+     "type": "tide_predictions",
+     "relation": "related",
+     "status": "rejected",
+     "distance_mi": 3.9,
+     "note": "CO-OPS harmonic reference station; predicted mean range 0.27 ft (Nov 28 to Dec 4, 2026).",
+     "reject_reason": "Wind-driven water: astronomical predictions are not representative (Ed decision 2)."
+    }
+   ],
+   "note": "Wind-driven water: no tide tables; observed water level and wind are prioritized in Phase 3B.",
+   "reject_unlisted": "Upstream freshwater stream gauge; not the estuary's local water level.",
+   "tide_basis": "Nearest CO-OPS prediction station 8652437 (Oyster Creek, Croatan Sound) predicts a mean range of 0.27 ft; predictions not shown on wind-driven water."
+  },
+  "baa-manns-harbor": {
+   "water_class": "estuary_wind_driven",
+   "class_basis": "Croatan Sound. Albemarle-Pamlico system: small lunar tides, wind dominates water level (USGS WRI 79-46; APNEP).",
+   "tide_policy": "omit_wind_driven",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8652247",
+     "name": "Manns Harbor, Croatan Sound",
+     "type": "tide_predictions",
+     "relation": "related",
+     "status": "rejected",
+     "distance_mi": 0.5,
+     "note": "CO-OPS harmonic reference station; predicted mean range 0.17 ft (Nov 28 to Dec 4, 2026).",
+     "reject_reason": "Wind-driven water: astronomical predictions are not representative (Ed decision 2)."
+    }
+   ],
+   "note": "Wind-driven water: no tide tables; observed water level and wind are prioritized in Phase 3B.",
+   "reject_unlisted": "Upstream freshwater stream gauge; not the estuary's local water level.",
+   "tide_basis": "Nearest CO-OPS prediction station 8652247 (Manns Harbor, Croatan Sound) predicts a mean range of 0.17 ft; predictions not shown on wind-driven water."
+  },
+  "baa-stumpy-point": {
+   "water_class": "estuary_wind_driven",
+   "class_basis": "Pamlico Sound side. Albemarle-Pamlico system: small lunar tides, wind dominates water level (USGS WRI 79-46; APNEP).",
+   "tide_policy": "omit_wind_driven",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8652547",
+     "name": "Roanoke Marshes Light, Croatan Sound",
+     "type": "tide_predictions",
+     "relation": "related",
+     "status": "rejected",
+     "distance_mi": 8.7,
+     "note": "CO-OPS harmonic reference station; predicted mean range 0.28 ft (Nov 28 to Dec 4, 2026).",
+     "reject_reason": "Wind-driven water: astronomical predictions are not representative (Ed decision 2)."
+    }
+   ],
+   "note": "Wind-driven water: no tide tables; observed water level and wind are prioritized in Phase 3B.",
+   "reject_unlisted": "Upstream freshwater stream gauge; not the estuary's local water level.",
+   "tide_basis": "Nearest CO-OPS prediction station 8652547 (Roanoke Marshes Light, Croatan Sound) predicts a mean range of 0.28 ft; predictions not shown on wind-driven water."
+  },
+  "baa-washington-baum-bridge": {
+   "water_class": "estuary_wind_driven",
+   "class_basis": "Roanoke Sound. Albemarle-Pamlico system: small lunar tides, wind dominates water level (USGS WRI 79-46; APNEP).",
+   "tide_policy": "omit_wind_driven",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8652226",
+     "name": "Jennettes Pier, Nags Head (ocean)",
+     "type": "tide_predictions",
+     "relation": "related",
+     "status": "rejected",
+     "distance_mi": 2.8,
+     "note": "CO-OPS subordinate station; predicted mean range 3.19 ft (Nov 28 to Dec 4, 2026).",
+     "reject_reason": "Ocean pier, not Roanoke Sound."
+    }
+   ],
+   "note": "Wind-driven water: no tide tables; observed water level and wind are prioritized in Phase 3B.",
+   "reject_unlisted": "Upstream freshwater stream gauge; not the estuary's local water level.",
+   "tide_basis": "Nearest CO-OPS prediction station 8652226 (Jennettes Pier, Nags Head (ocean)) predicts a mean range of 3.19 ft; predictions not shown on wind-driven water."
+  },
+  "baa-rodanthe": {
+   "water_class": "estuary_wind_driven",
+   "class_basis": "Pamlico Sound. Albemarle-Pamlico system: small lunar tides, wind dominates water level (USGS WRI 79-46; APNEP).",
+   "tide_policy": "omit_wind_driven",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8653215",
+     "name": "Rodanthe, Pamlico Sound",
+     "type": "tide_predictions",
+     "relation": "related",
+     "status": "rejected",
+     "distance_mi": 0.1,
+     "note": "CO-OPS harmonic reference station; predicted mean range 0.37 ft (Nov 28 to Dec 4, 2026).",
+     "reject_reason": "Wind-driven water: astronomical predictions are not representative (Ed decision 2)."
+    }
+   ],
+   "note": "Wind-driven water: no tide tables; observed water level and wind are prioritized in Phase 3B.",
+   "reject_unlisted": "Upstream freshwater stream gauge; not the estuary's local water level.",
+   "tide_basis": "Nearest CO-OPS prediction station 8653215 (Rodanthe, Pamlico Sound) predicts a mean range of 0.37 ft; predictions not shown on wind-driven water."
+  },
+  "baa-cedar-island": {
+   "water_class": "estuary_wind_driven",
+   "class_basis": "Pamlico Sound at Cedar Island. Albemarle-Pamlico system: small lunar tides, wind dominates water level (USGS WRI 79-46; APNEP).",
+   "tide_policy": "omit_wind_driven",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8655151",
+     "name": "Cedar Island",
+     "type": "tide_predictions",
+     "relation": "related",
+     "status": "rejected",
+     "distance_mi": 0.1,
+     "note": "CO-OPS harmonic reference station; predicted mean range 0.07 ft (Nov 28 to Dec 4, 2026).",
+     "reject_reason": "Wind-driven water: astronomical predictions are not representative (Ed decision 2)."
+    }
+   ],
+   "note": "Wind-driven water: no tide tables; observed water level and wind are prioritized in Phase 3B.",
+   "reject_unlisted": "Upstream freshwater stream gauge; not the estuary's local water level.",
+   "tide_basis": "Nearest CO-OPS prediction station 8655151 (Cedar Island) predicts a mean range of 0.07 ft; predictions not shown on wind-driven water."
+  },
+  "baa-mashoes": {
+   "water_class": "estuary_wind_driven",
+   "class_basis": "East Lake, Albemarle Sound system. Albemarle-Pamlico system: small lunar tides, wind dominates water level (USGS WRI 79-46; APNEP).",
+   "tide_policy": "omit_wind_driven",
+   "decisions": [],
+   "note": "Wind-driven water: no tide tables; observed water level and wind are prioritized in Phase 3B.",
+   "reject_unlisted": "Upstream freshwater stream gauge; not the estuary's local water level.",
+   "tide_basis": "Albemarle-Pamlico estuary (USGS WRI 79-46); Oriental, Neuse River CO-OPS predicts a mean range of 0.15 ft."
+  },
+  "baa-salters-creek": {
+   "water_class": "estuary_wind_driven",
+   "class_basis": "Northern Core Sound opening to Pamlico Sound. Albemarle-Pamlico system: small lunar tides, wind dominates water level (USGS WRI 79-46; APNEP).",
+   "tide_policy": "omit_wind_driven",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8655875",
+     "name": "Sea Level",
+     "type": "tide_predictions",
+     "relation": "related",
+     "status": "rejected",
+     "distance_mi": 3.4,
+     "note": "CO-OPS harmonic reference station; predicted mean range 0.56 ft (Nov 28 to Dec 4, 2026).",
+     "reject_reason": "Wind-driven water: astronomical predictions are not representative (Ed decision 2)."
+    }
+   ],
+   "note": "Wind-driven water: no tide tables; observed water level and wind are prioritized in Phase 3B.",
+   "reject_unlisted": "Upstream freshwater stream gauge; not the estuary's local water level.",
+   "tide_basis": "Nearest CO-OPS prediction station 8655875 (Sea Level) predicts a mean range of 0.56 ft; predictions not shown on wind-driven water."
+  },
+  "baa-oriental": {
+   "water_class": "estuary_wind_driven",
+   "class_basis": "Neuse River estuary at Oriental. Albemarle-Pamlico system: small lunar tides, wind dominates water level (USGS WRI 79-46; APNEP).",
+   "tide_policy": "omit_wind_driven",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8655133",
+     "name": "Oriental, Neuse River",
+     "type": "tide_predictions",
+     "relation": "related",
+     "status": "rejected",
+     "distance_mi": 0.5,
+     "note": "CO-OPS harmonic reference station; predicted mean range 0.15 ft (Nov 28 to Dec 4, 2026).",
+     "reject_reason": "Wind-driven water: astronomical predictions are not representative (Ed decision 2)."
+    }
+   ],
+   "note": "Wind-driven water: no tide tables; observed water level and wind are prioritized in Phase 3B.",
+   "reject_unlisted": "Upstream freshwater stream gauge; not the estuary's local water level.",
+   "tide_basis": "Nearest CO-OPS prediction station 8655133 (Oriental, Neuse River) predicts a mean range of 0.15 ft; predictions not shown on wind-driven water."
+  },
+  "baa-brices-creek": {
+   "water_class": "estuary_wind_driven",
+   "class_basis": "Neuse/Trent estuary at New Bern. Albemarle-Pamlico system: small lunar tides, wind dominates water level (USGS WRI 79-46; APNEP).",
+   "tide_policy": "omit_wind_driven",
+   "decisions": [],
+   "note": "Wind-driven water: no tide tables; observed water level and wind are prioritized in Phase 3B.",
+   "reject_unlisted": "Upstream freshwater stream gauge; not the estuary's local water level.",
+   "tide_basis": "Albemarle-Pamlico estuary (USGS WRI 79-46); Oriental, Neuse River CO-OPS predicts a mean range of 0.15 ft."
+  },
+  "baa-dawson-creek": {
+   "water_class": "estuary_wind_driven",
+   "class_basis": "Neuse River estuary. Albemarle-Pamlico system: small lunar tides, wind dominates water level (USGS WRI 79-46; APNEP).",
+   "tide_policy": "omit_wind_driven",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8655133",
+     "name": "Oriental, Neuse River",
+     "type": "tide_predictions",
+     "relation": "related",
+     "status": "rejected",
+     "distance_mi": 3.7,
+     "note": "CO-OPS harmonic reference station; predicted mean range 0.15 ft (Nov 28 to Dec 4, 2026).",
+     "reject_reason": "Wind-driven water: astronomical predictions are not representative (Ed decision 2)."
+    }
+   ],
+   "note": "Wind-driven water: no tide tables; observed water level and wind are prioritized in Phase 3B.",
+   "reject_unlisted": "Upstream freshwater stream gauge; not the estuary's local water level.",
+   "tide_basis": "Nearest CO-OPS prediction station 8655133 (Oriental, Neuse River) predicts a mean range of 0.15 ft; predictions not shown on wind-driven water."
+  },
+  "baa-lees-landing": {
+   "water_class": "estuary_wind_driven",
+   "class_basis": "Upper Broad Creek, Neuse estuary. Albemarle-Pamlico system: small lunar tides, wind dominates water level (USGS WRI 79-46; APNEP).",
+   "tide_policy": "omit_wind_driven",
+   "decisions": [],
+   "note": "Wind-driven water: no tide tables; observed water level and wind are prioritized in Phase 3B.",
+   "reject_unlisted": "Upstream freshwater stream gauge; not the estuary's local water level.",
+   "tide_basis": "Albemarle-Pamlico estuary (USGS WRI 79-46); Oriental, Neuse River CO-OPS predicts a mean range of 0.15 ft."
+  },
+  "baa-percy-berry": {
+   "water_class": "estuary_wind_driven",
+   "class_basis": "Hancock Creek, Neuse estuary. Albemarle-Pamlico system: small lunar tides, wind dominates water level (USGS WRI 79-46; APNEP).",
+   "tide_policy": "omit_wind_driven",
+   "decisions": [],
+   "note": "Wind-driven water: no tide tables; observed water level and wind are prioritized in Phase 3B.",
+   "reject_unlisted": "Upstream freshwater stream gauge; not the estuary's local water level.",
+   "tide_basis": "Albemarle-Pamlico estuary (USGS WRI 79-46); Oriental, Neuse River CO-OPS predicts a mean range of 0.15 ft."
+  },
+  "baa-slocum-creek": {
+   "water_class": "estuary_wind_driven",
+   "class_basis": "Slocum Creek, Neuse estuary. Albemarle-Pamlico system: small lunar tides, wind dominates water level (USGS WRI 79-46; APNEP).",
+   "tide_policy": "omit_wind_driven",
+   "decisions": [],
+   "note": "Wind-driven water: no tide tables; observed water level and wind are prioritized in Phase 3B.",
+   "reject_unlisted": "Upstream freshwater stream gauge; not the estuary's local water level.",
+   "tide_basis": "Albemarle-Pamlico estuary (USGS WRI 79-46); Oriental, Neuse River CO-OPS predicts a mean range of 0.15 ft."
+  },
+  "baa-cool-springs": {
+   "water_class": "estuary_wind_driven",
+   "class_basis": "Swift Creek at the Neuse estuary. Albemarle-Pamlico system: small lunar tides, wind dominates water level (USGS WRI 79-46; APNEP).",
+   "tide_policy": "omit_wind_driven",
+   "decisions": [],
+   "note": "Wind-driven water: no tide tables; observed water level and wind are prioritized in Phase 3B.",
+   "reject_unlisted": "Upstream freshwater stream gauge; not the estuary's local water level.",
+   "tide_basis": "Albemarle-Pamlico estuary (USGS WRI 79-46); Oriental, Neuse River CO-OPS predicts a mean range of 0.15 ft."
+  },
+  "baa-bridgeton": {
+   "water_class": "estuary_wind_driven",
+   "class_basis": "Neuse River estuary at New Bern. Albemarle-Pamlico system: small lunar tides, wind dominates water level (USGS WRI 79-46; APNEP).",
+   "tide_policy": "omit_wind_driven",
+   "decisions": [],
+   "note": "Wind-driven water: no tide tables; observed water level and wind are prioritized in Phase 3B.",
+   "reject_unlisted": "Upstream freshwater stream gauge; not the estuary's local water level.",
+   "tide_basis": "Albemarle-Pamlico estuary (USGS WRI 79-46); Oriental, Neuse River CO-OPS predicts a mean range of 0.15 ft."
+  },
+  "local-newbern-union-point": {
+   "water_class": "estuary_wind_driven",
+   "class_basis": "Neuse/Trent confluence at New Bern. Albemarle-Pamlico system: small lunar tides, wind dominates water level (USGS WRI 79-46; APNEP).",
+   "tide_policy": "omit_wind_driven",
+   "decisions": [],
+   "note": "Wind-driven water: no tide tables; observed water level and wind are prioritized in Phase 3B.",
+   "reject_unlisted": "Upstream freshwater stream gauge; not the estuary's local water level.",
+   "tide_basis": "Albemarle-Pamlico estuary (USGS WRI 79-46); Oriental, Neuse River CO-OPS predicts a mean range of 0.15 ft."
+  },
+  "local-newbern-glenburnie": {
+   "water_class": "estuary_wind_driven",
+   "class_basis": "Neuse River estuary at New Bern. Albemarle-Pamlico system: small lunar tides, wind dominates water level (USGS WRI 79-46; APNEP).",
+   "tide_policy": "omit_wind_driven",
+   "decisions": [],
+   "note": "Wind-driven water: no tide tables; observed water level and wind are prioritized in Phase 3B.",
+   "reject_unlisted": "Upstream freshwater stream gauge; not the estuary's local water level.",
+   "tide_basis": "Albemarle-Pamlico estuary (USGS WRI 79-46); Oriental, Neuse River CO-OPS predicts a mean range of 0.15 ft."
+  },
+  "local-newbern-lawson-creek-1": {
+   "water_class": "estuary_wind_driven",
+   "class_basis": "Trent River estuary at New Bern. Albemarle-Pamlico system: small lunar tides, wind dominates water level (USGS WRI 79-46; APNEP).",
+   "tide_policy": "omit_wind_driven",
+   "decisions": [],
+   "note": "Wind-driven water: no tide tables; observed water level and wind are prioritized in Phase 3B.",
+   "reject_unlisted": "Upstream freshwater stream gauge; not the estuary's local water level.",
+   "tide_basis": "Albemarle-Pamlico estuary (USGS WRI 79-46); Oriental, Neuse River CO-OPS predicts a mean range of 0.15 ft."
+  },
+  "local-newbern-lawson-creek-2": {
+   "water_class": "estuary_wind_driven",
+   "class_basis": "Trent River estuary at New Bern. Albemarle-Pamlico system: small lunar tides, wind dominates water level (USGS WRI 79-46; APNEP).",
+   "tide_policy": "omit_wind_driven",
+   "decisions": [],
+   "note": "Wind-driven water: no tide tables; observed water level and wind are prioritized in Phase 3B.",
+   "reject_unlisted": "Upstream freshwater stream gauge; not the estuary's local water level.",
+   "tide_basis": "Albemarle-Pamlico estuary (USGS WRI 79-46); Oriental, Neuse River CO-OPS predicts a mean range of 0.15 ft."
+  },
+  "baa-emerald-isle": {
+   "water_class": "unresolved",
+   "class_basis": "ICW at the west end of Bogue Sound: nearest stations are Bogue Inlet (in the inlet) and Swansboro; same-water choice needs a local check.",
+   "tide_policy": "unresolved",
+   "tide_basis": "No tide predictions until the classification is confirmed.",
+   "status": "needs_followup",
+   "note": "ICW at the west end of Bogue Sound: nearest stations are Bogue Inlet (in the inlet) and Swansboro; same-water choice needs a local check."
+  },
+  "baa-hampstead": {
+   "water_class": "unresolved",
+   "class_basis": "ICW / Topsail Sound: Hampstead CO-OPS station is 7 mi away; same reach not confirmed.",
+   "tide_policy": "unresolved",
+   "tide_basis": "No tide predictions until the classification is confirmed.",
+   "status": "needs_followup",
+   "note": "ICW / Topsail Sound: Hampstead CO-OPS station is 7 mi away; same reach not confirmed."
+  },
+  "baa-shell-rock-landing": {
+   "water_class": "unresolved",
+   "class_basis": "ICW in Onslow County between Swansboro and New River: no station confirmed on this reach.",
+   "tide_policy": "unresolved",
+   "tide_basis": "No tide predictions until the classification is confirmed.",
+   "status": "needs_followup",
+   "note": "ICW in Onslow County between Swansboro and New River: no station confirmed on this reach."
+  },
+  "baa-snows-cut": {
+   "water_class": "unresolved",
+   "class_basis": "Snow's Cut joins the ICW to the Cape Fear: Wilmington Beach vs Orton Point not confirmed.",
+   "tide_policy": "unresolved",
+   "tide_basis": "No tide predictions until the classification is confirmed.",
+   "status": "needs_followup",
+   "note": "Snow's Cut joins the ICW to the Cape Fear: Wilmington Beach vs Orton Point not confirmed."
+  },
+  "local-morehead-south-10th": {
+   "water_class": "unresolved",
+   "class_basis": "Bogue Sound / Calico Creek area (the city page does not name the water): station choice depends on which side.",
+   "tide_policy": "unresolved",
+   "tide_basis": "No tide predictions until the classification is confirmed.",
+   "status": "needs_followup",
+   "note": "Bogue Sound / Calico Creek area (the city page does not name the water): station choice depends on which side."
+  },
+  "baa-willis-landing": {
+   "water_class": "unresolved",
+   "class_basis": "Bear Creek (Onslow): lunar or wind-driven not confirmed; no same-water station.",
+   "tide_policy": "unresolved",
+   "tide_basis": "No tide predictions until the classification is confirmed.",
+   "status": "needs_followup",
+   "note": "Bear Creek (Onslow): lunar or wind-driven not confirmed; no same-water station."
+  },
+  "baa-rices-creek": {
+   "water_class": "unresolved",
+   "class_basis": "Rice Creek (Brunswick County, Cape Fear tributary): tidal reach and station not confirmed.",
+   "tide_policy": "unresolved",
+   "tide_basis": "No tide predictions until the classification is confirmed.",
+   "status": "needs_followup",
+   "note": "Rice Creek (Brunswick County, Cape Fear tributary): tidal reach and station not confirmed."
+  },
+  "baa-holly-shelter": {
+   "water_class": "unresolved",
+   "class_basis": "Northeast Cape Fear above Castle Hayne: tidal freshwater reach; the Castle Hayne station is 15+ miles downstream.",
+   "tide_policy": "unresolved",
+   "tide_basis": "No tide predictions until the classification is confirmed.",
+   "status": "needs_followup",
+   "note": "Northeast Cape Fear above Castle Hayne: tidal freshwater reach; the Castle Hayne station is 15+ miles downstream."
+  },
+  "baa-cow-pen-landing": {
+   "water_class": "unresolved",
+   "class_basis": "Neuse River between Fort Barnwell and New Bern (joint waters): riverine-to-estuary transition reach.",
+   "tide_policy": "unresolved",
+   "tide_basis": "No tide predictions until the classification is confirmed.",
+   "status": "needs_followup",
+   "note": "Neuse River between Fort Barnwell and New Bern (joint waters): riverine-to-estuary transition reach."
+  },
+  "baa-spring-garden": {
+   "water_class": "unresolved",
+   "class_basis": "Neuse River between Fort Barnwell and New Bern: riverine-to-estuary transition reach.",
+   "tide_policy": "unresolved",
+   "tide_basis": "No tide predictions until the classification is confirmed.",
+   "status": "needs_followup",
+   "note": "Neuse River between Fort Barnwell and New Bern: riverine-to-estuary transition reach."
+  },
+  "baa-surf-city": {
+   "water_class": "tidal_lunar",
+   "class_basis": "ICW behind Topsail / Onslow beaches, inlet-connected lunar tides.",
+   "tide_policy": "unavailable_no_same_water_station",
+   "tide_basis": "The only nearby station is an ocean fishing pier; no CO-OPS prediction station on this ICW reach.",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8657419",
+     "name": "Ocean City Beach (fishing pier)",
+     "type": "tide_predictions",
+     "relation": "related",
+     "status": "rejected",
+     "distance_mi": 3.5,
+     "note": "CO-OPS subordinate station; predicted mean range 4.25 ft (Nov 28 to Dec 4, 2026).",
+     "reject_reason": "Ocean fishing pier, not the ICW."
+    }
+   ],
+   "note": "No same-water tide station."
+  },
+  "baa-turkey-creek": {
+   "water_class": "tidal_lunar",
+   "class_basis": "ICW behind Topsail / Onslow beaches, inlet-connected lunar tides.",
+   "tide_policy": "unavailable_no_same_water_station",
+   "tide_basis": "The only nearby station is an ocean fishing pier; no CO-OPS prediction station on this ICW reach.",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8657419",
+     "name": "Ocean City Beach (fishing pier)",
+     "type": "tide_predictions",
+     "relation": "related",
+     "status": "rejected",
+     "distance_mi": 3.4,
+     "note": "CO-OPS subordinate station; predicted mean range 4.25 ft (Nov 28 to Dec 4, 2026).",
+     "reject_reason": "Ocean fishing pier, not the ICW."
+    }
+   ],
+   "note": "No same-water tide station."
+  },
+  "baa-west-onslow-beach": {
+   "water_class": "tidal_lunar",
+   "class_basis": "ICW behind Topsail / Onslow beaches, inlet-connected lunar tides.",
+   "tide_policy": "unavailable_no_same_water_station",
+   "tide_basis": "The only nearby station is an ocean fishing pier; no CO-OPS prediction station on this ICW reach.",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8657419",
+     "name": "Ocean City Beach (fishing pier)",
+     "type": "tide_predictions",
+     "relation": "related",
+     "status": "rejected",
+     "distance_mi": 5.0,
+     "note": "CO-OPS subordinate station; predicted mean range 4.25 ft (Nov 28 to Dec 4, 2026).",
+     "reject_reason": "Ocean fishing pier, not the ICW."
+    }
+   ],
+   "note": "No same-water tide station."
+  },
+  "baa-newport": {
+   "water_class": "tidal_lunar",
+   "class_basis": "Upper Newport River at Newport (inland fishing waters by the official layer); weak tidal influence.",
+   "tide_policy": "unavailable_no_same_water_station",
+   "tide_basis": "No CO-OPS station on the upper Newport River.",
+   "decisions": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656467",
+     "name": "SpoonersCreek",
+     "type": "tide_predictions",
+     "relation": "related",
+     "status": "rejected",
+     "distance_mi": 4.9,
+     "note": "CO-OPS harmonic reference station; predicted mean range 1.6 ft (Nov 28 to Dec 4, 2026).",
+     "reject_reason": "Spooners Creek is on Bogue Sound, a different water body."
+    }
+   ],
+   "note": "No same-water tide station."
+  },
+  "baa-haywood-landing": {
+   "water_class": "river",
+   "class_basis": "Upper White Oak River (Jones County), tidal-freshwater river reach.",
+   "tide_policy": "unavailable_no_same_water_station",
+   "tide_basis": "No CO-OPS station on the upper White Oak River.",
+   "note": "No gauge or tide station on this reach."
+  },
+  "baa-great-lake": {
+   "note": "Natural lake in the Croatan National Forest: no official level or temperature station."
+  },
+  "baa-sutton-lake": {
+   "note": "Duke Energy cooling-water lake: no reviewed public feed. Level unavailable (operator terms do not permit reuse); operator link recorded.",
+   "operator": "duke"
+  }
+ }
+}

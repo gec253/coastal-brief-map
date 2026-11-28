@@ -1,0 +1,5347 @@
+{
+"_about": "Read-only snapshot of free federal sources used to build data/ramp_stations.json. Nothing here is a reading shown to visitors.",
+"coops_ranges": {
+"8639428": {
+"err": null,
+"mean_range_ft": 3.27,
+"n": 27,
+"name": "Sandbridge",
+"subordinate": true,
+"type": "S"
+},
+"8651370": {
+"err": null,
+"mean_range_ft": 3.14,
+"n": 27,
+"name": "DUCK PIER",
+"subordinate": false,
+"type": "R"
+},
+"8651605": {
+"err": null,
+"mean_range_ft": 3.09,
+"n": 27,
+"name": "Kitty Hawk (ocean)",
+"subordinate": true,
+"type": "S"
+},
+"8652226": {
+"err": null,
+"mean_range_ft": 3.19,
+"n": 27,
+"name": "Jennettes Pier, Nags Head (ocean)",
+"subordinate": true,
+"type": "S"
+},
+"8652247": {
+"err": null,
+"mean_range_ft": 0.17,
+"n": 26,
+"name": "Manns Harbor, Croatan Sound",
+"subordinate": false,
+"type": "R"
+},
+"8652437": {
+"err": null,
+"mean_range_ft": 0.27,
+"n": 27,
+"name": "Oyster Creek, Croatan Sound",
+"subordinate": false,
+"type": "R"
+},
+"8652547": {
+"err": null,
+"mean_range_ft": 0.28,
+"n": 27,
+"name": "Roanoke Marshes Light, Croatan Sound",
+"subordinate": false,
+"type": "R"
+},
+"8653215": {
+"err": null,
+"mean_range_ft": 0.37,
+"n": 27,
+"name": "Rodanthe, Pamlico Sound",
+"subordinate": false,
+"type": "R"
+},
+"8653244": {
+"err": null,
+"mean_range_ft": 0.28,
+"n": 27,
+"name": "Pungo River, Route 45, NC",
+"subordinate": false,
+"type": "R"
+},
+"8653471": {
+"err": null,
+"mean_range_ft": 0.36,
+"n": 27,
+"name": "Engelhard",
+"subordinate": false,
+"type": "R"
+},
+"8655133": {
+"err": null,
+"mean_range_ft": 0.15,
+"n": 23,
+"name": "Oriental, Neuse River",
+"subordinate": false,
+"type": "R"
+},
+"8655151": {
+"err": null,
+"mean_range_ft": 0.07,
+"n": 20,
+"name": "Cedar Island",
+"subordinate": false,
+"type": "R"
+},
+"8655875": {
+"err": null,
+"mean_range_ft": 0.56,
+"n": 27,
+"name": "Sea Level",
+"subordinate": false,
+"type": "R"
+},
+"8656084": {
+"err": null,
+"mean_range_ft": 2.13,
+"n": 27,
+"name": "Core Creek Bridge",
+"subordinate": false,
+"type": "R"
+},
+"8656201": {
+"err": null,
+"mean_range_ft": 1.05,
+"n": 27,
+"name": "Davis, Core Sound",
+"subordinate": false,
+"type": "R"
+},
+"8656451": {
+"err": null,
+"mean_range_ft": 3.02,
+"n": 27,
+"name": "Gallant Channel",
+"subordinate": true,
+"type": "S"
+},
+"8656467": {
+"err": null,
+"mean_range_ft": 1.6,
+"n": 27,
+"name": "SpoonersCreek",
+"subordinate": false,
+"type": "R"
+},
+"8656499": {
+"err": null,
+"mean_range_ft": 2.39,
+"n": 27,
+"name": "Atlantic Beach Bridge",
+"subordinate": true,
+"type": "S"
+},
+"8656502": {
+"err": null,
+"mean_range_ft": 3.05,
+"n": 27,
+"name": "Morehead City Harbor",
+"subordinate": false,
+"type": "R"
+},
+"8656503": {
+"err": null,
+"mean_range_ft": 1.56,
+"n": 26,
+"name": "Harkers Island Bridge",
+"subordinate": true,
+"type": "S"
+},
+"8656518": {
+"mean_range_ft": 2.84,
+"n": 27,
+"name": "8656518"
+},
+"8656539": {
+"err": null,
+"mean_range_ft": 2.39,
+"n": 27,
+"name": "Lenoxville Point",
+"subordinate": true,
+"type": "S"
+},
+"8656613": {
+"err": null,
+"mean_range_ft": 1.49,
+"n": 27,
+"name": "Swansboro, East Corbett Ave. Bridge",
+"subordinate": false,
+"type": "R"
+},
+"8657002": {
+"err": null,
+"mean_range_ft": 0.55,
+"n": 26,
+"name": "Sneads Ferry, New River",
+"subordinate": false,
+"type": "R"
+},
+"8657419": {
+"err": null,
+"mean_range_ft": 4.25,
+"n": 27,
+"name": "Ocean City Beach (fishing pier)",
+"subordinate": true,
+"type": "S"
+},
+"8658120": {
+"err": null,
+"mean_range_ft": 4.51,
+"n": 26,
+"name": "Wilmington",
+"subordinate": false,
+"type": "R"
+},
+"8658145": {
+"err": null,
+"mean_range_ft": 3.95,
+"n": 27,
+"name": "Shinn Point, ICWW",
+"subordinate": false,
+"type": "R"
+},
+"8658559": {
+"err": null,
+"mean_range_ft": 4.26,
+"n": 27,
+"name": "Wilmington Beach",
+"subordinate": true,
+"type": "S"
+},
+"8658715": {
+"err": null,
+"mean_range_ft": 4.24,
+"n": 27,
+"name": "Federal Point",
+"subordinate": true,
+"type": "S"
+},
+"8659182": {
+"err": null,
+"mean_range_ft": 4.67,
+"n": 27,
+"name": "Oak Island, Yaupon Beach",
+"subordinate": false,
+"type": "R"
+},
+"8659414": {
+"err": null,
+"mean_range_ft": 3.65,
+"n": 27,
+"name": "Varnamtown, Lockwoods Folly River",
+"subordinate": false,
+"type": "R"
+},
+"8659665": {
+"err": null,
+"mean_range_ft": 4.67,
+"n": 27,
+"name": "Bowen Point, Shallotte Inlet",
+"subordinate": false,
+"type": "R"
+},
+"8659899": {
+"err": null,
+"mean_range_ft": 4.66,
+"n": 27,
+"name": "Sunset Beach Bridge",
+"subordinate": true,
+"type": "S"
+},
+"8660121": {
+"err": null,
+"mean_range_ft": 4.37,
+"n": 27,
+"name": "Little River (town)",
+"subordinate": true,
+"type": "S"
+},
+"TEC2831": {
+"err": null,
+"mean_range_ft": 1.97,
+"n": 27,
+"name": "N.C. State Fisheries",
+"subordinate": true,
+"type": "S"
+},
+"TEC2837": {
+"err": null,
+"mean_range_ft": 2.2,
+"n": 27,
+"name": "Bogue Inlet",
+"subordinate": true,
+"type": "S"
+},
+"TEC2863": {
+"err": null,
+"mean_range_ft": 1.89,
+"n": 27,
+"name": "Castle Hayne, Northeast River",
+"subordinate": true,
+"type": "S"
+}
+},
+"retrieved": "2026-11-28",
+"sites": {
+"baa-apalachia": {
+"comid": 19678379,
+"dm": [],
+"juris": [],
+"nws": [
+"MRX",
+64,
+14
+],
+"um": []
+},
+"baa-astoria-landing": {
+"comid": 10452322,
+"dm": [
+"02081094",
+"0208114150"
+],
+"juris": [
+"joint"
+],
+"nws": [
+"MHX",
+46,
+106
+],
+"um": [
+"02081054",
+"02081094"
+]
+},
+"baa-aurora": {
+"comid": 1970925,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+53,
+84
+],
+"um": []
+},
+"baa-avalon-beach": {
+"comid": 10477609,
+"dm": [],
+"juris": [
+"joint"
+],
+"nws": [
+"MHX",
+88,
+122
+],
+"um": []
+},
+"baa-avents-ferry-bridge": {
+"comid": 8844757,
+"dm": [
+"02102500"
+],
+"juris": [],
+"nws": [
+"RAH",
+62,
+46
+],
+"um": [
+"02098206",
+"02098197",
+"02096960"
+]
+},
+"baa-avey-creek": {
+"comid": 19721455,
+"dm": [
+"0351706800"
+],
+"juris": [],
+"nws": [
+"GSP",
+7,
+61
+],
+"um": []
+},
+"baa-barkers-creek": {
+"comid": 19729910,
+"dm": [
+"03513000"
+],
+"juris": [],
+"nws": [
+"GSP",
+29,
+64
+],
+"um": [
+"03508050",
+"03510577"
+]
+},
+"baa-battle-park": {
+"comid": 8762349,
+"dm": [
+"02082585"
+],
+"juris": [
+"inland"
+],
+"nws": [
+"RAH",
+104,
+69
+],
+"um": [
+"0208250410",
+"02082585"
+]
+},
+"baa-bear-creek": {
+"comid": 19730724,
+"dm": [
+"03508050"
+],
+"juris": [],
+"nws": [
+"GSP",
+38,
+58
+],
+"um": []
+},
+"baa-beatties-ford": {
+"comid": 9755484,
+"dm": [
+"0214267602",
+"0214264790"
+],
+"juris": [],
+"nws": [
+"GSP",
+114,
+76
+],
+"um": []
+},
+"baa-beaufort": {
+"comid": 10960308,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+62,
+58
+],
+"um": []
+},
+"baa-belhaven": {
+"comid": 1968345,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+57,
+95
+],
+"um": []
+},
+"baa-bells-bridge": {
+"comid": 8762461,
+"dm": [
+"02083500"
+],
+"juris": [
+"inland"
+],
+"nws": [
+"RAH",
+113,
+69
+],
+"um": []
+},
+"baa-big-flatty": {
+"comid": 10480125,
+"dm": [],
+"juris": [
+"joint"
+],
+"nws": [
+"AKQ",
+100,
+22
+],
+"um": []
+},
+"baa-black-bear": {
+"comid": 9754206,
+"dm": [
+"02138816"
+],
+"juris": [],
+"nws": [
+"GSP",
+76,
+84
+],
+"um": []
+},
+"baa-blewetts-grave": {
+"comid": 9167926,
+"dm": [
+"02130000",
+"02129000",
+"02129375"
+],
+"juris": [],
+"nws": [
+"RAH",
+34,
+17
+],
+"um": []
+},
+"baa-blounts-creek": {
+"comid": 1970761,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+46,
+88
+],
+"um": []
+},
+"baa-boardman": {
+"comid": 9131716,
+"dm": [
+"02134500"
+],
+"juris": [],
+"nws": [
+"ILM",
+51,
+80
+],
+"um": [
+"02134500",
+"02134170"
+]
+},
+"baa-bowsertown-road": {
+"comid": 10482405,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+89,
+116
+],
+"um": []
+},
+"baa-brices-creek": {
+"comid": 10977067,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+45,
+71
+],
+"um": []
+},
+"baa-bricklanding-road": {
+"comid": 11562048,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"ILM",
+74,
+59
+],
+"um": []
+},
+"baa-bridgeton": {
+"comid": 11239519,
+"dm": [],
+"juris": [
+"joint"
+],
+"nws": [
+"MHX",
+44,
+76
+],
+"um": [
+"02091814"
+]
+},
+"baa-bridgewater": {
+"comid": 9752982,
+"dm": [
+"02138520"
+],
+"juris": [],
+"nws": [
+"GSP",
+81,
+84
+],
+"um": [
+"02138520"
+]
+},
+"baa-bringle-ferry": {
+"comid": 9223791,
+"dm": [],
+"juris": [],
+"nws": [
+"RAH",
+18,
+43
+],
+"um": []
+},
+"baa-brumley-road": {
+"comid": 10466687,
+"dm": [],
+"juris": [
+"joint"
+],
+"nws": [
+"AKQ",
+106,
+38
+],
+"um": []
+},
+"baa-c-j-harris": {
+"comid": 19730544,
+"dm": [
+"03513000",
+"03510577"
+],
+"juris": [],
+"nws": [
+"GSP",
+31,
+63
+],
+"um": [
+"03508050"
+]
+},
+"baa-cable-cove": {
+"comid": 19736645,
+"dm": [],
+"juris": [],
+"nws": [
+"GSP",
+13,
+64
+],
+"um": []
+},
+"baa-cannons-ferry": {
+"comid": 10462209,
+"dm": [],
+"juris": [
+"joint"
+],
+"nws": [
+"AKQ",
+80,
+24
+],
+"um": []
+},
+"baa-castle-bridge": {
+"comid": 9754106,
+"dm": [
+"0214196125",
+"02141500"
+],
+"juris": [],
+"nws": [
+"GSP",
+92,
+87
+],
+"um": []
+},
+"baa-castle-hayne": {
+"comid": 10529067,
+"dm": [],
+"juris": [
+"joint"
+],
+"nws": [
+"ILM",
+90,
+81
+],
+"um": []
+},
+"baa-cedar-cliff": {
+"comid": 19730308,
+"dm": [
+"03508050"
+],
+"juris": [],
+"nws": [
+"GSP",
+37,
+58
+],
+"um": []
+},
+"baa-cedar-island": {
+"comid": 10957926,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+72,
+74
+],
+"um": []
+},
+"baa-cheoah-point": {
+"comid": 19721453,
+"dm": [
+"0351706800"
+],
+"juris": [],
+"nws": [
+"GSP",
+9,
+61
+],
+"um": []
+},
+"baa-chinquapin": {
+"comid": 10525935,
+"dm": [
+"02108000"
+],
+"juris": [],
+"nws": [
+"MHX",
+18,
+58
+],
+"um": [
+"02108000"
+]
+},
+"baa-choga-road": {
+"comid": 19736825,
+"dm": [
+"03505550"
+],
+"juris": [],
+"nws": [
+"GSP",
+16,
+53
+],
+"um": []
+},
+"baa-circle-drive": {
+"comid": 9223889,
+"dm": [],
+"juris": [],
+"nws": [
+"RAH",
+23,
+39
+],
+"um": []
+},
+"baa-clarks-creek": {
+"comid": 9211646,
+"dm": [
+"02126375"
+],
+"juris": [],
+"nws": [
+"RAH",
+26,
+26
+],
+"um": []
+},
+"baa-coinjock": {
+"comid": 10499557,
+"dm": [],
+"juris": [
+"joint"
+],
+"nws": [
+"AKQ",
+106,
+32
+],
+"um": []
+},
+"baa-columbia": {
+"comid": 26816615,
+"dm": [],
+"juris": [
+"joint"
+],
+"nws": [
+"MHX",
+67,
+113
+],
+"um": []
+},
+"baa-conaby-creek": {
+"comid": 10451858,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+52,
+110
+],
+"um": []
+},
+"baa-concord-church": {
+"comid": 9252872,
+"dm": [],
+"juris": [],
+"nws": [
+"GSP",
+129,
+93
+],
+"um": [
+"02116500"
+]
+},
+"baa-conley-creek": {
+"comid": 9754080,
+"dm": [
+"0214196125",
+"02141500"
+],
+"juris": [],
+"nws": [
+"GSP",
+93,
+87
+],
+"um": []
+},
+"baa-cool-springs": {
+"comid": 11239417,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+43,
+78
+],
+"um": [
+"0209205053"
+]
+},
+"baa-cooleemee": {
+"comid": 9235631,
+"dm": [],
+"juris": [],
+"nws": [
+"GSP",
+125,
+92
+],
+"um": [
+"02118000"
+]
+},
+"baa-county-line": {
+"comid": 8653394,
+"dm": [
+"02079500",
+"02079490"
+],
+"juris": [],
+"nws": [
+"RAH",
+82,
+92
+],
+"um": []
+},
+"baa-cow-pen-landing": {
+"comid": 11239339,
+"dm": [],
+"juris": [
+"joint"
+],
+"nws": [
+"MHX",
+40,
+79
+],
+"um": [
+"02091814"
+]
+},
+"baa-coxs-ferry": {
+"comid": 8790695,
+"dm": [
+"02089000"
+],
+"juris": [
+"inland"
+],
+"nws": [
+"RAH",
+95,
+41
+],
+"um": [
+"02088119"
+]
+},
+"baa-crater-park": {
+"comid": 9249426,
+"dm": [
+"02112250"
+],
+"juris": [],
+"nws": [
+"RNK",
+47,
+20
+],
+"um": [
+"02112250",
+"02112000"
+]
+},
+"baa-craven-street-bridge": {
+"comid": 22162114,
+"dm": [
+"03451500",
+"03451200",
+"03453500"
+],
+"juris": [],
+"nws": [
+"GSP",
+55,
+75
+],
+"um": [
+"03451200",
+"03447687"
+]
+},
+"baa-creswell": {
+"comid": 10482857,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+64,
+111
+],
+"um": []
+},
+"baa-cross-point-landing": {
+"comid": 8842767,
+"dm": [
+"02102500",
+"02102192"
+],
+"juris": [],
+"nws": [
+"RAH",
+63,
+47
+],
+"um": []
+},
+"baa-crowther": {
+"comid": 9236743,
+"dm": [],
+"juris": [],
+"nws": [
+"GSP",
+130,
+89
+],
+"um": [
+"02118000"
+]
+},
+"baa-dan-river": {
+"comid": 8677767,
+"dm": [],
+"juris": [],
+"nws": [
+"RNK",
+84,
+33
+],
+"um": [
+"02071000",
+"02069000"
+]
+},
+"baa-dawson-creek": {
+"comid": 10978349,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+56,
+71
+],
+"um": []
+},
+"baa-diggs": {
+"comid": 9165662,
+"dm": [
+"02130561",
+"02130000"
+],
+"juris": [],
+"nws": [
+"RAH",
+34,
+12
+],
+"um": []
+},
+"baa-donnaha-park": {
+"comid": 9249366,
+"dm": [
+"02115360"
+],
+"juris": [],
+"nws": [
+"RNK",
+62,
+20
+],
+"um": []
+},
+"baa-double-bluff": {
+"comid": 9249382,
+"dm": [],
+"juris": [],
+"nws": [
+"RNK",
+49,
+20
+],
+"um": [
+"02112250"
+]
+},
+"baa-dram-tree-park": {
+"comid": 8832748,
+"dm": [],
+"juris": [
+"coastal",
+"joint"
+],
+"nws": [
+"ILM",
+89,
+75
+],
+"um": []
+},
+"baa-draper-landing": {
+"comid": 8677715,
+"dm": [],
+"juris": [],
+"nws": [
+"RNK",
+87,
+36
+],
+"um": [
+"02071000"
+]
+},
+"baa-dunbar-bridge": {
+"comid": 8762423,
+"dm": [
+"02083500"
+],
+"juris": [
+"inland"
+],
+"nws": [
+"RAH",
+109,
+69
+],
+"um": [
+"0208250410",
+"02082585"
+]
+},
+"baa-dusty-ridge": {
+"comid": 9753978,
+"dm": [
+"0214244102",
+"0214196125"
+],
+"juris": [],
+"nws": [
+"GSP",
+102,
+90
+],
+"um": [
+"02141500"
+]
+},
+"baa-dutch-second": {
+"comid": 9223789,
+"dm": [],
+"juris": [],
+"nws": [
+"GSP",
+136,
+84
+],
+"um": []
+},
+"baa-edenhouse-bridge": {
+"comid": 10462287,
+"dm": [],
+"juris": [
+"joint"
+],
+"nws": [
+"AKQ",
+81,
+15
+],
+"um": []
+},
+"baa-edwards-ferry": {
+"comid": 10451378,
+"dm": [
+"02081000"
+],
+"juris": [
+"inland",
+"joint"
+],
+"nws": [
+"RAH",
+117,
+82
+],
+"um": [
+"0208062765",
+"02081000"
+]
+},
+"baa-elwells-ferry": {
+"comid": 8834908,
+"dm": [
+"02105769"
+],
+"juris": [
+"inland"
+],
+"nws": [
+"ILM",
+72,
+84
+],
+"um": []
+},
+"baa-emerald-isle": {
+"comid": 10963582,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+49,
+55
+],
+"um": []
+},
+"baa-engelhard": {
+"comid": 3357640,
+"dm": [],
+"juris": [
+"coastal",
+"joint"
+],
+"nws": [
+"MHX",
+80,
+97
+],
+"um": []
+},
+"baa-ennis-bridge": {
+"comid": 8815351,
+"dm": [],
+"juris": [],
+"nws": [
+"ILM",
+73,
+92
+],
+"um": []
+},
+"baa-eno-river": {
+"comid": 8777667,
+"dm": [
+"02087182"
+],
+"juris": [],
+"nws": [
+"RAH",
+66,
+70
+],
+"um": [
+"02085039",
+"02085070"
+]
+},
+"baa-fair-bluff": {
+"comid": 9133926,
+"dm": [
+"02134900"
+],
+"juris": [],
+"nws": [
+"ILM",
+49,
+74
+],
+"um": [
+"02134500"
+]
+},
+"baa-falkland": {
+"comid": 3350885,
+"dm": [
+"02084000"
+],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+25,
+98
+],
+"um": [
+"02083500"
+]
+},
+"baa-farrington-point": {
+"comid": 8897814,
+"dm": [
+"02098206",
+"02098197"
+],
+"juris": [],
+"nws": [
+"RAH",
+61,
+57
+],
+"um": []
+},
+"baa-fayetteville": {
+"comid": 8852013,
+"dm": [
+"02105500"
+],
+"juris": [
+"inland"
+],
+"nws": [
+"RAH",
+71,
+22
+],
+"um": []
+},
+"baa-federal-point": {
+"comid": 8835368,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"ILM",
+91,
+63
+],
+"um": []
+},
+"baa-fifth-street-landing": {
+"comid": 12049882,
+"dm": [
+"0208062765",
+"02080500"
+],
+"juris": [],
+"nws": [
+"RAH",
+105,
+92
+],
+"um": []
+},
+"baa-flat-branch": {
+"comid": 19730688,
+"dm": [],
+"juris": [],
+"nws": [
+"GSP",
+20,
+65
+],
+"um": [
+"03513000",
+"03510577"
+]
+},
+"baa-flat-creek": {
+"comid": 9223857,
+"dm": [],
+"juris": [],
+"nws": [
+"GSP",
+140,
+82
+],
+"um": []
+},
+"baa-flemingtown-landing": {
+"comid": 8658002,
+"dm": [
+"02079500",
+"02079490"
+],
+"juris": [],
+"nws": [
+"RAH",
+82,
+88
+],
+"um": []
+},
+"baa-frying-pan": {
+"comid": 10484711,
+"dm": [],
+"juris": [],
+"nws": [
+"MHX",
+74,
+109
+],
+"um": []
+},
+"baa-gaston": {
+"comid": 10451170,
+"dm": [
+"0208062765",
+"02080500"
+],
+"juris": [
+"inland"
+],
+"nws": [
+"AKQ",
+44,
+29
+],
+"um": []
+},
+"baa-gatesville": {
+"comid": 10462171,
+"dm": [],
+"juris": [
+"inland",
+"joint"
+],
+"nws": [
+"AKQ",
+76,
+28
+],
+"um": [
+"02047370"
+]
+},
+"baa-gatlington-landing": {
+"comid": 10460569,
+"dm": [],
+"juris": [
+"joint"
+],
+"nws": [
+"AKQ",
+70,
+34
+],
+"um": [
+"02047370"
+]
+},
+"baa-goldsboro": {
+"comid": 11239895,
+"dm": [
+"02089000"
+],
+"juris": [
+"inland"
+],
+"nws": [
+"RAH",
+99,
+41
+],
+"um": []
+},
+"baa-gordon-s-myers-at-cedar-point": {
+"comid": 10961582,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+45,
+55
+],
+"um": []
+},
+"baa-grape-creek": {
+"comid": 19678389,
+"dm": [],
+"juris": [],
+"nws": [
+"MRX",
+67,
+13
+],
+"um": []
+},
+"baa-grassy-island": {
+"comid": 9211110,
+"dm": [
+"0212880025",
+"02129000",
+"02129375"
+],
+"juris": [],
+"nws": [
+"RAH",
+34,
+20
+],
+"um": []
+},
+"baa-great-lake": {
+"comid": 10961560,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+46,
+63
+],
+"um": []
+},
+"baa-greenville": {
+"comid": 3350969,
+"dm": [
+"02084472"
+],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+32,
+94
+],
+"um": []
+},
+"baa-grifton": {
+"comid": 11574664,
+"dm": [
+"02091814"
+],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+29,
+84
+],
+"um": [
+"02091500"
+]
+},
+"baa-gum-neck-landing": {
+"comid": 10484383,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+75,
+105
+],
+"um": []
+},
+"baa-gunpowder": {
+"comid": 9754042,
+"dm": [
+"0214244102",
+"0214196125"
+],
+"juris": [],
+"nws": [
+"GSP",
+97,
+88
+],
+"um": []
+},
+"baa-hager-creek": {
+"comid": 9751144,
+"dm": [
+"0214267602",
+"0214264790"
+],
+"juris": [],
+"nws": [
+"GSP",
+113,
+79
+],
+"um": [
+"0214244102"
+]
+},
+"baa-halls-creek": {
+"comid": 10479989,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"AKQ",
+95,
+24
+],
+"um": []
+},
+"baa-hamilton": {
+"comid": 10453350,
+"dm": [
+"02081028",
+"02081054"
+],
+"juris": [
+"joint"
+],
+"nws": [
+"MHX",
+34,
+110
+],
+"um": [
+"02081028"
+]
+},
+"baa-hampstead": {
+"comid": 10520478,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"ILM",
+100,
+84
+],
+"um": []
+},
+"baa-hanging-dog": {
+"comid": 19678439,
+"dm": [],
+"juris": [],
+"nws": [
+"MRX",
+68,
+12
+],
+"um": []
+},
+"baa-harrellsville": {
+"comid": 10462193,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"AKQ",
+76,
+26
+],
+"um": []
+},
+"baa-harts": {
+"comid": 8675313,
+"dm": [
+"02068500"
+],
+"juris": [],
+"nws": [
+"RNK",
+65,
+34
+],
+"um": [
+"02068500"
+]
+},
+"baa-havens-garden": {
+"comid": 1969299,
+"dm": [],
+"juris": [
+"coastal",
+"inland"
+],
+"nws": [
+"MHX",
+42,
+93
+],
+"um": []
+},
+"baa-hawtree-creek": {
+"comid": 12049422,
+"dm": [],
+"juris": [],
+"nws": [
+"RAH",
+89,
+93
+],
+"um": []
+},
+"baa-haywood-landing": {
+"comid": 10961354,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+41,
+61
+],
+"um": []
+},
+"baa-henderson-point": {
+"comid": 8653370,
+"dm": [
+"02079500",
+"02079490"
+],
+"juris": [],
+"nws": [
+"RAH",
+81,
+92
+],
+"um": []
+},
+"baa-henrico": {
+"comid": 12047938,
+"dm": [
+"02080500"
+],
+"juris": [],
+"nws": [
+"AKQ",
+36,
+30
+],
+"um": []
+},
+"baa-hertford": {
+"comid": 10499491,
+"dm": [],
+"juris": [
+"joint"
+],
+"nws": [
+"AKQ",
+89,
+21
+],
+"um": []
+},
+"baa-hibernia": {
+"comid": 8657976,
+"dm": [
+"02079500",
+"02079490"
+],
+"juris": [],
+"nws": [
+"RAH",
+80,
+91
+],
+"um": []
+},
+"baa-hickory-hill": {
+"comid": 166737701,
+"dm": [
+"02087182"
+],
+"juris": [],
+"nws": [
+"RAH",
+68,
+69
+],
+"um": [
+"02085039",
+"02085070"
+]
+},
+"baa-high-hill": {
+"comid": 9127150,
+"dm": [
+"02134500"
+],
+"juris": [],
+"nws": [
+"ILM",
+49,
+86
+],
+"um": [
+"02134170"
+]
+},
+"baa-highwy-73": {
+"comid": 9755486,
+"dm": [
+"0214267602",
+"0214264790"
+],
+"juris": [],
+"nws": [
+"GSP",
+114,
+73
+],
+"um": [
+"0214264790"
+]
+},
+"baa-holden-beach": {
+"comid": 166756337,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"ILM",
+79,
+60
+],
+"um": []
+},
+"baa-hollemans-crossing": {
+"comid": 8842739,
+"dm": [
+"02102192"
+],
+"juris": [],
+"nws": [
+"RAH",
+65,
+49
+],
+"um": []
+},
+"baa-holly-shelter": {
+"comid": 10526677,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"ILM",
+92,
+90
+],
+"um": [
+"02108566"
+]
+},
+"baa-hookerton": {
+"comid": 11574594,
+"dm": [
+"02091500"
+],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+23,
+85
+],
+"um": []
+},
+"baa-horse-shoe": {
+"comid": 22164210,
+"dm": [
+"03447687"
+],
+"juris": [],
+"nws": [
+"GSP",
+56,
+63
+],
+"um": [
+"03443000"
+]
+},
+"baa-hunts-bluff": {
+"comid": 8818293,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"ILM",
+79,
+84
+],
+"um": []
+},
+"baa-hyco-afterbay": {
+"comid": 8696445,
+"dm": [
+"02077303"
+],
+"juris": [],
+"nws": [
+"RAH",
+57,
+88
+],
+"um": [
+"02077280"
+]
+},
+"baa-hydeland-canal": {
+"comid": 3359336,
+"dm": [],
+"juris": [
+"joint"
+],
+"nws": [
+"MHX",
+73,
+92
+],
+"um": []
+},
+"baa-ivanhoe": {
+"comid": 8816225,
+"dm": [],
+"juris": [],
+"nws": [
+"RAH",
+95,
+7
+],
+"um": [
+"02106500"
+]
+},
+"baa-jackrabbit": {
+"comid": 19674831,
+"dm": [],
+"juris": [],
+"nws": [
+"MRX",
+80,
+9
+],
+"um": []
+},
+"baa-jacksonville-landing": {
+"comid": 10519332,
+"dm": [],
+"juris": [
+"coastal",
+"inland"
+],
+"nws": [
+"MHX",
+33,
+56
+],
+"um": []
+},
+"baa-jessup-mill": {
+"comid": 8675267,
+"dm": [
+"02068500"
+],
+"juris": [],
+"nws": [
+"RNK",
+63,
+34
+],
+"um": []
+},
+"baa-johns-river": {
+"comid": 9752772,
+"dm": [
+"02141500"
+],
+"juris": [],
+"nws": [
+"GSP",
+86,
+87
+],
+"um": [
+"02140991"
+]
+},
+"baa-kelly-n-davis": {
+"comid": 3359330,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+69,
+90
+],
+"um": []
+},
+"baa-kenansville": {
+"comid": 10526977,
+"dm": [
+"02108000"
+],
+"juris": [],
+"nws": [
+"MHX",
+16,
+63
+],
+"um": []
+},
+"baa-kinston": {
+"comid": 11239465,
+"dm": [
+"02089500"
+],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+24,
+78
+],
+"um": [
+"02089500"
+]
+},
+"baa-lake-adger": {
+"comid": 12037859,
+"dm": [],
+"juris": [],
+"nws": [
+"GSP",
+68,
+65
+],
+"um": []
+},
+"baa-lake-emory": {
+"comid": 19736807,
+"dm": [
+"03503000"
+],
+"juris": [],
+"nws": [
+"GSP",
+27,
+55
+],
+"um": [
+"03500000"
+]
+},
+"baa-lake-mattamuskeet": {
+"comid": 3359158,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+74,
+94
+],
+"um": []
+},
+"baa-lake-rim": {
+"comid": 8850881,
+"dm": [
+"02104320"
+],
+"juris": [],
+"nws": [
+"RAH",
+64,
+23
+],
+"um": []
+},
+"baa-lake-waccamaw": {
+"comid": 9065570,
+"dm": [
+"02109500"
+],
+"juris": [],
+"nws": [
+"ILM",
+67,
+75
+],
+"um": []
+},
+"baa-lakemont": {
+"comid": 9224677,
+"dm": [
+"0212378405"
+],
+"juris": [],
+"nws": [
+"RAH",
+24,
+38
+],
+"um": []
+},
+"baa-leaksville": {
+"comid": 8677731,
+"dm": [],
+"juris": [],
+"nws": [
+"RNK",
+85,
+35
+],
+"um": [
+"02071000"
+]
+},
+"baa-ledfords-chapel": {
+"comid": 19674831,
+"dm": [],
+"juris": [],
+"nws": [
+"MRX",
+80,
+10
+],
+"um": []
+},
+"baa-ledge-rock": {
+"comid": 166737681,
+"dm": [
+"02087182"
+],
+"juris": [],
+"nws": [
+"RAH",
+70,
+69
+],
+"um": []
+},
+"baa-lees-landing": {
+"comid": 10975775,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+49,
+74
+],
+"um": []
+},
+"baa-lemmons-branch": {
+"comid": 19736695,
+"dm": [],
+"juris": [],
+"nws": [
+"GSP",
+19,
+63
+],
+"um": [
+"03503000"
+]
+},
+"baa-lennons-bridge": {
+"comid": 9131700,
+"dm": [
+"02134500"
+],
+"juris": [],
+"nws": [
+"ILM",
+54,
+82
+],
+"um": [
+"02134480"
+]
+},
+"baa-lewellyn-branch": {
+"comid": 19721411,
+"dm": [],
+"juris": [],
+"nws": [
+"GSP",
+10,
+65
+],
+"um": []
+},
+"baa-lewiston-woodville": {
+"comid": 10451450,
+"dm": [
+"02081028"
+],
+"juris": [
+"joint"
+],
+"nws": [
+"AKQ",
+61,
+14
+],
+"um": [
+"02081000"
+]
+},
+"baa-lillington": {
+"comid": 8846903,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"RAH",
+72,
+40
+],
+"um": [
+"02098206",
+"02102500"
+]
+},
+"baa-lillys-bridge": {
+"comid": 9211966,
+"dm": [
+"0212378405",
+"02126375"
+],
+"juris": [],
+"nws": [
+"RAH",
+26,
+27
+],
+"um": []
+},
+"baa-linville-river": {
+"comid": 9754172,
+"dm": [
+"02138816"
+],
+"juris": [],
+"nws": [
+"GSP",
+79,
+86
+],
+"um": []
+},
+"baa-little-creek": {
+"comid": 9751148,
+"dm": [
+"0214267602",
+"0214264790"
+],
+"juris": [],
+"nws": [
+"GSP",
+112,
+78
+],
+"um": []
+},
+"baa-lock-and-dam-1": {
+"comid": 8834930,
+"dm": [
+"02105769"
+],
+"juris": [
+"inland",
+"joint"
+],
+"nws": [
+"ILM",
+75,
+81
+],
+"um": [
+"02105769"
+]
+},
+"baa-lock-and-dam-2": {
+"comid": 8831810,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"ILM",
+64,
+90
+],
+"um": [
+"02105500"
+]
+},
+"baa-long-island": {
+"comid": 9751026,
+"dm": [
+"0214264790"
+],
+"juris": [],
+"nws": [
+"GSP",
+112,
+84
+],
+"um": [
+"0214244102",
+"0214196125"
+]
+},
+"baa-lookout-shoals": {
+"comid": 9754036,
+"dm": [
+"0214244102"
+],
+"juris": [],
+"nws": [
+"GSP",
+107,
+88
+],
+"um": [
+"0214244102",
+"0214196125"
+]
+},
+"baa-lovelady": {
+"comid": 9754044,
+"dm": [
+"0214244102",
+"0214196125"
+],
+"juris": [],
+"nws": [
+"GSP",
+98,
+88
+],
+"um": [
+"02141500"
+]
+},
+"baa-lucia": {
+"comid": 9755506,
+"dm": [
+"0214267602"
+],
+"juris": [],
+"nws": [
+"GSP",
+113,
+71
+],
+"um": []
+},
+"baa-luck-stone": {
+"comid": 9245128,
+"dm": [
+"02113850"
+],
+"juris": [],
+"nws": [
+"RNK",
+55,
+30
+],
+"um": []
+},
+"baa-manns-harbor": {
+"comid": 10482309,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+86,
+116
+],
+"um": []
+},
+"baa-maple-cypress": {
+"comid": 11239241,
+"dm": [
+"02091814"
+],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+34,
+82
+],
+"um": [
+"02091814",
+"02089500"
+]
+},
+"baa-mashoes": {
+"comid": 10480421,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+84,
+116
+],
+"um": []
+},
+"baa-masons-landing": {
+"comid": 3350985,
+"dm": [
+"02084472"
+],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+41,
+94
+],
+"um": []
+},
+"baa-mccrary-creek": {
+"comid": 9751108,
+"dm": [
+"0214264790"
+],
+"juris": [],
+"nws": [
+"GSP",
+114,
+81
+],
+"um": [
+"0214244102"
+]
+},
+"baa-mcneils-bridge": {
+"comid": 9130760,
+"dm": [
+"02134170"
+],
+"juris": [],
+"nws": [
+"ILM",
+47,
+88
+],
+"um": []
+},
+"baa-midway-drive": {
+"comid": 10479971,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"AKQ",
+86,
+13
+],
+"um": []
+},
+"baa-milton": {
+"comid": 8696463,
+"dm": [
+"02075500"
+],
+"juris": [],
+"nws": [
+"RNK",
+104,
+40
+],
+"um": [
+"02075045"
+]
+},
+"baa-morehead-city": {
+"comid": 10960312,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+58,
+58
+],
+"um": []
+},
+"baa-murfreesboro": {
+"comid": 8746189,
+"dm": [],
+"juris": [
+"joint"
+],
+"nws": [
+"AKQ",
+64,
+30
+],
+"um": []
+},
+"baa-nc-hwy-109": {
+"comid": 9224643,
+"dm": [
+"0212378405",
+"02123500"
+],
+"juris": [],
+"nws": [
+"RAH",
+27,
+36
+],
+"um": [
+"02123500"
+]
+},
+"baa-nc-hwy-45-bridge": {
+"comid": 10452260,
+"dm": [
+"0208114150"
+],
+"juris": [
+"joint"
+],
+"nws": [
+"MHX",
+52,
+111
+],
+"um": [
+"02081094"
+]
+},
+"baa-neck-road": {
+"comid": 9755514,
+"dm": [
+"0214267602"
+],
+"juris": [],
+"nws": [
+"GSP",
+115,
+71
+],
+"um": []
+},
+"baa-newport": {
+"comid": 10959232,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+53,
+60
+],
+"um": []
+},
+"baa-north-bend": {
+"comid": 9753022,
+"dm": [],
+"juris": [],
+"nws": [
+"GSP",
+82,
+84
+],
+"um": [
+"02137727",
+"02138816"
+]
+},
+"baa-norwood": {
+"comid": 9211958,
+"dm": [
+"0212378405",
+"02126375"
+],
+"juris": [],
+"nws": [
+"RAH",
+24,
+28
+],
+"um": []
+},
+"baa-oak-island": {
+"comid": 8835878,
+"dm": [],
+"juris": [
+"coastal",
+"inland"
+],
+"nws": [
+"ILM",
+87,
+61
+],
+"um": []
+},
+"baa-ocean-isle-beach": {
+"comid": 11562054,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"ILM",
+73,
+58
+],
+"um": []
+},
+"baa-odom": {
+"comid": 10451266,
+"dm": [
+"02081000"
+],
+"juris": [
+"inland"
+],
+"nws": [
+"AKQ",
+52,
+23
+],
+"um": [
+"0208062765",
+"02080500"
+]
+},
+"baa-old-288": {
+"comid": 19730706,
+"dm": [],
+"juris": [],
+"nws": [
+"GSP",
+22,
+65
+],
+"um": [
+"03513000",
+"03510577"
+]
+},
+"baa-old-sparta": {
+"comid": 3351025,
+"dm": [
+"02084000"
+],
+"juris": [
+"inland"
+],
+"nws": [
+"RAH",
+114,
+63
+],
+"um": [
+"02083500"
+]
+},
+"baa-oriental": {
+"comid": 10975729,
+"dm": [],
+"juris": [
+"coastal",
+"joint"
+],
+"nws": [
+"MHX",
+58,
+72
+],
+"um": []
+},
+"baa-outfall-canal": {
+"comid": 3359364,
+"dm": [],
+"juris": [
+"coastal",
+"joint"
+],
+"nws": [
+"MHX",
+77,
+90
+],
+"um": []
+},
+"baa-oxford": {
+"comid": 9753972,
+"dm": [
+"0214244102",
+"0214196125"
+],
+"juris": [],
+"nws": [
+"GSP",
+103,
+90
+],
+"um": []
+},
+"baa-oyster-creek": {
+"comid": 10960276,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+68,
+64
+],
+"um": []
+},
+"baa-pee-dee": {
+"comid": 9215534,
+"dm": [
+"02130000",
+"0212880025",
+"02129000",
+"02129375"
+],
+"juris": [],
+"nws": [
+"RAH",
+33,
+17
+],
+"um": [
+"02126375"
+]
+},
+"baa-penrose": {
+"comid": 22164558,
+"dm": [
+"03443000",
+"03447687"
+],
+"juris": [],
+"nws": [
+"GSP",
+54,
+60
+],
+"um": []
+},
+"baa-percy-berry": {
+"comid": 10978665,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+53,
+67
+],
+"um": []
+},
+"baa-perquimans": {
+"comid": 10479911,
+"dm": [],
+"juris": [
+"joint"
+],
+"nws": [
+"AKQ",
+94,
+20
+],
+"um": []
+},
+"baa-pine-creek": {
+"comid": 19730760,
+"dm": [
+"03508050"
+],
+"juris": [],
+"nws": [
+"GSP",
+35,
+55
+],
+"um": []
+},
+"baa-pine-hall": {
+"comid": 8679999,
+"dm": [
+"02071000"
+],
+"juris": [],
+"nws": [
+"RNK",
+75,
+26
+],
+"um": []
+},
+"baa-piney-bluff": {
+"comid": 8680073,
+"dm": [],
+"juris": [],
+"nws": [
+"RAH",
+21,
+72
+],
+"um": []
+},
+"baa-pinnacle": {
+"comid": 9751108,
+"dm": [
+"0214264790"
+],
+"juris": [],
+"nws": [
+"GSP",
+114,
+81
+],
+"um": [
+"0214244102"
+]
+},
+"baa-pireway": {
+"comid": 9065638,
+"dm": [
+"02110500"
+],
+"juris": [],
+"nws": [
+"ILM",
+65,
+62
+],
+"um": [
+"02109500"
+]
+},
+"baa-plymouth-water-street": {
+"comid": 10452260,
+"dm": [
+"0208114150"
+],
+"juris": [
+"joint"
+],
+"nws": [
+"MHX",
+51,
+109
+],
+"um": [
+"02081094"
+]
+},
+"baa-pollocksville": {
+"comid": 10976859,
+"dm": [
+"02092554"
+],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+39,
+69
+],
+"um": [
+"02092554"
+]
+},
+"baa-poplar-branch": {
+"comid": 10477431,
+"dm": [],
+"juris": [
+"joint"
+],
+"nws": [
+"AKQ",
+108,
+29
+],
+"um": []
+},
+"baa-powerhouse": {
+"comid": 19730756,
+"dm": [
+"03508050"
+],
+"juris": [],
+"nws": [
+"GSP",
+35,
+55
+],
+"um": []
+},
+"baa-poyners-road": {
+"comid": 10477925,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"AKQ",
+100,
+36
+],
+"um": []
+},
+"baa-prices-landing": {
+"comid": 11239459,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"RAH",
+102,
+40
+],
+"um": [
+"02089000",
+"02088119"
+]
+},
+"baa-ramsey-bluff": {
+"comid": 19678447,
+"dm": [],
+"juris": [],
+"nws": [
+"MRX",
+68,
+12
+],
+"um": []
+},
+"baa-ranger-station": {
+"comid": 19721465,
+"dm": [
+"0351706800"
+],
+"juris": [],
+"nws": [
+"GSP",
+10,
+60
+],
+"um": []
+},
+"baa-red-hill": {
+"comid": 9211318,
+"dm": [
+"0212880025",
+"02129000"
+],
+"juris": [],
+"nws": [
+"RAH",
+29,
+21
+],
+"um": [
+"0212378405",
+"02126375"
+]
+},
+"baa-rhodes-pond": {
+"comid": 8812815,
+"dm": [],
+"juris": [],
+"nws": [
+"RAH",
+77,
+33
+],
+"um": []
+},
+"baa-rhodhiss": {
+"comid": 9754092,
+"dm": [
+"0214196125",
+"02141500"
+],
+"juris": [],
+"nws": [
+"GSP",
+95,
+87
+],
+"um": []
+},
+"baa-rices-creek": {
+"comid": 8834116,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"ILM",
+85,
+71
+],
+"um": []
+},
+"baa-richardsons-bridge": {
+"comid": 8790723,
+"dm": [
+"02089000",
+"02088119"
+],
+"juris": [
+"inland"
+],
+"nws": [
+"RAH",
+93,
+41
+],
+"um": [
+"02088119"
+]
+},
+"baa-riverbend": {
+"comid": 9755528,
+"dm": [
+"0214267602"
+],
+"juris": [],
+"nws": [
+"GSP",
+114,
+70
+],
+"um": [
+"0214267602",
+"0214264790"
+]
+},
+"baa-roaring-river": {
+"comid": 9249554,
+"dm": [
+"02112250"
+],
+"juris": [],
+"nws": [
+"RNK",
+42,
+18
+],
+"um": [
+"0211139110",
+"02111391",
+"02112000"
+]
+},
+"baa-rockingham": {
+"comid": 9167976,
+"dm": [
+"02130000",
+"02129000",
+"02129375"
+],
+"juris": [],
+"nws": [
+"RAH",
+34,
+15
+],
+"um": [
+"02126375",
+"0212880025",
+"02129000"
+]
+},
+"baa-rocky-branch": {
+"comid": 19736823,
+"dm": [
+"03505550"
+],
+"juris": [],
+"nws": [
+"GSP",
+17,
+53
+],
+"um": [
+"03504000"
+]
+},
+"baa-rodanthe": {
+"comid": 3357708,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+98,
+103
+],
+"um": []
+},
+"baa-rose-bay": {
+"comid": 3360102,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+65,
+93
+],
+"um": []
+},
+"baa-salmons-landing": {
+"comid": 12049976,
+"dm": [
+"02080500"
+],
+"juris": [],
+"nws": [
+"RAH",
+95,
+92
+],
+"um": []
+},
+"baa-salters-creek": {
+"comid": 10960218,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+69,
+68
+],
+"um": []
+},
+"baa-sans-souci-ferry": {
+"comid": 10452244,
+"dm": [],
+"juris": [
+"inland",
+"joint"
+],
+"nws": [
+"AKQ",
+77,
+8
+],
+"um": [
+"0208111310"
+]
+},
+"baa-sawpit-landing": {
+"comid": 10527331,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"ILM",
+92,
+91
+],
+"um": [
+"02108566"
+]
+},
+"baa-sawyers-creek": {
+"comid": 10478439,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"AKQ",
+97,
+29
+],
+"um": []
+},
+"baa-seven-springs": {
+"comid": 166737729,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"RAH",
+106,
+37
+],
+"um": [
+"02089000"
+]
+},
+"baa-sharon": {
+"comid": 9754036,
+"dm": [
+"0214244102"
+],
+"juris": [],
+"nws": [
+"GSP",
+108,
+88
+],
+"um": [
+"0214244102",
+"0214196125"
+]
+},
+"baa-shelby": {
+"comid": 12034553,
+"dm": [],
+"juris": [],
+"nws": [
+"GSP",
+92,
+66
+],
+"um": [
+"02152474"
+]
+},
+"baa-shell-rock-landing": {
+"comid": 10961590,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+43,
+53
+],
+"um": []
+},
+"baa-shelter-creek": {
+"comid": 10526505,
+"dm": [],
+"juris": [],
+"nws": [
+"ILM",
+92,
+93
+],
+"um": []
+},
+"baa-shingle-landing": {
+"comid": 10474437,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"AKQ",
+96,
+38
+],
+"um": []
+},
+"baa-shoups-landing": {
+"comid": 10462137,
+"dm": [],
+"juris": [
+"joint"
+],
+"nws": [
+"AKQ",
+70,
+29
+],
+"um": [
+"02047370"
+]
+},
+"baa-sloans-bridge": {
+"comid": 8816189,
+"dm": [],
+"juris": [],
+"nws": [
+"ILM",
+69,
+96
+],
+"um": []
+},
+"baa-slocum-creek": {
+"comid": 10977973,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+50,
+65
+],
+"um": []
+},
+"baa-smithfield": {
+"comid": 8785685,
+"dm": [
+"02087570"
+],
+"juris": [
+"inland"
+],
+"nws": [
+"RAH",
+86,
+47
+],
+"um": [
+"02087500",
+"02087570"
+]
+},
+"baa-smiths-creek": {
+"comid": 1970055,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+59,
+83
+],
+"um": []
+},
+"baa-sneads-ferry": {
+"comid": 10519472,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+36,
+48
+],
+"um": []
+},
+"baa-snow-hill": {
+"comid": 11574082,
+"dm": [
+"02091500"
+],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+20,
+86
+],
+"um": []
+},
+"baa-snows-cut": {
+"comid": 10520606,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"ILM",
+92,
+68
+],
+"um": []
+},
+"baa-south-point": {
+"comid": 9756910,
+"dm": [
+"02145910",
+"02146000"
+],
+"juris": [],
+"nws": [
+"GSP",
+113,
+61
+],
+"um": [
+"0214267602"
+]
+},
+"baa-spring-garden": {
+"comid": 11239377,
+"dm": [],
+"juris": [
+"inland",
+"joint"
+],
+"nws": [
+"MHX",
+40,
+78
+],
+"um": [
+"02091814"
+]
+},
+"baa-stevens-mill": {
+"comid": 11239875,
+"dm": [
+"02089000"
+],
+"juris": [
+"inland"
+],
+"nws": [
+"RAH",
+97,
+42
+],
+"um": [
+"02088119"
+]
+},
+"baa-stony-mountain": {
+"comid": 9212048,
+"dm": [
+"0212378405",
+"02126375"
+],
+"juris": [],
+"nws": [
+"RAH",
+25,
+30
+],
+"um": []
+},
+"baa-straits-landing": {
+"comid": 10960304,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+64,
+59
+],
+"um": []
+},
+"baa-stumpy-point": {
+"comid": 3357552,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+88,
+106
+],
+"um": []
+},
+"baa-summit": {
+"comid": 12049898,
+"dm": [
+"02080500"
+],
+"juris": [],
+"nws": [
+"RAH",
+100,
+92
+],
+"um": []
+},
+"baa-sunset-beach": {
+"comid": 11562042,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"ILM",
+70,
+57
+],
+"um": []
+},
+"baa-sunset-harbor": {
+"comid": 11562104,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"ILM",
+81,
+60
+],
+"um": []
+},
+"baa-sunset-park": {
+"comid": 8762357,
+"dm": [
+"02082585"
+],
+"juris": [],
+"nws": [
+"RAH",
+103,
+69
+],
+"um": [
+"0208250410"
+]
+},
+"baa-surf-city": {
+"comid": null,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"ILM",
+102,
+86
+],
+"um": []
+},
+"baa-sutton-lake": {
+"comid": 8832596,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"ILM",
+87,
+78
+],
+"um": []
+},
+"baa-swift-island": {
+"comid": 9211948,
+"dm": [
+"0212378405",
+"02126375"
+],
+"juris": [],
+"nws": [
+"RAH",
+25,
+30
+],
+"um": []
+},
+"baa-tar-heel": {
+"comid": 8831736,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"ILM",
+56,
+94
+],
+"um": [
+"02105500"
+]
+},
+"baa-thelma": {
+"comid": 12049924,
+"dm": [
+"0208062765",
+"02080500"
+],
+"juris": [],
+"nws": [
+"RAH",
+101,
+92
+],
+"um": []
+},
+"baa-todd": {
+"comid": 6891896,
+"dm": [],
+"juris": [],
+"nws": [
+"RNK",
+20,
+20
+],
+"um": []
+},
+"baa-tory-hole": {
+"comid": 8831808,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"ILM",
+63,
+90
+],
+"um": [
+"02105500"
+]
+},
+"baa-trails-end": {
+"comid": 10520544,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"ILM",
+93,
+72
+],
+"um": []
+},
+"baa-trenton": {
+"comid": 10976627,
+"dm": [
+"02092554"
+],
+"juris": [
+"inland"
+],
+"nws": [
+"MHX",
+34,
+71
+],
+"um": [
+"02092500"
+]
+},
+"baa-triple-springs": {
+"comid": 8699141,
+"dm": [
+"02077670"
+],
+"juris": [],
+"nws": [
+"RAH",
+62,
+87
+],
+"um": []
+},
+"baa-troy": {
+"comid": 9210566,
+"dm": [],
+"juris": [],
+"nws": [
+"RAH",
+32,
+31
+],
+"um": [
+"02128000"
+]
+},
+"baa-tsali": {
+"comid": 19736669,
+"dm": [],
+"juris": [],
+"nws": [
+"GSP",
+19,
+63
+],
+"um": [
+"03503000"
+]
+},
+"baa-tunis": {
+"comid": 10461385,
+"dm": [],
+"juris": [
+"inland",
+"joint"
+],
+"nws": [
+"AKQ",
+72,
+28
+],
+"um": []
+},
+"baa-turkey-creek": {
+"comid": 10520448,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+33,
+45
+],
+"um": []
+},
+"baa-upper-bartons-creek": {
+"comid": 933020119,
+"dm": [
+"02087182"
+],
+"juris": [],
+"nws": [
+"RAH",
+73,
+66
+],
+"um": []
+},
+"baa-us-221": {
+"comid": 12034711,
+"dm": [
+"02153200",
+"02151500"
+],
+"juris": [],
+"nws": [
+"GSP",
+83,
+60
+],
+"um": []
+},
+"baa-us-221a": {
+"comid": 12034699,
+"dm": [
+"02153200",
+"02151500"
+],
+"juris": [],
+"nws": [
+"GSP",
+85,
+61
+],
+"um": []
+},
+"baa-vandemere": {
+"comid": 3360382,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+58,
+79
+],
+"um": []
+},
+"baa-vultare": {
+"comid": 12047902,
+"dm": [
+"0208062765",
+"02080500"
+],
+"juris": [],
+"nws": [
+"AKQ",
+39,
+29
+],
+"um": []
+},
+"baa-wagram": {
+"comid": 9130462,
+"dm": [
+"02133624"
+],
+"juris": [],
+"nws": [
+"RAH",
+54,
+15
+],
+"um": [
+"02133500"
+]
+},
+"baa-washington-baum-bridge": {
+"comid": 10482537,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+90,
+116
+],
+"um": []
+},
+"baa-waynes-landing": {
+"comid": 10527145,
+"dm": [],
+"juris": [],
+"nws": [
+"MHX",
+16,
+56
+],
+"um": [
+"02108000"
+]
+},
+"baa-weldon": {
+"comid": 10451232,
+"dm": [
+"0208062765"
+],
+"juris": [
+"inland"
+],
+"nws": [
+"RAH",
+108,
+91
+],
+"um": [
+"02080500"
+]
+},
+"baa-west-beaufort": {
+"comid": 10960096,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+61,
+59
+],
+"um": []
+},
+"baa-west-onslow-beach": {
+"comid": null,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+34,
+45
+],
+"um": []
+},
+"baa-westfeldt-park": {
+"comid": 22163576,
+"dm": [
+"03451500",
+"03451200",
+"03447687"
+],
+"juris": [],
+"nws": [
+"GSP",
+57,
+68
+],
+"um": [
+"03443000"
+]
+},
+"baa-whittier": {
+"comid": 19729728,
+"dm": [
+"03513000"
+],
+"juris": [],
+"nws": [
+"GSP",
+27,
+65
+],
+"um": [
+"03510577"
+]
+},
+"baa-william-o-huske-lock-and-dam": {
+"comid": 8831710,
+"dm": [
+"02105500"
+],
+"juris": [
+"inland"
+],
+"nws": [
+"ILM",
+54,
+98
+],
+"um": [
+"02104000",
+"02105500"
+]
+},
+"baa-williamston": {
+"comid": 10453368,
+"dm": [
+"02081054",
+"02081094"
+],
+"juris": [
+"joint"
+],
+"nws": [
+"MHX",
+40,
+107
+],
+"um": [
+"02081028",
+"02081054"
+]
+},
+"baa-willis-landing": {
+"comid": 10961554,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+41,
+53
+],
+"um": []
+},
+"baa-windsor": {
+"comid": 10451764,
+"dm": [],
+"juris": [
+"inland"
+],
+"nws": [
+"AKQ",
+72,
+10
+],
+"um": [
+"0208111310"
+]
+},
+"baa-wittenburg": {
+"comid": 9754020,
+"dm": [
+"0214244102",
+"0214196125"
+],
+"juris": [],
+"nws": [
+"GSP",
+99,
+89
+],
+"um": [
+"02141500"
+]
+},
+"baa-wolf-creek": {
+"comid": 19729254,
+"dm": [
+"03508050"
+],
+"juris": [],
+"nws": [
+"GSP",
+41,
+57
+],
+"um": []
+},
+"baa-worthville-road": {
+"comid": 8869646,
+"dm": [
+"02100500"
+],
+"juris": [],
+"nws": [
+"RAH",
+34,
+54
+],
+"um": []
+},
+"baa-wrights-creek": {
+"comid": 1974417,
+"dm": [],
+"juris": [
+"coastal",
+"inland"
+],
+"nws": [
+"MHX",
+59,
+90
+],
+"um": []
+},
+"baa-wrightsville-beach": {
+"comid": null,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"ILM",
+94,
+75
+],
+"um": []
+},
+"local-atlantic-beach-moonlight-drive": {
+"comid": 10960552,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+58,
+58
+],
+"um": []
+},
+"local-atlantic-beach-west-bogue-sound": {
+"comid": 10960552,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+58,
+58
+],
+"um": []
+},
+"local-morehead-south-10th": {
+"comid": 10960310,
+"dm": [],
+"juris": [
+"coastal"
+],
+"nws": [
+"MHX",
+59,
+58
+],
+"um": []
+},
+"local-newbern-glenburnie": {
+"comid": null,
+"dm": [],
+"juris": null,
+"nws": null,
+"um": []
+},
+"local-newbern-lawson-creek-1": {
+"comid": null,
+"dm": [],
+"juris": null,
+"nws": null,
+"um": []
+},
+"local-newbern-lawson-creek-2": {
+"comid": null,
+"dm": [],
+"juris": null,
+"nws": null,
+"um": []
+},
+"local-newbern-union-point": {
+"comid": 10977155,
+"dm": [],
+"juris": [
+"coastal",
+"joint"
+],
+"nws": [
+"MHX",
+45,
+74
+],
+"um": [
+"02092554"
+]
+},
+"parks-falls-beaverdam": {
+"comid": 8778551,
+"dm": [
+"02087182",
+"0208706575"
+],
+"juris": [],
+"nws": [
+"RAH",
+71,
+69
+],
+"um": []
+},
+"parks-falls-bw-wells-campers": {
+"comid": 166737621,
+"dm": [
+"02087182"
+],
+"juris": [],
+"nws": [
+"RAH",
+74,
+67
+],
+"um": []
+},
+"parks-falls-highway-50": {
+"comid": 933020120,
+"dm": [
+"02087182"
+],
+"juris": [],
+"nws": [
+"RAH",
+71,
+68
+],
+"um": [
+"02085070"
+]
+},
+"parks-falls-holly-point-campers": {
+"comid": 933020099,
+"dm": [
+"02087182"
+],
+"juris": [],
+"nws": [
+"RAH",
+73,
+68
+],
+"um": [
+"02085070"
+]
+},
+"parks-falls-rolling-view": {
+"comid": 166737675,
+"dm": [
+"02087182"
+],
+"juris": [],
+"nws": [
+"RAH",
+70,
+67
+],
+"um": [
+"02085039",
+"02085070"
+]
+},
+"parks-jordan-ebenezer": {
+"comid": 8898050,
+"dm": [
+"02098206",
+"02098197"
+],
+"juris": [],
+"nws": [
+"RAH",
+61,
+53
+],
+"um": []
+},
+"parks-jordan-new-hope": {
+"comid": 8898074,
+"dm": [
+"02098206",
+"02098197"
+],
+"juris": [],
+"nws": [
+"RAH",
+60,
+51
+],
+"um": [
+"02097314"
+]
+},
+"parks-jordan-poplar-point-campers": {
+"comid": 8894390,
+"dm": [
+"02098206",
+"02098197"
+],
+"juris": [],
+"nws": [
+"RAH",
+62,
+54
+],
+"um": []
+},
+"parks-jordan-seaforth": {
+"comid": 8898028,
+"dm": [
+"02098206",
+"02098197"
+],
+"juris": [],
+"nws": [
+"RAH",
+60,
+54
+],
+"um": [
+"02097314"
+]
+},
+"parks-jordan-vista-point-sailboat": {
+"comid": 8898074,
+"dm": [
+"02098206",
+"02098197"
+],
+"juris": [],
+"nws": [
+"RAH",
+60,
+52
+],
+"um": [
+"02097314"
+]
+},
+"usace-jordan-poes-ridge": {
+"comid": null,
+"dm": [],
+"juris": null,
+"nws": null,
+"um": []
+}
+},
+"sources": {
+"coops_predictions": "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter (hilo predictions 2026-11-28 to 2026-12-04, MLLW; mean range = mean high/low difference)",
+"jurisdiction": "https://maps.deq.nc.gov/arcgis/rest/services/DMF/DBCJIW_Review_Salinty/MapServer/4 (NCDMF Current Boundaries, coastal/joint/inland, 15A NCAC 03Q .0202); point query, then 300 m if no hit",
+"nldi": "https://api.water.usgs.gov/nldi/ (NHDPlus position; upstream/downstream mainstem nwissite within 40 km along the river, which is under 25 miles)",
+"nws_points": "https://api.weather.gov/points/",
+"usace": "https://epec.saw.usace.army.mil/dsslake.txt (Kerr, Jordan, Falls, W. Kerr Scott; checked 2026-11-28)",
+"usgs_iv": "https://waterservices.usgs.gov/nwis/iv/ (active in the last 12 h for 00060, 00065, 62614, 62615, 00010)",
+"usgs_site": "https://waterservices.usgs.gov/nwis/site/"
+},
+"usgs": {
+"02047370": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 36.56681864,
+"lon": -76.9444058,
+"name": "NOTTOWAY RIVER NEAR RIVERDALE, VA",
+"site_type": "ST"
+},
+"02068500": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 36.515,
+"lon": -80.3030556,
+"name": "DAN RIVER NEAR FRANCISCO, NC",
+"site_type": "ST"
+},
+"02069000": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 36.31930349,
+"lon": -80.0500424,
+"name": "DAN RIVER AT PINE HALL, NC",
+"site_type": "ST"
+},
+"02071000": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 36.41054722,
+"lon": -79.82713611,
+"name": "DAN RIVER NEAR WENTWORTH, NC",
+"site_type": "ST"
+},
+"02075045": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 36.56263889,
+"lon": -79.369744,
+"name": "DAN RIVER AT STP NEAR DANVILLE, VA",
+"site_type": "ST"
+},
+"02075500": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 36.64236056,
+"lon": -79.089459,
+"name": "DAN RIVER AT PACES, VA",
+"site_type": "ST"
+},
+"02077280": {
+"active_params": [
+"62614"
+],
+"lat": 36.51166667,
+"lon": -79.0472222,
+"name": "HYCO LAKE AT DAM NR ROXBORO, NC",
+"site_type": "LK"
+},
+"02077303": {
+"active_params": [
+"00010",
+"00060",
+"00065"
+],
+"lat": 36.5227222,
+"lon": -78.9970556,
+"name": "HYCO R BL ABAY D NR MCGEHEES MILL, NC",
+"site_type": "ST"
+},
+"02077670": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 36.5408333,
+"lon": -78.8719444,
+"name": "MAYO CR NR BETHEL HILL, NC",
+"site_type": "ST"
+},
+"02079490": {
+"active_params": [
+"62614"
+],
+"lat": 36.59847608,
+"lon": -78.2988854,
+"name": "JOHN H. KERR RESERVOIR AT DAM NEAR BOYDTON, VA",
+"site_type": "LK"
+},
+"02079500": {
+"active_params": [
+"00010",
+"00065"
+],
+"lat": 36.60319824,
+"lon": -78.2977743,
+"name": "ROANOKE RIVER AT BUGGS ISLAND, VA",
+"site_type": "ST"
+},
+"02080500": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 36.46,
+"lon": -77.6336111,
+"name": "ROANOKE RIVER AT ROANOKE RAPIDS, NC",
+"site_type": "ST"
+},
+"0208062765": {
+"active_params": [
+"00010",
+"00065"
+],
+"lat": 36.3311111,
+"lon": -77.58027778,
+"name": "ROANOKE RIVER AT HALIFAX, NC",
+"site_type": "ST"
+},
+"02081000": {
+"active_params": [
+"00065"
+],
+"lat": 36.20916667,
+"lon": -77.38388889,
+"name": "ROANOKE RIVER NEAR SCOTLAND NECK, NC",
+"site_type": "ST"
+},
+"02081028": {
+"active_params": [
+"00065"
+],
+"lat": 35.9475,
+"lon": -77.2025,
+"name": "ROANOKE RIVER AT HAMILTON, NC",
+"site_type": "ST"
+},
+"02081054": {
+"active_params": [
+"00065"
+],
+"lat": 35.8597222,
+"lon": -77.04027778,
+"name": "ROANOKE RIVER AT WILLIAMSTON, NC",
+"site_type": "ST"
+},
+"02081094": {
+"active_params": [
+"00010",
+"00065"
+],
+"lat": 35.81305556,
+"lon": -76.89277778,
+"name": "ROANOKE RIVER AT JAMESVILLE, NC",
+"site_type": "ST"
+},
+"0208111310": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 36.04777778,
+"lon": -76.9841667,
+"name": "CASHIE RIVER AT SR1257 NEAR WINDSOR, NC",
+"site_type": "ST"
+},
+"0208114150": {
+"active_params": [
+"00010",
+"00065"
+],
+"lat": 35.915,
+"lon": -76.72277778,
+"name": "ROANOKE RIVER AT NC 45 NR WESTOVER, NC",
+"site_type": "ST"
+},
+"0208250410": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.89987728,
+"lon": -77.88414888,
+"name": "TAR RIVER BELOW DAM NEAR LANGLEY CROSSROADS, NC",
+"site_type": "ST"
+},
+"02082585": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.9547222,
+"lon": -77.7872222,
+"name": "TAR RIVER AT NC 97 AT ROCKY MOUNT, NC",
+"site_type": "ST"
+},
+"02083500": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.89444444,
+"lon": -77.5330556,
+"name": "TAR RIVER AT TARBORO, NC",
+"site_type": "ST"
+},
+"02084000": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.61666667,
+"lon": -77.37277778,
+"name": "TAR RIVER AT GREENVILLE, NC",
+"site_type": "ST"
+},
+"02084472": {
+"active_params": [
+"00065"
+],
+"lat": 35.5433333,
+"lon": -77.0619444,
+"name": "PAMLICO RIVER AT WASHINGTON, NC",
+"site_type": "ES"
+},
+"02085039": {
+"active_params": [
+"00065"
+],
+"lat": 36.05941667,
+"lon": -78.9780833,
+"name": "ENO RIVER AT COLE MILL RD NR HUCKLEBERRY SPRING",
+"site_type": "ST"
+},
+"02085070": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 36.0722222,
+"lon": -78.9077778,
+"name": "ENO RIVER NEAR DURHAM, NC",
+"site_type": "ST"
+},
+"0208706575": {
+"active_params": [
+"62615"
+],
+"lat": 36.0236111,
+"lon": -78.6891667,
+"name": "BEAVERDAM CREEK AT DAM NEAR CREEDMOOR, NC",
+"site_type": "ST"
+},
+"02087182": {
+"active_params": [
+"00010",
+"62614",
+"62615"
+],
+"lat": 35.9411111,
+"lon": -78.5833333,
+"name": "FALLS LAKE ABOVE DAM NR FALLS, NC",
+"site_type": "LK"
+},
+"02087500": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.6472222,
+"lon": -78.4052778,
+"name": "NEUSE RIVER NEAR CLAYTON, NC",
+"site_type": "ST"
+},
+"02087570": {
+"active_params": [
+"00065"
+],
+"lat": 35.5125,
+"lon": -78.3494444,
+"name": "NEUSE RIVER AT SMITHFIELD, NC",
+"site_type": "ST"
+},
+"02088119": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.374125,
+"lon": -78.19615278,
+"name": "NEUSE RIVER NEAR COX MILL, NC",
+"site_type": "ST"
+},
+"02089000": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.3375,
+"lon": -77.9975,
+"name": "NEUSE RIVER NEAR GOLDSBORO, NC",
+"site_type": "ST"
+},
+"02089500": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.25777778,
+"lon": -77.5855556,
+"name": "NEUSE RIVER AT KINSTON, NC",
+"site_type": "ST"
+},
+"02091500": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.42888889,
+"lon": -77.5825,
+"name": "CONTENTNEA CREEK AT HOOKERTON, NC",
+"site_type": "ST"
+},
+"02091814": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.31388889,
+"lon": -77.30277778,
+"name": "NEUSE RIVER NEAR FORT BARNWELL, NC",
+"site_type": "ST"
+},
+"0209205053": {
+"active_params": [
+"00065"
+],
+"lat": 35.2308333,
+"lon": -77.11388889,
+"name": "SWIFT CREEK AT HWY 43 NR STREETS FERRY, NC",
+"site_type": "ST"
+},
+"02092500": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.06416667,
+"lon": -77.46138889,
+"name": "TRENT RIVER NEAR TRENTON, NC",
+"site_type": "ST"
+},
+"02092554": {
+"active_params": [
+"00065"
+],
+"lat": 35.01,
+"lon": -77.21888889,
+"name": "TRENT R AT POLLOCKSVILLE, NC",
+"site_type": "ST"
+},
+"02096960": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.76527778,
+"lon": -79.1358333,
+"name": "HAW RIVER NEAR BYNUM, NC",
+"site_type": "ST"
+},
+"02097314": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.885,
+"lon": -78.9652778,
+"name": "NEW HOPE CREEK NEAR BLANDS, NC",
+"site_type": "ST"
+},
+"02098197": {
+"active_params": [
+"62614",
+"62615"
+],
+"lat": 35.6547222,
+"lon": -79.0683333,
+"name": " B. EVERETT JORDAN LAKE AT DAM NR MONCURE, NC",
+"site_type": "LK"
+},
+"02098206": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.6322222,
+"lon": -79.06,
+"name": "HAW RIVER NEAR MONCURE, NC",
+"site_type": "ST"
+},
+"02100500": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.72638889,
+"lon": -79.6555556,
+"name": "DEEP RIVER AT RAMSEUR, NC",
+"site_type": "ST"
+},
+"02102192": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.5597222,
+"lon": -78.9736111,
+"name": "BUCKHORN CREEK NR CORINTH, NC",
+"site_type": "ST"
+},
+"02102500": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.4061111,
+"lon": -78.8133333,
+"name": "CAPE FEAR RIVER AT LILLINGTON, NC",
+"site_type": "ST"
+},
+"02104000": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.0497222,
+"lon": -78.85638889,
+"name": "CAPE FEAR RIVER AT FAYETTEVILLE, NC",
+"site_type": "ST"
+},
+"02104320": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.0106861,
+"lon": -79.0161417,
+"name": "LITTLE ROCKFISH CREEK NEAR CUMBERLAND, NC",
+"site_type": "ST"
+},
+"02105500": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 34.83555556,
+"lon": -78.8236111,
+"name": "CAPE FEAR R AT WILM O HUSKE LOCK NR TARHEEL, NC",
+"site_type": "ST"
+},
+"02105769": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 34.40444444,
+"lon": -78.2936111,
+"name": "CAPE FEAR R AT LOCK 1 NR KELLY, NC",
+"site_type": "ST"
+},
+"02106500": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 34.755,
+"lon": -78.2886111,
+"name": "BLACK RIVER NEAR TOMAHAWK, NC",
+"site_type": "ST"
+},
+"02108000": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 34.82888889,
+"lon": -77.8322222,
+"name": "NORTHEAST CAPE FEAR RIVER NEAR CHINQUAPIN, NC",
+"site_type": "ST"
+},
+"02108566": {
+"active_params": [
+"00065"
+],
+"lat": 34.5983333,
+"lon": -77.8752778,
+"name": "NORTHEAST CAPE FEAR R NR BURGAW, NC",
+"site_type": "ST"
+},
+"02109500": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 34.095,
+"lon": -78.5483333,
+"name": "WACCAMAW RIVER AT FREELAND, NC",
+"site_type": "ST"
+},
+"02110500": {
+"active_params": [
+"00010",
+"00060",
+"00065"
+],
+"lat": 33.9126719,
+"lon": -78.7150175,
+"name": "WACCAMAW RIVER NEAR LONGS, SC",
+"site_type": "ST"
+},
+"02111391": {
+"active_params": [
+"62614",
+"62615"
+],
+"lat": 36.1336111,
+"lon": -81.2266667,
+"name": "W. KERR SCOTT RESERVOIR AT DAM NR WILKESBORO, NC",
+"site_type": "LK"
+},
+"0211139110": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 36.1361111,
+"lon": -81.2233333,
+"name": "YADKIN RIVER BL W KERR SCOTT DAM NEAR BUCK, NC",
+"site_type": "ST"
+},
+"02112000": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 36.1525,
+"lon": -81.1455556,
+"name": "YADKIN RIVER AT WILKESBORO, NC",
+"site_type": "ST"
+},
+"02112250": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 36.24103889,
+"lon": -80.8491,
+"name": "YADKIN RIVER AT ELKIN, NC",
+"site_type": "ST"
+},
+"02113850": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 36.40438889,
+"lon": -80.5616944,
+"name": "ARARAT RIVER AT ARARAT, NC",
+"site_type": "ST"
+},
+"02115360": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 36.1328861,
+"lon": -80.445275,
+"name": "YADKIN RIVER AT ENON, NC",
+"site_type": "ST"
+},
+"02116500": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.85666667,
+"lon": -80.3869444,
+"name": "YADKIN RIVER AT YADKIN COLLEGE, NC",
+"site_type": "ST"
+},
+"02118000": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.845,
+"lon": -80.65888889,
+"name": "SOUTH YADKIN RIVER NEAR MOCKSVILLE, NC",
+"site_type": "ST"
+},
+"02123500": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.43147778,
+"lon": -80.01663889,
+"name": "UWHARRIE RIVER NEAR ELDORADO, NC",
+"site_type": "ST"
+},
+"0212378405": {
+"active_params": [
+"00010",
+"00060",
+"00065"
+],
+"lat": 35.20066667,
+"lon": -80.0618056,
+"name": "PEE DEE R AT HWY731 BL LK TILLERY NR NORWOOD, NC",
+"site_type": "ST"
+},
+"02126375": {
+"active_params": [
+"00065"
+],
+"lat": 35.10321667,
+"lon": -80.0459333,
+"name": "PEE DEE R AT PEE DEE REFUGE NR ANSONVILLE, NC",
+"site_type": "ST"
+},
+"02128000": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.3872222,
+"lon": -79.83138889,
+"name": "LITTLE RIVER NEAR STAR, NC",
+"site_type": "ST"
+},
+"0212880025": {
+"active_params": [
+"00010",
+"00065"
+],
+"lat": 34.9834833,
+"lon": -79.8775806,
+"name": "PEE DEE RIVER BELOW POWERHOUSE DAM NR PEE DEE, NC",
+"site_type": "ST"
+},
+"02129000": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 34.9458333,
+"lon": -79.8697222,
+"name": "PEE DEE R NR ROCKINGHAM, NC",
+"site_type": "ST"
+},
+"02129375": {
+"active_params": [
+"00010",
+"00065"
+],
+"lat": 34.8662583,
+"lon": -79.878925,
+"name": "PEE DEE RIVER ABOVE JONES CREEK NEAR CORDOVA, NC",
+"site_type": "ST"
+},
+"02130000": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 34.708489,
+"lon": -79.876175,
+"name": "PEE DEE RIVER AT CHERAW, SC",
+"site_type": "ST"
+},
+"02130561": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 34.60622774,
+"lon": -79.7883877,
+"name": "PEE DEE RIVER NR BENNETTSVILLE, SC",
+"site_type": "ST"
+},
+"02133500": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.0611111,
+"lon": -79.49388889,
+"name": "DROWNING CREEK NEAR HOFFMAN, NC",
+"site_type": "ST"
+},
+"02133624": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 34.77277778,
+"lon": -79.3319444,
+"name": "LUMBER RIVER NEAR MAXTON, NC",
+"site_type": "ST"
+},
+"02134170": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 34.61796389,
+"lon": -79.0113,
+"name": "LUMBER RIVER AT LUMBERTON, NC",
+"site_type": "ST"
+},
+"02134480": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 34.71027778,
+"lon": -78.83638889,
+"name": "BIG SWAMP NR TAR HEEL, NC",
+"site_type": "ST"
+},
+"02134500": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 34.4425,
+"lon": -78.9602778,
+"name": "LUMBER RIVER AT BOARDMAN, NC",
+"site_type": "ST"
+},
+"02134900": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 34.22599744,
+"lon": -79.1342051,
+"name": "LUMBER RIVER AT NICHOLS, SC",
+"site_type": "ST"
+},
+"02137727": {
+"active_params": [
+"00010",
+"00060",
+"00065"
+],
+"lat": 35.6858333,
+"lon": -82.0602778,
+"name": "CATAWBA R NR PLEASANT GARDENS, NC",
+"site_type": "ST"
+},
+"02138520": {
+"active_params": [
+"00010",
+"00060",
+"00065"
+],
+"lat": 35.74125,
+"lon": -81.8352528,
+"name": "CATAWBA R AT SR1223 BL LK JAMES NR BRIDGEWATER, NC",
+"site_type": "ST"
+},
+"02138816": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.7344861,
+"lon": -81.887375,
+"name": "OLD CATAWBA R BL CATAWBA DAM NEAR BRIDGEWATER, NC",
+"site_type": "ST"
+},
+"02140991": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.8336111,
+"lon": -81.7119444,
+"name": "JOHNS RIVER AT ARNEYS STORE, NC",
+"site_type": "ST"
+},
+"02141500": {
+"active_params": [
+"00010",
+"00065"
+],
+"lat": 35.77262778,
+"lon": -81.4306556,
+"name": "CATAWBA RIVER AT RHODHISS, NC",
+"site_type": "ST"
+},
+"0214196125": {
+"active_params": [
+"00010",
+"00060",
+"00065"
+],
+"lat": 35.8218972,
+"lon": -81.1903833,
+"name": "CATAWBA RIVER AT NC HIGHWAY 16 NR MILLERSVILLE, NC",
+"site_type": "ST"
+},
+"0214244102": {
+"active_params": [
+"00010",
+"00065"
+],
+"lat": 35.75719444,
+"lon": -81.08915,
+"name": "CATAWBA RIVER BL LOOKOUT SHOALS DAM NR SHARON, NC",
+"site_type": "ST"
+},
+"0214264790": {
+"active_params": [
+"00010",
+"00065"
+],
+"lat": 35.4277333,
+"lon": -80.9573417,
+"name": "CATAWBA R AT RR BRIDGE AB NC 73 AT COWANS FORD, NC",
+"site_type": "ST"
+},
+"0214267602": {
+"active_params": [
+"00010",
+"00065"
+],
+"lat": 35.33400556,
+"lon": -80.9864083,
+"name": "CATAWBA RIVER DNSTRM DECK MTN IS DAM NR MTN IS, NC",
+"site_type": "ST"
+},
+"02145910": {
+"active_params": [
+"00010",
+"00060",
+"00065"
+],
+"lat": 35.01641944,
+"lon": -81.00156389,
+"name": "CATAWBA RIVER BL LAKE WYLIE DAM FEWELL ISLAND, SC",
+"site_type": "ST"
+},
+"02146000": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 34.98486935,
+"lon": -80.9739658,
+"name": "CATAWBA RIVER NEAR ROCK HILL, SC",
+"site_type": "ST"
+},
+"02151500": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.21126667,
+"lon": -81.69843056,
+"name": "BROAD RIVER NEAR BOILING SPRINGS, NC",
+"site_type": "ST"
+},
+"02152474": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.41527778,
+"lon": -81.5616667,
+"name": "FIRST BROAD RIVER AT LAWNDALE, NC",
+"site_type": "ST"
+},
+"02153200": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.12401728,
+"lon": -81.58787199,
+"name": "BROAD RIVER NEAR BLACKSBURG, SC",
+"site_type": "ST"
+},
+"03443000": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.29916667,
+"lon": -82.62388889,
+"name": "FRENCH BROAD RIVER AT BLANTYRE, NC",
+"site_type": "ST"
+},
+"03447687": {
+"active_params": [
+"00010",
+"00060",
+"00065"
+],
+"lat": 35.42916667,
+"lon": -82.5525,
+"name": "FRENCH BROAD RIVER NEAR FLETCHER, NC",
+"site_type": "ST"
+},
+"03451200": {
+"active_params": [
+"00010"
+],
+"lat": 35.585,
+"lon": -82.5686111,
+"name": "FRENCH BROAD RIVER AT HAYWOOD RD AT ASHEVILLE, NC",
+"site_type": "ST"
+},
+"03451500": {
+"active_params": [
+"00010",
+"00060",
+"00065"
+],
+"lat": 35.60888889,
+"lon": -82.5780556,
+"name": "FRENCH BROAD RIVER AT ASHEVILLE, NC",
+"site_type": "ST"
+},
+"03453500": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.78638889,
+"lon": -82.6608333,
+"name": "FRENCH BROAD RIVER AT MARSHALL, NC",
+"site_type": "ST"
+},
+"03500000": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.15,
+"lon": -83.3797222,
+"name": "LITTLE TENNESSEE RIVER NEAR PRENTISS, NC",
+"site_type": "ST"
+},
+"03503000": {
+"active_params": [
+"00010",
+"00060",
+"00065"
+],
+"lat": 35.33638889,
+"lon": -83.5269444,
+"name": "LITTLE TENNESSEE RIVER AT NEEDMORE, NC",
+"site_type": "ST"
+},
+"03504000": {
+"active_params": [
+"00010",
+"00060",
+"00065"
+],
+"lat": 35.1275,
+"lon": -83.6186111,
+"name": "NANTAHALA RIVER NEAR RAINBOW SPRINGS, NC",
+"site_type": "ST"
+},
+"03505550": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.305,
+"lon": -83.6522222,
+"name": "NANTAHALA RIVER NEAR HEWITT, NC",
+"site_type": "ST"
+},
+"03508050": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.28777778,
+"lon": -83.14388889,
+"name": "TUCKASEGEE RIVER AT SR 1172 NR CULLOWHEE, NC",
+"site_type": "ST"
+},
+"03510577": {
+"active_params": [
+"00010",
+"00060",
+"00065"
+],
+"lat": 35.38444444,
+"lon": -83.2916667,
+"name": "TUCKASEGEE RIVER AT BARKER'S CREEK, NC",
+"site_type": "ST"
+},
+"03513000": {
+"active_params": [
+"00060",
+"00065"
+],
+"lat": 35.4275,
+"lon": -83.4469444,
+"name": "TUCKASEGEE RIVER AT BRYSON CITY, NC",
+"site_type": "ST"
+},
+"0351706800": {
+"active_params": [
+"00010",
+"00060",
+"00065"
+],
+"lat": 35.4383333,
+"lon": -83.91888889,
+"name": "CHEOAH RIVER NR BEARPEN GAP NR TAPOCO, NC",
+"site_type": "ST"
+}
+},
+"validated_2026_11_28": {
+"coops": "All reviewed CO-OPS stations returned hilo predictions",
+"usace": "dsslake.txt listed Kerr, Jordan, Falls and W. Kerr Scott elevations",
+"usgs_reviewed_active": "13 of 13 reviewed USGS stations reported values in the last 12 h"
+}
+}
