@@ -317,6 +317,10 @@ class ProtectedSurfacesUnchanged(unittest.TestCase):
         # homepage_boot.py 9e9f3591349135a7bb84c5c27978637a5805291d33a35337262d2ee6979d959f,
         # dashboard.js e6e4e879bcad83b4ed6aa9445bc50b0b8aacc534b19a99f8f1acce30a45ffdf6).
         t444u.update({"homepage_boot.py": "d5ea520", "dashboard.js": "d5ea520"})
+        # Ed t576u (Phase 3C.1): the sitewide wind-direction standard changed dashboard.js and wind-viewer.js;
+        # pinned to the approved commit 960ebe1 (SHA-256 dashboard.js ed29757fa3cbba9697acffc5348a25244f92e2a86bcd10c94b8b6b2baa128dba,
+        # wind-viewer.js b3749937c6b564aead9dbbfc3c5f9d2dfafd98fd61cbf334bd15c9e7280f4c3e). Every other pin is unchanged.
+        t444u.update({"dashboard.js": "960ebe1"})
         # Ed t497u: wind-lab.js pinned to the reviewed Phase A public engine 8f17de6
         # (SHA-256 aca358bd4ee33fdef19da2fd6aa907f690c2b080803b11d6cb86dac99c371558).
         t444u.update({"wind-lab.js": "8f17de6"})

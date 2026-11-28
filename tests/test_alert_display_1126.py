@@ -606,6 +606,10 @@ class ServerFetchAndGuards(unittest.TestCase):
                 "wind-lab.js": "8f17de6",
                 "wind.html": "f05fb4539b2354132bf0d0c2b7828896d03c931a",
                 "wind-viewer.js": "f05fb4539b2354132bf0d0c2b7828896d03c931a"}
+        # Ed t576u (Phase 3C.1): the sitewide wind-direction standard changed dashboard.js and wind-viewer.js;
+        # pinned to the approved commit 960ebe1 (SHA-256 dashboard.js ed29757fa3cbba9697acffc5348a25244f92e2a86bcd10c94b8b6b2baa128dba,
+        # wind-viewer.js b3749937c6b564aead9dbbfc3c5f9d2dfafd98fd61cbf334bd15c9e7280f4c3e). Every other pin is unchanged.
+        pins.update({"dashboard.js": "960ebe1", "wind-viewer.js": "960ebe1"})
         for rel in ("conditions.py", "homepage_boot.py", "dashboard.js", "app.js", "styles.css", "index.html",
                     "freshwater.py", "radar.html", "radar-viewer.js", "wind-lab.js", "wind.html", "wind-viewer.js",
                     "brief_preview.py", "brief_strings.py", "lake.js", "fresh-home.js"):

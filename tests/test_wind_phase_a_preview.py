@@ -112,9 +112,11 @@ class PhaseAPreview(unittest.TestCase):
 
         # Ed t511u: wind.html and wind-viewer.js pinned to the reviewed B4 commit f05fb45.
         B4 = "f05fb4539b2354132bf0d0c2b7828896d03c931a"
+        # Ed t576u (Phase 3C.1): wind-viewer.js is pinned to the approved wind-direction standard commit 960ebe1
+        # (SHA-256 b3749937c6b564aead9dbbfc3c5f9d2dfafd98fd61cbf334bd15c9e7280f4c3e); wind.html stays on B4.
         for rel in ("wind.html", "wind-viewer.js"):
             current = (ROOT / rel).read_bytes()
-            baseline = subprocess.check_output(["git", "show", "%s:%s" % (B4, rel)], cwd=ROOT)
+            baseline = subprocess.check_output(["git", "show", "%s:%s" % ("960ebe1" if rel == "wind-viewer.js" else B4, rel)], cwd=ROOT)
             self.assertEqual(current, baseline, rel)
 
     def test_preview_engine_respawns_in_field_not_only_at_edges(self):

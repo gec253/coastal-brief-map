@@ -404,9 +404,11 @@ class RadarPreview1127(unittest.TestCase):
             self.assertEqual(player, (ROOT / "radar-player.js").read_bytes())
             # Preview route stays gated.
             self.assertEqual(self._get("/preview/radar")[0], 404)
+        # Ed t576u (Phase 3C.1): wind-viewer.js is pinned to the approved wind-direction standard commit 960ebe1
+        # (SHA-256 b3749937c6b564aead9dbbfc3c5f9d2dfafd98fd61cbf334bd15c9e7280f4c3e). All other files stay on BASELINE.
         for rel in FROZEN:
             current = (ROOT / rel).read_bytes()
-            baseline = subprocess.check_output(["git", "show", "%s:%s" % (BASELINE, rel)], cwd=ROOT)
+            baseline = subprocess.check_output(["git", "show", "%s:%s" % ("960ebe1" if rel == "wind-viewer.js" else BASELINE, rel)], cwd=ROOT)
             self.assertEqual(current, baseline, rel)
 
 

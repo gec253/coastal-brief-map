@@ -177,3 +177,15 @@ class HelmCalmLabel(unittest.TestCase):
         self.assertNotIn("from Calm", h)
         self.assertNotIn('class="pointer"', h)
         self.assertIn('<span class="dir">from SW</span>', signature_helm.dial_html(dict(state="ok", num="9", unit="kt", dir="SW", dial=225, gust="", sub="")))
+
+
+class CompassLetterContrast(unittest.TestCase):
+    """Dark-mode compass lettering (Ed t576u): BYL cardinal letters take the theme ink colour
+    (cream on navy in dark = 12:1; measured in the browser)."""
+
+    def test_letters_are_inside_the_styled_group_and_use_ink(self):
+        h = byl_page.compass_svg(225, 10)
+        self.assertIn('<g class="cmp-l">', h)
+        css = (ROOT / "preview/before-you-launch/byl.css").read_text()
+        self.assertIn(".cmp-l text{font:700 11px \"Barlow Condensed\",sans-serif;fill:var(--ink)}", css)
+        self.assertRegex(css, r"html\.dark,\.dark\{[^}]*--ink:#F6F1E7")
