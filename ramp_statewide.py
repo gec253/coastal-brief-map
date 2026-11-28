@@ -11,6 +11,7 @@ import math
 from pathlib import Path
 
 import ramp_finder as rf
+import ramp_search
 
 ROOT = Path(__file__).resolve().parent
 DATA_PATH = ROOT / "preview" / "ramp-finder" / "statewide.json"
@@ -49,6 +50,14 @@ EXTRA_CSS = """<style>
 .sw-refresh-bad{border-left:4px solid #8a1c1c;padding:.6rem .9rem;margin:1rem 0}
 .sw-about summary{cursor:pointer;min-height:44px;display:flex;align-items:center}
 .sw-about li{margin:.3rem 0}
+.sw-active{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem;margin:.6rem 0}
+.sw-al{font-size:.85rem;font-weight:600}
+.sw-chip{display:inline-flex;align-items:center;gap:.3rem;min-height:44px;padding:0 .8rem;border-radius:999px;border:1.5px solid currentColor;text-decoration:none;color:inherit;font-weight:600;font-size:.9rem}
+.sw-chip span{font-size:1.1rem}
+.sw-scope{font-size:.9rem;margin:.4rem 0}.sw-scope a{display:inline-flex;align-items:center;min-height:44px}
+.sw-allnc{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 1.2rem;border-radius:12px;background:#0e2a47;color:#fff!important;font-weight:700;text-decoration:none}
+.sw-inarea{display:flex;align-items:center;gap:.5rem;min-height:44px;font-size:.9rem}
+.sw-inarea input{width:22px;height:22px}
 </style>"""
 
 
@@ -75,7 +84,8 @@ def _first(q: dict, k: str) -> str:
 
 
 def parse(q: dict) -> dict:
-    f = {"region": _first(q, "region"), "q": _first(q, "q"), "type": _first(q, "type"), "water": _first(q, "water")}
+    f = {"region": _first(q, "region"), "q": _first(q, "q"), "type": _first(q, "type"), "water": _first(q, "water"),
+         "in_area": _first(q, "in_area") in ("1", "true", "on", "yes")}
     for key, _ in rf.FLAG_FILTERS:
         f[key] = _first(q, key) in ("1", "true", "on", "yes")
     if f["type"] not in dict(TYPE_CHOICES):
@@ -142,36 +152,63 @@ EXTRA_CSS = EXTRA_CSS.replace("</style>", """
 [data-find][hidden]{display:none}
 </style>""")
 
-FIND_JS = """<script>
+FIND_JS = "<script>" + ramp_search.JS.replace("</", "<\\/") + """
 (function(){
-  var q=document.getElementById("q"), live=document.getElementById("sw-live");
-  if(!q||!live) return;
+  /* Live filtering with the shared search rules (ramp_search.py). Search never depends on stored
+     state: the form is reset to the server's values on back/forward restores (iPhone Safari). */
+  var form=document.getElementById("filters"), q=document.getElementById("q"), live=document.getElementById("sw-live");
+  if(!form||!q||!live||!window.CBRampSearch) return;
+  var S=window.CBRampSearch, area=form.getAttribute("data-area")||"", statewide=form.getAttribute("data-statewide")||"/ramps";
   var items=[].slice.call(document.querySelectorAll("li[data-find]"));
   var groups=[].slice.call(document.querySelectorAll("details.sw-group"));
   var start=groups.map(function(g){return g.open});
+  var reg=document.getElementById("sw-region"), inArea=form.querySelector('input[name="in_area"]');
+  var go=document.createElement("p"); go.className="sw-scope"; go.hidden=true; live.parentNode.insertBefore(go, live.nextSibling);
   function run(){
-    var t=q.value.trim().toLowerCase(), n=0;
-    items.forEach(function(li){var hit=!t||li.getAttribute("data-find").indexOf(t)>-1; li.hidden=!hit; if(hit) n++;});
+    var raw=q.value.trim(), t=S.norm(raw), n=0;
+    items.forEach(function(li){var hit=!t||S.matches(li.getAttribute("data-find"),raw); li.hidden=!hit; if(hit) n++;});
     groups.forEach(function(g,i){
       var vis=g.querySelectorAll("li[data-find]:not([hidden])").length;
       g.hidden=!!t&&vis===0; g.open=t?vis>0:start[i];
       var c=g.querySelector("summary .n"); if(c) c.textContent=vis;
     });
-    live.textContent=t?(n+(n===1?" site matches":" sites match")+" \u201c"+q.value.trim()+"\u201d on this page."):"";
+    if(!t){live.textContent=""; go.hidden=true; return;}
+    if(area){
+      live.textContent=n+(n===1?" site in ":" sites in ")+area+" match \u201c"+raw+"\u201d. Press Search to look across all of North Carolina.";
+      go.innerHTML=""; var a=document.createElement("a"); a.className="sw-allnc"; a.setAttribute("data-allnc",""); a.href=statewide+"?q="+encodeURIComponent(raw); a.textContent="Search all North Carolina ramps for \u201c"+raw+"\u201d"; go.appendChild(a); go.hidden=false;
+    } else {
+      live.textContent=n+(n===1?" site matches":" sites match")+" \u201c"+raw+"\u201d.";
+      go.hidden=true;
+    }
   }
   q.addEventListener("input",run);
+  if(reg&&inArea) reg.addEventListener("change",function(){inArea.checked=!!reg.value;});
+  addEventListener("pageshow",function(e){ if(e.persisted){ form.reset(); run(); } });
+  run();
 })();
 </script>"""
+
+
+def region_applies(f) -> bool:
+    """An area from a homepage link scopes browsing, not searching (Ed t559u, t560u).
+
+    Typing a search looks across all of North Carolina unless the visitor chose
+    "Only search in this area" (in_area=1). This was the root cause of "every search fails
+    until Reset": homepage links carry ?region=..., the Area select inside the collapsed
+    "More filters" was pre-filled from it, and every search was silently limited to that area.
+    """
+    return bool(f["region"]) and (not ramp_search.norm(f["q"]) or f.get("in_area", False))
 
 
 def classify(data, f):
     """Group the filtered records by access type (one dimension). Status is a separate filter."""
     secs = {k: [] for k in TYPE_LABELS}
     flag_keys = ("camper_only", "non_gas_only", "size_limited", "no_parking")
+    scoped = region_applies(f)
     for r in data["records"]:
-        if not region_match(r, f["region"]):
+        if scoped and not region_match(r, f["region"]):
             continue
-        if not rf.matches_search(r, f["q"]):
+        if not ramp_search.matches(ramp_search.record_haystack(r), f["q"]):
             continue
         if f["type"] and r.get("type_dimension") != f["type"]:
             continue
@@ -195,9 +232,8 @@ SECTION_TEXT = {
 
 
 def _find_text(r) -> str:
-    bits = [r.get("display_name"), r.get("official_name"), r.get("alias"), r.get("city"), r.get("county"),
-            (r.get("county") or "") + " county", r.get("body_of_water"), r.get("area_label"), r.get("neuse_segment_label")]
-    return " ".join(b for b in bits if b and b != "not stated").lower()
+    """Same haystack the server and the statewide map search (ramp_search)."""
+    return ramp_search.record_haystack(r)
 
 
 def _card(r, *, public: bool = False) -> str:
@@ -278,6 +314,54 @@ def _unmatched_notices_html(data, area: str | None) -> str:
     return "".join(parts)
 
 
+def _url(base: str, params: dict) -> str:
+    from urllib.parse import urlencode
+    keep = {k: v for k, v in params.items() if v not in ("", None, False)}
+    return base + ("?" + urlencode(keep) if keep else "")
+
+
+def _params(f, region_param) -> dict:
+    p = {"q": f["q"], "region": region_param, "in_area": "1" if f.get("in_area") else "",
+         "type": f["type"], "status": f.get("status", ""), "water": f["water"]}
+    for k, _ in rf.FLAG_FILTERS:
+        if f.get(k):
+            p[k] = "1"
+    return p
+
+
+def _active_filters(f, region_param, scoped, base) -> list:
+    """Every filter that is narrowing the list, each with a link that removes just that filter."""
+    p = _params(f, region_param)
+    out = []
+    def drop(*keys):
+        return _url(base, {k: v for k, v in p.items() if k not in keys})
+    if scoped and region_param:
+        out.append(("Area: " + REGION_LABELS.get(region_param, region_param), drop("region", "in_area")))
+    if f["type"]:
+        out.append(("Type: " + dict(TYPE_CHOICES).get(f["type"], f["type"]), drop("type")))
+    if f.get("status"):
+        out.append(("Status: " + STATUS_LABELS.get(f["status"], f["status"]), drop("status")))
+    if f["water"]:
+        out.append(("Water: " + dict(WATER_CHOICES).get(f["water"], f["water"]), drop("water")))
+    for k, lbl in rf.FLAG_FILTERS:
+        if f.get(k) and k in ("camper_only", "non_gas_only", "size_limited", "no_parking"):
+            out.append((lbl, drop(k)))
+    return out
+
+
+def _active_html(active, f, region_param, scoped, base) -> str:
+    bits = []
+    if active:
+        chips = "".join(f'<a class="sw-chip" href="{rf.esc(href)}" aria-label="Remove filter: {rf.esc(lbl)}">{rf.esc(lbl)} <span aria-hidden="true">×</span></a>'
+                        for lbl, href in active)
+        bits.append(f'<div class="sw-active" data-active-filters role="group" aria-label="Active filters"><span class="sw-al">Active filters:</span>{chips}</div>')
+    if f["q"] and region_param and region_param in REGION_LABELS and not scoped:
+        p = _params(f, region_param); p["in_area"] = "1"
+        bits.append(f'<p class="sw-scope" data-scope="statewide">Searching all of North Carolina for “{rf.esc(f["q"])}”. '
+                    f'<a href="{rf.esc(_url(base, p))}">Only search {rf.esc(REGION_LABELS[region_param])}</a></p>')
+    return "".join(bits)
+
+
 def render_list(data, q, *, public: bool = False) -> str:
     base = "/ramps" if public else BASE
     tok = rf.STATEWIDE_BASE.set(base)
@@ -290,7 +374,9 @@ def render_list(data, q, *, public: bool = False) -> str:
 def _render_list(data, q, *, public: bool = False, base: str = BASE) -> str:
     f = parse(q)
     f["status"] = _first(q, "status") if _first(q, "status") in STATUS_LABELS else ""
-    region = f["region"]
+    region_param = f["region"]
+    scoped = region_applies(f)
+    region = region_param if scoped else ""  # the area shapes this page only when it applies
     meta = data.get("meta") or {}
     checked = meta.get("date_checked", "")
     refresh = meta.get("refresh") or {}
@@ -334,8 +420,13 @@ def _render_list(data, q, *, public: bool = False, base: str = BASE) -> str:
     else:
         for kind in TYPE_LABELS:
             body.append(_section(kind, secs[kind], group_by_area=grouped, collapsed=grouped, public=public))
+    active = _active_filters(f, region_param, scoped, base)
     if not shown and not unknown:
-        body.append('<p class="empty" data-empty="ramps">No ramps match those filters.</p>')
+        if active:
+            body.append('<div class="empty sw-empty" data-empty="ramps"><p>No ramps match with these filters.</p>'
+                        f'<p><a class="sw-allnc" data-allnc href="{rf.esc(_url(base, {"q": f["q"]}))}">Search all North Carolina ramps</a></p></div>')
+        else:
+            body.append('<p class="empty" data-empty="ramps">No ramps match that search. Try a town, county, ramp name or waterbody.</p>')
     ctx = ""
     if region in ("falls-lake", "jordan-lake"):
         ctx = rf.lake_context_html(data, region)
@@ -366,13 +457,14 @@ def _render_list(data, q, *, public: bool = False, base: str = BASE) -> str:
 <h1>Ramp Finder: North Carolina</h1>
 <p class="lead">{n_total} public boating access sites statewide, from official sources only, checked {rf.esc(checked)}. This is not a live open/closed board.</p>
 {refresh_html}
-<form class="filters" id="filters" method="get" action="{base}" role="search">
+<form class="filters" id="filters" method="get" action="{base}" role="search" autocomplete="off" data-area="{rf.esc(REGION_LABELS.get(region, "") if region else "")}" data-statewide="{rf.esc(base)}">
   <label class="q-lab" for="q">Search by ramp name, town, county or waterbody</label>
   <input type="search" id="q" name="q" value="{rf.esc(f["q"])}" placeholder="e.g. Kerr, Wilmington, Neuse" autocomplete="off" aria-describedby="sw-live">
   <p id="sw-live" class="sw-dims" aria-live="polite"></p>
   <details class="sw-about"><summary>More filters</summary>
   <div class="sw-select">
-    {_select("region", "Area", REGION_CHOICES, region if region in REGION_LABELS else "")}
+    {_select("region", "Area", REGION_CHOICES, region_param if region_param in REGION_LABELS else "")}
+    <label class="sw-inarea"><input type="checkbox" name="in_area" value="1"{" checked" if f.get("in_area") else ""}> Only search in the selected area</label>
     {_select("type", "Access type", TYPE_CHOICES, f["type"])}
     {_select("status", "Official status", STATUS_CHOICES, f["status"])}
     {_select("water", "Water", WATER_CHOICES, f["water"])}
@@ -382,6 +474,7 @@ def _render_list(data, q, *, public: bool = False, base: str = BASE) -> str:
   <div class="actions"><button type="submit">Search</button>
   <button type="reset" onclick="location.href='{base}'; return false;">Reset</button></div>
 </form>
+{_active_html(active, f, region_param, scoped, base)}
 {honest}
 {count_line}
 {ctx}
