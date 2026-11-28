@@ -16,6 +16,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import ramp_search
+
 ROOT = Path(__file__).resolve().parent
 STATEWIDE = ROOT / "preview" / "ramp-finder" / "statewide.json"
 OUT = ROOT / "preview" / "ramp-finder" / "map-data.json"
@@ -80,7 +82,7 @@ def record(r) -> dict:
     docks = (_int(r.get("fixed_docks")) or 0) + (_int(r.get("floating_docks")) or 0)
     return {
         "id": r["id"], "n": r["display_name"], "ci": r.get("city") or "", "co": r.get("county") or "",
-        "w": r.get("body_of_water") or "", "a": r.get("area_label") or "",
+        "w": r.get("body_of_water") or "", "a": r.get("area_label") or "", "al": ramp_search.name_aliases(r),
         "la": la, "lo": lo, "pr": pr, "cs": cs,
         "ty": ty, "tyl": TYPE_LABELS[ty],
         "rx": rx if _stated(rx) else "",
