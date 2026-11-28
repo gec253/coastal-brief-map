@@ -4553,7 +4553,8 @@ class Handler(SimpleHTTPRequestHandler):
         path = parsed.path or "/ramps"
         is_map = (
             path.rstrip("/") == "/ramps/map"
-            or path in ("/ramps/map.js", "/ramps/map.json", "/ramps/map.css")
+            or path in ("/ramps/map.js", "/ramps/map.json", "/ramps/map.css",
+                     "/ramps/map/geo-lo.json", "/ramps/map/geo-hi.json")
         )
         if is_map:
             if not launch_flags.ramp_map_public():
