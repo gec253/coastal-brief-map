@@ -263,11 +263,11 @@
       const row = staSel ? staRow(staSel) : null;
       if (row) {
         const w = classifySta(row).wind || {};
-        if (w.dirDeg != null && isFinite(w.dirDeg)) return { mode: "observed", dirDeg: w.dirDeg, compass: w.dirCompass || M.compass(w.dirDeg) };
+        if (w.dirDeg != null && isFinite(w.dirDeg)) return { mode: "observed", dirDeg: w.dirDeg, compass: w.dirCompass || M.compass(w.dirDeg), calm: isFinite(w.speedKt) && w.speedKt < 0.5 };
       }
       const ll = dot ? dot.getLatLng() : null;
       const s = (grid && ll) ? wind.sample(ll.lat, ll.lng) : null;
-      if (s && isFinite(s.from)) return { mode: "forecast", dirDeg: s.from, compass: M.compass(s.from) };
+      if (s && isFinite(s.from)) return { mode: "forecast", dirDeg: s.from, compass: M.compass(s.from), calm: isFinite(s.kt) && s.kt < 0.5 };
       return { mode: null, dirDeg: null, compass: "" };
     }
     function syncCmp() {
@@ -290,9 +290,16 @@
         return;
       }
       if (k) k.textContent = st.mode === "observed" ? "OBSERVED" : "FORECAST";
+      if (st.calm) {
+        if (d) d.textContent = "CALM";
+        if (needle) { needle.setAttribute("transform", "rotate(0 32 32)"); needle.setAttribute("visibility", "hidden"); }
+        return;
+      }
+      if (needle) needle.removeAttribute("visibility");
       if (d) d.textContent = "FROM " + Math.round(st.dirDeg) + "°T";
       if (needle) {
-        needle.setAttribute("transform", "rotate(" + st.dirDeg + " 32 32)");
+        // Arrow shows airflow: it points where the wind is going (FROM + 180).
+        needle.setAttribute("transform", "rotate(" + ((st.dirDeg + 180) % 360) + " 32 32)");
         needle.setAttribute("data-dir", String(st.dirDeg));
       }
     }

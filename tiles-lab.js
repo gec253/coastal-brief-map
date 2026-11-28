@@ -30,7 +30,7 @@
     return '<svg class="compass" viewBox="0 0 128 128" role="img" aria-label="' + (has ? "Wind from " + Math.round(fromDeg) + " degrees" : "Wind direction unavailable") + '">' +
       '<circle class="ring" cx="64" cy="64" r="60"/><circle class="ring" cx="64" cy="64" r="40" stroke-dasharray="1 3"/>' + tk +
       '<text x="64" y="25">N</text><text x="103" y="64">E</text><text x="64" y="103">S</text><text x="25" y="64">W</text>' +
-      (has ? '<g class="needle" style="transform:rotate(' + fromDeg + 'deg)"><path d="M64 4 l7 12 h-14z" fill="var(--tAcc)"/><line x1="64" y1="18" x2="64" y2="100" stroke="var(--tAcc)" stroke-width="2.2" stroke-linecap="round"/><path d="M64 112 l-6-12 h12z" fill="var(--tAcc)" opacity=".55"/></g><circle cx="64" cy="64" r="3.5" fill="var(--tInk)"/>' : "") +
+      (has ? '<g class="needle" style="transform:rotate(' + ((fromDeg + 180) % 360) + 'deg)"><path d="M64 4 l7 12 h-14z" fill="var(--tAcc)"/><line x1="64" y1="18" x2="64" y2="100" stroke="var(--tAcc)" stroke-width="2.2" stroke-linecap="round"/><path d="M64 112 l-6-12 h12z" fill="var(--tAcc)" opacity=".55"/></g><circle cx="64" cy="64" r="3.5" fill="var(--tInk)"/>' : "") +
       "</svg>";
   }
   function swellWave(hFt, periodS) {

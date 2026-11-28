@@ -70,6 +70,18 @@ def _tlabel(t):
     return _ts(t).astimezone(byl_data.ET).strftime("%a %-I:%M %p")
 
 
+def _segments(pts, max_gap_s):
+    """Split a series wherever readings are missing for longer than max_gap_s, so a gap is drawn
+    as a gap and never bridged by a straight line."""
+    segs = []
+    for t, v in pts:
+        ts = _ts(t).timestamp()
+        if not segs or ts - segs[-1][-1][0] > max_gap_s:
+            segs.append([])
+        segs[-1].append((ts, v))
+    return segs
+
+
 def spark_svg(pts, label, unit, W=300, H=64, cls="obs"):
     """24 h line for a measured series; time axis is real time, no smoothing or filling."""
     vs = [v for _, v in pts]
@@ -79,11 +91,13 @@ def spark_svg(pts, label, unit, W=300, H=64, cls="obs"):
     t0, t1 = _ts(pts[0][0]).timestamp(), _ts(pts[-1][0]).timestamp()
     X = lambda t: 8 + (t - t0) / max(t1 - t0, 1) * (W - 16)
     Y = lambda v: 6 + (1 - (v - lo) / (hi - lo)) * (H - 22)
-    d = "M" + " L".join(f"{X(_ts(t).timestamp()):.1f},{Y(v):.1f}" for t, v in pts)
-    area = d + f" L{X(t1):.1f},{H-16} L{X(t0):.1f},{H-16}Z"
+    segs = _segments(pts, 2 * 3600)
+    d = "".join("M" + " L".join(f"{X(t):.1f},{Y(v):.1f}" for t, v in s) for s in segs)
+    area = "".join("M" + " L".join(f"{X(t):.1f},{Y(v):.1f}" for t, v in s) + f" L{X(s[-1][0]):.1f},{H-16} L{X(s[0][0]):.1f},{H-16}Z" for s in segs)
     lx, ly = X(t1), Y(vs[-1])
     rows = [[round(X(_ts(t).timestamp()), 1), f"{v:g} {unit} · {_tlabel(t)}"] for t, v in pts]
-    return (f'<svg class="chart spark" viewBox="0 0 {W} {H}" role="img" aria-label="{E(label)}: last 24 hours, from {min(vs):g} to {max(vs):g} {E(unit)}"{_scrub(rows, "Measured")}>'
+    gap = "; gaps in the record are left blank" if len(segs) > 1 else ""
+    return (f'<svg class="chart spark" viewBox="0 0 {W} {H}" role="img" aria-label="{E(label)}: last 24 hours, from {min(vs):g} to {max(vs):g} {E(unit)}{gap}"{_scrub(rows, "Measured")}>'
             f'<path class="a-{cls}" d="{area}"/><path class="l-{cls}" d="{d}"/><circle class="dot {cls[0]}" cx="{lx:.1f}" cy="{ly:.1f}" r="4"/>'
             f'<text x="8" y="{H-3}">{E(_hm(pts[0][0]))}</text><text x="{W-8}" y="{H-3}" text-anchor="end">now</text>'
             f'<text x="{W-8}" y="12" text-anchor="end">{max(vs):g}</text><text x="{W-8}" y="{H-19}" text-anchor="end">{min(vs):g}</text></svg>')
@@ -95,7 +109,8 @@ def lake_svg(hist, guide, datum, W=330, H=140):
     t0, t1 = _ts(hist[0][0]).timestamp(), _ts(hist[-1][0]).timestamp()
     X = lambda t: 40 + (t - t0) / max(t1 - t0, 1) * (W - 50)
     Y = lambda v: 10 + (1 - (v - lo) / (hi - lo)) * (H - 44)
-    d = "M" + " L".join(f"{X(_ts(t).timestamp()):.1f},{Y(v):.1f}" for t, v in hist)
+    segs = _segments(hist, 9 * 3600)  # points are 6-hourly; a longer jump means missing readings
+    d = "".join("M" + " L".join(f"{X(t):.1f},{Y(v):.1f}" for t, v in s) for s in segs)
     g = ""
     if guide is not None:
         g = (f'<line class="l-guide" x1="40" x2="{W-10}" y1="{Y(guide):.1f}" y2="{Y(guide):.1f}"/>'
@@ -113,7 +128,7 @@ def lake_svg(hist, guide, datum, W=330, H=140):
     rows = [[round(X(_ts(t).timestamp()), 1), f"{v:.2f} ft {datum} · {_tlabel(t)}" + (f" · {v - guide:+.2f} vs guide" if guide is not None else "")] for t, v in hist]
     return (f'<svg class="chart" viewBox="0 0 {W} {H}" role="img" aria-label="Lake elevation, last 14 days, feet above {E(datum)}{", with guide curve" if guide else ""}"{_scrub(rows, "Measured, 6-hourly")}>'
             f'{ticks}{g}<path class="l-obs" d="{d}"/><circle class="dot o" cx="{lx:.1f}" cy="{ly:.1f}" r="5"/>{days}'
-            f'<text x="40" y="{H-1}">ft above {E(datum)} · 14 days · USGS</text></svg>')
+            f'<text x="40" y="{H-1}">ft above {E(datum)} · 14 days · USGS{" · gaps left blank" if len(segs) > 1 else ""}</text></svg>')
 
 
 def tide_svg(curve, events, now, W=330, H=118):
@@ -133,11 +148,40 @@ def tide_svg(curve, events, now, W=330, H=118):
                    f'<text class="tb" x="{min(max(x, 30), W-30):.1f}" y="{(y-8) if e["type"] == "High" else (y+16):.1f}" text-anchor="middle">{"H" if e["type"] == "High" else "L"} {E(e["time"])}</text>')
     nt = _ts(now).timestamp()
     nx = X(min(max(nt, t0), t1))
-    grid = "".join(f'<text x="{X(_ts(t).timestamp()):.1f}" y="{H-6}" text-anchor="middle">{E(_hm(t))}</text>' for t, _ in curve[::6])
-    rows = [[round(X(_ts(t).timestamp()), 1), f"{v:.1f} ft MLLW · {_tlabel(t)}"] for t, v in curve]
-    return (f'<svg class="chart" viewBox="0 0 {W} {H}" role="img" aria-label="Predicted tide for the next 18 hours, feet above MLLW, with now marker"{_scrub(rows, "Predicted")}>'
+    step = max(1, round(len(curve) / 24 * 6))  # an hour label every 6 h
+    grid = "".join(f'<text x="{X(_ts(t).timestamp()):.1f}" y="{H-6}" text-anchor="middle">{E(_hm(t))}</text>' for t, _ in curve[::step])
+    # readout: every plotted 6-minute NOAA prediction
+    rows = [[round(X(_ts(t).timestamp()), 1), f"{v:.2f} ft MLLW · {_tlabel(t)}"] for t, v in curve]
+    return (f'<svg class="chart" viewBox="0 0 {W} {H}" role="img" aria-label="NOAA 6-minute tide predictions, 6 hours ago to 18 hours ahead, feet above MLLW, with now marker"{_scrub(rows, "Predicted")}>'
             f'<path class="a-pred" d="{area}"/><path class="l-pred" d="{d}"/>{ev}<line class="now" x1="{nx:.1f}" x2="{nx:.1f}" y1="8" y2="{H-22}"/>'
             f'<text class="tb" x="{nx+4:.1f}" y="14">now</text>{grid}</svg>')
+
+
+def hilo_svg(events, now, W=330, H=118):
+    """Official NOAA high and low predictions as a schedule: one bar per event at its time, height
+    from MLLW 0. No line joins the bars, because the station publishes no values in between."""
+    n0 = _ts(now).timestamp()
+    t0, t1 = n0 - 4 * 3600, n0 + 20 * 3600
+    ev = [e for e in events if t0 <= _ts(e["ts"]).timestamp() <= t1]
+    if not ev:
+        return ""
+    vs = [float(e["ft"]) for e in ev] + [0.0]
+    lo, hi = min(vs) - .3, max(vs) + .6
+    X = lambda t: 14 + (t - t0) / (t1 - t0) * (W - 28)
+    Y = lambda v: 20 + (1 - (v - lo) / (hi - lo)) * (H - 46)
+    out, rows = "", []
+    for e in ev:
+        x, v = X(_ts(e["ts"]).timestamp()), float(e["ft"])
+        y0, y1 = Y(0), Y(v)
+        hiw = e["type"] == "High"
+        out += (f'<rect class="{"b-hi" if hiw else "b-lo"}" x="{x-7:.1f}" y="{min(y0, y1):.1f}" width="14" height="{max(abs(y1-y0), 1.5):.1f}" rx="3"/>'
+                f'<text class="tb" x="{min(max(x, 26), W-26):.1f}" y="{(min(y0, y1) - 5) if hiw else (max(y0, y1) + 13):.1f}" text-anchor="middle">{"H" if hiw else "L"} {v:.1f}</text>'
+                f'<text x="{min(max(x, 22), W-22):.1f}" y="{H-6}" text-anchor="middle">{E(e["time"].replace(" AM", "a").replace(" PM", "p"))}</text>')
+        rows.append([round(x, 1), f'{e["type"]} {v:.1f} ft MLLW · {_tlabel(e["ts"])}'])
+    nx = X(n0)
+    return (f'<svg class="chart" viewBox="0 0 {W} {H}" role="img" aria-label="NOAA high and low tide predictions, feet above MLLW, with now marker"{_scrub(rows, "Predicted")}>'
+            f'<line class="base" x1="8" x2="{W-8}" y1="{Y(0):.1f}" y2="{Y(0):.1f}"/><text x="{W-10}" y="{Y(0)-3:.1f}" text-anchor="end">0 = MLLW</text>{out}'
+            f'<line class="now" x1="{nx:.1f}" x2="{nx:.1f}" y1="8" y2="{H-22}"/><text class="tb" x="{nx+4:.1f}" y="14">now</text></svg>')
 
 
 def compass_svg(deg, kt, R=34):
@@ -160,7 +204,7 @@ def wind_bars_svg(hourly, W=330, H=86):
         w = bw * .6
         bh = h["mph"] / m * 44
         out += f'<rect class="bar-f" x="{x:.1f}" y="{50-bh:.1f}" width="{w:.1f}" height="{bh:.1f}" rx="2"/><text x="{x+w/2:.1f}" y="{46-bh:.1f}" text-anchor="middle">{h["mph"]}</text>'
-        if h["dir"] in DIRS:
+        if h["dir"] in DIRS and h["mph"] > 0:
             out += f'<g transform="translate({x+w/2:.1f},62) rotate({(DIRS[h["dir"]] + 180) % 360})"><path d="M0 -6 L4 5 L0 2.5 L-4 5Z" fill="var(--ink2)"/></g>'
         if i % 3 == 0:
             out += f'<text x="{x+w/2:.1f}" y="{H-4}" text-anchor="middle">{E(_hm(h["t"]))}</text>'
@@ -214,16 +258,17 @@ def card_html(c):
         c = dict(c, note="")
     elif key == "wind_obs":
         g = f' · gusts {c["gust_mph"]} mph' if c.get("gust_mph") is not None else ""
-        body = (f'<div class="wind">{compass_svg(c.get("deg"), c["kt"])}<div><div class="big">{c["mph"]}<small>mph</small></div>'
-                f'<p class="delta">{"Calm" if c.get("calm") else "From " + E(c.get("dir") or "?")}{g}</p><p class="note">{c["kt"]} kt{f" · gusts {c[chr(103)+chr(117)+chr(115)+chr(116)+chr(95)+chr(107)+chr(116)]} kt" if c.get("gust_kt") is not None else ""}</p></div></div>')
+        body = (f'<div class="wind">{compass_svg(None if c.get("calm") else c.get("deg"), c["kt"])}<div><div class="big">{c["mph"]}<small>mph</small></div>'
+                f'<p class="delta">{"Calm" if c.get("calm") else ("From " + E(c["dir"]) if c.get("dir") and c.get("deg") is not None else "Direction variable or not reported")}{g}</p><p class="note">{c["kt"]} kt{f" · gusts {c[chr(103)+chr(117)+chr(115)+chr(116)+chr(95)+chr(107)+chr(116)]} kt" if c.get("gust_kt") is not None else ""}</p></div></div>')
     elif key == "tide":
         cv = c.get("curve")
         if cv:
-            body = tide_svg(cv["pts"], c.get("all_events") or c["events"], c.get("now") or cv["pts"][0][0]) + '<p class="note">Feet above MLLW (mean lower low water), NOAA predictions. Not water depth.</p>'
-            if cv.get("interpolated"):
-                body += '<p class="note">This NOAA station publishes high and low times only; the curve is drawn between them.</p>'
+            body = tide_svg(cv["pts"], c.get("all_events") or c["events"], c.get("now") or cv["pts"][0][0]) + '<p class="note">NOAA 6-minute predictions, feet above MLLW (mean lower low water). Not water depth.</p>'
+        elif c.get("now") and hilo_svg(c.get("all_events") or c["events"], c["now"]):
+            body = (hilo_svg(c.get("all_events") or c["events"], c["now"])
+                    + '<p class="note">This NOAA station publishes official high and low predictions only, so no curve is drawn between them. Feet above MLLW; not water depth.</p>')
         else:
-            body = '<div class="chart-ph">Tide curve not available right now. High and low times below.</div>'
+            body = '<div class="chart-ph">Tide chart not available right now. High and low times below.</div>'
         body += '<ul class="tides">' + "".join(f'<li><b>{E(e["type"])}</b> {E(e["day"])} {E(e["time"])} · {E(e["ft"])} ft</li>' for e in c["events"]) + "</ul>"
     elif "value" in c:
         extra = ""
@@ -304,14 +349,24 @@ def regs_card(site):
     return sec("Fishing regulations", f'<div class="links">{links}</div>{why}', "official links")
 
 
+CHART_LINKS = (
+    # Checked Nov 28, 2026: NOAA has sunset its raster charts (the old OnLineViewer pages now say so),
+    # so the gateway links only to NOAA's current ENC products.
+    ("https://nauticalcharts.noaa.gov/enconline/enconline.html", "NOAA ENC Viewer", "Official electronic navigational charts"),
+    ("https://www.charts.noaa.gov/InteractiveCatalog/nrnc.shtml", "NOAA Chart Locator", "Find and download the ENC cells for this area"),
+)
+
+
 def charts_card(site, cz):
-    """Nautical Charts gateway: official NOAA links, coastal and estuarine ramps only."""
+    """Nautical Charts gateway: current official NOAA ENC products, coastal and estuarine ramps only."""
     if site["water_class"] in byl_data.FRESH_CLASSES or not cz.get("chart"):
         return ""
     ch = cz["chart"]
-    return sec("Nautical charts", f'<div class="links"><a class="lk" href="{E(ch["url"])}" rel="noopener"><span class="ico">{ic("chart")}</span><span><small>NOAA chart {E(ch["chart"])} · 1:{ch["scale"]:,}</small>{E(ch["title"])}</span>{ic("ext")}</a>'
-               f'<a class="lk" href="https://nauticalcharts.noaa.gov/enconline/enconline.html" rel="noopener"><span class="ico">{ic("chart")}</span><span><small>NOAA</small>ENC Online chart viewer</span>{ic("ext")}</a></div>'
-               '<p class="note">The largest-scale NOAA chart whose official footprint covers this ramp. Check Local Notices to Mariners for changes.</p>', "official NOAA")
+    links = "".join(f'<a class="lk" href="{E(u)}" rel="noopener"><span class="ico">{ic("chart")}</span><span><small>{E(sm)}</small>{E(t)}</span>{ic("ext")}</a>'
+                    for u, t, sm in CHART_LINKS)
+    return sec("Nautical charts", f'<div class="links">{links}</div>'
+               f'<p class="note">Area reference: this ramp lies on former NOAA chart {E(ch["chart"])} ({E(ch["title"])}, 1:{ch["scale"]:,}). '
+               'NOAA has retired its raster charts; the ENC is the current official chart. Check Local Notices to Mariners for changes.</p>', "official NOAA")
 
 
 def sun_card(c):
@@ -433,6 +488,94 @@ def resolve_request(path):
 _GEO = {}
 
 
+def _enc():
+    """NOAA ENC land areas (LNDARE) already in the repo for the coastal basemap (wind-coast/enc.json,
+    CC0, Office of Coast Survey; see docs/BASEMAP.md), plus its coverage mask. Not for navigation."""
+    if "enc" not in _GEO:
+        from pathlib import Path
+        d = json.loads((Path(__file__).resolve().parent / "wind-coast/enc.json").read_text())
+        q = d["q"]
+
+        def dec(polys):
+            out = []
+            for p in polys:
+                rings = []
+                for a in p["r"]:
+                    x = y = 0
+                    pts = []
+                    for i in range(0, len(a) - 1, 2):
+                        x += a[i]; y += a[i + 1]
+                        pts.append((x / q, y / q))
+                    rings.append(pts)
+                out.append(([v / q for v in p["b"]], rings))
+            return out
+        _GEO["enc"] = (dec(d["polys"]), dec(d["cover"]))
+    return _GEO["enc"]
+
+
+def _in_polys(polys, lo, la):
+    inside = False
+    for b, rings in polys:
+        if lo < b[0] or lo > b[2] or la < b[1] or la > b[3]:
+            continue
+        for r in rings:
+            j = len(r) - 1
+            for i in range(len(r)):
+                (xi, yi), (xj, yj) = r[i], r[j]
+                if (yi > la) != (yj > la) and lo < (xj - xi) * (la - yi) / (yj - yi) + xi:
+                    inside = not inside
+                j = i
+    return inside
+
+
+def _clip_ring(r, x0, y0, x1, y1):
+    """Sutherland-Hodgman clip of one ring to a lon/lat rectangle."""
+    def clip(pts, inside, cut):
+        out = []
+        for i in range(len(pts)):
+            a, b = pts[i - 1], pts[i]
+            if inside(b):
+                if not inside(a):
+                    out.append(cut(a, b))
+                out.append(b)
+            elif inside(a):
+                out.append(cut(a, b))
+        return out
+
+    def cx(x):
+        return lambda a, b: (x, a[1] + (b[1] - a[1]) * (x - a[0]) / (b[0] - a[0]))
+
+    def cy(y):
+        return lambda a, b: (a[0] + (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]), y)
+    pts = r
+    for inside, cut in ((lambda p: p[0] >= x0, cx(x0)), (lambda p: p[0] <= x1, cx(x1)),
+                        (lambda p: p[1] >= y0, cy(y0)), (lambda p: p[1] <= y1, cy(y1))):
+        pts = clip(pts, inside, cut)
+        if not pts:
+            return []
+    return pts
+
+
+def enc_land(x0, y0, x1, y1):
+    """ENC land rings clipped to the frame, or None when any part of the frame lies outside the
+    ENC coverage mask (then the map would show uncharted land as water, so it is not used)."""
+    land, cover = _enc()
+    n = 6
+    for i in range(n + 1):
+        for j in range(n + 1):
+            if not _in_polys(cover, x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * j / n):
+                return None
+    out = []
+    for b, rings in land:
+        if b[2] < x0 or b[0] > x1 or b[3] < y0 or b[1] > y1:
+            continue
+        for r in rings:
+            c = _clip_ring(r, x0, y0, x1, y1)
+            if len(c) > 2:
+                out.append(c)
+    return out
+
+
 def _geo():
     if "g" not in _GEO:
         from pathlib import Path
@@ -522,6 +665,15 @@ def locator_svg(site, rec, cz, W=330, H=210):
         return "".join(out)
     wpath = "".join(path(f, True) for f in water)
     rpath = "".join(path(f, False) for f in rivers)
+    lpath = ""
+    if cz:
+        # Coastal and estuarine ramps: the inland TIGER layer has no sounds or ocean, so it would paint
+        # open water as land. Use the NOAA ENC shoreline when it covers the whole frame, else no outline.
+        wpath = rpath = ""
+        land = enc_land(x0, y0, x1, y1)
+        if land is not None:
+            lpath = path(land, True) or "M0,0"
+            rpath = ""
     marks = ""
     for role, sid, name, la, lo, why, srcn in pts:
         x, y = X(lo), Y(la)
@@ -531,12 +683,16 @@ def locator_svg(site, rec, cz, W=330, H=210):
     scale_mi = max(1, round(span_x * 69.0 / 4))
     sb = scale_mi / (span_x * 69.0) * W
     svg = (f'<svg class="chart loc" viewBox="0 0 {W} {H}" role="img" aria-label="Map of the ramp and the {len(pts)} stations this page uses">'
-           f'<rect width="{W}" height="{H}" class="{"loc-land" if wpath else "loc-plain"}"/><path class="loc-water" d="{wpath}"/><path class="loc-river" d="{rpath}"/>{marks}'
+           + (f'<rect width="{W}" height="{H}" class="loc-sea"/><path class="loc-enc" fill-rule="evenodd" d="{lpath}"/>' if lpath else
+              f'<rect width="{W}" height="{H}" class="{"loc-land" if wpath else "loc-plain"}"/><path class="loc-water" d="{wpath}"/><path class="loc-river" d="{rpath}"/>')
+           + f'{marks}'
            f'<line class="loc-sb" x1="10" x2="{10+sb:.1f}" y1="{H-10}" y2="{H-10}"/><text x="10" y="{H-14}">{scale_mi} mi</text>'
            f'<text x="{W-8}" y="14" text-anchor="end">N ↑</text></svg>')
     legend = "".join(f'<li><span class="lm lm-{r}"><b>{r}</b></span> {E(why.capitalize())}: {E(srcn)} {E(sid)} · {E(n)} · {_mi(rec["la"], rec["lo"], la, lo):.1f} mi</li>'
                      for r, sid, n, la, lo, why, srcn in pts)
     return (f'<section class="card rd"><div class="top"><span class="lbl">Where these readings come from</span>{tag("comp")}</div>{svg}'
             f'<ul class="loc-leg">{legend}</ul><p class="note">Pin is the ramp; positions and distances are to scale. '
-            + ("Water outlines: U.S. Census TIGER/Line, simplified. " if wpath else "Coastline not drawn: our self-hosted water layer covers inland waters only, and coastal sounds and the ocean are not in it. ")
+            + ("Water outlines: U.S. Census TIGER/Line, simplified. " if wpath else
+               "Shoreline: NOAA ENC land areas (Office of Coast Survey, ENC Direct), simplified; not a chart. " if lpath else
+               "Coastline not drawn: neither our inland water layer nor our NOAA ENC shoreline covers this whole area. ")
             + 'Illustration, not for navigation; use the NOAA chart for that.</p></section>')

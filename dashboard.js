@@ -225,9 +225,11 @@
     dial.setAttribute("aria-label", has && isNum(v.dirDeg)
       ? "Wind from " + v.dirCompass + ", " + Math.round(v.dirDeg) + " degrees, " + Math.round(v.speedKt) + " knots" + (isNum(v.gustKt) ? ", gusting " + Math.round(v.gustKt) : "")
       : "Wind direction not available");
-    needle.classList.toggle("is-hidden", !isNum(v.dirDeg));
-    if (isNum(v.dirDeg)) setNeedle(v.dirDeg);
-    flow.set(isNum(v.dirDeg) && has ? v.dirDeg : null, has ? v.speedKt : 0, r && r.status === "ok");
+    // Calm (under 0.5 kt) has no meaningful direction: no needle and no particles.
+    const dirOk = isNum(v.dirDeg) && !(has && v.speedKt < 0.5);
+    needle.classList.toggle("is-hidden", !dirOk);
+    if (dirOk) setNeedle(v.dirDeg);
+    flow.set(dirOk && has ? v.dirDeg : null, has ? v.speedKt : 0, r && r.status === "ok");
   }
 
   // Needle: a lightly damped spring, so it swings to the new heading and
@@ -659,8 +661,8 @@
     const v = val(r);
     stateClass(el, r);
     el.innerHTML = '<div class="harbor-row">' +
-      (isNum(v.dirDeg) ? '<svg class="mini-compass" viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="26" class="mc-ring"/><text x="30" y="13" class="mc-n">N</text>' +
-        '<g style="transform: rotate(' + v.dirDeg + 'deg); transform-origin: 30px 30px"><path d="M30 5 L35.5 17 L30 14.5 L24.5 17 Z" class="mc-ptr"/><line x1="30" y1="16" x2="30" y2="50" class="mc-tail"/></g></svg>' : '<span class="mini-compass"></span>') +
+      (isNum(v.dirDeg) && !(isNum(v.speedKt) && v.speedKt < 0.5) ? '<svg class="mini-compass" viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="26" class="mc-ring"/><text x="30" y="13" class="mc-n">N</text>' +
+        '<g style="transform: rotate(' + ((v.dirDeg + 180) % 360) + 'deg); transform-origin: 30px 30px"><path d="M30 5 L35.5 17 L30 14.5 L24.5 17 Z" class="mc-ptr"/><line x1="30" y1="16" x2="30" y2="50" class="mc-tail"/></g></svg>' : '<span class="mini-compass"></span>') +
       '<div class="harbor-txt"><div class="sub-k">' + esc((r && r.role) || "Inlet wind") + "</div>" +
       '<div class="harbor-v"><span class="sub-v">' + (isNum(v.speedKt) ? numSpan("hw", Math.round(v.speedKt), 0) + " kt" : "—") + "</span>" +
       '<span class="harbor-d">' + (isNum(v.dirDeg) ? "from " + esc(v.dirCompass) + " " + fmt(v.dirDeg) + "°" : "") + (isNum(v.gustKt) ? " · gust " + fmt(v.gustKt) + " kt" : "") + "</span>" + statusChip(r) + "</div></div></div>" +

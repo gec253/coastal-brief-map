@@ -205,7 +205,7 @@ def dial_html(t: dict, label: str = "Wind") -> str:
         gust = ('GUST <b>%s</b> kt' % _e(t["gust"])) if t.get("gust") else _e(t.get("sub") or "")
         read = ('<div class="dial-read"><span class="dir">%s</span><span class="big">%s<small>kt</small></span>'
                 '<span class="gust">%s</span></div>') % (
-            ("from " + _e(t["dir"])) if t.get("dir") else "&nbsp;", _e(t["num"]), gust)
+            (("from " + _e(t["dir"])) if t["dir"] != "Calm" else "Calm") if t.get("dir") else "&nbsp;", _e(t["num"]), gust)
     note = ('<p class="sub">%s</p>' % _e(t["note"])) if t.get("note") else ""
     return ('<div class="dial-wrap" role="group" aria-label="%s, %s">'
             '<div class="lbl"><span>%s</span>%s</div>'
@@ -241,8 +241,9 @@ def gfs_wind_tile(g: dict, lat: float, lon: float) -> dict:
             return "time unknown"
         d = d.astimezone(ET)
         return d.strftime("%a ") + homepage_boot.et_time(d.isoformat())
-    t = sprint_home._tile(id="wind", name="Wind", kind="Forecast", state="ok", dir=windgrid.compass(deg),
-                          num=str(int(round(kt))), unit="kt", dial=deg,
+    calm = kt < 0.5  # no meaningful direction: no pointer (sitewide wind standard)
+    t = sprint_home._tile(id="wind", name="Wind", kind="Forecast", state="ok", dir="Calm" if calm else windgrid.compass(deg),
+                          num=str(int(round(kt))), unit="kt", dial=None if calm else deg,
                           sub="≈ %d mph · model" % int(round(kt * 1.15078)),
                           src="NOAA NCEP GFS 0.25° 10 m wind at %s · valid %s (run %s%s)" % (
                               "%.2f°N %.2f°W" % (lat, abs(lon)), fmt(valid), fmt(run),

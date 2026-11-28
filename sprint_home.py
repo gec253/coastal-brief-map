@@ -830,11 +830,12 @@ def figure(p: dict | None, cls: str, sizes: str, slot_title: str = "", ratio: st
 # ---------------------------------------------------------------- instruments markup
 
 def _dial(deg) -> str:
-    """Compass with an arrow at the bearing the wind comes from (true north up)."""
+    """Compass whose arrow shows airflow (true north up): it points where the wind is going,
+    FROM + 180 degrees. The FROM direction stays in the text reading."""
     if deg is None:
         return ""
-    a = math.radians(float(deg))
-    # tip on the rim (from-direction); shaft points toward the centre
+    a = math.radians((float(deg) + 180) % 360)
+    # tip on the rim on the downwind side; shaft runs back toward the centre
     tx, ty = 20 + 14 * math.sin(a), 20 - 14 * math.cos(a)
     bx, by = 20 + 3 * math.sin(a), 20 - 3 * math.cos(a)
     px, py = math.cos(a), math.sin(a)  # perpendicular

@@ -202,3 +202,6 @@ html.dark .loc-land{fill:#13293a}html.dark .loc-water{fill:#24506b;stroke:#3d739
 svg.chart.loc{overflow:hidden;border-radius:8px;display:block;width:100%;height:auto}
 .loc-plain{fill:transparent;stroke:var(--hair);stroke-dasharray:2 4}
 .s-tide{min-height:382px}.s-lake{min-height:427px}.s-spark{min-height:306px}.s-level{min-height:306px}
+.b-hi{fill:var(--pred);opacity:.85}.b-lo{fill:var(--pred);opacity:.4}svg.chart .base{stroke:var(--hair);stroke-width:1.2}
+.loc-sea{fill:#bcd8e6}.loc-enc{fill:#efe7d6;stroke:#7fa9bf;stroke-width:.6}
+html.dark .loc-sea{fill:#24506b}html.dark .loc-enc{fill:#13293a;stroke:#3d7393}

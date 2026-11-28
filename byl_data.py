@@ -328,7 +328,7 @@ def usace_card(c, now, f=FETCH):
         return _unav("usace", "Official lake level", "Not shown: the USACE midnight report's latest row is %s, more than a week old." % day.strftime("%b %-d"), "USACE Wilmington District")
     return _card("usace", "Official lake level", "stale" if fr == "stale" else "obs", "USACE Wilmington District · midnight report",
                  day.strftime("%b %-d"), value=round(elev, 2), unit="ft", guide=guide, vs_guide=round(elev - guide, 2),
-                 note="Feet above mean sea level (NGVD29). The guide curve is the operator's seasonal target, not a safety line.")
+                 note="Feet above mean sea level (NGVD29). The guide curve is the USACE target pool level (constant every day of the year for Falls and Jordan), not a safety line.")
 
 
 # ---------- CO-OPS
@@ -344,7 +344,7 @@ def coops_card(c, now, f=FETCH):
     ev = []
     for x in p:
         t = datetime.strptime(x["t"], "%Y-%m-%d %H:%M").replace(tzinfo=ET)
-        ev.append({"type": "High" if x["type"] == "H" else "Low", "time": _fmt(t), "day": t.strftime("%a"), "ft": round(float(x["v"]), 1), "ts": t.isoformat()})
+        ev.append({"type": "High" if x["type"] == "H" else "Low", "time": _fmt(t), "day": t.strftime("%a"), "ft": round(float(x["v"]), 1) + 0.0, "ts": t.isoformat()})  # + 0.0: never "-0.0"
     upcoming = [e for e in ev if datetime.fromisoformat(e["ts"]) >= now][:4]
     all_events = [e for e in ev if abs((datetime.fromisoformat(e["ts"]) - now).total_seconds()) <= 20 * 3600]
     if not upcoming:
@@ -396,7 +396,7 @@ def wind_obs(st, now, f=FETCH):
                    "&format=json&application=thecoastalbrief" % st["id"])
             x = f.get("coops_obs", url)["data"][-1]
             t = datetime.strptime(x["t"], "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
-            kt, gkt, deg = float(x["s"]), float(x["g"]) if x.get("g") not in (None, "") else None, float(x["d"])
+            kt, gkt, deg = float(x["s"]), float(x["g"]) if x.get("g") not in (None, "") else None, (float(x["d"]) if x.get("d") not in (None, "") else None)
         else:
             # Recent observations: the newest one that actually carries a wind value (some reports omit it).
             url = "https://api.weather.gov/stations/%s/observations?limit=6" % st["id"]
@@ -480,38 +480,24 @@ def marine_zone(z, now, f=FETCH):
 
 
 def tide_curve(c, now, f=FETCH):
-    """Hourly NOAA predictions for the next 24 h plus the official high/low times, for the curve."""
+    """NOAA CO-OPS 6-minute tide predictions (MLLW) from 6 h ago to 18 h ahead, for the curve.
+
+    Only harmonic stations publish 6-minute predictions. Subordinate stations publish official
+    highs and lows only; for those this returns None and the page shows the high/low schedule.
+    Nothing is interpolated between NOAA's points. One request per station and hour, shared by
+    every ramp that uses the station."""
     d0 = now.astimezone(ET)
     url = ("https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&application=thecoastalbrief&datum=MLLW"
-           "&time_zone=lst_ldt&units=english&interval=h&format=json&station=%s&begin_date=%s&range=30"
+           "&time_zone=lst_ldt&units=english&interval=6&format=json&station=%s&begin_date=%s&range=30"
            % (c["id"], (d0 - timedelta(hours=6)).strftime("%Y%m%d%%20%H:00")))
     try:
         p = f.get("coops", url).get("predictions") or []
     except SourceDown:
         return None
     pts = [[datetime.strptime(x["t"], "%Y-%m-%d %H:%M").replace(tzinfo=ET).isoformat(), round(float(x["v"]), 2)] for x in p]
-    interp = False
-    if not pts:
-        # Subordinate stations publish only high/low times. Draw the curve between NOAA's own high/low
-        # predictions with the standard cosine interpolation, and say so on the card.
-        d1 = now.astimezone(ET).date()
-        u2 = ("https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&application=thecoastalbrief&datum=MLLW"
-              "&time_zone=lst_ldt&units=english&interval=hilo&format=json&station=%s&begin_date=%s&end_date=%s"
-              % (c["id"], (d1 - timedelta(days=1)).strftime("%Y%m%d"), (d1 + timedelta(days=1)).strftime("%Y%m%d")))
-        try:
-            hl = [(datetime.strptime(x["t"], "%Y-%m-%d %H:%M").replace(tzinfo=ET), float(x["v"])) for x in f.get("coops", u2).get("predictions") or []]
-        except SourceDown:
-            return None
-        for (ta, va), (tb, vb) in zip(hl, hl[1:]):
-            t = ta.replace(minute=0) + timedelta(hours=1)
-            while t < tb:
-                fr = (t - ta).total_seconds() / (tb - ta).total_seconds()
-                pts.append([t.isoformat(), round(va + (vb - va) * (1 - math.cos(math.pi * fr)) / 2, 2)])
-                t += timedelta(hours=1)
-        interp = True
     lo, hi = (now - timedelta(hours=6)), (now + timedelta(hours=18))
     pts = [x for x in pts if lo <= datetime.fromisoformat(x[0]) <= hi]
-    return {"pts": pts, "interpolated": interp} if len(pts) >= 12 else None
+    return {"pts": pts, "interval_min": 6} if len(pts) >= 120 else None
 
 
 def nws_hourly(site, f=FETCH, now=None):
