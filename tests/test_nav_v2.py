@@ -132,9 +132,13 @@ class SecondaryPages(Server):
         self.assertEqual(status, 404)
         self.assertIn(b"data-nav-v2", body)
         self.assertIn(b"No Morning Brief for this area", body)
-        for path in ("/ramps.json", "/ramps/map", "/ramps/local-atlantic-beach-west-bogue-sound"):
+        for path in ("/ramps.json", "/ramps/map"):
             status, _ = self._req(path, env=env)
             self.assertEqual(status, 404, path)
+        # t550u: needs-review records are part of the public statewide directory and stay labeled.
+        status, body = self._req("/ramps/local-atlantic-beach-west-bogue-sound", env=env)
+        self.assertEqual(status, 200)
+        self.assertIn(b"needs review", body.lower())
 
 
 class Homepage(Server):

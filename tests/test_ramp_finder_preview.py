@@ -859,17 +859,18 @@ class StageBPublicLaunchT451u(unittest.TestCase):
         g2, _, _ = ramp_finder.visible_sets(self.data, ramp_finder.parse_filters({}), public=False)
         self.assertEqual([r["id"] for r in g], [r["id"] for r in g2])
 
-    def test_public_needs_review_details_and_json_are_404(self):
+    def test_public_needs_review_are_listed_and_json_stays_404(self):
+        """t550u: all 285 records, including needs-review, are on the public directory and labeled.
+        /ramps.json stays unpublished."""
         self.assertEqual(ramp_finder.resolve_request("/ramps.json", {}, public=True)[0], 404)
         for rid in self.HIDDEN:
-            self.assertEqual(ramp_finder.resolve_request(f"/ramps/{rid}", {}, public=True)[0], 404, rid)
-        # Query flag cannot leak them on the public list.
-        status, _, html = ramp_finder.resolve_request("/ramps", {"needs_review": ["1"]}, public=True)
+            status, _, html = ramp_finder.resolve_request(f"/ramps/{rid}", {}, public=True)
+            self.assertEqual(status, 200, rid)
+        status, _, html = ramp_finder.resolve_request("/ramps", {"type": ["needs_review"]}, public=True)
         self.assertEqual(status, 200)
         for rid in self.HIDDEN:
-            self.assertNotIn(rid, html)
-        self.assertNotIn("needs-review", html)
-        self.assertNotIn('name="needs_review"', html)
+            self.assertIn(rid, html)
+        self.assertIn("needs review", html.lower())
 
     def test_preview_still_serves_all_55_and_json(self):
         status, _, body = ramp_finder.resolve_request("/preview/ramps.json", {}, public=False)
@@ -917,9 +918,12 @@ class StageBPublicLaunchT451u(unittest.TestCase):
         self.assertIn("Falls Lake", meta)
         self.assertIn("Jordan Lake", meta)
         self.assertIn("Neuse River", meta)
+        # The public /ramps index now describes the 285-site statewide directory (t550u).
         status, _, html = ramp_finder.resolve_request("/ramps", {}, public=True)
         self.assertEqual(status, 200)
-        self.assertIn(f'<meta name="description" content="{meta}">', html)
+        self.assertIn("285 public boating access sites across North Carolina", html)
+        self.assertIn("Not a live open/closed board", html)
+        self.assertNotIn(f'<meta name="description" content="{meta}">', html)
 
     def test_folio_find_a_ramp_coverage_notes(self):
         import folio_entry

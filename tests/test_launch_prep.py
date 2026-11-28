@@ -372,7 +372,7 @@ class PublicRampsFlags(unittest.TestCase):
         self.assertIn(ramp_finder.JORDAN_LOW_WATER_VISITOR_TEXT.encode(), body)
         self.assertIn(b"Parkers Creek", body)
         self.assertIn(b"single-axle trailers only", body)
-        self.assertIn(b"Last checked 8:39 PM EST, Nov 22, 2026", body)
+        self.assertIn(b"Last checked 2026-11-27 7:07 PM ET", body)
         self.assertNotIn(b"no ramp record or coordinates were added", body)
         self.assertNotIn("noindex", (hdrs.get("x-robots-tag") or "").lower())
         self.assertNotIn("cookie", (hdrs.get("vary") or "").lower())

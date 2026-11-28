@@ -46,7 +46,7 @@ class Dimensions(unittest.TestCase):
 
     def test_rechecked_notices_dated(self):
         for rid in ("parks-falls-holly-point-campers", "parks-jordan-seaforth", "parks-jordan-vista-point-sailboat", "baa-hibernia"):
-            self.assertIn("Nov 27, 2026, 6:20 PM ET", self.by[rid]["access_status"]["as_of"], rid)
+            self.assertIn("Nov 27, 2026, 7:07 PM ET", self.by[rid]["access_status"]["as_of"], rid)
         for rid in ("baa-outfall-canal", "baa-county-line", "baa-norwood"):
             self.assertIn("rechecked 2026-11-27", self.by[rid]["access_status"]["as_of"], rid)
         self.assertIn("no Nov. 30 seasonal close for Seaforth", self.by["parks-jordan-seaforth"]["notices"][-1]["text"])
@@ -107,10 +107,14 @@ class Page(unittest.TestCase):
         _, _, b = ramp_statewide.resolve_request("/preview/ramps-statewide/local-newbern-glenburnie", {})
         self.assertIn("Map point", b)
 
-    def test_public_unaffected(self):
+    def test_public_directory_uses_statewide_search_and_groups(self):
+        """t550u: the public list is the statewide directory (search, groups, both dimensions)."""
         st, _, b = ramp_finder.resolve_request("/ramps", {}, public=True)
-        self.assertNotIn("sw-group", b)
-        self.assertNotIn("data-find", b)
+        self.assertEqual(st, 200)
+        self.assertIn("sw-group", b)
+        self.assertIn("data-find", b)
+        self.assertIn("263 trailer", b)
+        self.assertIn("261 open as listed", b)
 
 
 if __name__ == "__main__":

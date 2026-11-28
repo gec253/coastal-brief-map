@@ -265,14 +265,17 @@ class Pages(unittest.TestCase):
         self.assertIn("https://www.google.com/maps/dir/?api=1&amp;destination=34.70975803,-76.63196738", b)
         self.assertEqual(ramp_statewide.resolve_request("/preview/ramps-statewide/nope", {})[0], 404)
 
-    def test_public_ramps_never_read_statewide(self):
+    def test_public_ramps_is_the_statewide_directory(self):
+        """t550u: public /ramps is the 285-site statewide directory. The inventory preview is unchanged."""
         st, _, b = ramp_finder.resolve_request("/ramps", {}, public=True)
         self.assertEqual(st, 200)
-        self.assertNotIn("ramps-statewide", b)
-        self.assertNotIn("badge-paddle", b)
-        self.assertIn("Showing 48 ramps", b)
+        self.assertIn("Showing 285 sites", b)
+        self.assertIn("index, follow", b)
+        self.assertNotIn("Private data preview", b)
+        self.assertNotIn("Private preview · this browser only", b)
         st, _, b = ramp_finder.resolve_request("/preview/ramps", {}, public=False)
-        self.assertNotIn("ramps-statewide", b)
+        self.assertIn("Showing 48 ramps", b)
+        self.assertNotIn("Showing 285", b)
         self.assertIsNone(ramp_finder.STATEWIDE_BASE.get())
 
 
