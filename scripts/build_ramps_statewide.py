@@ -783,6 +783,11 @@ def main(argv=None) -> int:
            "diff": diff, "counts": data["counts"], "quality": extra["quality"]}
     if not args.dry_run:
         OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n")
+        # Phase 2 map data is derived from the same records, so the map never disagrees with /ramps.
+        if str(ROOT) not in sys.path:
+            sys.path.insert(0, str(ROOT))
+        import ramp_map_data
+        ramp_map_data.write(data, out=OUT.with_name("map-data.json"))
         SNAPSHOT.write_text(json.dumps(new_snap, ensure_ascii=False, indent=1, sort_keys=True) + "\n")
         CROSSWALK.write_text(json.dumps(extra["crosswalk"], indent=1, sort_keys=True) + "\n")
         REPORT.write_text(json.dumps(rep, ensure_ascii=False, indent=1) + "\n")

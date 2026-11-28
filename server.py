@@ -4553,11 +4553,19 @@ class Handler(SimpleHTTPRequestHandler):
         path = parsed.path or "/ramps"
         is_map = (
             path.rstrip("/") == "/ramps/map"
-            or path in ("/ramps/map.js", "/ramps/map.json")
+            or path in ("/ramps/map.js", "/ramps/map.json", "/ramps/map.css")
         )
         if is_map:
             if not launch_flags.ramp_map_public():
                 return self.send_error(404, "not found")
+            # Phase 2 statewide map (Ed t556u). Only reachable with PUBLIC_RAMP_MAP on.
+            import ramp_map
+            suffix = "" if path.rstrip("/") == "/ramps/map" else path[len("/ramps/map"):]
+            status, ctype, body = ramp_map.resolve(suffix, public=True)
+            if status != 200:
+                return self.send_error(status, "not found")
+            data = body.encode("utf-8") if isinstance(body, str) else body
+            return self._send_private(None, ctype, data, status, robots="index, follow")
         elif not launch_flags.ramps_routes_public():
             return self.send_error(404, "not found")
         q = parse_qs(parsed.query or "")

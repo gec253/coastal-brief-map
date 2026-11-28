@@ -415,6 +415,12 @@ def resolve_request(path: str, query: dict, *, public: bool = False):
     data = load()
     if raw == base:
         return 200, "text/html; charset=utf-8", render_list(data, query or {}, public=public)
+    if not public:
+        # Phase 2 statewide map (private). Public /ramps/map is routed by the server behind PUBLIC_RAMP_MAP.
+        import ramp_map
+        for suffix in ramp_map.SUFFIXES:
+            if raw == base + "/map" + suffix:
+                return ramp_map.resolve(suffix, public=False)
     if raw.startswith(base + "/"):
         rid = raw[len(base) + 1:].strip("/")
         rec = by_id(rid, data)
