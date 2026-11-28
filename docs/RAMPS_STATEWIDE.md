@@ -7,16 +7,21 @@ There's no map, near-me search or conditions panel yet (Phase 2).
 
 ## Refresh (GitHub Actions, review only; no automatic merge or deploy)
 
-A workflow at `.github/workflows/ramps-refresh.yml` (Ed t552u) runs the official refresh and a
+A workflow at `.github/workflows/ramps-refresh.yml` (Ed t552u, t556u) runs the official refresh and a
 closure-banner check. It uses the built-in `GITHUB_TOKEN` only. It never merges, never pushes
-to `main`, and never deploys to Render.
+to `main`, and never deploys to Render. It pins `actions/checkout` to the verified `v7.0.1`
+commit SHA (`3d3c42e5aac5ba805825da76410c181273ba90b1`, Node 24).
 
 - **Weekly (Mondays, 11:00 UTC / 6:00 AM ET in standard time, 7:00 AM ET in daylight time):**
   `scripts/build_ramps_statewide.py` pulls the official NCWRC Boating Access Area feature service.
-  If the snapshot changes and last-known-good checks pass, the job pushes a `ramps-refresh/YYYY-MM-DD`
-  branch and opens a pull request, or an issue with a compare link if the repository does not allow
-  Actions to create pull requests. The PR/issue body flags additions, removals, status changes,
-  coordinate changes and other field changes, and includes `refresh-report.json`.
+  Every successful run (and every last-known-good keep) writes a verification summary to the
+  job's `GITHUB_STEP_SUMMARY`. If the only differences are fetch timestamps (`fetched_at`,
+  `attempted_at`, `fetched`), no review branch is pushed and no issue or pull request is opened.
+  If the inventory or other fields change and last-known-good checks pass, the job pushes a
+  `ramps-refresh/YYYY-MM-DD` branch and opens a pull request, or an issue with a compare link if
+  the repository does not allow Actions to create pull requests. The PR/issue body flags additions,
+  removals, status changes, coordinate changes and other field changes, and includes
+  `refresh-report.json`.
 - **Daily (11:15 UTC):** `scripts/check_notice_fingerprints.py` fingerprints the official Jordan,
   Falls and Kerr Lake State Parks notice banners against
   `preview/ramp-finder/notice-fingerprints.json`. If a banner changes or a page fails to fetch, the

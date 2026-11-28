@@ -1,9 +1,12 @@
 # Weekly official NCWRC Boating Access Area refresh and daily official
-# closure-banner fingerprint check (Ed t552u).
+# closure-banner fingerprint check (Ed t552u, t556u).
 #
 # This workflow never merges and never deploys. It never pushes to main.
 # It opens a pull request if the repo allows it, otherwise an issue, for
-# Scout to review. GITHUB_TOKEN only; no personal access token, no secrets.
+# Scout to review. A run whose only changes are fetch timestamps
+# (fetched_at, attempted_at, fetched) records a verification summary and
+# does not open an issue or pull request or push a review branch.
+# GITHUB_TOKEN only; no personal access token, no secrets.
 #
 # Weekly: Mondays 11:00 UTC (6:00 AM ET in standard time, 7:00 AM ET in daylight time).
 # Daily: 11:15 UTC, so the two jobs do not collide.
@@ -44,7 +47,7 @@ jobs:
       issues: write
     steps:
       - name: Check out main
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0 (lightweight tag, verified 2026-11-27)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1 (lightweight tag, Node 24, verified 2026-11-27)
         with:
           ref: main
           persist-credentials: true
@@ -71,6 +74,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          {
+            echo "## Official NCWRC refresh verification"
+            echo
+            echo '- Classification: `kept_last_known_good`'
+            echo "- Last-known-good data was preserved. An issue is opened for review."
+            echo "- Nothing was overwritten, merged, or deployed."
+          } >> "$GITHUB_STEP_SUMMARY"
           body="$(python3 - <<'PY'
           import json, pathlib
           p = pathlib.Path("preview/ramp-finder/refresh-report.json")
@@ -94,7 +104,7 @@ jobs:
             --title "Ramp Finder: official refresh kept last-known-good" \
             --body "$body"
 
-      - name: Open a review pull request (or issue) if the snapshot changed
+      - name: Record verification; open a review ticket if the inventory changed
         if: steps.refresh.outputs.code == '0'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -112,14 +122,15 @@ jobs:
             echo "refusing to use a branch named main or empty"
             exit 1
           fi
-          if git diff --quiet -- \
-               preview/ramp-finder/statewide.json \
-               preview/ramp-finder/ncwrc_snapshot.json \
-               preview/ramp-finder/refresh-report.json \
-               preview/ramp-finder/ncwrc_crosswalk.json \
-               preview/ramp-finder/noaa_tide_stations_nc.json; then
-            echo "No data changes."
+          kind="$(python3 scripts/classify_refresh_diff.py --write-summary)"
+          echo "refresh_diff_kind=$kind"
+          if [ "$kind" = "none" ] || [ "$kind" = "timestamps_only" ]; then
+            echo "No inventory changes ($kind). Recorded the verification summary. No review branch, issue, or pull request."
             exit 0
+          fi
+          if [ "$kind" != "real" ]; then
+            echo "Unexpected classification: $kind"
+            exit 1
           fi
           git checkout -B "$branch"
           git add preview/ramp-finder/statewide.json \
@@ -221,7 +232,7 @@ jobs:
       issues: write
     steps:
       - name: Check out main
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0 (lightweight tag, verified 2026-11-27)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1 (lightweight tag, Node 24, verified 2026-11-27)
         with:
           ref: main
           persist-credentials: false
