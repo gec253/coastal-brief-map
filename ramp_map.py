@@ -48,6 +48,7 @@ def render_html(*, public: bool = False) -> str:
   <img class="mono" src="/branding/favicon.svg" alt="" width="30" height="30">
   <div class="wm"><b>The Coastal Brief</b><small>Ramp Finder</small></div>
   {tag}
+  <a class="dirlink" id="dirlink" href="{d}">List</a>
   <div class="theme" role="group" aria-label="Theme"><button type="button" data-t="auto" aria-pressed="false">Auto</button><button type="button" data-t="light" aria-pressed="false">Light</button><button type="button" data-t="dark" aria-pressed="false">Dark</button></div>
 </header>
 <div class="shell" id="shell" data-view="map">

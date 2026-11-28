@@ -10,6 +10,7 @@ import json
 import math
 from pathlib import Path
 
+import launch_flags
 import ramp_finder as rf
 import ramp_search
 
@@ -57,6 +58,7 @@ EXTRA_CSS = """<style>
 .sw-scope{font-size:.9rem;margin:.4rem 0}.sw-scope a{display:inline-flex;align-items:center;min-height:44px}
 .sw-allnc{display:inline-flex;align-items:center;justify-content:center;min-height:48px;text-decoration:none;text-align:center}
 html[data-theme="dark"] .sw-allnc{background:var(--ivory);color:var(--navy);border-color:var(--ivory)}
+.sw-viewmap{margin-left:auto;min-height:44px;gap:.2rem}
 .sw-inarea{display:flex;align-items:center;gap:.5rem;min-height:44px;font-size:.9rem}
 .sw-inarea input{width:22px;height:22px}
 </style>"""
@@ -182,9 +184,18 @@ FIND_JS = "<script>" + ramp_search.JS.replace("</", "<\\/") + """
       go.hidden=true;
     }
   }
-  q.addEventListener("input",run);
+  var mv=document.getElementById("sw-viewmap");
+  function mapHref(){
+    if(!mv) return; var u=[], v=q.value.trim(), ty=document.getElementById("sw-type"), st=document.getElementById("sw-status");
+    if(v) u.push("q="+encodeURIComponent(v).replace(/%20/g,"+"));
+    if(ty&&/^(trailer|paddle|limited|needs_review)$/.test(ty.value)) u.push("type="+ty.value);
+    if(st&&st.value) u.push("status="+st.value);
+    mv.setAttribute("href","/ramps/map"+(u.length?"?"+u.join("&"):""));
+  }
+  q.addEventListener("input",function(){run();mapHref();});
+  form.addEventListener("change",mapHref);
   if(reg&&inArea) reg.addEventListener("change",function(){inArea.checked=!!reg.value;});
-  addEventListener("pageshow",function(e){ if(e.persisted){ form.reset(); run(); } });
+  addEventListener("pageshow",function(e){ if(e.persisted){ form.reset(); run(); mapHref(); } });
   run();
 })();
 </script>"""
@@ -450,6 +461,12 @@ def _render_list(data, q, *, public: bool = False, base: str = BASE) -> str:
     count_line = (f'<p class="count">Showing {len(shown)} {"site" if len(shown) == 1 else "sites"}'
                   f'{" in " + rf.esc(where) if where else ""}.</p>' + (_dims_html(shown) if shown else "")) if not unknown else ""
     n_total = len(data["records"])
+    map_link = ""
+    if public and launch_flags.ramp_map_public():
+        mp = {"q": f["q"], "type": f["type"] if f["type"] in ("trailer", "paddle", "limited", "needs_review") else "", "status": f.get("status", "")}
+        map_link = (f'<a class="btn sw-viewmap" id="sw-viewmap" href="{rf.esc(_url("/ramps/map", mp))}">'
+                    '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M2.5 5l5-2 5 2 5-2v12l-5 2-5-2-5 2z"/><path d="M7.5 3v12M12.5 5v12"/></svg>'
+                    '&nbsp;View map</a>')
     kicker = "" if public else '<p class="kicker">Private data preview · Phase 1.1</p>'
     desc = (f"{n_total} public boating access sites across North Carolina, from official sources only, "
             f"checked {checked}. Search by name, town, county or waterbody. Not a live open/closed board.")
@@ -473,7 +490,7 @@ def _render_list(data, q, *, public: bool = False, base: str = BASE) -> str:
   <fieldset class="opt-filters"><legend>Restrictions</legend><div class="opt-row">{checks}</div></fieldset>
   </details>
   <div class="actions"><button type="submit">Search</button>
-  <button type="reset" onclick="location.href='{base}'; return false;">Reset</button></div>
+  <button type="reset" onclick="location.href='{base}'; return false;">Reset</button>{map_link}</div>
 </form>
 {_active_html(active, f, region_param, scoped, base)}
 {honest}

@@ -228,3 +228,7 @@ html.dark{--water:#0E2D49;--water-line:#3F6E93;--river:#4D80A8;--state:rgba(204,
 .list .empty .btn{display:flex;margin:12px 0 0;width:100%;justify-content:center}
 .attrib{position:absolute;right:0;bottom:0;z-index:550;margin:0;padding:2px 6px;max-width:100%;background:color-mix(in srgb,var(--p1) 86%,transparent);color:var(--lab2);font-size:10.5px;line-height:1.35;pointer-events:none}
 .leaflet-bottom{bottom:26px}
+.dirlink{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;padding:0 12px;border-radius:99px;border:1.5px solid var(--lab2);color:var(--ink);font-weight:700;font-size:13px;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;font-family:"Barlow Condensed","Arial Narrow",sans-serif;white-space:nowrap}
+.dirlink::before{content:"\2190\00a0"}
+.bar .tag+.dirlink{margin-left:0}
+@media (max-width:420px){.bar{gap:6px;padding:7px 8px}.bar .mono{display:none}.bar .wm{flex:0 1 auto;min-width:0}.bar .wm b{font-size:17px;white-space:nowrap}.bar .wm small{display:none}.dirlink{padding:0 10px;margin-left:auto}.dirlink::before{content:none}.bar .theme button{padding:0 6px;min-width:40px}}

@@ -162,8 +162,16 @@ function readURL() {
 }
 function scopeLabel(sc) { if (sc.k === "ramp") return byId[sc.v] ? byId[sc.v].n : ""; if (sc.k === "town") return sc.v.split("|")[0]; if (sc.k === "county") return sc.v + " County"; return sc.v; }
 
+/* Back to the full directory list, carrying search and single-value filters. Never location. */
+function dirHref() {
+  var u = [], q = S.scope ? scopeLabel(S.scope) : S.q.trim(), ty = on("ty"), st = on("st");
+  if (q) u.push("q=" + encodeURIComponent(q).replace(/%20/g, "+"));
+  if (ty.length === 1) u.push("type=" + ty[0]);
+  if (st.length === 1) u.push("status=" + st[0]);
+  return DIRECTORY + (u.length ? "?" + u.join("&") : "");
+}
 function refresh(fit) {
-  S.more = 60; renderList(); renderMarkers(); writeURL();
+  S.more = 60; renderList(); renderMarkers(); writeURL(); $("#dirlink").setAttribute("href", dirHref());
   var res = results();
   if (fit) { var p = res.filter(function (r) { return r.pr !== "none"; }); if (p.length) map.fitBounds(L.latLngBounds(p.map(function (r) { return [r.la, r.lo]; })), { padding: [50, 50], maxZoom: 12, animate: !reduce }); }
   if (!$("#fpanel").hidden) { var g = $("#fgo"); if (g) g.textContent = "Show " + res.length + (res.length === 1 ? " ramp" : " ramps"); }

@@ -4650,6 +4650,8 @@ class Handler(SimpleHTTPRequestHandler):
         if not isinstance(data, (bytes, bytearray)) or not str(ctype).startswith("text/html"):
             return data
         path = urlparse(self.path or "/").path
+        if path.rstrip("/") == "/ramps/map":
+            return data  # the map is a full-screen app with its own header and Auto / Light / Dark control
         try:
             if nav_v2.page_key(path) is not None and nav_v2.active(self._preview_ok):
                 data = nav_v2.apply(bytes(data), self.path or "/")
