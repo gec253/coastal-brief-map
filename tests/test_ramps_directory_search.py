@@ -61,7 +61,7 @@ class DirectorySearch(unittest.TestCase):
         self.assertEqual(shown(h), 0)
         self.assertIn('aria-label="Remove filter: Area: Wilmington · Wrightsville Beach"', h)
         self.assertIn('href="/ramps?q=Goldsboro" aria-label="Remove filter: Area', h)
-        self.assertIn('class="sw-allnc" data-allnc href="/ramps?q=Goldsboro">Search all North Carolina ramps</a>', h)
+        self.assertIn('class="btn sw-allnc" data-allnc href="/ramps?q=Goldsboro">Search all North Carolina ramps</a>', h)
         # browsing an area without a search still shows that area, with its chip
         h = sw.render_list(DATA, {"region": ["wilmington"]}, public=True)
         self.assertEqual(shown(h), 8)
@@ -79,6 +79,8 @@ class DirectorySearch(unittest.TestCase):
         self.assertEqual(shown(h), 0)
         self.assertIn('Remove filter: Type: Paddle / carry-in', h)
         self.assertIn('href="/ramps?q=Kerr+Lake">Search all North Carolina ramps</a>', h)
+        self.assertNotIn("Only search All of North Carolina", h)
+        self.assertNotIn('data-scope="statewide"', h)  # no area in play, so no area notice
         self.assertEqual(shown(sw.render_list(DATA, {"q": ["Kerr Lake"]}, public=True)), 4)
 
     def test_no_manual_reset_needed_and_no_stale_state(self):
