@@ -5,18 +5,35 @@ and `/preview/ramps-statewide/<slug>`, behind the PREVIEW_KEY cookie. Pages are 
 and they aren't in the sitemap. Public `/ramps` still reads `preview/ramp-finder/inventory.json` and is unchanged.
 There's no map, near-me search or conditions panel yet (Phase 2).
 
-## Refresh (manual, no cron, no paid service)
+## Refresh (GitHub Actions, review only; no automatic merge or deploy)
+
+A workflow at `.github/workflows/ramps-refresh.yml` (Ed t552u) runs the official refresh and a
+closure-banner check. It uses the built-in `GITHUB_TOKEN` only. It never merges, never pushes
+to `main`, and never deploys to Render.
+
+- **Weekly (Mondays, 11:00 UTC / 6:00 AM ET in standard time, 7:00 AM ET in daylight time):**
+  `scripts/build_ramps_statewide.py` pulls the official NCWRC Boating Access Area feature service.
+  If the snapshot changes and last-known-good checks pass, the job pushes a `ramps-refresh/YYYY-MM-DD`
+  branch and opens a pull request, or an issue with a compare link if the repository does not allow
+  Actions to create pull requests. The PR/issue body flags additions, removals, status changes,
+  coordinate changes and other field changes, and includes `refresh-report.json`.
+- **Daily (11:15 UTC):** `scripts/check_notice_fingerprints.py` fingerprints the official Jordan,
+  Falls and Kerr Lake State Parks notice banners against
+  `preview/ramp-finder/notice-fingerprints.json`. If a banner changes or a page fails to fetch, the
+  job opens an issue. It never rewrites official statuses.
+
+You can still run the build by hand:
 
 ```
 python3 scripts/build_ramps_statewide.py            # live NCWRC + NOAA station list
 python3 scripts/build_ramps_statewide.py --dry-run  # report only
 python3 scripts/build_ramps_statewide.py --from-file saved-query.json --no-noaa-fetch
+python3 scripts/check_notice_fingerprints.py        # official banner fingerprints (exit 0 unchanged, 2 changed/failed)
 ```
 
-The script exits 0 when it wrote data and 2 when it kept the last-known-good data. Afterwards, review
-`preview/ramp-finder/refresh-report.json` (the diff of added, removed and changed NCWRC records and fields,
-plus counts and data quality) before committing. Recheck `official_notices.json` against the official pages
-before every deploy.
+The build script exits 0 when it wrote data (or confirmed the current snapshot) and 2 when it kept
+the last-known-good data. Recheck `official_notices.json` against the official pages before every
+deploy. Scout remains the merge and deployment authority; auto-merge stays off.
 
 ### Last-known-good protection
 The script keeps the previous `statewide.json` records and sets `meta.refresh.status = kept_last_known_good`

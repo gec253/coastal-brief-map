@@ -1,0 +1,262 @@
+# Weekly official NCWRC Boating Access Area refresh and daily official
+# closure-banner fingerprint check (Ed t552u).
+#
+# This workflow never merges and never deploys. It never pushes to main.
+# It opens a pull request if the repo allows it, otherwise an issue, for
+# Scout to review. GITHUB_TOKEN only; no personal access token, no secrets.
+#
+# Weekly: Mondays 11:00 UTC (6:00 AM ET in standard time, 7:00 AM ET in daylight time).
+# Daily: 11:15 UTC, so the two jobs do not collide.
+
+name: Ramp Finder official-data refresh
+
+on:
+  schedule:
+    - cron: "0 11 * * 1"
+    - cron: "15 11 * * *"
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "Which job to run"
+        required: true
+        default: "both"
+        type: choice
+        options: [weekly-ncwrc, daily-notices, both]
+
+concurrency:
+  group: ramps-refresh
+  cancel-in-progress: false
+
+# Default token is empty. Each job grants only what it needs.
+permissions: {}
+
+jobs:
+  weekly-ncwrc:
+    if: >
+      (github.event_name == 'workflow_dispatch'
+       && (github.event.inputs.job == 'weekly-ncwrc' || github.event.inputs.job == 'both'))
+      || (github.event_name == 'schedule' && github.event.schedule == '0 11 * * 1')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Check out main
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0 (lightweight tag, verified 2026-11-27)
+        with:
+          ref: main
+          persist-credentials: true
+
+      - name: Refresh the official NCWRC dataset
+        id: refresh
+        run: |
+          set +e
+          python3 scripts/build_ramps_statewide.py
+          code=$?
+          set -e
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          if [ "$code" -eq 0 ]; then
+            echo "The build wrote a new snapshot (or confirmed the current one)."
+          elif [ "$code" -eq 2 ]; then
+            echo "The script kept last-known-good data. A report is in preview/ramp-finder/refresh-report.json."
+          else
+            echo "Unexpected exit $code"
+            exit "$code"
+          fi
+
+      - name: Open an issue if last-known-good was kept
+        if: steps.refresh.outputs.code == '2'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          body="$(python3 - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("preview/ramp-finder/refresh-report.json")
+          try:
+              rep = json.loads(p.read_text()) if p.is_file() else {"error": "no refresh-report.json"}
+          except json.JSONDecodeError:
+              rep = {"error": "refresh-report.json was not valid JSON"}
+          reason = rep.get("reason") or "(no reason recorded)"
+          print("The official NCWRC refresh kept last-known-good data.")
+          print()
+          print("Nothing was overwritten. This issue does not merge or deploy anything.")
+          print()
+          print("Reason:", reason)
+          print()
+          print("```json")
+          print(json.dumps(rep, indent=2))
+          print("```")
+          PY
+          )"
+          gh issue create \
+            --title "Ramp Finder: official refresh kept last-known-good" \
+            --body "$body"
+
+      - name: Open a review pull request (or issue) if the snapshot changed
+        if: steps.refresh.outputs.code == '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          stamp="$(date -u +%Y-%m-%d)"
+          branch="ramps-refresh/${stamp}"
+          case "$branch" in
+            ramps-refresh/*) ;;
+            *) echo "refusing unexpected branch name: $branch"; exit 1 ;;
+          esac
+          if [ "$branch" = "main" ] || [ -z "$branch" ]; then
+            echo "refusing to use a branch named main or empty"
+            exit 1
+          fi
+          if git diff --quiet -- \
+               preview/ramp-finder/statewide.json \
+               preview/ramp-finder/ncwrc_snapshot.json \
+               preview/ramp-finder/refresh-report.json \
+               preview/ramp-finder/ncwrc_crosswalk.json \
+               preview/ramp-finder/noaa_tide_stations_nc.json; then
+            echo "No data changes."
+            exit 0
+          fi
+          git checkout -B "$branch"
+          git add preview/ramp-finder/statewide.json \
+                  preview/ramp-finder/ncwrc_snapshot.json \
+                  preview/ramp-finder/refresh-report.json \
+                  preview/ramp-finder/ncwrc_crosswalk.json \
+                  preview/ramp-finder/noaa_tide_stations_nc.json || true
+          if git diff --cached --quiet; then
+            echo "No staged changes."
+            exit 0
+          fi
+          git commit -m "Ramp Finder official data refresh ${stamp} (review only; do not auto-merge)"
+          # Push only the dated refresh branch. Never main.
+          git push -u origin "HEAD:refs/heads/${branch}"
+          body="$(python3 - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("preview/ramp-finder/refresh-report.json")
+          try:
+              rep = json.loads(p.read_text()) if p.is_file() else {}
+          except json.JSONDecodeError:
+              rep = {}
+          diff = rep.get("diff") or {}
+          added = diff.get("added") or []
+          removed = diff.get("removed") or []
+          changed = diff.get("changed") or {}
+          status_keys = {"Site_Status", "Closure_Reason"}
+          coord_keys = {"Latitude", "Longitude"}
+          status_ch, coord_ch, other_ch = [], [], []
+          for gid, info in changed.items():
+              fields = info.get("fields") or {}
+              name = info.get("name") or gid
+              def fmt(keys):
+                  parts = []
+                  for k in keys:
+                      if k in fields:
+                          a, b = fields[k]
+                          parts.append(f"{k}: {a!r} → {b!r}")
+                  return "; ".join(parts)
+              if set(fields) & status_keys:
+                  status_ch.append(f"- {name}: {fmt(status_keys)}")
+              if set(fields) & coord_keys:
+                  coord_ch.append(f"- {name}: {fmt(coord_keys)}")
+              other = [k for k in fields if k not in status_keys and k not in coord_keys]
+              if other:
+                  other_ch.append(f"- {name}: " + ", ".join(other))
+          print("Automated official NCWRC refresh for Scout to review.")
+          print()
+          print("This does not merge itself and does not deploy. Scout remains the merge and deploy authority.")
+          print("The build script's last-known-good checks already ran.")
+          print()
+          print("## Flagged changes")
+          print()
+          print(f"- Additions: {len(added)}")
+          for row in added:
+              print(f"  - {row.get('name')} ({row.get('globalid')})")
+          print(f"- Removals: {len(removed)}")
+          for row in removed:
+              print(f"  - {row.get('name')} ({row.get('globalid')})")
+          print(f"- Status changes (Site_Status / Closure_Reason): {len(status_ch)}")
+          print("\n".join(status_ch) if status_ch else "  (none)")
+          print(f"- Coordinate changes (Latitude / Longitude): {len(coord_ch)}")
+          print("\n".join(coord_ch) if coord_ch else "  (none)")
+          print(f"- Other field changes: {len(other_ch)}")
+          print("\n".join(other_ch) if other_ch else "  (none)")
+          print()
+          print("Schema changes that fail validation do not appear here; those keep last-known-good data and open a separate issue.")
+          print()
+          print("```json")
+          print(json.dumps(rep, indent=2) if rep else "(no refresh-report.json)")
+          print("```")
+          PY
+          )"
+          # The repo setting "Allow GitHub Actions to create and approve pull requests"
+          # is currently off. Try a PR; if GitHub refuses, open an issue with a compare link.
+          if gh pr create \
+               --base main \
+               --head "$branch" \
+               --title "Ramp Finder official data refresh ${stamp}" \
+               --body "$body"; then
+            echo "Opened a review pull request."
+          else
+            echo "Could not open a pull request with GITHUB_TOKEN. Opening an issue instead."
+            compare="https://github.com/${GITHUB_REPOSITORY}/compare/main...${branch}"
+            issue_body="$(printf '%s\n\nRefresh branch: `%s`\nCompare: %s\n\nThe repository setting **Allow GitHub Actions to create and approve pull requests** must be enabled for this workflow to open a PR with GITHUB_TOKEN. Until then, this issue is the review ticket. Do not merge or deploy from here automatically.\n' "$body" "$branch" "$compare")"
+            gh issue create \
+              --title "Ramp Finder official data refresh ${stamp} (review branch ${branch})" \
+              --body "$issue_body"
+          fi
+
+  daily-notices:
+    if: >
+      (github.event_name == 'workflow_dispatch'
+       && (github.event.inputs.job == 'daily-notices' || github.event.inputs.job == 'both'))
+      || (github.event_name == 'schedule' && github.event.schedule == '15 11 * * *')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Check out main
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0 (lightweight tag, verified 2026-11-27)
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Fingerprint official closure banners
+        id: check
+        run: |
+          set +e
+          python3 scripts/check_notice_fingerprints.py
+          code=$?
+          set -e
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          if [ -f notice-check-report.md ]; then
+            cat notice-check-report.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+          # 2 means a banner changed or a page failed; the job should still succeed
+          # so GitHub does not mark the workflow as broken, and an issue is opened.
+          if [ "$code" -ne 0 ] && [ "$code" -ne 2 ]; then
+            exit "$code"
+          fi
+
+      - name: Open an issue if a banner changed or a page failed
+        if: steps.check.outputs.code == '2'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -f notice-check-report.md ]; then
+            body="$(cat notice-check-report.md)"
+          else
+            body="The official closure-page fingerprint check reported a change or a fetch failure, but notice-check-report.md was not written."
+          fi
+          body="${body}
+
+          ---
+          This check does not change any ramp statuses and does not deploy anything. A person should open the official page, confirm the wording, and update official_notices.json and preview/ramp-finder/notice-fingerprints.json if needed."
+          gh issue create \
+            --title "Ramp Finder: official closure page may have changed" \
+            --body "$body"
