@@ -2,8 +2,11 @@
 point, look across North Carolina by default, show active filters as removable chips, offer
 'Search all North Carolina ramps' when filters leave nothing, and match the statewide map exactly."""
 import json
+import os
 import re
+import threading
 import unittest
+from http.client import HTTPConnection
 from urllib.parse import parse_qs, urlparse
 
 import folio_entry
@@ -106,3 +109,73 @@ class DirectorySearch(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+    def test_theme_and_navigation_are_preserved(self):
+        h = sw.render_list(DATA, {"region": ["crystal-coast"], "q": ["Goldsboro"]}, public=True)
+        for must in ("theme-toggle", "The Coastal Brief", 'aria-label="Site"', "Ramp Finder",
+                     'action="/ramps"', ">Search</button>", ">Reset</button>", "Skip to the ramp list"):
+            self.assertIn(must, h, must)
+        self.assertIn('id="theme-toggle"', h)
+        # no public Map tab while PUBLIC_RAMP_MAP is off
+        self.assertNotIn(">Map</a>", h)
+        self.assertNotIn("/preview/ramps-statewide/map", h)
+        self.assertNotIn("Private preview", h)
+
+class ServedDirectory(unittest.TestCase):
+    """The public /ramps page as the server paints it (theme system, optional site nav)."""
+    KEY = "local-test-key-directory-search-not-production"
+
+    @classmethod
+    def setUpClass(cls):
+        import launch_flags
+        import server
+        cls.launch_flags = launch_flags
+        cls.saved = {k: os.environ.get(k) for k in (launch_flags.PUBLIC_RAMPS, launch_flags.PUBLIC_RAMP_MAP, "PREVIEW_KEY", "NAV_V2")}
+        os.environ[launch_flags.PUBLIC_RAMPS] = "1"
+        os.environ.pop(launch_flags.PUBLIC_RAMP_MAP, None)
+        os.environ["PREVIEW_KEY"] = cls.KEY
+        os.environ["NAV_V2"] = "1"  # production has the shared masthead on /ramps
+        cls.httpd = server.ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
+        threading.Thread(target=cls.httpd.serve_forever, daemon=True).start()
+        cls.port = cls.httpd.server_address[1]
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.httpd.shutdown(); cls.httpd.server_close()
+        for k, v in cls.saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+
+    def req(self, path):
+        c = HTTPConnection("127.0.0.1", self.port, timeout=15)
+        c.request("GET", path)
+        r = c.getresponse(); body = r.read(); h = {k.lower(): v for k, v in r.getheaders()}; c.close()
+        return r.status, body, h
+
+    def test_theme_controls_and_site_navigation_are_on_the_served_page(self):
+        st, body, _ = self.req("/ramps")
+        self.assertEqual(st, 200)
+        self.assertIn(b'data-cb-theme-control', body)
+        self.assertIn(b'Find a Ramp', body)
+        self.assertIn(b'Morning Brief', body)
+        self.assertIn(b'Catch Wall', body)
+        self.assertIn(b'>Search</button>', body)
+        self.assertIn(b'>Reset</button>', body)
+        self.assertNotIn(b'/ramps/map', body)  # flag off: no public map tab
+        # Light / Dark / Auto still present after a search from a homepage region link
+        st, body, _ = self.req("/ramps?q=Goldsboro&region=crystal-coast")
+        self.assertEqual(st, 200)
+        self.assertIn(b'data-cb-theme-control', body)
+        self.assertIn(b'Find a Ramp', body)
+        self.assertIn(b'Showing 3 sites', body)
+
+    def test_preview_hub_stays_gated_and_lists_the_private_map(self):
+        self.assertEqual(self.req("/preview")[0], 404)
+        self.assertEqual(self.req("/preview/ramps-statewide/map")[0], 404)
+        st, sm, _ = self.req("/sitemap.xml")
+        self.assertEqual(st, 200)
+        self.assertNotIn(b"/preview/", sm)
+        self.assertNotIn(b"/ramps/map", sm)
+

@@ -231,6 +231,19 @@ class Routes(unittest.TestCase):
         self.assertNotIn(b"/ramps/map", body)
         self.assertNotIn(b"ramps-statewide", body)
 
+
+    def test_preview_hub_lists_the_private_map(self):
+        st, body, h = self.req("/preview", self.ck)
+        self.assertEqual(st, 200)
+        self.assertIn(b'noindex, nofollow', body)
+        self.assertIn(b'href="/preview/ramps-statewide/map"', body)
+        self.assertIn(b'Statewide map (Phase 2, private)', body)
+        self.assertEqual(self.req("/preview")[0], 404)
+        st, sm, _ = self.req("/sitemap.xml")
+        self.assertEqual(st, 200)
+        self.assertNotIn(b"/preview/ramps-statewide", sm)
+        self.assertNotIn(b"/ramps/map", sm)
+
     def test_directory_records_and_detail_pages_unchanged(self):
         os.environ[launch_flags.PUBLIC_RAMPS] = "1"
         self.assertEqual(self.req("/ramps")[0], 200)
