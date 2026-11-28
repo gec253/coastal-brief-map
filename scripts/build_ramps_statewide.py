@@ -665,12 +665,19 @@ def build(attrs: list, fields: list, edit_info: dict, *, checked: str, stations:
     records.sort(key=lambda r: (r["area"], r["display_name"].lower()))
     new_cross = {"by_slug": {r["id"]: r["ncwrc"]["globalid"] for r in records if r.get("ncwrc")},
                  "note": "Stable slug <-> NCWRC GlobalID crosswalk. Slugs never change once assigned."}
-    unmatched_notices = [n["key"] for n in notices if not any(n["key"] in r["applied_notices"] for r in records)]
+    unmatched_notices = [n for n in notices if not any(n["key"] in r["applied_notices"] for r in records)]
+    notice_file = json.loads(NOTICES.read_text())
     meta = dict(inv["meta"])
+    if meta.get("jordan_lake_official_notice"):
+        jn = dict(meta["jordan_lake_official_notice"])
+        jn["accessed_at_label"] = notice_file.get("rechecked", jn.get("accessed_at_label"))
+        jn["as_of"] = notice_file.get("rechecked", jn.get("as_of"))
+        meta["jordan_lake_official_notice"] = jn
+    meta["unmatched_official_notices"] = unmatched_notices
     meta.update({
-        "title": "North Carolina Ramp Finder — statewide private preview (Phase 1.1)",
+        "title": "North Carolina Ramp Finder — statewide directory",
         "date_checked": checked,
-        "notices_rechecked": json.loads(NOTICES.read_text()).get("rechecked", ""),
+        "notices_rechecked": notice_file.get("rechecked", ""),
         "scope": "Statewide: the manually verified Ramp Finder inventory plus every NCWRC Boating Access Area.",
         "ncwrc": {"layer": NCWRC_LAYER, "record_count": len(attrs), "data_last_edit": data_edit,
                   "license": "NCWRC: developed and maintained for free and unrestricted use; no warranty."},
@@ -685,7 +692,7 @@ def build(attrs: list, fields: list, edit_info: dict, *, checked: str, stations:
     data["counts"] = counts(records)
     quality = {
         "matches": report_matches, "near_duplicates_flagged": flags_near, "conflicts": conflicts,
-        "unmatched_notices": unmatched_notices,
+        "unmatched_notices": [n["key"] for n in unmatched_notices],
         "missing": {k: [r["id"] for r in records if not stated(v(r))] for k, v in {
             "coordinates": lambda r: "x" if has_point(r) else None,
             "lanes": lambda r: r.get("lanes"),

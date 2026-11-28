@@ -82,3 +82,11 @@ Missing data always means uncertainty. It's never shown as "open".
 - **Official coordinates overlay.** `preview/ramp-finder/official_coordinates.json` holds access-area GPS points published by the owner (NC State Parks pages for Falls Lake and Jordan Lake). They are shown as "Official location point". `directions` are never changed, and addresses are never geocoded. Records the owner does not publish a point for are listed under `unresolved` and keep address-only directions.
 - **Notices.** `official_notices.json` carries the date and time each official page was last rechecked. NCWRC statuses show the NCWRC data edit date plus the recheck date. Where sources conflict, the status is "status unclear", never "open".
 - **Preview UI.** There is one search field (name, town, county, waterbody). The server-side GET search works without JavaScript, and a small inline script filters as you type. The statewide view groups launches by area in native `<details>`, collapsed by default. Each section shows an access-type line and a status line.
+
+## Public launch (Nov 27, 2026, Ed t550u)
+
+Public `/ramps` and `/ramps/<slug>` serve this statewide directory (285 sites). `/preview/ramps-statewide` stays cookie-gated and shows the same data. The inventory preview at `/preview/ramps` and the interactive map stay private. `PUBLIC_RAMPS=0` still hides `/ramps`. `PUBLIC_RAMP_MAP` stays off, so `/ramps/map` is 404.
+
+The sitemap lists only `/ramps` (the same as before this launch). Individual ramp pages are not added, which matches how the earlier public directory was listed.
+
+Jordan Lake (`/ramps?region=jordan-lake`) shows the official low-water banner and the unmatched Parkers Creek closure as an official notice not tied to a listed ramp, with its source and date.

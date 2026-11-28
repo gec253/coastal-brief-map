@@ -1,9 +1,8 @@
-"""Statewide Ramp Finder — PRIVATE preview only (Ed t547u, Phase 1).
+"""Statewide Ramp Finder directory (Phase 1 / 1.1, public launch Ed t550u).
 
-/preview/ramps-statewide and /preview/ramps-statewide/<slug>, cookie-gated by server.py.
-Reads the static preview/ramp-finder/statewide.json written by
-scripts/build_ramps_statewide.py. Public /ramps keeps reading inventory.json and is
-unchanged. No map, near-me or conditions panel here (Phase 2).
+Public /ramps and /ramps/<slug> read statewide.json. The same pages remain
+available behind the cookie at /preview/ramps-statewide. The interactive map
+stays private. No near-me or conditions panel (Phase 2).
 """
 from __future__ import annotations
 
@@ -201,11 +200,11 @@ def _find_text(r) -> str:
     return " ".join(b for b in bits if b and b != "not stated").lower()
 
 
-def _card(r) -> str:
-    return rf.card_html(r, public=False).replace("<li>", f'<li data-find="{rf.esc(_find_text(r))}">', 1)
+def _card(r, *, public: bool = False) -> str:
+    return rf.card_html(r, public=public).replace("<li>", f'<li data-find="{rf.esc(_find_text(r))}">', 1)
 
 
-def _section(kind, rows, *, group_by_area=False, collapsed=False, sub=None):
+def _section(kind, rows, *, group_by_area=False, collapsed=False, sub=None, public: bool = False):
     if not rows:
         return ""
     title, lead = SECTION_TEXT[kind]
@@ -218,14 +217,14 @@ def _section(kind, rows, *, group_by_area=False, collapsed=False, sub=None):
             buckets.setdefault(r["area"], []).append(r)
         parts = []
         for area in sorted(buckets, key=lambda a: order.index(a) if a in order else 99):
-            items = "".join(_card(r) for r in buckets[area])
+            items = "".join(_card(r, public=public) for r in buckets[area])
             label = REGION_LABELS.get(area, area)
             parts.append(f'<details class="sw-group" data-area="{rf.esc(area)}"{"" if collapsed else " open"}>'
                          f'<summary>{rf.esc(label)} <span class="n">{len(buckets[area])}</span></summary>'
                          f'<ul class="list">{items}</ul></details>')
         inner = "".join(parts)
     else:
-        inner = f'<ul class="list">{"".join(_card(r) for r in rows)}</ul>'
+        inner = f'<ul class="list">{"".join(_card(r, public=public) for r in rows)}</ul>'
     return (f'<section class="rf-section" data-section="{rf.esc(kind)}">'
             f'<h2>{rf.esc(title)} ({len(rows)})</h2><p class="section-lead">{rf.esc(lead)}</p>{inner}</section>')
 
@@ -257,15 +256,38 @@ def _dims_html(rows) -> str:
     return f'<p class="sw-dims" data-dims><b>Access type:</b> {rf.esc(tt)}.<br><b>Official status:</b> {rf.esc(ss)}.</p>'
 
 
-def render_list(data, q) -> str:
-    tok = rf.STATEWIDE_BASE.set(BASE)
+
+def _unmatched_notices_html(data, area: str | None) -> str:
+    """Official notices that do not attach to a listed ramp, with source and date."""
+    parts = []
+    for n in (data.get("meta") or {}).get("unmatched_official_notices") or []:
+        key = n.get("key") or ""
+        # Parkers Creek (and any later unmatched Jordan notice) belong on the Jordan Lake section.
+        if area == "jordan-lake" and "jordan" not in key:
+            continue
+        if area is None and "jordan" in key:
+            continue  # statewide already shows Parkers Creek inside the Jordan banner; the standalone item is on the Jordan page
+        parts.append(
+            f'<aside class="context region-notice" data-notice="unmatched" data-notice-key="{rf.esc(key)}">'
+            f'<p><strong>Official notice not tied to a listed ramp.</strong> {rf.esc(n.get("text") or "")} '
+            f'This site is not in our directory, so the official notice is shown here rather than on a ramp page.</p>'
+            f'<p class="notice-meta"><a href="{rf.esc(n.get("source_url") or "")}" rel="noopener noreferrer">'
+            f'{rf.esc(n.get("source_name") or n.get("source_url") or "")}</a>. '
+            f'Last checked {rf.esc(n.get("as_of_label") or "")}.</p></aside>'
+        )
+    return "".join(parts)
+
+
+def render_list(data, q, *, public: bool = False) -> str:
+    base = "/ramps" if public else BASE
+    tok = rf.STATEWIDE_BASE.set(base)
     try:
-        return _render_list(data, q)
+        return _render_list(data, q, public=public, base=base)
     finally:
         rf.STATEWIDE_BASE.reset(tok)
 
 
-def _render_list(data, q) -> str:
+def _render_list(data, q, *, public: bool = False, base: str = BASE) -> str:
     f = parse(q)
     f["status"] = _first(q, "status") if _first(q, "status") in STATUS_LABELS else ""
     region = f["region"]
@@ -280,7 +302,7 @@ def _render_list(data, q) -> str:
     if unknown:
         honest = (f'<aside class="sw-honest" data-honest="unknown-region"><p>We don’t have a ramp area called '
                   f'“{rf.esc(region)}”. Nothing is filtered here, so no ramps are shown for it.</p>'
-                  f'<p><a href="{BASE}">See the statewide ramp list</a></p></aside>')
+                  f'<p><a href="{base}">See the statewide ramp list</a></p></aside>')
     elif region == "emerald-isle":
         honest = ('<aside class="sw-honest" data-honest="emerald-isle"><p>Emerald Isle ramps are listed with the '
                   'Crystal Coast. This list shows the whole Crystal Coast area.</p></aside>')
@@ -293,7 +315,7 @@ def _render_list(data, q) -> str:
         for d, r in near:
             r2 = dict(r)
             r2["_distance_note"] = f"{d:.0f} mi straight line from {anc.get('label', 'Cape Hatteras')}"
-            cards.append(rf.card_html(r2, public=False))
+            cards.append(rf.card_html(r2, public=public))
         honest = (f'<aside class="sw-honest" data-honest="hatteras"><p><strong>Hatteras Island coverage is limited.</strong> '
                   'The one verified public trailer launch we list is Rodanthe, a Dare County ramp in the NCWRC program. '
                   'It is included by a documented exception because it sits on Hatteras Island but outside our 20-mile '
@@ -308,15 +330,17 @@ def _render_list(data, q) -> str:
     if region == "neuse-river":
         for seg, sub in (("upper", "Upper Neuse, Falls Dam to Goldsboro"), ("lower", "Lower Neuse, below Goldsboro (brackish and tidal launches included)")):
             for kind in TYPE_LABELS:
-                body.append(_section(kind, [r for r in secs[kind] if r.get("neuse_segment") == seg], sub=sub))
+                body.append(_section(kind, [r for r in secs[kind] if r.get("neuse_segment") == seg], sub=sub, public=public))
     else:
         for kind in TYPE_LABELS:
-            body.append(_section(kind, secs[kind], group_by_area=grouped, collapsed=grouped))
+            body.append(_section(kind, secs[kind], group_by_area=grouped, collapsed=grouped, public=public))
     if not shown and not unknown:
         body.append('<p class="empty" data-empty="ramps">No ramps match those filters.</p>')
     ctx = ""
     if region in ("falls-lake", "jordan-lake"):
         ctx = rf.lake_context_html(data, region)
+    if region == "jordan-lake":
+        ctx = rf.region_notice_html(data, "jordan-lake") + _unmatched_notices_html(data, "jordan-lake") + ctx
     rechecked = (data.get("meta") or {}).get("notices_rechecked") or ""
     if rechecked:
         ctx = (f'<p class="sw-dims" data-notices-rechecked>Official closure notices (NC State Parks, NCWRC) rechecked '
@@ -334,12 +358,15 @@ def _render_list(data, q) -> str:
     count_line = (f'<p class="count">Showing {len(shown)} {"site" if len(shown) == 1 else "sites"}'
                   f'{" in " + rf.esc(where) if where else ""}.</p>' + (_dims_html(shown) if shown else "")) if not unknown else ""
     n_total = len(data["records"])
-    return rf._shell("Ramp Finder statewide — private preview", f"""
-<p class="kicker">Private data preview · Phase 1.1</p>
+    kicker = "" if public else '<p class="kicker">Private data preview · Phase 1.1</p>'
+    desc = (f"{n_total} public boating access sites across North Carolina, from official sources only, "
+            f"checked {checked}. Search by name, town, county or waterbody. Not a live open/closed board.")
+    return rf._shell("Ramp Finder: North Carolina", f"""
+{kicker}
 <h1>Ramp Finder: North Carolina</h1>
 <p class="lead">{n_total} public boating access sites statewide, from official sources only, checked {rf.esc(checked)}. This is not a live open/closed board.</p>
 {refresh_html}
-<form class="filters" id="filters" method="get" action="{BASE}" role="search">
+<form class="filters" id="filters" method="get" action="{base}" role="search">
   <label class="q-lab" for="q">Search by ramp name, town, county or waterbody</label>
   <input type="search" id="q" name="q" value="{rf.esc(f["q"])}" placeholder="e.g. Kerr, Wilmington, Neuse" autocomplete="off" aria-describedby="sw-live">
   <p id="sw-live" class="sw-dims" aria-live="polite"></p>
@@ -353,7 +380,7 @@ def _render_list(data, q) -> str:
   <fieldset class="opt-filters"><legend>Restrictions</legend><div class="opt-row">{checks}</div></fieldset>
   </details>
   <div class="actions"><button type="submit">Search</button>
-  <button type="reset" onclick="location.href='{BASE}'; return false;">Reset</button></div>
+  <button type="reset" onclick="location.href='{base}'; return false;">Reset</button></div>
 </form>
 {honest}
 {count_line}
@@ -361,27 +388,37 @@ def _render_list(data, q) -> str:
 {"".join(body)}
 {nearest_html}
 {_about(data)}
-""", extra_head=EXTRA_CSS, extra_script=FIND_JS, public=False)
+""", extra_head=EXTRA_CSS, extra_script=FIND_JS, public=public,
+              canonical=(rf.SITE_ORIGIN + _list_canonical(q)) if public else None,
+              description=desc if public else None)
 
 
-def render_detail(data, rec) -> str:
-    tok = rf.STATEWIDE_BASE.set(BASE)
+def _list_canonical(q: dict) -> str:
+    region = (q or {}).get("region") or [""]
+    region = region[0] if isinstance(region, list) else region
+    return "/ramps?region=" + region if region else "/ramps"
+
+
+def render_detail(data, rec, *, public: bool = False) -> str:
+    base = "/ramps" if public else BASE
+    tok = rf.STATEWIDE_BASE.set(base)
     try:
-        html_out = rf.render_detail(data, rec, public=False)
+        html_out = rf.render_detail(data, rec, public=public)
     finally:
         rf.STATEWIDE_BASE.reset(tok)
     return html_out.replace("</head>", EXTRA_CSS + "\n</head>", 1)
 
 
-def resolve_request(path: str, query: dict):
-    raw = path.rstrip("/") or BASE
+def resolve_request(path: str, query: dict, *, public: bool = False):
+    base = "/ramps" if public else BASE
+    raw = path.rstrip("/") or base
     data = load()
-    if raw == BASE:
-        return 200, "text/html; charset=utf-8", render_list(data, query or {})
-    if raw.startswith(BASE + "/"):
-        rid = raw[len(BASE) + 1:].strip("/")
+    if raw == base:
+        return 200, "text/html; charset=utf-8", render_list(data, query or {}, public=public)
+    if raw.startswith(base + "/"):
+        rid = raw[len(base) + 1:].strip("/")
         rec = by_id(rid, data)
         if not rec:
             return 404, "text/plain", "not found"
-        return 200, "text/html; charset=utf-8", render_detail(data, rec)
+        return 200, "text/html; charset=utf-8", render_detail(data, rec, public=public)
     return 404, "text/plain", "not found"

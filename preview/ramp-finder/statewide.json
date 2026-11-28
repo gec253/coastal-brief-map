@@ -1,6 +1,6 @@
 {
  "meta": {
-  "title": "North Carolina Ramp Finder — statewide private preview (Phase 1.1)",
+  "title": "North Carolina Ramp Finder — statewide directory",
   "date_checked": "2026-11-27",
   "scope": "Statewide: the manually verified Ramp Finder inventory plus every NCWRC Boating Access Area.",
   "production_commit": "e2e427a",
@@ -61,9 +61,9 @@
   "jordan_lake_official_notice": {
    "category": "current_dated_notice",
    "title": "Jordan Lake boat ramps — official low-water notice",
-   "as_of": "2026-11-22",
+   "as_of": "2026-11-27 7:07 PM ET",
    "accessed_at": "2026-11-22T20:39:49-05:00",
-   "accessed_at_label": "8:39 PM EST, Nov 22, 2026",
+   "accessed_at_label": "2026-11-27 7:07 PM ET",
    "source_name": "N.C. State Parks — Jordan Lake State Recreation Area",
    "source_url": "https://www.ncparks.gov/state-parks/jordan-lake-state-recreation-area",
    "text": "LOW-WATER ACCESS NOTICE — N.C. State Parks reports Vista Point and Parkers Creek boat ramps closed. Seaforth has one ramp available for single-axle trailers only. Ebenezer Church and New Hope are listed as alternatives. Check the official park notice before traveling.",
@@ -76,7 +76,21 @@
    "Re-check the Falls Lake home-page banner and the Holly Point construction blog immediately before release. Official pages still disagree on post-November 16 status.",
    "Re-check NCDMF proclamations and What’s Biting? report dates on deploy day."
   ],
-  "notices_rechecked": "2026-11-27 6:20 PM ET",
+  "unmatched_official_notices": [
+   {
+    "key": "jordan-low-water-parkers-creek",
+    "ids": [],
+    "status": "temporarily_closed",
+    "label": "Temporarily closed (low water)",
+    "notice_label": "Current official notice",
+    "text": "N.C. State Parks reports the Parkers Creek boat ramp closed due to low water levels.",
+    "as_of_date": "2026-11-27",
+    "as_of_label": "Nov 27, 2026, 7:07 PM ET (official page rechecked)",
+    "source_name": "N.C. State Parks, Jordan Lake State Recreation Area",
+    "source_url": "https://www.ncparks.gov/state-parks/jordan-lake-state-recreation-area"
+   }
+  ],
+  "notices_rechecked": "2026-11-27 7:07 PM ET",
   "ncwrc": {
    "layer": "https://services1.arcgis.com/YfqBAUM5nWR3yhGP/arcgis/rest/services/NCWRC_Boating_Access_Areas_view/FeatureServer/0",
    "record_count": 267,
@@ -125,7 +139,7 @@
   },
   "refresh": {
    "status": "ok",
-   "attempted_at": "2026-11-27T18:24-05:00",
+   "attempted_at": "2026-11-27T19:09-05:00",
    "data_from": "2026-11-27",
    "added": 0,
    "removed": 0,
@@ -3406,7 +3420,7 @@
      "category": "current_dated_notice",
      "label": "Current official notice",
      "text": "N.C. State Parks reports Holly Point is currently closed for construction. All other Falls Lake areas are listed as open as normal.",
-     "as_of": "Nov 27, 2026, 6:20 PM ET (official page rechecked)",
+     "as_of": "Nov 27, 2026, 7:07 PM ET (official page rechecked)",
      "sources": [
       {
        "label": "N.C. State Parks, Falls Lake State Recreation Area",
@@ -3464,7 +3478,7 @@
     "code": "temporarily_closed",
     "label": "Temporarily closed (construction)",
     "detail": "N.C. State Parks reports Holly Point is currently closed for construction. All other Falls Lake areas are listed as open as normal.",
-    "as_of": "Nov 27, 2026, 6:20 PM ET (official page rechecked)",
+    "as_of": "Nov 27, 2026, 7:07 PM ET (official page rechecked)",
     "source": "N.C. State Parks, Falls Lake State Recreation Area",
     "source_url": "https://www.ncparks.gov/state-parks/falls-lake-state-recreation-area",
     "notice": "falls-holly-point-construction",
@@ -4948,7 +4962,7 @@
      "category": "current_dated_notice",
      "label": "Current official notice",
      "text": "N.C. State Parks reports Seaforth has 1 ramp open for single-axle trailers due to low water levels. The current published schedule lists the Seaforth day-use area as open year-round; it shows no Nov. 30 seasonal close for Seaforth.",
-     "as_of": "Nov 27, 2026, 6:20 PM ET (official page rechecked)",
+     "as_of": "Nov 27, 2026, 7:07 PM ET (official page rechecked)",
      "sources": [
       {
        "label": "N.C. State Parks, Jordan Lake State Recreation Area",
@@ -5006,7 +5020,7 @@
     "code": "partially_open",
     "label": "Partly open: 1 ramp, single-axle trailers only",
     "detail": "N.C. State Parks reports Seaforth has 1 ramp open for single-axle trailers due to low water levels. The current published schedule lists the Seaforth day-use area as open year-round; it shows no Nov. 30 seasonal close for Seaforth.",
-    "as_of": "Nov 27, 2026, 6:20 PM ET (official page rechecked)",
+    "as_of": "Nov 27, 2026, 7:07 PM ET (official page rechecked)",
     "source": "N.C. State Parks, Jordan Lake State Recreation Area",
     "source_url": "https://www.ncparks.gov/state-parks/jordan-lake-state-recreation-area",
     "notice": "jordan-low-water-seaforth",
@@ -5112,7 +5126,7 @@
      "category": "current_dated_notice",
      "label": "Current official notice",
      "text": "N.C. State Parks reports the Vista Point boat ramp closed due to low water levels. Its published schedule also lists the Vista Point boat ramp season as March 2 to Nov. 30, 2026. Ebenezer Church and New Hope are listed as open alternatives.",
-     "as_of": "Nov 27, 2026, 6:20 PM ET (official page rechecked)",
+     "as_of": "Nov 27, 2026, 7:07 PM ET (official page rechecked)",
      "sources": [
       {
        "label": "N.C. State Parks, Jordan Lake State Recreation Area",
@@ -5164,7 +5178,7 @@
     "code": "temporarily_closed",
     "label": "Temporarily closed (low water)",
     "detail": "N.C. State Parks reports the Vista Point boat ramp closed due to low water levels. Its published schedule also lists the Vista Point boat ramp season as March 2 to Nov. 30, 2026. Ebenezer Church and New Hope are listed as open alternatives.",
-    "as_of": "Nov 27, 2026, 6:20 PM ET (official page rechecked)",
+    "as_of": "Nov 27, 2026, 7:07 PM ET (official page rechecked)",
     "source": "N.C. State Parks, Jordan Lake State Recreation Area",
     "source_url": "https://www.ncparks.gov/state-parks/jordan-lake-state-recreation-area",
     "notice": "jordan-low-water-vista-point",
@@ -30638,7 +30652,7 @@
      "category": "current_dated_notice",
      "label": "Current official notice",
      "text": "N.C. State Parks reports most boat ramps at Kerr Lake closed due to low water levels. It lists its Kimball Point ramp and the NC Wildlife ramp at Hibernia as the only boat ramps open on the North Carolina side.",
-     "as_of": "Nov 27, 2026, 6:20 PM ET (official page rechecked)",
+     "as_of": "Nov 27, 2026, 7:07 PM ET (official page rechecked)",
      "sources": [
       {
        "label": "N.C. State Parks, Kerr Lake State Recreation Area",
@@ -32360,7 +32374,7 @@
      "category": "current_dated_notice",
      "label": "Current official notice",
      "text": "N.C. State Parks reports most boat ramps at Kerr Lake closed due to low water levels. It lists its Kimball Point ramp and the NC Wildlife ramp at Hibernia as the only boat ramps open on the North Carolina side.",
-     "as_of": "Nov 27, 2026, 6:20 PM ET (official page rechecked)",
+     "as_of": "Nov 27, 2026, 7:07 PM ET (official page rechecked)",
      "sources": [
       {
        "label": "N.C. State Parks, Kerr Lake State Recreation Area",
@@ -33235,7 +33249,7 @@
      "category": "current_dated_notice",
      "label": "Current official notice",
      "text": "N.C. State Parks reports most boat ramps at Kerr Lake closed due to low water levels. It lists its Kimball Point ramp and the NC Wildlife ramp at Hibernia as the only boat ramps open on the North Carolina side.",
-     "as_of": "Nov 27, 2026, 6:20 PM ET (official page rechecked)",
+     "as_of": "Nov 27, 2026, 7:07 PM ET (official page rechecked)",
      "sources": [
       {
        "label": "N.C. State Parks, Kerr Lake State Recreation Area",
@@ -33540,7 +33554,7 @@
      "category": "current_dated_notice",
      "label": "Current official notice",
      "text": "N.C. State Parks reports most boat ramps at Kerr Lake closed due to low water levels. It lists its Kimball Point ramp and the NC Wildlife ramp at Hibernia as the only boat ramps open on the North Carolina side.",
-     "as_of": "Nov 27, 2026, 6:20 PM ET (official page rechecked)",
+     "as_of": "Nov 27, 2026, 7:07 PM ET (official page rechecked)",
      "sources": [
       {
        "label": "N.C. State Parks, Kerr Lake State Recreation Area",
@@ -33552,7 +33566,7 @@
      "category": "current_dated_notice",
      "label": "Official sources disagree",
      "text": "NCWRC data (last edited Nov 6, 2026) lists Hibernia as temporarily closed due to low water. The N.C. State Parks Kerr Lake banner checked Nov 27, 2026 lists the NC Wildlife ramp at Hibernia as open, and the same banner says the Hibernia area is closed for the season for construction. Check with the park before traveling.",
-     "as_of": "Nov 27, 2026, 6:20 PM ET (both sources rechecked)",
+     "as_of": "Nov 27, 2026, 7:07 PM ET (both sources rechecked)",
      "sources": [
       {
        "label": "N.C. State Parks, Kerr Lake State Recreation Area",
@@ -33624,7 +33638,7 @@
     "code": "conflicting",
     "label": "Status unclear: official sources disagree",
     "detail": "NCWRC data (last edited Nov 6, 2026) lists Hibernia as temporarily closed due to low water. The N.C. State Parks Kerr Lake banner checked Nov 27, 2026 lists the NC Wildlife ramp at Hibernia as open, and the same banner says the Hibernia area is closed for the season for construction. Check with the park before traveling.",
-    "as_of": "Nov 27, 2026, 6:20 PM ET (both sources rechecked)",
+    "as_of": "Nov 27, 2026, 7:07 PM ET (both sources rechecked)",
     "source": "N.C. State Parks, Kerr Lake State Recreation Area",
     "source_url": "https://www.ncparks.gov/state-parks/kerr-lake-state-recreation-area",
     "notice": "kerr-hibernia-conflict",

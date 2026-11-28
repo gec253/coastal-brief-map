@@ -1497,6 +1497,15 @@ def resolve_request(path: str, query: dict, *, public: bool = False):
         return 200, "application/json; charset=utf-8", json.dumps(map_payload(data, public=public), ensure_ascii=False)
     if raw in ("/preview/ramps/map",):
         return 200, "text/html; charset=utf-8", render_map(data, parse_map_filters(query or {}), public=public)
+    if public and raw == "/preview/ramps":
+        import ramp_statewide
+        return ramp_statewide.resolve_request("/ramps", query, public=True)
+    if public and raw.startswith("/preview/ramps/"):
+        import ramp_statewide
+        rid = raw[len("/preview/ramps/"):].strip("/")
+        if rid in MAP_ASSET_SLUGS:
+            return 404, "text/plain", "not found"
+        return ramp_statewide.resolve_request("/ramps/" + rid, query, public=True)
     if raw in ("/preview/ramps",):
         return 200, "text/html; charset=utf-8", render_list(data, parse_filters(query or {}), public=public)
     prefix = "/preview/ramps/"
