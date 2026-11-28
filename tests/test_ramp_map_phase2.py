@@ -255,10 +255,24 @@ class Routes(unittest.TestCase):
         self.assertIn(b'href="/preview/ramps-statewide/map"', body)
         self.assertIn(b'Statewide map (Phase 2, private)', body)
         self.assertEqual(self.req("/preview")[0], 404)
+        # Sitemap follows the feature switch: the public map appears only while PUBLIC_RAMP_MAP is on,
+        # and the private preview map never appears in either state.
+        os.environ.pop(launch_flags.PUBLIC_RAMP_MAP, None)
         st, sm, _ = self.req("/sitemap.xml")
         self.assertEqual(st, 200)
         self.assertNotIn(b"/preview/ramps-statewide", sm)
         self.assertNotIn(b"/ramps/map", sm)
+        self.assertEqual(self.req("/ramps/map")[0], 404)
+        os.environ[launch_flags.PUBLIC_RAMP_MAP] = "1"
+        st, sm, _ = self.req("/sitemap.xml")
+        self.assertEqual(st, 200)
+        self.assertNotIn(b"/preview/ramps-statewide", sm)
+        self.assertIn(b"https://thecoastalbrief.com/ramps/map</loc>", sm)
+        self.assertEqual(self.req("/ramps/map")[0], 200)
+        st, body, _ = self.req("/preview", self.ck)  # the hub still lists the private map with the flag on
+        self.assertEqual(st, 200)
+        self.assertIn(b'href="/preview/ramps-statewide/map"', body)
+        self.assertEqual(self.req("/preview")[0], 404)
 
     def test_directory_records_and_detail_pages_unchanged(self):
         os.environ[launch_flags.PUBLIC_RAMPS] = "1"
