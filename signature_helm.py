@@ -885,20 +885,18 @@ RAMP_PHOTO = {   # authentic photos; location is a photo place, never the launch
 }
 # Scope label, so it is clear at a glance whether the card opens region results or the statewide list (Ed, Nov 27)
 RAMP_DESC = {"crystal-coast": "Crystal Coast ramps", "emerald-isle": "Crystal Coast ramps",
-             "falls-lake": "Falls Lake ramps", "jordan-lake": "Jordan Lake ramps", "neuse-river": "Neuse River ramps"}
+             "falls-lake": "Falls Lake ramps", "jordan-lake": "Jordan Lake ramps", "neuse-river": "Neuse River ramps",
+             "wilmington": "Wilmington ramps", "topsail": "Topsail ramps", "nags-head": "Nags Head ramps",
+             "hatteras": "Hatteras Island ramps"}
 
 
 def tools_ramp(rid: str, fresh: bool) -> tuple[str, str, str]:
     """(href, description, note) for Find a Ramp, per the audited link map."""
-    if fresh:
-        note = "The Neuse list includes tidal lower-river launches, not only Falls Dam to Goldsboro." if rid == "neuse-river" else ""
-        return "/ramps?region=%s" % rid, RAMP_DESC[rid], note
-    if rid == "crystal-coast":
-        return "/ramps?region=crystal-coast", RAMP_DESC[rid], ""
-    if rid == "emerald-isle":
-        return "/ramps?region=crystal-coast", RAMP_DESC[rid], "Emerald Isle ramps are in the Crystal Coast list."
-    href, note = ramps_entry(rid)   # hatteras, wilmington, nags-head, topsail: bare /ramps plus the existing coverage note
-    return "/ramps", "Statewide ramp list", note
+    href, note = ramps_entry(rid)
+    if rid == "neuse-river":
+        note = "The Neuse list includes tidal lower-river launches, not only Falls Dam to Goldsboro."
+    desc = RAMP_DESC.get(rid, "Statewide ramp list")
+    return href, desc, note
 
 
 def tools_links(rid: str, fresh: bool) -> tuple[list, list]:

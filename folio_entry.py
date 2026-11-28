@@ -23,9 +23,24 @@ WB_REGIONS = {
 WB_ALIASES = {
     "emerald-isle": "crystal-coast",
 }
-# Areas with verified ramps in the inventory (t451u). Other public homepage
-# regions still get a Find a Ramp link to the full finder, with a coverage note.
-RAMP_REGIONS = ("crystal-coast", "falls-lake", "jordan-lake", "neuse-river")
+# Areas with verified ramps in the statewide directory (t552u). Emerald Isle
+# shares the Crystal Coast list via the existing /ramps?region=emerald-isle
+# filter. Hatteras keeps an honest limited-coverage note.
+RAMP_REGIONS = (
+    "crystal-coast",
+    "wilmington",
+    "topsail",
+    "nags-head",
+    "hatteras",
+    "falls-lake",
+    "jordan-lake",
+    "neuse-river",
+    "emerald-isle",
+)
+RAMP_NOTES = {
+    "hatteras": "Hatteras Island coverage is limited. Only Rodanthe is listed.",
+    "emerald-isle": "Emerald Isle ramps are in the Crystal Coast list.",
+}
 
 
 def _rid(region_id: str | None) -> str:
@@ -49,12 +64,14 @@ def whats_biting_entry(region_id: str | None) -> tuple[str, str, str]:
 def ramps_entry(region_id: str | None) -> tuple[str, str, str]:
     """Return (href, label, coverage note).
 
-    Covered inventory areas link to the regional list. Other homepage regions
-    link to the full finder and say ramps are not yet listed for that area.
+    Covered inventory areas, including Emerald Isle's Crystal Coast listing,
+    link to that area's /ramps?region= filter. Hatteras keeps an honest note
+    that only Rodanthe is listed. Other homepage regions still link to the
+    full finder and say ramps are not yet listed for that area.
     """
     rid = _rid(region_id)
     if rid in RAMP_REGIONS:
-        return f"/ramps?region={rid}", "Find a Ramp", ""
+        return f"/ramps?region={rid}", "Find a Ramp", RAMP_NOTES.get(rid, "")
     return "/ramps", "Find a Ramp", "Ramps are not yet listed for this area"
 
 
