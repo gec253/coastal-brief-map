@@ -1,0 +1,212 @@
+{
+ "0208706575": {
+  "lat": 36.02361,
+  "lon": -78.68917,
+  "name": "Beaverdam Creek At Dam Near Creedmoor, Nc",
+  "source": "USGS"
+ },
+ "02087182": {
+  "lat": 35.94111,
+  "lon": -78.58333,
+  "name": "Falls Lake Above Dam Nr Falls, Nc",
+  "source": "USGS"
+ },
+ "02087183": {
+  "lat": 35.94,
+  "lon": -78.58083,
+  "name": "Neuse River Near Falls, Nc",
+  "source": "USGS"
+ },
+ "02087500": {
+  "lat": 35.64722,
+  "lon": -78.40528,
+  "name": "Neuse River Near Clayton, Nc",
+  "source": "USGS"
+ },
+ "02087570": {
+  "lat": 35.5125,
+  "lon": -78.34944,
+  "name": "Neuse River At Smithfield, Nc",
+  "source": "USGS"
+ },
+ "02088119": {
+  "lat": 35.37412,
+  "lon": -78.19615,
+  "name": "Neuse River Near Cox Mill, Nc",
+  "source": "USGS"
+ },
+ "02089000": {
+  "lat": 35.3375,
+  "lon": -77.9975,
+  "name": "Neuse River Near Goldsboro, Nc",
+  "source": "USGS"
+ },
+ "02089500": {
+  "lat": 35.25778,
+  "lon": -77.58556,
+  "name": "Neuse River At Kinston, Nc",
+  "source": "USGS"
+ },
+ "02091814": {
+  "lat": 35.31389,
+  "lon": -77.30278,
+  "name": "Neuse River Near Fort Barnwell, Nc",
+  "source": "USGS"
+ },
+ "02092500": {
+  "lat": 35.06417,
+  "lon": -77.46139,
+  "name": "Trent River Near Trenton, Nc",
+  "source": "USGS"
+ },
+ "02092554": {
+  "lat": 35.01,
+  "lon": -77.21889,
+  "name": "Trent R At Pollocksville, Nc",
+  "source": "USGS"
+ },
+ "02098197": {
+  "lat": 35.65472,
+  "lon": -79.06833,
+  "name": " B. Everett Jordan Lake At Dam Nr Moncure, Nc",
+  "source": "USGS"
+ },
+ "02098206": {
+  "lat": 35.63222,
+  "lon": -79.06,
+  "name": "Haw River Near Moncure, Nc",
+  "source": "USGS"
+ },
+ "8656201": {
+  "lat": 34.7968,
+  "lon": -76.4555,
+  "name": "Davis, Core Sound",
+  "source": "NOAA CO-OPS"
+ },
+ "8656451": {
+  "lat": 34.7283,
+  "lon": -76.6683,
+  "name": "GALLANT CHANNEL",
+  "source": "NOAA CO-OPS"
+ },
+ "8656483": {
+  "lat": 34.71733,
+  "lon": -76.67066,
+  "name": "Beaufort, Duke Marine Lab",
+  "source": "NOAA CO-OPS"
+ },
+ "8656499": {
+  "lat": 34.7183,
+  "lon": -76.7367,
+  "name": "Atlantic Beach Bridge",
+  "source": "NOAA CO-OPS"
+ },
+ "8656503": {
+  "lat": 34.715,
+  "lon": -76.5783,
+  "name": "HARKERS ISLAND BRIDGE",
+  "source": "NOAA CO-OPS"
+ },
+ "8656518": {
+  "lat": 34.7117,
+  "lon": -76.645,
+  "name": "BEAUFORT, TAYLOR CREEK",
+  "source": "NOAA CO-OPS"
+ },
+ "8656613": {
+  "lat": 34.6866,
+  "lon": -77.1181,
+  "name": "Swansboro, East Corbett Ave Bridge",
+  "source": "NOAA CO-OPS"
+ },
+ "8657002": {
+  "lat": 34.5763,
+  "lon": -77.3954,
+  "name": "Sneads Ferry, New River",
+  "source": "NOAA CO-OPS"
+ },
+ "8658120": {
+  "lat": 34.2267,
+  "lon": -77.9533,
+  "name": "Wilmington",
+  "source": "NOAA CO-OPS"
+ },
+ "8658145": {
+  "lat": 34.2179,
+  "lon": -77.8123,
+  "name": "Shinn Point",
+  "source": "NOAA CO-OPS"
+ },
+ "8658163": {
+  "lat": 34.21331,
+  "lon": -77.7867,
+  "name": "Wrightsville Beach",
+  "source": "NOAA CO-OPS"
+ },
+ "8658715": {
+  "lat": 33.9617,
+  "lon": -77.94,
+  "name": "FEDERAL POINT, CAPE FEAR RIVER",
+  "source": "NOAA CO-OPS"
+ },
+ "KEWN": {
+  "lat": 35.0675,
+  "lon": -77.04722,
+  "name": "New Bern, Craven County Regional Airport",
+  "source": "NWS ASOS"
+ },
+ "KFFA": {
+  "lat": 36.01667,
+  "lon": -75.66667,
+  "name": "Kill Devil Hills, First Flight Airport",
+  "source": "NWS ASOS"
+ },
+ "KILM": {
+  "lat": 34.26681,
+  "lon": -77.89987,
+  "name": "Wilmington International Airport",
+  "source": "NWS ASOS"
+ },
+ "KMQI": {
+  "lat": 35.91667,
+  "lon": -75.7,
+  "name": "Manteo / Dare County Regional",
+  "source": "NWS ASOS"
+ },
+ "KMRH": {
+  "lat": 34.73259,
+  "lon": -76.6566,
+  "name": "Beaufort Smith Field",
+  "source": "NWS ASOS"
+ },
+ "KNJM": {
+  "lat": 34.69403,
+  "lon": -77.02945,
+  "name": "Bogue Field Marine Corps Auxiliary Field",
+  "source": "NWS ASOS"
+ },
+ "KNKT": {
+  "lat": 34.89719,
+  "lon": -76.88135,
+  "name": "Cherry Point Marine Corps Air Station",
+  "source": "NWS ASOS"
+ },
+ "KSUT": {
+  "lat": 33.92921,
+  "lon": -78.07223,
+  "name": "Brunswick County Airport",
+  "source": "NWS ASOS"
+ },
+ "TEC2831": {
+  "lat": 34.71667,
+  "lon": -76.75,
+  "name": "N.C. State Fisheries",
+  "source": "NOAA CO-OPS"
+ },
+ "TEC2863": {
+  "lat": 34.35,
+  "lon": -77.93333,
+  "name": "Castle Hayne, Northeast River",
+  "source": "NOAA CO-OPS"
+ }
+}

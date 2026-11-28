@@ -1,0 +1,1952 @@
+{
+ "reviewed_at": "2026-11-28T18:00+00:00",
+ "rules": "- Observed wind: an official station (NOAA CO-OPS meteorological or NWS ASOS/AWOS airport). It must have\n  reported wind within 2 h at review time and be within 8 mi of the ramp. The nearest qualifying station\n  is accepted and always labelled Related station (the wind at the station, not at the ramp). Ocean-pier\n  stations are flagged as more exposed than sound-side water. Citizen (CWOP/APRS) stations are never used.\n- Marine zone: NWS sound/river zones (Albemarle, Alligator River, Croatan and Roanoke, Pamlico Sound, Pamlico\n  and Pungo, Neuse and Bay) are accepted when the ramp point is inside the zone or within 1.5 km of it (ramps sit\n  on the shore, and zone polygons stop at the water). An ocean zone (out to 20 NM) is accepted only when its\n  polygon itself contains the ramp point, and then only as \"ocean beyond the inlet\", never as sound conditions.\n- Coastal water temperature and observed water level: a CO-OPS station on the same water within 3 mi.\n  Ocean-pier stations are rejected for sound or ICW ramps (different water), and ramps with an unresolved\n  water class get none.\n- Nautical chart: the largest-scale NOAA chart whose official footprint contains the ramp point, for\n  coastal and estuarine ramps only.",
+ "sites": [
+  {
+   "id": "baa-avalon-beach",
+   "water_class": "estuary_wind_driven",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KFFA",
+     "name": "Kill Devil Hills, First Flight Airport",
+     "distance_mi": 1.7,
+     "exposure": "airport",
+     "decision": "accepted",
+     "label": "Related station",
+     "reason": "Official station reporting wind, 1.7 mi away; shown as wind at the station, not at the ramp. Airport anemometer over land."
+    },
+    {
+     "source": "NWS ASOS",
+     "id": "KMQI",
+     "name": "Manteo / Dare County Regional",
+     "distance_mi": 8.3,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8651370",
+     "name": "Duck",
+     "distance_mi": 10.7,
+     "exposure": "ocean_pier",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    }
+   ],
+   "marine_zone": {
+    "decision": "accepted",
+    "id": "AMZ231",
+    "name": "Croatan and Roanoke Sounds",
+    "kind": "sound_river",
+    "distance_km": 0.01,
+    "reason": "NWS marine zone for this sound or river lies 0.0 km from the ramp."
+   },
+   "water": [],
+   "chart": {
+    "chart": "12204",
+    "title": "Currituck Beach Lt To Wimble Shoals",
+    "scale": 80000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/12204.shtml"
+   }
+  },
+  {
+   "id": "baa-beaufort",
+   "water_class": "tidal_lunar",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KMRH",
+     "name": "Beaufort Smith Field",
+     "distance_mi": 2.1,
+     "exposure": "airport",
+     "decision": "accepted",
+     "label": "Related station",
+     "reason": "Official station reporting wind, 2.1 mi away; shown as wind at the station, not at the ramp. Airport anemometer over land."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656483",
+     "name": "Beaufort, Duke Marine Lab",
+     "distance_mi": 2.3,
+     "exposure": "harbor_inlet",
+     "decision": "rejected",
+     "reason": "A nearer reviewed station was accepted."
+    }
+   ],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656483",
+     "name": "Beaufort, Duke Marine Lab",
+     "type": "water_temp",
+     "distance_mi": 2.3,
+     "exposure": "harbor_inlet",
+     "decision": "accepted",
+     "reason": "Same water within 2.3 mi.",
+     "datum": null
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656483",
+     "name": "Beaufort, Duke Marine Lab",
+     "type": "water_level",
+     "distance_mi": 2.3,
+     "exposure": "harbor_inlet",
+     "decision": "accepted",
+     "reason": "Same water within 2.3 mi.",
+     "datum": "MLLW"
+    }
+   ],
+   "chart": {
+    "chart": "11547",
+    "title": "Morehead City Harbor",
+    "scale": 15000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11547.shtml"
+   }
+  },
+  {
+   "id": "baa-bowsertown-road",
+   "water_class": "estuary_wind_driven",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KMQI",
+     "name": "Manteo / Dare County Regional",
+     "distance_mi": 1.8,
+     "exposure": "airport",
+     "decision": "accepted",
+     "label": "Related station",
+     "reason": "Official station reporting wind, 1.8 mi away; shown as wind at the station, not at the ramp. Airport anemometer over land."
+    },
+    {
+     "source": "NWS ASOS",
+     "id": "KFFA",
+     "name": "Kill Devil Hills, First Flight Airport",
+     "distance_mi": 8.2,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8652587",
+     "name": "Oregon Inlet Marina",
+     "distance_mi": 10.1,
+     "exposure": "sound_inlet",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    }
+   ],
+   "marine_zone": {
+    "decision": "accepted",
+    "id": "AMZ231",
+    "name": "Croatan and Roanoke Sounds",
+    "kind": "sound_river",
+    "distance_km": 0.73,
+    "reason": "NWS marine zone for this sound or river lies 0.7 km from the ramp."
+   },
+   "water": [],
+   "chart": {
+    "chart": "12205",
+    "title": "Roanoke Island And Oregon Inlet  Inset 1",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/12205.shtml"
+   }
+  },
+  {
+   "id": "baa-brices-creek",
+   "water_class": "estuary_wind_driven",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KEWN",
+     "name": "New Bern, Craven County Regional Airport",
+     "distance_mi": 1.2,
+     "exposure": "airport",
+     "decision": "accepted",
+     "label": "Related station",
+     "reason": "Official station reporting wind, 1.2 mi away; shown as wind at the station, not at the ramp. Airport anemometer over land."
+    },
+    {
+     "source": "NWS ASOS",
+     "id": "KNKT",
+     "name": "Cherry Point Marine Corps Air Station",
+     "distance_mi": 14.2,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    }
+   ],
+   "marine_zone": {
+    "decision": "accepted",
+    "id": "AMZ137",
+    "name": "Neuse and Bay Rivers",
+    "kind": "sound_river",
+    "distance_km": 0.8,
+    "reason": "NWS marine zone for this sound or river lies 0.8 km from the ramp."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11552",
+    "title": "Neuse River And Upper Part Of Bay River",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11552.shtml"
+   }
+  },
+  {
+   "id": "baa-bridgeton",
+   "water_class": "estuary_wind_driven",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KEWN",
+     "name": "New Bern, Craven County Regional Airport",
+     "distance_mi": 5.3,
+     "exposure": "airport",
+     "decision": "accepted",
+     "label": "Related station",
+     "reason": "Official station reporting wind, 5.3 mi away; shown as wind at the station, not at the ramp. Airport anemometer over land."
+    }
+   ],
+   "marine_zone": {
+    "decision": "accepted",
+    "id": "AMZ137",
+    "name": "Neuse and Bay Rivers",
+    "kind": "sound_river",
+    "distance_km": 0.0,
+    "reason": "NWS marine zone for this sound or river contains the ramp point."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11552",
+    "title": "Neuse River And Upper Part Of Bay River",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11552.shtml"
+   }
+  },
+  {
+   "id": "baa-castle-hayne",
+   "water_class": "tidal_lunar",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KILM",
+     "name": "Wilmington International Airport",
+     "distance_mi": 6.7,
+     "exposure": "airport",
+     "decision": "accepted",
+     "label": "Related station",
+     "reason": "Official station reporting wind, 6.7 mi away; shown as wind at the station, not at the ramp. Airport anemometer over land."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658120",
+     "name": "Wilmington",
+     "distance_mi": 10.0,
+     "exposure": "river",
+     "decision": "rejected",
+     "reason": "No current wind report at review time (inactive or no wind sensor)."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658163",
+     "name": "Wrightsville Beach",
+     "distance_mi": 12.1,
+     "exposure": "ocean_pier",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    }
+   ],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658120",
+     "name": "Wilmington",
+     "type": "water_temp",
+     "distance_mi": 10.0,
+     "exposure": "river",
+     "decision": "rejected",
+     "reason": "More than 3 mi away: different water conditions likely."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658120",
+     "name": "Wilmington",
+     "type": "water_level",
+     "distance_mi": 10.0,
+     "exposure": "river",
+     "decision": "rejected",
+     "reason": "More than 3 mi away: different water conditions likely."
+    }
+   ],
+   "chart": {
+    "chart": "11539",
+    "title": "New River Inlet To Cape Fear North Carolina",
+    "scale": 80000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11539.shtml"
+   }
+  },
+  {
+   "id": "baa-cedar-island",
+   "water_class": "estuary_wind_driven",
+   "wind": [],
+   "marine_zone": {
+    "decision": "accepted",
+    "id": "AMZ135",
+    "name": "Pamlico Sound",
+    "kind": "sound_river",
+    "distance_km": 0.13,
+    "reason": "NWS marine zone for this sound or river lies 0.1 km from the ramp."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11550",
+    "title": "Ocracoke Inlet And Part Of Core Sound",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11550.shtml"
+   }
+  },
+  {
+   "id": "baa-cool-springs",
+   "water_class": "estuary_wind_driven",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KEWN",
+     "name": "New Bern, Craven County Regional Airport",
+     "distance_mi": 8.9,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    }
+   ],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11552",
+    "title": "Continuation Of Neuse River",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11552.shtml"
+   }
+  },
+  {
+   "id": "baa-cow-pen-landing",
+   "water_class": "unresolved",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KEWN",
+     "name": "New Bern, Craven County Regional Airport",
+     "distance_mi": 13.6,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    }
+   ],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11520",
+    "title": "Cape Hatteras To Charleston",
+    "scale": 432720,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11520.shtml"
+   }
+  },
+  {
+   "id": "baa-dawson-creek",
+   "water_class": "estuary_wind_driven",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KNKT",
+     "name": "Cherry Point Marine Corps Air Station",
+     "distance_mi": 10.2,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    }
+   ],
+   "marine_zone": {
+    "decision": "accepted",
+    "id": "AMZ137",
+    "name": "Neuse and Bay Rivers",
+    "kind": "sound_river",
+    "distance_km": 0.42,
+    "reason": "NWS marine zone for this sound or river lies 0.4 km from the ramp."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11552",
+    "title": "Neuse River And Upper Part Of Bay River",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11552.shtml"
+   }
+  },
+  {
+   "id": "baa-dram-tree-park",
+   "water_class": "tidal_lunar",
+   "wind": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658120",
+     "name": "Wilmington",
+     "distance_mi": 0.2,
+     "exposure": "river",
+     "decision": "rejected",
+     "reason": "No current wind report at review time (inactive or no wind sensor)."
+    },
+    {
+     "source": "NWS ASOS",
+     "id": "KILM",
+     "name": "Wilmington International Airport",
+     "distance_mi": 4.0,
+     "exposure": "airport",
+     "decision": "accepted",
+     "label": "Related station",
+     "reason": "Official station reporting wind, 4.0 mi away; shown as wind at the station, not at the ramp. Airport anemometer over land."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658163",
+     "name": "Wrightsville Beach",
+     "distance_mi": 9.4,
+     "exposure": "ocean_pier",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    }
+   ],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658120",
+     "name": "Wilmington",
+     "type": "water_temp",
+     "distance_mi": 0.2,
+     "exposure": "river",
+     "decision": "accepted",
+     "reason": "Same water within 0.2 mi.",
+     "datum": null
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658120",
+     "name": "Wilmington",
+     "type": "water_level",
+     "distance_mi": 0.2,
+     "exposure": "river",
+     "decision": "accepted",
+     "reason": "Same water within 0.2 mi.",
+     "datum": "MLLW"
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658163",
+     "name": "Wrightsville Beach",
+     "type": "water_temp",
+     "distance_mi": 9.4,
+     "exposure": "ocean_pier",
+     "decision": "rejected",
+     "reason": "More than 3 mi away: different water conditions likely."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658163",
+     "name": "Wrightsville Beach",
+     "type": "water_level",
+     "distance_mi": 9.4,
+     "exposure": "ocean_pier",
+     "decision": "rejected",
+     "reason": "More than 3 mi away: different water conditions likely."
+    }
+   ],
+   "chart": {
+    "chart": "11537",
+    "title": "Cape Fear River - Cape Fear To Wilmington",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11537.shtml"
+   }
+  },
+  {
+   "id": "baa-emerald-isle",
+   "water_class": "unresolved",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KNJM",
+     "name": "Bogue Field Marine Corps Auxiliary Field",
+     "distance_mi": 2.1,
+     "exposure": "airport",
+     "decision": "accepted",
+     "label": "Related station",
+     "reason": "Official station reporting wind, 2.1 mi away; shown as wind at the station, not at the ramp. Airport anemometer over land."
+    }
+   ],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11541",
+    "title": "Bogue Sound",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11541.shtml"
+   }
+  },
+  {
+   "id": "baa-federal-point",
+   "water_class": "tidal_lunar",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KSUT",
+     "name": "Brunswick County Airport",
+     "distance_mi": 7.8,
+     "exposure": "airport",
+     "decision": "accepted",
+     "label": "Related station",
+     "reason": "Official station reporting wind, 7.8 mi away; shown as wind at the station, not at the ramp. Airport anemometer over land."
+    }
+   ],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11537",
+    "title": "Cape Fear River - Cape Fear To Wilmington",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11537.shtml"
+   }
+  },
+  {
+   "id": "baa-gordon-s-myers-at-cedar-point",
+   "water_class": "tidal_lunar",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KNJM",
+     "name": "Bogue Field Marine Corps Auxiliary Field",
+     "distance_mi": 4.7,
+     "exposure": "airport",
+     "decision": "accepted",
+     "label": "Related station",
+     "reason": "Official station reporting wind, 4.7 mi away; shown as wind at the station, not at the ramp. Airport anemometer over land."
+    }
+   ],
+   "marine_zone": {
+    "decision": "accepted",
+    "id": "AMZ158",
+    "name": "S of Cape Lookout NC to Surf City NC out to 20 NM",
+    "kind": "ocean_beyond_inlet",
+    "reason": "Ocean zone polygon contains the shoreline point: shown only as ocean conditions beyond the inlet, not for the sound or waterway."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11541",
+    "title": "Humphrey Point To Stump Sound",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11541.shtml"
+   }
+  },
+  {
+   "id": "baa-hampstead",
+   "water_class": "unresolved",
+   "wind": [],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11541",
+    "title": "Stump Sound To Masonboro Sound",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11541.shtml"
+   }
+  },
+  {
+   "id": "baa-holly-shelter",
+   "water_class": "unresolved",
+   "wind": [],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11539",
+    "title": "New River Inlet To Cape Fear North Carolina",
+    "scale": 80000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11539.shtml"
+   }
+  },
+  {
+   "id": "baa-lees-landing",
+   "water_class": "estuary_wind_driven",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KEWN",
+     "name": "New Bern, Craven County Regional Airport",
+     "distance_mi": 7.0,
+     "exposure": "airport",
+     "decision": "accepted",
+     "label": "Related station",
+     "reason": "Official station reporting wind, 7.0 mi away; shown as wind at the station, not at the ramp. Airport anemometer over land."
+    },
+    {
+     "source": "NWS ASOS",
+     "id": "KNKT",
+     "name": "Cherry Point Marine Corps Air Station",
+     "distance_mi": 14.8,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    }
+   ],
+   "marine_zone": {
+    "decision": "accepted",
+    "id": "AMZ137",
+    "name": "Neuse and Bay Rivers",
+    "kind": "sound_river",
+    "distance_km": 0.03,
+    "reason": "NWS marine zone for this sound or river lies 0.0 km from the ramp."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11552",
+    "title": "Neuse River And Upper Part Of Bay River",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11552.shtml"
+   }
+  },
+  {
+   "id": "baa-manns-harbor",
+   "water_class": "estuary_wind_driven",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KMQI",
+     "name": "Manteo / Dare County Regional",
+     "distance_mi": 4.0,
+     "exposure": "airport",
+     "decision": "accepted",
+     "label": "Related station",
+     "reason": "Official station reporting wind, 4.0 mi away; shown as wind at the station, not at the ramp. Airport anemometer over land."
+    },
+    {
+     "source": "NWS ASOS",
+     "id": "KFFA",
+     "name": "Kill Devil Hills, First Flight Airport",
+     "distance_mi": 9.4,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8652587",
+     "name": "Oregon Inlet Marina",
+     "distance_mi": 14.8,
+     "exposure": "sound_inlet",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    }
+   ],
+   "marine_zone": {
+    "decision": "accepted",
+    "id": "AMZ231",
+    "name": "Croatan and Roanoke Sounds",
+    "kind": "sound_river",
+    "distance_km": 0.01,
+    "reason": "NWS marine zone for this sound or river lies 0.0 km from the ramp."
+   },
+   "water": [],
+   "chart": {
+    "chart": "12205",
+    "title": "Roanoke Island And Oregon Inlet  Inset 1",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/12205.shtml"
+   }
+  },
+  {
+   "id": "baa-mashoes",
+   "water_class": "estuary_wind_driven",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KMQI",
+     "name": "Manteo / Dare County Regional",
+     "distance_mi": 6.5,
+     "exposure": "airport",
+     "decision": "accepted",
+     "label": "Related station",
+     "reason": "Official station reporting wind, 6.5 mi away; shown as wind at the station, not at the ramp. Airport anemometer over land."
+    },
+    {
+     "source": "NWS ASOS",
+     "id": "KFFA",
+     "name": "Kill Devil Hills, First Flight Airport",
+     "distance_mi": 10.3,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    }
+   ],
+   "marine_zone": {
+    "decision": "accepted",
+    "id": "AMZ131",
+    "name": "Alligator River",
+    "kind": "sound_river",
+    "distance_km": 0.06,
+    "reason": "NWS marine zone for this sound or river lies 0.1 km from the ramp."
+   },
+   "water": [],
+   "chart": {
+    "chart": "12204",
+    "title": "Currituck Beach Lt To Wimble Shoals",
+    "scale": 80000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/12204.shtml"
+   }
+  },
+  {
+   "id": "baa-morehead-city",
+   "water_class": "tidal_lunar",
+   "wind": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656483",
+     "name": "Beaufort, Duke Marine Lab",
+     "distance_mi": 4.6,
+     "exposure": "harbor_inlet",
+     "decision": "accepted",
+     "label": "Related station",
+     "reason": "Official station reporting wind, 4.6 mi away; shown as wind at the station, not at the ramp."
+    },
+    {
+     "source": "NWS ASOS",
+     "id": "KMRH",
+     "name": "Beaufort Smith Field",
+     "distance_mi": 5.4,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "A nearer reviewed station was accepted."
+    },
+    {
+     "source": "NWS ASOS",
+     "id": "KNKT",
+     "name": "Cherry Point Marine Corps Air Station",
+     "distance_mi": 14.2,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    }
+   ],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656483",
+     "name": "Beaufort, Duke Marine Lab",
+     "type": "water_temp",
+     "distance_mi": 4.6,
+     "exposure": "harbor_inlet",
+     "decision": "rejected",
+     "reason": "More than 3 mi away: different water conditions likely."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656483",
+     "name": "Beaufort, Duke Marine Lab",
+     "type": "water_level",
+     "distance_mi": 4.6,
+     "exposure": "harbor_inlet",
+     "decision": "rejected",
+     "reason": "More than 3 mi away: different water conditions likely."
+    }
+   ],
+   "chart": {
+    "chart": "11545",
+    "title": "Beaufort Inlet And Part Of Core Sound",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11545.shtml"
+   }
+  },
+  {
+   "id": "baa-newport",
+   "water_class": "tidal_lunar",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KNKT",
+     "name": "Cherry Point Marine Corps Air Station",
+     "distance_mi": 8.3,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    },
+    {
+     "source": "NWS ASOS",
+     "id": "KNJM",
+     "name": "Bogue Field Marine Corps Auxiliary Field",
+     "distance_mi": 11.3,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656483",
+     "name": "Beaufort, Duke Marine Lab",
+     "distance_mi": 11.5,
+     "exposure": "harbor_inlet",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    },
+    {
+     "source": "NWS ASOS",
+     "id": "KMRH",
+     "name": "Beaufort Smith Field",
+     "distance_mi": 11.9,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    }
+   ],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11543",
+    "title": "Cape Lookout To New River",
+    "scale": 80000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11543.shtml"
+   }
+  },
+  {
+   "id": "baa-oriental",
+   "water_class": "estuary_wind_driven",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KNKT",
+     "name": "Cherry Point Marine Corps Air Station",
+     "distance_mi": 13.6,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    }
+   ],
+   "marine_zone": {
+    "decision": "accepted",
+    "id": "AMZ137",
+    "name": "Neuse and Bay Rivers",
+    "kind": "sound_river",
+    "distance_km": 0.01,
+    "reason": "NWS marine zone for this sound or river lies 0.0 km from the ramp."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11552",
+    "title": "Neuse River And Upper Part Of Bay River",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11552.shtml"
+   }
+  },
+  {
+   "id": "baa-oyster-creek",
+   "water_class": "tidal_lunar",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KMRH",
+     "name": "Beaufort Smith Field",
+     "distance_mi": 13.1,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656483",
+     "name": "Beaufort, Duke Marine Lab",
+     "distance_mi": 14.3,
+     "exposure": "harbor_inlet",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    }
+   ],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11545",
+    "title": "Beaufort Inlet And Part Of Core Sound",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11545.shtml"
+   }
+  },
+  {
+   "id": "baa-percy-berry",
+   "water_class": "estuary_wind_driven",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KNKT",
+     "name": "Cherry Point Marine Corps Air Station",
+     "distance_mi": 2.1,
+     "exposure": "airport",
+     "decision": "accepted",
+     "label": "Related station",
+     "reason": "Official station reporting wind, 2.1 mi away; shown as wind at the station, not at the ramp. Airport anemometer over land."
+    }
+   ],
+   "marine_zone": {
+    "decision": "accepted",
+    "id": "AMZ137",
+    "name": "Neuse and Bay Rivers",
+    "kind": "sound_river",
+    "distance_km": 0.01,
+    "reason": "NWS marine zone for this sound or river lies 0.0 km from the ramp."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11552",
+    "title": "Neuse River And Upper Part Of Bay River",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11552.shtml"
+   }
+  },
+  {
+   "id": "baa-rices-creek",
+   "water_class": "unresolved",
+   "wind": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658120",
+     "name": "Wilmington",
+     "distance_mi": 8.6,
+     "exposure": "river",
+     "decision": "rejected",
+     "reason": "No current wind report at review time (inactive or no wind sensor)."
+    },
+    {
+     "source": "NWS ASOS",
+     "id": "KILM",
+     "name": "Wilmington International Airport",
+     "distance_mi": 12.7,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    }
+   ],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658120",
+     "name": "Wilmington",
+     "type": "water_temp",
+     "distance_mi": 8.6,
+     "exposure": "river",
+     "decision": "rejected",
+     "reason": "Water class unresolved: water readings withheld."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658120",
+     "name": "Wilmington",
+     "type": "water_level",
+     "distance_mi": 8.6,
+     "exposure": "river",
+     "decision": "rejected",
+     "reason": "Water class unresolved: water readings withheld."
+    }
+   ],
+   "chart": {
+    "chart": "11520",
+    "title": "Cape Hatteras To Charleston",
+    "scale": 432720,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11520.shtml"
+   }
+  },
+  {
+   "id": "baa-rodanthe",
+   "water_class": "estuary_wind_driven",
+   "wind": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8652587",
+     "name": "Oregon Inlet Marina",
+     "distance_mi": 14.5,
+     "exposure": "sound_inlet",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    }
+   ],
+   "marine_zone": {
+    "decision": "accepted",
+    "id": "AMZ135",
+    "name": "Pamlico Sound",
+    "kind": "sound_river",
+    "distance_km": 0.03,
+    "reason": "NWS marine zone for this sound or river lies 0.0 km from the ramp."
+   },
+   "water": [],
+   "chart": {
+    "chart": "12204",
+    "title": "Currituck Beach Lt To Wimble Shoals",
+    "scale": 80000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/12204.shtml"
+   }
+  },
+  {
+   "id": "baa-salters-creek",
+   "water_class": "estuary_wind_driven",
+   "wind": [],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11544",
+    "title": "Portsmouth Isl To Beaufort Incl Cape Lookout Shoals",
+    "scale": 80000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11544.shtml"
+   }
+  },
+  {
+   "id": "baa-shell-rock-landing",
+   "water_class": "unresolved",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KNJM",
+     "name": "Bogue Field Marine Corps Auxiliary Field",
+     "distance_mi": 8.2,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    }
+   ],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11541",
+    "title": "Humphrey Point To Stump Sound",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11541.shtml"
+   }
+  },
+  {
+   "id": "baa-slocum-creek",
+   "water_class": "estuary_wind_driven",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KNKT",
+     "name": "Cherry Point Marine Corps Air Station",
+     "distance_mi": 2.4,
+     "exposure": "airport",
+     "decision": "accepted",
+     "label": "Related station",
+     "reason": "Official station reporting wind, 2.4 mi away; shown as wind at the station, not at the ramp. Airport anemometer over land."
+    },
+    {
+     "source": "NWS ASOS",
+     "id": "KEWN",
+     "name": "New Bern, Craven County Regional Airport",
+     "distance_mi": 14.0,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    },
+    {
+     "source": "NWS ASOS",
+     "id": "KNJM",
+     "name": "Bogue Field Marine Corps Auxiliary Field",
+     "distance_mi": 14.9,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    }
+   ],
+   "marine_zone": {
+    "decision": "accepted",
+    "id": "AMZ137",
+    "name": "Neuse and Bay Rivers",
+    "kind": "sound_river",
+    "distance_km": 0.59,
+    "reason": "NWS marine zone for this sound or river lies 0.6 km from the ramp."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11552",
+    "title": "Neuse River And Upper Part Of Bay River",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11552.shtml"
+   }
+  },
+  {
+   "id": "baa-sneads-ferry",
+   "water_class": "tidal_lunar",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KNCA",
+     "name": "MCAS New River",
+     "distance_mi": 10.3,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "No current wind report at review time (inactive or no wind sensor)."
+    }
+   ],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11542",
+    "title": "New River",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11542.shtml"
+   }
+  },
+  {
+   "id": "baa-snows-cut",
+   "water_class": "unresolved",
+   "wind": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658120",
+     "name": "Wilmington",
+     "distance_mi": 12.2,
+     "exposure": "river",
+     "decision": "rejected",
+     "reason": "No current wind report at review time (inactive or no wind sensor)."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658163",
+     "name": "Wrightsville Beach",
+     "distance_mi": 12.4,
+     "exposure": "ocean_pier",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    },
+    {
+     "source": "NWS ASOS",
+     "id": "KSUT",
+     "name": "Brunswick County Airport",
+     "distance_mi": 13.6,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    },
+    {
+     "source": "NWS ASOS",
+     "id": "KILM",
+     "name": "Wilmington International Airport",
+     "distance_mi": 14.5,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    }
+   ],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11537",
+    "title": "Cape Fear River - Cape Fear To Wilmington",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11537.shtml"
+   }
+  },
+  {
+   "id": "baa-spring-garden",
+   "water_class": "unresolved",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KEWN",
+     "name": "New Bern, Craven County Regional Airport",
+     "distance_mi": 11.9,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    }
+   ],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11520",
+    "title": "Cape Hatteras To Charleston",
+    "scale": 432720,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11520.shtml"
+   }
+  },
+  {
+   "id": "baa-straits-landing",
+   "water_class": "tidal_lunar",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KMRH",
+     "name": "Beaufort Smith Field",
+     "distance_mi": 4.7,
+     "exposure": "airport",
+     "decision": "accepted",
+     "label": "Related station",
+     "reason": "Official station reporting wind, 4.7 mi away; shown as wind at the station, not at the ramp. Airport anemometer over land."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656483",
+     "name": "Beaufort, Duke Marine Lab",
+     "distance_mi": 5.4,
+     "exposure": "harbor_inlet",
+     "decision": "rejected",
+     "reason": "A nearer reviewed station was accepted."
+    }
+   ],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656483",
+     "name": "Beaufort, Duke Marine Lab",
+     "type": "water_temp",
+     "distance_mi": 5.4,
+     "exposure": "harbor_inlet",
+     "decision": "rejected",
+     "reason": "More than 3 mi away: different water conditions likely."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656483",
+     "name": "Beaufort, Duke Marine Lab",
+     "type": "water_level",
+     "distance_mi": 5.4,
+     "exposure": "harbor_inlet",
+     "decision": "rejected",
+     "reason": "More than 3 mi away: different water conditions likely."
+    }
+   ],
+   "chart": {
+    "chart": "11545",
+    "title": "Beaufort Inlet And Part Of Core Sound",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11545.shtml"
+   }
+  },
+  {
+   "id": "baa-stumpy-point",
+   "water_class": "estuary_wind_driven",
+   "wind": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8652587",
+     "name": "Oregon Inlet Marina",
+     "distance_mi": 12.9,
+     "exposure": "sound_inlet",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    }
+   ],
+   "marine_zone": {
+    "decision": "accepted",
+    "id": "AMZ135",
+    "name": "Pamlico Sound",
+    "kind": "sound_river",
+    "distance_km": 0.07,
+    "reason": "NWS marine zone for this sound or river lies 0.1 km from the ramp."
+   },
+   "water": [],
+   "chart": {
+    "chart": "12204",
+    "title": "Currituck Beach Lt To Wimble Shoals",
+    "scale": 80000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/12204.shtml"
+   }
+  },
+  {
+   "id": "baa-surf-city",
+   "water_class": "tidal_lunar",
+   "wind": [],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11541",
+    "title": "Stump Sound To Masonboro Sound",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11541.shtml"
+   }
+  },
+  {
+   "id": "baa-trails-end",
+   "water_class": "tidal_lunar",
+   "wind": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658163",
+     "name": "Wrightsville Beach",
+     "distance_mi": 5.6,
+     "exposure": "ocean_pier",
+     "decision": "accepted",
+     "label": "Related station",
+     "reason": "Official station reporting wind, 5.6 mi away; shown as wind at the station, not at the ramp. Ocean pier: more exposed than sound-side water."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658120",
+     "name": "Wilmington",
+     "distance_mi": 7.4,
+     "exposure": "river",
+     "decision": "rejected",
+     "reason": "No current wind report at review time (inactive or no wind sensor)."
+    },
+    {
+     "source": "NWS ASOS",
+     "id": "KILM",
+     "name": "Wilmington International Airport",
+     "distance_mi": 8.0,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    }
+   ],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658120",
+     "name": "Wilmington",
+     "type": "water_temp",
+     "distance_mi": 7.4,
+     "exposure": "river",
+     "decision": "rejected",
+     "reason": "More than 3 mi away: different water conditions likely."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658120",
+     "name": "Wilmington",
+     "type": "water_level",
+     "distance_mi": 7.4,
+     "exposure": "river",
+     "decision": "rejected",
+     "reason": "More than 3 mi away: different water conditions likely."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658163",
+     "name": "Wrightsville Beach",
+     "type": "water_temp",
+     "distance_mi": 5.6,
+     "exposure": "ocean_pier",
+     "decision": "rejected",
+     "reason": "More than 3 mi away: different water conditions likely."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658163",
+     "name": "Wrightsville Beach",
+     "type": "water_level",
+     "distance_mi": 5.6,
+     "exposure": "ocean_pier",
+     "decision": "rejected",
+     "reason": "More than 3 mi away: different water conditions likely."
+    }
+   ],
+   "chart": {
+    "chart": "11541",
+    "title": "Stump Sound To Masonboro Sound",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11541.shtml"
+   }
+  },
+  {
+   "id": "baa-turkey-creek",
+   "water_class": "tidal_lunar",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KNCA",
+     "name": "MCAS New River",
+     "distance_mi": 14.7,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "No current wind report at review time (inactive or no wind sensor)."
+    }
+   ],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11542",
+    "title": "New River",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11542.shtml"
+   }
+  },
+  {
+   "id": "baa-washington-baum-bridge",
+   "water_class": "estuary_wind_driven",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KMQI",
+     "name": "Manteo / Dare County Regional",
+     "distance_mi": 3.8,
+     "exposure": "airport",
+     "decision": "accepted",
+     "label": "Related station",
+     "reason": "Official station reporting wind, 3.8 mi away; shown as wind at the station, not at the ramp. Airport anemometer over land."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8652587",
+     "name": "Oregon Inlet Marina",
+     "distance_mi": 8.4,
+     "exposure": "sound_inlet",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    },
+    {
+     "source": "NWS ASOS",
+     "id": "KFFA",
+     "name": "Kill Devil Hills, First Flight Airport",
+     "distance_mi": 8.6,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    }
+   ],
+   "marine_zone": {
+    "decision": "accepted",
+    "id": "AMZ231",
+    "name": "Croatan and Roanoke Sounds",
+    "kind": "sound_river",
+    "distance_km": 0.02,
+    "reason": "NWS marine zone for this sound or river lies 0.0 km from the ramp."
+   },
+   "water": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8652587",
+     "name": "Oregon Inlet Marina",
+     "type": "water_temp",
+     "distance_mi": 8.4,
+     "exposure": "sound_inlet",
+     "decision": "rejected",
+     "reason": "More than 3 mi away: different water conditions likely."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8652587",
+     "name": "Oregon Inlet Marina",
+     "type": "water_level",
+     "distance_mi": 8.4,
+     "exposure": "sound_inlet",
+     "decision": "rejected",
+     "reason": "More than 3 mi away: different water conditions likely."
+    }
+   ],
+   "chart": {
+    "chart": "12205",
+    "title": "Roanoke Island And Oregon Inlet  Inset 1",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/12205.shtml"
+   }
+  },
+  {
+   "id": "baa-west-beaufort",
+   "water_class": "tidal_lunar",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KMRH",
+     "name": "Beaufort Smith Field",
+     "distance_mi": 0.6,
+     "exposure": "airport",
+     "decision": "accepted",
+     "label": "Related station",
+     "reason": "Official station reporting wind, 0.6 mi away; shown as wind at the station, not at the ramp. Airport anemometer over land."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656483",
+     "name": "Beaufort, Duke Marine Lab",
+     "distance_mi": 0.7,
+     "exposure": "harbor_inlet",
+     "decision": "rejected",
+     "reason": "A nearer reviewed station was accepted."
+    }
+   ],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656483",
+     "name": "Beaufort, Duke Marine Lab",
+     "type": "water_temp",
+     "distance_mi": 0.7,
+     "exposure": "harbor_inlet",
+     "decision": "accepted",
+     "reason": "Same water within 0.7 mi.",
+     "datum": null
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656483",
+     "name": "Beaufort, Duke Marine Lab",
+     "type": "water_level",
+     "distance_mi": 0.7,
+     "exposure": "harbor_inlet",
+     "decision": "accepted",
+     "reason": "Same water within 0.7 mi.",
+     "datum": "MLLW"
+    }
+   ],
+   "chart": {
+    "chart": "11545",
+    "title": "Beaufort Inlet And Part Of Core Sound",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11545.shtml"
+   }
+  },
+  {
+   "id": "baa-west-onslow-beach",
+   "water_class": "tidal_lunar",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KNCA",
+     "name": "MCAS New River",
+     "distance_mi": 14.5,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "No current wind report at review time (inactive or no wind sensor)."
+    }
+   ],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11542",
+    "title": "New River",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11542.shtml"
+   }
+  },
+  {
+   "id": "baa-willis-landing",
+   "water_class": "unresolved",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KNJM",
+     "name": "Bogue Field Marine Corps Auxiliary Field",
+     "distance_mi": 10.9,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "More than 8 mi from the ramp."
+    },
+    {
+     "source": "NWS ASOS",
+     "id": "KNCA",
+     "name": "MCAS New River",
+     "distance_mi": 13.7,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "No current wind report at review time (inactive or no wind sensor)."
+    }
+   ],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11541",
+    "title": "Humphrey Point To Stump Sound",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11541.shtml"
+   }
+  },
+  {
+   "id": "baa-wrightsville-beach",
+   "water_class": "tidal_lunar",
+   "wind": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658163",
+     "name": "Wrightsville Beach",
+     "distance_mi": 1.4,
+     "exposure": "ocean_pier",
+     "decision": "accepted",
+     "label": "Related station",
+     "reason": "Official station reporting wind, 1.4 mi away; shown as wind at the station, not at the ramp. Ocean pier: more exposed than sound-side water."
+    },
+    {
+     "source": "NWS ASOS",
+     "id": "KILM",
+     "name": "Wilmington International Airport",
+     "distance_mi": 6.1,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "A nearer reviewed station was accepted."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658120",
+     "name": "Wilmington",
+     "distance_mi": 8.1,
+     "exposure": "river",
+     "decision": "rejected",
+     "reason": "No current wind report at review time (inactive or no wind sensor)."
+    }
+   ],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658120",
+     "name": "Wilmington",
+     "type": "water_temp",
+     "distance_mi": 8.1,
+     "exposure": "river",
+     "decision": "rejected",
+     "reason": "More than 3 mi away: different water conditions likely."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658120",
+     "name": "Wilmington",
+     "type": "water_level",
+     "distance_mi": 8.1,
+     "exposure": "river",
+     "decision": "rejected",
+     "reason": "More than 3 mi away: different water conditions likely."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658163",
+     "name": "Wrightsville Beach",
+     "type": "water_temp",
+     "distance_mi": 1.4,
+     "exposure": "ocean_pier",
+     "decision": "rejected",
+     "reason": "Ocean pier: ocean water, not the sound or waterway at this ramp."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8658163",
+     "name": "Wrightsville Beach",
+     "type": "water_level",
+     "distance_mi": 1.4,
+     "exposure": "ocean_pier",
+     "decision": "rejected",
+     "reason": "Ocean pier: ocean water, not the sound or waterway at this ramp."
+    }
+   ],
+   "chart": {
+    "chart": "11541",
+    "title": "Stump Sound To Masonboro Sound",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11541.shtml"
+   }
+  },
+  {
+   "id": "local-atlantic-beach-moonlight-drive",
+   "water_class": "tidal_lunar",
+   "wind": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656483",
+     "name": "Beaufort, Duke Marine Lab",
+     "distance_mi": 3.9,
+     "exposure": "harbor_inlet",
+     "decision": "accepted",
+     "label": "Related station",
+     "reason": "Official station reporting wind, 3.9 mi away; shown as wind at the station, not at the ramp."
+    },
+    {
+     "source": "NWS ASOS",
+     "id": "KMRH",
+     "name": "Beaufort Smith Field",
+     "distance_mi": 4.9,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "A nearer reviewed station was accepted."
+    }
+   ],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656483",
+     "name": "Beaufort, Duke Marine Lab",
+     "type": "water_temp",
+     "distance_mi": 3.9,
+     "exposure": "harbor_inlet",
+     "decision": "rejected",
+     "reason": "More than 3 mi away: different water conditions likely."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656483",
+     "name": "Beaufort, Duke Marine Lab",
+     "type": "water_level",
+     "distance_mi": 3.9,
+     "exposure": "harbor_inlet",
+     "decision": "rejected",
+     "reason": "More than 3 mi away: different water conditions likely."
+    }
+   ],
+   "chart": {
+    "chart": "11547",
+    "title": "Morehead City Harbor",
+    "scale": 15000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11547.shtml"
+   }
+  },
+  {
+   "id": "local-atlantic-beach-west-bogue-sound",
+   "water_class": "tidal_lunar",
+   "wind": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656483",
+     "name": "Beaufort, Duke Marine Lab",
+     "distance_mi": 3.9,
+     "exposure": "harbor_inlet",
+     "decision": "accepted",
+     "label": "Related station",
+     "reason": "Official station reporting wind, 3.9 mi away; shown as wind at the station, not at the ramp."
+    },
+    {
+     "source": "NWS ASOS",
+     "id": "KMRH",
+     "name": "Beaufort Smith Field",
+     "distance_mi": 5.0,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "A nearer reviewed station was accepted."
+    }
+   ],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656483",
+     "name": "Beaufort, Duke Marine Lab",
+     "type": "water_temp",
+     "distance_mi": 3.9,
+     "exposure": "harbor_inlet",
+     "decision": "rejected",
+     "reason": "More than 3 mi away: different water conditions likely."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656483",
+     "name": "Beaufort, Duke Marine Lab",
+     "type": "water_level",
+     "distance_mi": 3.9,
+     "exposure": "harbor_inlet",
+     "decision": "rejected",
+     "reason": "More than 3 mi away: different water conditions likely."
+    }
+   ],
+   "chart": {
+    "chart": "11547",
+    "title": "Morehead City Harbor",
+    "scale": 15000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11547.shtml"
+   }
+  },
+  {
+   "id": "local-morehead-south-10th",
+   "water_class": "unresolved",
+   "wind": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656483",
+     "name": "Beaufort, Duke Marine Lab",
+     "distance_mi": 2.6,
+     "exposure": "harbor_inlet",
+     "decision": "accepted",
+     "label": "Related station",
+     "reason": "Official station reporting wind, 2.6 mi away; shown as wind at the station, not at the ramp."
+    },
+    {
+     "source": "NWS ASOS",
+     "id": "KMRH",
+     "name": "Beaufort Smith Field",
+     "distance_mi": 3.5,
+     "exposure": "airport",
+     "decision": "rejected",
+     "reason": "A nearer reviewed station was accepted."
+    }
+   ],
+   "marine_zone": {
+    "decision": "none",
+    "reason": "No NWS sound or river zone within 1.5 km, and no ocean zone contains the point."
+   },
+   "water": [
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656483",
+     "name": "Beaufort, Duke Marine Lab",
+     "type": "water_temp",
+     "distance_mi": 2.6,
+     "exposure": "harbor_inlet",
+     "decision": "rejected",
+     "reason": "Water class unresolved: water readings withheld."
+    },
+    {
+     "source": "NOAA CO-OPS",
+     "id": "8656483",
+     "name": "Beaufort, Duke Marine Lab",
+     "type": "water_level",
+     "distance_mi": 2.6,
+     "exposure": "harbor_inlet",
+     "decision": "rejected",
+     "reason": "Water class unresolved: water readings withheld."
+    }
+   ],
+   "chart": {
+    "chart": "11547",
+    "title": "Morehead City Harbor",
+    "scale": 15000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11547.shtml"
+   }
+  },
+  {
+   "id": "local-newbern-glenburnie",
+   "water_class": "estuary_wind_driven",
+   "wind": [],
+   "marine_zone": null,
+   "water": [],
+   "chart": null,
+   "note": "No official coordinates: no station, zone or chart can be matched."
+  },
+  {
+   "id": "local-newbern-lawson-creek-1",
+   "water_class": "estuary_wind_driven",
+   "wind": [],
+   "marine_zone": null,
+   "water": [],
+   "chart": null,
+   "note": "No official coordinates: no station, zone or chart can be matched."
+  },
+  {
+   "id": "local-newbern-lawson-creek-2",
+   "water_class": "estuary_wind_driven",
+   "wind": [],
+   "marine_zone": null,
+   "water": [],
+   "chart": null,
+   "note": "No official coordinates: no station, zone or chart can be matched."
+  },
+  {
+   "id": "local-newbern-union-point",
+   "water_class": "estuary_wind_driven",
+   "wind": [
+    {
+     "source": "NWS ASOS",
+     "id": "KEWN",
+     "name": "New Bern, Craven County Regional Airport",
+     "distance_mi": 2.6,
+     "exposure": "airport",
+     "decision": "accepted",
+     "label": "Related station",
+     "reason": "Official station reporting wind, 2.6 mi away; shown as wind at the station, not at the ramp. Airport anemometer over land."
+    }
+   ],
+   "marine_zone": {
+    "decision": "accepted",
+    "id": "AMZ137",
+    "name": "Neuse and Bay Rivers",
+    "kind": "sound_river",
+    "distance_km": 0.02,
+    "reason": "NWS marine zone for this sound or river lies 0.0 km from the ramp."
+   },
+   "water": [],
+   "chart": {
+    "chart": "11552",
+    "title": "Neuse River And Upper Part Of Bay River",
+    "scale": 40000,
+    "url": "https://www.charts.noaa.gov/OnLineViewer/11552.shtml"
+   }
+  }
+ ]
+}

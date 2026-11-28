@@ -15,3 +15,25 @@
     clearTimeout(to);Object.keys(d.fragments||{}).forEach(function(k){var el=document.querySelector('[data-card="'+CSS.escape(k)+'"]');if(el)el.outerHTML=d.fragments[k]});
     fail();document.getElementById('live').textContent='Readings loaded.'}).catch(fail);
 })();
+/* Interactive charts (Ed t572u): drag, tap or use arrow keys on a chart to read the exact value and time
+   at that point. Values come only from the plotted readings or predictions; nothing is interpolated. */
+(function(){
+  function wire(svg){
+    if(svg.dataset.wired)return;svg.dataset.wired='1';
+    var rows;try{rows=JSON.parse(svg.dataset.scrub)}catch(e){return}
+    if(!rows.length)return;
+    var NS='http://www.w3.org/2000/svg',vb=svg.viewBox.baseVal,cur=document.createElementNS(NS,'line');
+    cur.setAttribute('class','cur');cur.setAttribute('y1',4);cur.setAttribute('y2',vb.height-14);cur.style.display='none';svg.appendChild(cur);
+    var out=document.createElement('p');out.className='readout';out.setAttribute('aria-live','polite');
+    out.textContent='Drag across the chart to read values';svg.after(out);var i=rows.length-1;
+    function show(k){i=Math.max(0,Math.min(rows.length-1,k));cur.setAttribute('x1',rows[i][0]);cur.setAttribute('x2',rows[i][0]);cur.style.display='';
+      out.textContent=svg.dataset.hint+': '+rows[i][1]}
+    function at(ev){var r=svg.getBoundingClientRect(),x=(ev.clientX-r.left)/r.width*vb.width,b=0;
+      rows.forEach(function(p,k){if(Math.abs(p[0]-x)<Math.abs(rows[b][0]-x))b=k});show(b)}
+    svg.addEventListener('pointerdown',function(e){at(e)});svg.addEventListener('pointermove',function(e){if(e.buttons||e.pointerType==='mouse')at(e)});
+    svg.addEventListener('keydown',function(e){if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();show(i+(e.key==='ArrowRight'?1:-1))}});
+    svg.addEventListener('focus',function(){show(i)});
+  }
+  function scan(){document.querySelectorAll('svg[data-scrub]').forEach(wire)}
+  scan();new MutationObserver(scan).observe(document.getElementById('main')||document.body,{childList:true,subtree:true});
+})();
