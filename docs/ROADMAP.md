@@ -40,3 +40,10 @@ Morning Briefs are public for Crystal Coast, Hatteras, and Falls Lake only. Prev
 Catch Wall uploads are on; every photo is moderated in /admin before it appears.
 Also live Nov 14: robots.txt and sitemap.xml (public pages only), and AMZ152 shown alongside AMZ154 on the Hatteras marine tile.
 Automatic Morning Brief publication for Crystal Coast and Hatteras is authorized through Nov 20, 2026, unless Ed extends it.
+
+## Backlog: Ramp Finder (after the Nov 28, 2026 public map launch)
+Ed accepted the public map on Nov 28, 2026 (production 4722eb7). Refine these after more real use:
+- Map/list filter sync: the map stores one access type and one status, so the directory's region, water and "in area" filters and multi-value choices do not carry across yet. Make the URL state fully shared, still never including location.
+- Live result counts: the directory's "Showing N sites" line should update while you type, as the map's count already does.
+- Navigation-flow refinements: entry from homepage region links, back-button behavior between list, map and detail pages, and how View map / List read on small phones.
+Phase 3 "Before You Launch" is in research and design planning only; no implementation until Ed approves.
