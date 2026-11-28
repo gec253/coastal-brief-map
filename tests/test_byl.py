@@ -90,9 +90,9 @@ def fake(down=(), timeout=(), usgs_age=0.5, usace_day="27NOV2026", alerts=None, 
             if "product=wind" in url:
                 return json.dumps({"data": [{"t": t, "s": "9.0", "d": "250", "g": "14.0"}]}).encode()
             return json.dumps({"data": [{"t": (NOW - timedelta(hours=h)).strftime("%Y-%m-%d %H:%M"), "v": "%.2f" % (2 + h / 10)} for h in range(6, -1, -1)]}).encode()
-        if "interval=h&" in url:
-            return json.dumps({"predictions": [{"t": (NOW.astimezone(B.ET) + timedelta(hours=h - 5)).strftime("%Y-%m-%d %H:00"), "v": "%.2f" % (1 + math.sin(h / 2))}
-                                               for h in range(30)]}).encode()
+        if "interval=6&" in url:
+            return json.dumps({"predictions": [{"t": (NOW.astimezone(B.ET).replace(minute=0) + timedelta(minutes=6 * k - 300)).strftime("%Y-%m-%d %H:%M"), "v": "%.2f" % (1 + math.sin(k / 20))}
+                                               for k in range(300)]}).encode()
         return json.dumps({"predictions": [{"t": "2026-11-28 15:00", "type": "H", "v": "2.1"}, {"t": "2026-11-28 21:10", "type": "L", "v": "0.2"}]}).encode()
     f = B.Fetcher(opener=opener, clock=lambda: 1000.0)
     return f, calls

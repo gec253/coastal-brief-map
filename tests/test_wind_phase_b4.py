@@ -474,7 +474,9 @@ class LiveLayoutAndBehavior(unittest.TestCase):
             self.assertEqual(st["label"], "FORECAST")
             self.assertFalse(st["hidden"])
             self.assertIsNotNone(st["dir"])
-            self.assertAlmostEqual(st["rot"], st["dir"], places=4)
+            # Sitewide wind standard (Ed, Phase 3C.1): the arrow points where the air goes, FROM + 180;
+            # the label keeps the FROM direction.
+            self.assertAlmostEqual(st["rot"], (st["dir"] + 180) % 360, places=4)
             self.assertEqual(st["text"], "FROM %d°T" % round(st["dir"]))
             # Select Cape Lookout: observed compass, same dir as the reading (240).
             page.evaluate("""() => {
@@ -496,8 +498,8 @@ class LiveLayoutAndBehavior(unittest.TestCase):
             self.assertEqual(st["label"], "OBSERVED")
             self.assertEqual(st["needles"], 1)
             self.assertEqual(round(st["dir"]), 240)
-            self.assertAlmostEqual(st["rot"], 240, places=4)
-            self.assertAlmostEqual(st["rot"], st["dir"], places=4)
+            self.assertAlmostEqual(st["rot"], 60, places=4)  # FROM 240 -> airflow toward 060
+            self.assertAlmostEqual(st["rot"], (st["dir"] + 180) % 360, places=4)
             self.assertEqual(st["text"], "FROM 240°T")
         finally:
             browser.close()

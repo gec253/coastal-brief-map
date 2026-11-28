@@ -3,7 +3,8 @@ last-known-good, reserved slot heights and the preview hub."""
 import json
 import re
 import unittest
-from datetime import timedelta
+import html as html_lib
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import byl_data as B
@@ -93,17 +94,27 @@ class Instruments(unittest.TestCase):
         d, _ = run(CEDAR)
         t = d["cards"]["tide"]
         self.assertTrue(t["curve"]["pts"])
-        self.assertFalse(t["curve"]["interpolated"])
+        self.assertEqual(t["curve"]["interval_min"], 6)
+        self.assertNotIn("interpolated", t["curve"])
         h = P.card_html(t)
-        self.assertIn("a-pred", h); self.assertIn("MLLW", h)
+        self.assertIn("a-pred", h); self.assertIn("MLLW", h); self.assertIn("6-minute", h)
 
-    def test_subordinate_station_curve_is_labelled_interpolated(self):
+    def test_curve_uses_six_minute_predictions_only(self):
+        d, calls = run(CEDAR)
+        pred = [u for u in calls if "product=predictions" in u and "interval=hilo" not in u]
+        self.assertTrue(pred)
+        self.assertTrue(all("interval=6&" in u for u in pred), pred)
+        # every plotted point is a NOAA point: 6-minute spacing, nothing added in between
+        ts = [datetime.fromisoformat(t) for t, _ in d["cards"]["tide"]["curve"]["pts"]]
+        self.assertTrue(all((b - a).total_seconds() == 360 for a, b in zip(ts, ts[1:])))
+
+    def test_subordinate_station_gets_high_low_schedule_not_a_curve(self):
         f, _ = fake()
         orig = f.opener
 
         def op(url, t):
-            if "interval=h&" in url:
-                return b'{"predictions": []}'
+            if "interval=6&" in url:
+                return json.dumps({"error": {"message": "No Predictions data was found."}}).encode()
             if "interval=hilo" in url:
                 base = NOW.astimezone(B.ET)
                 return json.dumps({"predictions": [{"t": (base + timedelta(hours=h)).strftime("%Y-%m-%d %H:%M"), "type": "H" if h % 12 == 0 else "L",
@@ -111,8 +122,16 @@ class Instruments(unittest.TestCase):
             return orig(url, t)
         f.opener = op
         d = B.assemble(CEDAR, f=f, now=NOW, sites=SITES, records=RECS)
-        self.assertTrue(d["cards"]["tide"]["curve"]["interpolated"])
-        self.assertIn("high and low times only", P.card_html(d["cards"]["tide"]))
+        t = d["cards"]["tide"]
+        self.assertIsNone(t["curve"])
+        h = P.card_html(t)
+        self.assertNotIn("l-pred", h); self.assertNotIn("a-pred", h)  # no manufactured curve
+        self.assertIn('class="b-hi"', h); self.assertIn('class="b-lo"', h)
+        self.assertIn("official high and low predictions only", h)
+        self.assertIn("MLLW", h)
+        # readout carries only the official events
+        rows = json.loads(html_lib.unescape(re.search(r'data-scrub="([^"]+)"', h).group(1)))
+        self.assertTrue(rows and all(r[1].startswith(("High", "Low")) for r in rows))
 
     def test_datums_and_discharge_are_labelled(self):
         d, _ = run(FALLS)
@@ -178,7 +197,12 @@ class Instruments(unittest.TestCase):
     def test_charts_gateway_on_coastal_pages(self):
         for sid in (CEDAR, UNION):
             h = P.render(sid, SITES, RECS)
-            self.assertIn("Nautical charts", h); self.assertIn("charts.noaa.gov/OnLineViewer", h)
+            self.assertIn("Nautical charts", h)
+            # NOAA has sunset raster charts: link only the current ENC products (HTTP-checked Nov 28, 2026)
+            self.assertNotIn("OnLineViewer", h)
+            self.assertIn('href="https://nauticalcharts.noaa.gov/enconline/enconline.html"', h)
+            self.assertIn('href="https://www.charts.noaa.gov/InteractiveCatalog/nrnc.shtml"', h)
+            self.assertIn("former NOAA chart", h)
 
     def test_below_dam_heading_only_where_relevant(self):
         self.assertIn("Below the dam", P.render(FALLS, SITES, RECS))
@@ -287,10 +311,13 @@ class GeographicAndInteractive(unittest.TestCase):
                 self.assertFalse([p for p in pts if p[0] == "T"], sid)
 
     def test_locator_is_honest_without_coastline(self):
-        h = P.locator_svg(SITES[WB], RECS[WB], CZ[WB])
-        self.assertIn("loc-plain", h); self.assertIn("Coastline not drawn", h)
+        # 3C.1: West Beaufort and Union Point now get the NOAA ENC shoreline; Dram Tree (upper Cape Fear)
+        # lies outside the ENC coverage, so it still gets a plain frame and says why.
+        dt = "baa-dram-tree-park"
+        h = P.locator_svg(SITES[dt], RECS[dt], CZ[dt])
+        self.assertIn("loc-plain", h); self.assertIn("Coastline not drawn", h); self.assertNotIn("loc-water\" d=\"M", h)
         h = P.locator_svg(SITES[UNION], RECS[UNION], CZ[UNION])
-        self.assertIn("loc-water", h); self.assertIn("not for navigation", h)
+        self.assertIn("loc-enc", h); self.assertIn("not for navigation", h)
 
     def test_no_locator_without_coordinates(self):
         for sid, r in RECS.items():
@@ -319,3 +346,56 @@ class Hub(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Phase3C1(unittest.TestCase):
+    """Phase 3C.1: ENC shoreline in coastal station maps, gaps left blank, hi/lo schedule values."""
+
+    def test_coastal_maps_use_enc_shoreline_or_no_outline(self):
+        for sid in (CEDAR, UNION, WB):
+            h = P.locator_svg(SITES[sid], RECS[sid], P.coastal(sid))
+            self.assertIn("loc-enc", h, sid)
+            self.assertIn("NOAA ENC land areas", h)
+            self.assertIn("not for navigation", h)
+            self.assertNotIn("TIGER", h)  # inland layer would paint sounds as land
+
+    def test_enc_not_used_outside_its_coverage(self):
+        self.assertIsNone(P.enc_land(-79.0, 35.7, -78.9, 35.8))  # Falls Lake area: outside ENC cover
+        land = P.enc_land(-76.72, 34.66, -76.62, 34.74)  # Beaufort harbour
+        self.assertTrue(land)
+        for r in land:
+            self.assertTrue(all(-76.72 - 1e-9 <= x <= -76.62 + 1e-9 and 34.66 - 1e-9 <= y <= 34.74 + 1e-9 for x, y in r))
+
+    def test_inland_maps_keep_tiger_water(self):
+        h = P.locator_svg(SITES[FALLS], RECS[FALLS], {})
+        self.assertIn("TIGER", h)
+        self.assertNotIn("loc-enc", h)
+
+    def test_gaps_are_not_bridged(self):
+        pts = [("2026-11-27T10:00:00-05:00", 1.0), ("2026-11-27T10:15:00-05:00", 1.1),
+               ("2026-11-27T15:00:00-05:00", 1.3), ("2026-11-27T15:15:00-05:00", 1.2)]
+        h = P.spark_svg(pts, "Stage", "ft")
+        line = re.search(r'class="l-obs" d="([^"]+)"', h).group(1)
+        self.assertEqual(line.count("M"), 2)
+        self.assertIn("gaps in the record are left blank", h)
+        hist = [("2026-11-%02dT%02d:00:00-05:00" % (14 + i // 4, (i % 4) * 6), 245.0 + i / 100) for i in range(56) if not 20 <= i < 26]
+        h = P.lake_svg(hist, 251.5, "NGVD29")
+        self.assertEqual(re.search(r'class="l-obs" d="([^"]+)"', h).group(1).count("M"), 2)
+        self.assertIn("gaps left blank", h)
+
+    def test_no_negative_zero_tide_heights(self):
+        f, _ = fake()
+        orig = f.opener
+
+        def op(url, t):
+            if "interval=hilo" in url:
+                base = NOW.astimezone(B.ET)
+                return json.dumps({"predictions": [{"t": (base + timedelta(hours=h)).strftime("%Y-%m-%d %H:%M"), "type": "L", "v": "-0.04"} for h in (1, 13)]}).encode()
+            return orig(url, t)
+        f.opener = op
+        c = B.coops_card({"id": "8656451", "name": "Gallant Channel", "relation": "same_waterbody"}, NOW, f)
+        self.assertTrue(all(str(e["ft"]) == "0.0" for e in c["events"]))
+
+    def test_guide_curve_values_match_usace_header(self):
+        # USACE Wilmington District dsslake.txt header: "Guide Curve for Jordan is 216.0, Falls is 251.5 ... each day of the year"
+        self.assertEqual(B.GUIDE, {"SAW-FALLS": 251.5, "SAW-JORDAN": 216.0})
