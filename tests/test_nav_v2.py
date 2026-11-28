@@ -161,12 +161,19 @@ class Homepage(Server):
         self.assertIn(b'href="/dashboard?region=crystal-coast"', tools)
         self.assertNotIn(b"not yet listed", tools)
 
-    def test_uncovered_region_keeps_coverage_note(self):
+    def test_wilmington_and_hatteras_link_to_their_lists(self):
         env = dict(LIVE, NAV_V2="1")
         _, body = self._req("/?region=wilmington", env=env)
         g = re.search(rb'<section class="mwt" id="tools".*?</section>', body, re.S).group(0)
-        self.assertIn(b'href="/ramps"', g)
-        self.assertIn(b"Ramps are not yet listed for this area", g)
+        self.assertIn(b'href="/ramps?region=wilmington"', g)
+        self.assertIn(b"All NC ramps", g)
+        self.assertNotIn(b"Ramps are not yet listed for this area", g)
+        _, body = self._req("/?region=hatteras", env=env)
+        g = re.search(rb'<section class="mwt" id="tools".*?</section>', body, re.S).group(0)
+        self.assertIn(b'href="/ramps?region=hatteras"', g)
+        self.assertIn(b"Hatteras Island coverage is limited. Only Rodanthe is listed.", g)
+        self.assertIn(b"All NC ramps", g)
+        self.assertNotIn(b"Ramps are not yet listed for this area", g)
 
     def test_freshwater_dashboard_card(self):
         self.assertIn('href="/lake?region=falls-lake"', nav_v2.guides_html("falls-lake"))

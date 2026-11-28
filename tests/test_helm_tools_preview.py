@@ -20,16 +20,25 @@ import test_signature_helm_preview as helm
 ROOT = Path(__file__).resolve().parents[1]
 KEY = helm.KEY
 ROUTE = "/preview/helm-tools"
-COVERED = ("crystal-coast", "emerald-isle", "falls-lake", "jordan-lake", "neuse-river")
-UNCOVERED = ("hatteras", "wilmington", "nags-head", "topsail")
+COVERED = ("crystal-coast", "emerald-isle", "wilmington", "topsail", "nags-head",
+           "hatteras", "falls-lake", "jordan-lake", "neuse-river")
+SALT_REGIONAL = ("crystal-coast", "emerald-isle", "wilmington", "topsail", "nags-head", "hatteras")
 FRESH = ("falls-lake", "jordan-lake", "neuse-river")
 NOTES = {
     "emerald-isle": "Emerald Isle ramps are in the Crystal Coast list.",
     "neuse-river": "The Neuse list includes tidal lower-river launches, not only Falls Dam to Goldsboro.",
-    "hatteras": "Ramps are not yet listed for this area",
-    "wilmington": "Ramps are not yet listed for this area",
-    "nags-head": "Ramps are not yet listed for this area",
-    "topsail": "Ramps are not yet listed for this area",
+    "hatteras": "Hatteras Island coverage is limited. Only Rodanthe is listed.",
+}
+SCOPES = {
+    "crystal-coast": "Crystal Coast ramps",
+    "emerald-isle": "Crystal Coast ramps",
+    "wilmington": "Wilmington ramps",
+    "topsail": "Topsail ramps",
+    "nags-head": "Nags Head ramps",
+    "hatteras": "Hatteras Island ramps",
+    "falls-lake": "Falls Lake ramps",
+    "jordan-lake": "Jordan Lake ramps",
+    "neuse-river": "Neuse River ramps",
 }
 CREDITS = {
     "salt": "Photo: Ingrid Lemme (public domain)",
@@ -93,27 +102,41 @@ class Build(unittest.TestCase):
         self.assertIn('class="mwt"', h)
 
     def test_all_nc_ramps_is_sibling_for_covered_regions(self):
-        for rid in ("crystal-coast", "emerald-isle"):
+        for rid in SALT_REGIONAL:
             sec = _tools(self.salt(rid))
-            self.assertIn('class="mwt-all"', sec)
-            self.assertIn('href="/ramps"', sec)
+            self.assertIn('class="mwt-all"', sec, rid)
+            self.assertIn('href="/ramps"', sec, rid)
             self.assertRegex(sec, r'<div class="mwt-rwrap">.*</figure>\s*<a class="mwt-all" href="/ramps">All NC ramps</a>', re.S)
             self.assertIsNone(re.search(r'<a href="[^"]+"[^>]*>[^<]*class="mwt-all"', sec))
             # not nested inside the featured card's anchor
             card = re.search(r'<figure class="mwt-ramp.*?</figure>', sec, re.S).group(0)
             self.assertNotIn("mwt-all", card)
+            # regional card links to that area's existing /ramps?region= filter
+            self.assertIn('href="/ramps?region=%s"' % rid, card, rid)
+            self.assertIn(SCOPES[rid], sec, rid)
+            self.assertNotIn("Statewide ramp list", sec, rid)
+            self.assertNotIn("Ramps are not yet listed for this area", sec, rid)
 
-    def test_uncovered_regions_have_no_all_nc_sibling(self):
-        for rid in UNCOVERED:
+    def test_former_uncovered_regions_now_link_to_their_lists(self):
+        # Retarget of the pre-launch "uncovered" card test (t552u).
+        for rid in ("hatteras", "wilmington", "nags-head", "topsail"):
             sec = _tools(self.salt(rid))
-            self.assertNotIn("mwt-all", sec)
-            self.assertIn('href="/ramps"', sec)
-            self.assertIn(NOTES[rid], sec)
+            self.assertIn('href="/ramps?region=%s"' % rid, sec, rid)
+            self.assertRegex(sec, r'<div class="mwt-rwrap">.*</figure>\s*<a class="mwt-all" href="/ramps">All NC ramps</a>', re.S)
+            self.assertNotIn("Ramps are not yet listed for this area", sec, rid)
+            self.assertIn(SCOPES[rid], sec, rid)
+        self.assertIn(NOTES["hatteras"], _tools(self.salt("hatteras")))
+        for rid in ("wilmington", "nags-head", "topsail"):
+            self.assertNotIn("mwt-note", _tools(self.salt(rid)), rid)
 
     def test_coverage_notes_exact(self):
         self.assertIn(NOTES["emerald-isle"], _tools(self.salt("emerald-isle")))
         self.assertIn(NOTES["neuse-river"], _tools(self.fresh("neuse-river")))
+        self.assertIn(NOTES["hatteras"], _tools(self.salt("hatteras")))
         self.assertNotIn("mwt-note", _tools(self.salt("crystal-coast")))
+        self.assertNotIn("mwt-note", _tools(self.salt("wilmington")))
+        self.assertNotIn("mwt-note", _tools(self.salt("topsail")))
+        self.assertNotIn("mwt-note", _tools(self.salt("nags-head")))
         self.assertNotIn("mwt-note", _tools(self.fresh("falls-lake")))
         self.assertNotIn("mwt-note", _tools(self.fresh("jordan-lake")))
 

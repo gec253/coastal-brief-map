@@ -397,9 +397,9 @@ class PublicRampsFlags(unittest.TestCase):
         self.assertIn(b'href="/ramps?region=crystal-coast"', body)
         status, _, body = self._req("/?region=hatteras")
         self.assertIn(b"Find a Ramp", body)
-        self.assertIn(b'href="/ramps"', body)
-        self.assertIn(b"Ramps are not yet listed for this area", body)
-        self.assertNotIn(b'href="/ramps?region=hatteras"', body)
+        self.assertIn(b'href="/ramps?region=hatteras"', body)
+        self.assertIn(b"Hatteras Island coverage is limited. Only Rodanthe is listed.", body)
+        self.assertNotIn(b"Ramps are not yet listed for this area", body)
         status, _, body = self._req("/?region=jordan-lake")
         self.assertIn(b'href="/ramps?region=jordan-lake"', body)
 

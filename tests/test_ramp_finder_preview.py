@@ -930,23 +930,21 @@ class StageBPublicLaunchT451u(unittest.TestCase):
         import launch_flags
         os.environ[launch_flags.PUBLIC_RAMPS] = "1"
         self.addCleanup(lambda: os.environ.pop(launch_flags.PUBLIC_RAMPS, None))
-        for rid in ("crystal-coast", "falls-lake", "jordan-lake", "neuse-river"):
+        notes = {
+            "hatteras": "Hatteras Island coverage is limited. Only Rodanthe is listed.",
+            "emerald-isle": "Emerald Isle ramps are in the Crystal Coast list.",
+        }
+        for rid in ("crystal-coast", "wilmington", "topsail", "nags-head", "hatteras",
+                    "emerald-isle", "falls-lake", "jordan-lake", "neuse-river"):
             href, label, note = folio_entry.ramps_entry(rid)
             self.assertEqual(label, "Find a Ramp")
             self.assertEqual(href, f"/ramps?region={rid}")
-            self.assertEqual(note, "")
+            self.assertEqual(note, notes.get(rid, ""))
             html = folio_entry.guides_html(rid, public_page=True)
             self.assertIn("Find a Ramp", html)
             self.assertIn(f'href="{href}"', html)
             self.assertNotIn("not yet listed", html)
-        for rid in ("hatteras", "emerald-isle", "nags-head", "topsail", "wilmington"):
-            href, label, note = folio_entry.ramps_entry(rid)
-            self.assertEqual(href, "/ramps")
-            self.assertEqual(note, "Ramps are not yet listed for this area")
-            html = folio_entry.guides_html(rid, public_page=True)
-            self.assertIn("Find a Ramp", html)
-            self.assertIn('href="/ramps"', html)
-            self.assertIn("Ramps are not yet listed for this area", html)
-            self.assertNotIn(f"/ramps?region={rid}", html)
+            if note:
+                self.assertIn(note, html)
         os.environ.pop(launch_flags.PUBLIC_RAMPS, None)
         self.assertEqual(folio_entry.guides_html("hatteras", public_page=True), "")

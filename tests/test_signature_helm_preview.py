@@ -263,8 +263,8 @@ class Render(unittest.TestCase):
         self.assertIn("<!--cb-featured-->", off)   # featured slot survives without the brief entry
         with mock.patch.dict(os.environ, {"PUBLIC_RAMPS": "1"}):
             on = self.sh.build("hatteras", now=NOW, salt_payload=salt_payload(), fetch=False)
-        self.assertIn('href="/ramps">Find a Ramp</a> <span class="rnote">(Ramps are not yet listed for this area)</span>', on)
-        self.assertNotIn("/ramps?region=hatteras", on)
+        self.assertIn('href="/ramps?region=hatteras">Find a Ramp</a> <span class="rnote">(Hatteras Island coverage is limited. Only Rodanthe is listed.)</span>', on)
+        self.assertNotIn("Ramps are not yet listed for this area", on)
         with mock.patch.dict(os.environ, {"PUBLIC_RAMPS": ""}):
             self.assertNotIn("Find a Ramp", self.salt())
 
