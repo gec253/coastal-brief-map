@@ -205,3 +205,4 @@ svg.chart.loc{overflow:hidden;border-radius:8px;display:block;width:100%;height:
 .b-hi{fill:var(--pred);opacity:.85}.b-lo{fill:var(--pred);opacity:.4}svg.chart .base{stroke:var(--hair);stroke-width:1.2}
 .loc-sea{fill:#bcd8e6}.loc-enc{fill:#efe7d6;stroke:#7fa9bf;stroke-width:.6}
 html.dark .loc-sea{fill:#24506b}html.dark .loc-enc{fill:#13293a;stroke:#3d7393}
+.cmp-l text{font:700 11px "Barlow Condensed",sans-serif;fill:var(--ink)}

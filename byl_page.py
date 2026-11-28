@@ -191,7 +191,7 @@ def compass_svg(deg, kt, R=34):
     ticks = "".join(f'<text x="{(R+9)*__import__("math").sin(a*3.14159/180):.1f}" y="{-(R+9)*__import__("math").cos(a*3.14159/180)+4:.1f}" text-anchor="middle">{n}</text>'
                     for n, a in (("N", 0), ("E", 90), ("S", 180), ("W", 270)))
     return (f'<svg width="{2*R+34}" height="{2*R+34}" viewBox="{-R-17} {-R-17} {2*R+34} {2*R+34}" role="img" aria-label="Wind direction: arrow points where the wind is blowing toward">'
-            f'<circle r="{R}" fill="none" stroke="var(--hair)" stroke-width="2"/>{ticks}{arrow}</svg>')
+            f'<circle r="{R}" fill="none" stroke="var(--hair)" stroke-width="2"/><g class="cmp-l">{ticks}</g>{arrow}</svg>')
 
 
 def wind_bars_svg(hourly, W=330, H=86):

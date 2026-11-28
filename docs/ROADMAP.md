@@ -47,3 +47,6 @@ Ed accepted the public map on Nov 28, 2026 (production 4722eb7). Refine these af
 - Live result counts: the directory's "Showing N sites" line should update while you type, as the map's count already does.
 - Navigation-flow refinements: entry from homepage region links, back-button behavior between list, map and detail pages, and how View map / List read on small phones.
 Phase 3 "Before You Launch" is in research and design planning only; no implementation until Ed approves.
+
+## Backlog: Deterministic regression-test maintenance (not started, awaiting Ed's authorization)
+Deterministic regression-test maintenance: use a frozen clock for date-dependent fixtures, and de-flake test_featured_home and the Falls guide test (test_freshwater guide_251_5). The 19 known unique failures on 3c3338f, 2ea7733 and 4722eb7 are outdated clock-dependent fixtures, environment-dependent tests (live observation, headless layout, missing pillow_heif) or intermittent tests; none is a known site defect. Do not start without approval.
