@@ -55,7 +55,7 @@ EXTRA_CSS = """<style>
 .sw-chip{display:inline-flex;align-items:center;gap:.3rem;min-height:44px;padding:0 .8rem;border-radius:999px;border:1.5px solid currentColor;text-decoration:none;color:inherit;font-weight:600;font-size:.9rem}
 .sw-chip span{font-size:1.1rem}
 .sw-scope{font-size:.9rem;margin:.4rem 0}.sw-scope a{display:inline-flex;align-items:center;min-height:44px}
-.sw-allnc{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 1.2rem;border-radius:12px;background:#0e2a47;color:#fff!important;font-weight:700;text-decoration:none}
+.sw-allnc{display:inline-flex;align-items:center;justify-content:center;min-height:48px;text-decoration:none;text-align:center}
 .sw-inarea{display:flex;align-items:center;gap:.5rem;min-height:44px;font-size:.9rem}
 .sw-inarea input{width:22px;height:22px}
 </style>"""
@@ -175,7 +175,7 @@ FIND_JS = "<script>" + ramp_search.JS.replace("</", "<\\/") + """
     if(!t){live.textContent=""; go.hidden=true; return;}
     if(area){
       live.textContent=n+(n===1?" site in ":" sites in ")+area+" match \u201c"+raw+"\u201d. Press Search to look across all of North Carolina.";
-      go.innerHTML=""; var a=document.createElement("a"); a.className="sw-allnc"; a.setAttribute("data-allnc",""); a.href=statewide+"?q="+encodeURIComponent(raw); a.textContent="Search all North Carolina ramps for \u201c"+raw+"\u201d"; go.appendChild(a); go.hidden=false;
+      go.innerHTML=""; var a=document.createElement("a"); a.className="btn sw-allnc"; a.setAttribute("data-allnc",""); a.href=statewide+"?q="+encodeURIComponent(raw); a.textContent="Search all North Carolina ramps for \u201c"+raw+"\u201d"; go.appendChild(a); go.hidden=false;
     } else {
       live.textContent=n+(n===1?" site matches":" sites match")+" \u201c"+raw+"\u201d.";
       go.hidden=true;
@@ -424,7 +424,7 @@ def _render_list(data, q, *, public: bool = False, base: str = BASE) -> str:
     if not shown and not unknown:
         if active:
             body.append('<div class="empty sw-empty" data-empty="ramps"><p>No ramps match with these filters.</p>'
-                        f'<p><a class="sw-allnc" data-allnc href="{rf.esc(_url(base, {"q": f["q"]}))}">Search all North Carolina ramps</a></p></div>')
+                        f'<p><a class="btn sw-allnc" data-allnc href="{rf.esc(_url(base, {"q": f["q"]}))}">Search all North Carolina ramps</a></p></div>')
         else:
             body.append('<p class="empty" data-empty="ramps">No ramps match that search. Try a town, county, ramp name or waterbody.</p>')
     ctx = ""
