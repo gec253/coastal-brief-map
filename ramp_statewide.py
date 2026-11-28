@@ -56,6 +56,7 @@ EXTRA_CSS = """<style>
 .sw-chip span{font-size:1.1rem}
 .sw-scope{font-size:.9rem;margin:.4rem 0}.sw-scope a{display:inline-flex;align-items:center;min-height:44px}
 .sw-allnc{display:inline-flex;align-items:center;justify-content:center;min-height:48px;text-decoration:none;text-align:center}
+html[data-theme="dark"] .sw-allnc{background:var(--ivory);color:var(--navy);border-color:var(--ivory)}
 .sw-inarea{display:flex;align-items:center;gap:.5rem;min-height:44px;font-size:.9rem}
 .sw-inarea input{width:22px;height:22px}
 </style>"""
