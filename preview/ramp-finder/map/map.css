@@ -87,7 +87,7 @@ mark{background:rgba(196,163,106,.34);color:inherit;border-radius:2px}html.dark 
 .panel h2{font:600 21px/1.12 "Fraunces",serif;padding-right:38px}.panel .where{font-size:14px;color:var(--lab2);margin-top:2px}
 .badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .badge{display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 9px 0 6px;border-radius:99px;font-size:12px;font-weight:600;border:1.5px solid currentColor;white-space:nowrap}
-.badge svg{width:17px;height:17px;flex:none;overflow:visible}.badge[class*=" s-"] svg{overflow:hidden;border-radius:50%}
+.badge svg{width:17px;height:17px;flex:none;overflow:visible}.badge[class*=" s-"] svg{margin-right:3px}
 .badge.t-trailer{color:var(--m-trailer)}.badge.t-paddle{color:var(--m-paddle)}.badge.t-limited{color:var(--brass-ink)}.badge.t-needs_review{color:var(--ink);border-style:dashed}
 .badge.s-listed_open{color:var(--lab2);border-color:var(--cellbd);font-weight:500}
 .badge.s-temporarily_closed{background:var(--bad);color:var(--bad-ink);border-color:var(--bad)}
