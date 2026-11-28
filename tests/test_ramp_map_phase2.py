@@ -97,11 +97,30 @@ class MapData(unittest.TestCase):
 
 class ScriptAndPage(unittest.TestCase):
     def test_no_location_request_storage_or_transmission(self):
-        for bad in ("geolocation", "getCurrentPosition", "watchPosition", "sendBeacon", "XMLHttpRequest",
-                    "pushState", "replaceState", "location.hash", "sessionStorage", "document.cookie", "indexedDB"):
+        # Phase 2 (Ed t558u): location may be requested, but only once, only inside the explicit
+        # "Use my location" tap handler, and the position is never stored, sent or put in the URL.
+        for bad in ("watchPosition", "sendBeacon", "XMLHttpRequest", "pushState", "location.hash",
+                    "location.href =", "sessionStorage", "document.cookie", "indexedDB", "WebSocket", "EventSource"):
             self.assertNotIn(bad, JS, bad)
-        self.assertEqual(re.findall(r"fetch\(([^,)]*)", JS), ['BASE + ".json"'])
+        self.assertEqual(JS.count("getCurrentPosition"), 1)
+        self.assertEqual(JS.count("navigator.geolocation"), 1)
+        handler = JS[JS.index('$("#pre-go").addEventListener("click"'):]
+        handler = handler[:handler.index("\n});") + 4]
+        self.assertIn("navigator.geolocation.getCurrentPosition", handler)
+        self.assertIn("enableHighAccuracy: false", handler)
+        # the only fetches are our own data and geography files, none of which carry a position
+        self.assertEqual(re.findall(r"fetch\(([^,)]*)", JS), ['BASE + "/geo-hi.json"', 'BASE + ".json"', 'BASE + "/geo-lo.json"'])
         self.assertEqual(set(re.findall(r'localStorage\.\w+\("([^"]+)"', JS)), {"coastalBrief.theme"})
+        # the URL is written in exactly one place, from search and filters only
+        self.assertEqual(JS.count("replaceState"), 1)
+        fn = JS[JS.index("function urlFromState()"):JS.index("function readURL()")]
+        self.assertIn("history.replaceState", fn)
+        for loc in ("NEAR", "coords", "pos.", ".lat", ".lon", "latitude", "longitude"):
+            self.assertNotIn(loc, fn, loc)
+        self.assertIn('var URLKEYS = ["q", "in", "type", "status", "fac", "fee"];', JS)
+        # the position lives in one in-memory variable and is cleared on exit and page hide
+        self.assertIn('addEventListener("pagehide", function () { NEAR = null; });', JS)
+        self.assertIn("function exitNear() { NEAR = null;", JS)
 
     def test_no_demo_point_or_placeholders(self):
         for bad in ("Demo position", "DEMO", "35.1085", "Future field", "coming soon", "Coming soon", "TODO"):
@@ -123,7 +142,10 @@ class ScriptAndPage(unittest.TestCase):
             self.assertNotRegex(h, r"(src|href)=\"(https?:)?//")
             self.assertIn("/vendor/leaflet/leaflet.js", h)
             self.assertIn("/wind/coast.js", h)
-        self.assertNotRegex(JS, r"https?://")
+        # the only outside URLs are the two directions apps, opened by the user with a destination only
+        self.assertEqual(sorted(set(re.findall(r'"(https?://[^"]*)"', JS))),
+                         ["https://maps.apple.com/?daddr=", "https://www.google.com/maps/dir/?api=1&destination="])
+        self.assertEqual(len(re.findall(r"https?://", JS)), 2)
         self.assertIn("noindex", ramp_map.render_html(public=False))
         self.assertIn('base: "/wind/coast-"', JS)
 
@@ -166,8 +188,10 @@ class Routes(unittest.TestCase):
         return r.status, body, h
 
     PRIVATE = ["/preview/ramps-statewide/map", "/preview/ramps-statewide/map.css",
-               "/preview/ramps-statewide/map.js", "/preview/ramps-statewide/map.json"]
-    PUBLIC = ["/ramps/map", "/ramps/map/", "/ramps/map.css", "/ramps/map.js", "/ramps/map.json", "/ramps.json"]
+               "/preview/ramps-statewide/map.js", "/preview/ramps-statewide/map.json",
+               "/preview/ramps-statewide/map/geo-lo.json", "/preview/ramps-statewide/map/geo-hi.json"]
+    PUBLIC = ["/ramps/map", "/ramps/map/", "/ramps/map.css", "/ramps/map.js", "/ramps/map.json", "/ramps.json",
+              "/ramps/map/geo-lo.json", "/ramps/map/geo-hi.json"]
 
     def test_private_preview_is_cookie_gated(self):
         for p in self.PRIVATE:
@@ -196,6 +220,8 @@ class Routes(unittest.TestCase):
         self.assertEqual((st, json.loads(body)["meta"]["pins"]), (200, 281))
         self.assertEqual(self.req("/ramps/map.css")[0], 200)
         self.assertEqual(self.req("/ramps/map.js")[0], 200)
+        self.assertEqual(self.req("/ramps/map/geo-lo.json")[0], 200)
+        self.assertEqual(self.req("/ramps/map/geo-hi.json")[0], 200)
         self.assertEqual(self.req("/ramps.json")[0], 404)
 
     def test_sitemap_unchanged_with_flag_off(self):
