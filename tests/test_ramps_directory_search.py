@@ -89,7 +89,7 @@ class DirectorySearch(unittest.TestCase):
     def test_no_manual_reset_needed_and_no_stale_state(self):
         h = sw.render_list(DATA, {"region": ["jordan-lake"]}, public=True)
         self.assertIn('autocomplete="off"', h)
-        self.assertIn('addEventListener("pageshow",function(e){ if(e.persisted){ form.reset(); run(); } });', h)
+        self.assertIn('addEventListener("pageshow",function(e){ if(e.persisted){ form.reset(); run(); mapHref(); } });', h)
         self.assertIn('name="in_area" value="1"> Only search in the selected area', h)
         self.assertNotIn("localStorage", h[h.index("window.CBRampSearch="):])
         self.assertIn('data-area="Jordan Lake"', h)
@@ -163,7 +163,8 @@ class ServedDirectory(unittest.TestCase):
         self.assertIn(b'Catch Wall', body)
         self.assertIn(b'>Search</button>', body)
         self.assertIn(b'>Reset</button>', body)
-        self.assertNotIn(b'/ramps/map', body)  # flag off: no public map tab
+        self.assertNotIn(b'href="/ramps/map', body)  # flag off: no public map tab or View map link
+        self.assertNotIn(b'id="sw-viewmap"', body)
         # Light / Dark / Auto still present after a search from a homepage region link
         st, body, _ = self.req("/ramps?q=Goldsboro&region=crystal-coast")
         self.assertEqual(st, 200)
@@ -179,3 +180,48 @@ class ServedDirectory(unittest.TestCase):
         self.assertNotIn(b"/preview/", sm)
         self.assertNotIn(b"/ramps/map", sm)
 
+class MapLinks(unittest.TestCase):
+    """Public launch prep (Ed t564u): View map from the directory and List from the map, with search and
+    filters (never location) handed across by the shared URL keys."""
+
+    def test_directory_shows_view_map_only_when_the_map_flag_is_on(self):
+        import launch_flags
+        saved = os.environ.get(launch_flags.PUBLIC_RAMP_MAP)
+        try:
+            os.environ.pop(launch_flags.PUBLIC_RAMP_MAP, None)
+            self.assertNotIn('id="sw-viewmap"', sw.render_list(DATA, {}, public=True))
+            self.assertNotIn('id="sw-viewmap"', sw.render_list(DATA, {}, public=False))
+            os.environ[launch_flags.PUBLIC_RAMP_MAP] = "1"
+            h = sw.render_list(DATA, {"q": ["Kerr Lake"], "type": ["trailer"], "status": ["temporarily_closed"]}, public=True)
+            self.assertIn('id="sw-viewmap" href="/ramps/map?q=Kerr+Lake&amp;type=trailer&amp;status=temporarily_closed"', h)
+            self.assertIn("View map", h)
+            self.assertIn('var mv=document.getElementById("sw-viewmap")', h)
+            self.assertNotIn('id="sw-viewmap"', sw.render_list(DATA, {}, public=False))  # private directory keeps its own nav
+            self.assertIn("min-height:44px", sw.EXTRA_CSS[sw.EXTRA_CSS.index(".sw-viewmap"):][:80])
+        finally:
+            if saved is None:
+                os.environ.pop(launch_flags.PUBLIC_RAMP_MAP, None)
+            else:
+                os.environ[launch_flags.PUBLIC_RAMP_MAP] = saved
+
+    def test_directory_filters_the_map_understands_are_the_only_ones_handed_over(self):
+        import launch_flags
+        os.environ[launch_flags.PUBLIC_RAMP_MAP] = "1"
+        try:
+            h = sw.render_list(DATA, {"q": ["Goldsboro"], "region": ["wilmington"], "water": ["fresh"]}, public=True)
+            self.assertIn('href="/ramps/map?q=Goldsboro"', h)  # area and water are directory-only; no location ever
+        finally:
+            os.environ.pop(launch_flags.PUBLIC_RAMP_MAP, None)
+
+    def test_map_has_a_list_link_that_carries_search_and_single_filters(self):
+        import ramp_map
+        js = ramp_map.JS_PATH.read_text()
+        for public, d in ((True, "/ramps"), (False, "/preview/ramps-statewide")):
+            h = ramp_map.render_html(public=public)
+            self.assertIn('<a class="dirlink" id="dirlink" href="%s">List</a>' % d, h)
+        fn = js[js.index("function dirHref()"):js.index("function refresh(fit)")]
+        self.assertIn('u.push("q="', fn); self.assertIn('u.push("type="', fn); self.assertIn('u.push("status="', fn)
+        for bad in ("NEAR", "coords", "lat", "lon", "geolocation"):
+            self.assertNotIn(bad, fn, bad)
+        self.assertIn('$("#dirlink").setAttribute("href", dirHref())', js)
+        self.assertIn("min-height:44px", ramp_map.CSS_PATH.read_text()[ramp_map.CSS_PATH.read_text().index(".dirlink{"):][:200])

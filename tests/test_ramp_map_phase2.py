@@ -224,6 +224,21 @@ class Routes(unittest.TestCase):
         self.assertEqual(self.req("/ramps/map/geo-hi.json")[0], 200)
         self.assertEqual(self.req("/ramps.json")[0], 404)
 
+    def test_public_map_page_has_no_site_masthead_overlay(self):
+        os.environ[launch_flags.PUBLIC_RAMP_MAP] = "1"
+        os.environ["NAV_V2"] = "1"
+        try:
+            st, body, _ = self.req("/ramps/map")
+            self.assertEqual(st, 200)
+            self.assertNotIn(b"data-nav-v2", body)
+            self.assertNotIn(b"data-cb-theme-control", body)  # the map has its own Auto / Light / Dark control
+            self.assertEqual(body.count(b'aria-label="Theme"'), 1)
+            self.assertIn(b'index, follow', body)
+            st, sm, _ = self.req("/sitemap.xml")
+            self.assertIn(b"/ramps/map</loc>", sm)  # existing pattern: the map joins the sitemap only with its flag
+        finally:
+            os.environ.pop("NAV_V2", None)
+
     def test_sitemap_unchanged_with_flag_off(self):
         os.environ.pop(launch_flags.PUBLIC_RAMP_MAP, None)
         os.environ[launch_flags.PUBLIC_RAMPS] = "1"
