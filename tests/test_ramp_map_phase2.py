@@ -234,6 +234,7 @@ class Routes(unittest.TestCase):
             self.assertNotIn(b"data-cb-theme-control", body)  # the map has its own Auto / Light / Dark control
             self.assertEqual(body.count(b'aria-label="Theme"'), 1)
             self.assertIn(b'index, follow', body)
+            self.assertIn(b'<meta name="description" content="Interactive map of 285 public', body)
             st, sm, _ = self.req("/sitemap.xml")
             self.assertIn(b"/ramps/map</loc>", sm)  # existing pattern: the map joins the sitemap only with its flag
         finally:
