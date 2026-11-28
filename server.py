@@ -2240,6 +2240,7 @@ import theme_toggle  # noqa: E402  (site-wide Light / Dark / Auto theme system, 
 import nav_v2  # noqa: E402  (t453u masthead + nav v2; NAV_V2 env or preview cookie, default off)
 import signature_helm  # noqa: E402  (Ed t529u preview /preview/helm; Ed t534u public homepage / and /index.html)
 import whats_biting  # noqa: E402  (private /reports preview; cookie-gated, not public)
+import byl_page  # noqa: E402  (private /preview/before-you-launch, Phase 3B; cookie-gated, not public)
 import ramp_statewide  # noqa: E402  (private /preview/ramps-statewide; cookie-gated, not public)
 import ramp_finder  # noqa: E402  (private /preview/ramps data preview; cookie-gated, not public)
 import freshwater  # noqa: E402
@@ -3667,6 +3668,7 @@ PREVIEW_HUB = """<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><met
 <a class="card" href="/reports"><b>What’s Biting? · fishing reports</b><span>Private preview: a report index and five regional pages (Crystal Coast, Hatteras, Falls Lake, Jordan Lake, and the Neuse from Falls Dam to Goldsboro). Cookie-gated, noindex, not in the sitemap. Not on the public homepage.</span></a>
 <a class="card" href="/preview/ramps"><b>Ramp Finder</b><span>Private data preview: searchable public boat-ramp list and a private interactive map prototype for the Crystal Coast, Falls Lake, Jordan Lake and the Neuse River. Cookie-gated, noindex, not in the sitemap. Not a public launch. Not on the public homepage.</span></a>
 <a class="card" href="/preview/ramps-statewide"><b>Ramp Finder · Statewide (Phase 1)</b><span>Private data preview: every NCWRC Boating Access Area merged with our verified ramps, with trailer, paddle, limited and closed launches separated, new Wilmington, Topsail and Nags Head areas, an honest Hatteras note and the Neuse split. Cookie-gated, noindex, not in the sitemap. The same directory is now also the public /ramps list when that flag is on.</span></a>
+<a class="card" href="/preview/before-you-launch"><b>Before You Launch (Phase 3B, private)</b><span>Private pages for the 79 pilot ramps: reviewed stations only, labelled readings, NWS forecast and alerts. Cookie-gated, noindex, not in the sitemap. Not a public launch.</span></a>
 <a class="card" href="/preview/ramps-statewide/map"><b>Ramp Finder · Statewide map (Phase 2, private)</b><span>Private interactive map of all 285 public launches: search, filters, Near Me and a self-hosted water layer. Cookie-gated, noindex, not in the sitemap. Not a public launch. Public /ramps/map stays 404 until it is approved.</span></a>
 <a class="card" href="/preview/photos-check"><b>Photo setup check</b><span>A private status report: storage, image tools, and the pending queue. It never shows keys.</span></a>
 <p><a href="/preview?lock=1">Lock this browser again</a></p></main></body></html>""" % PREVIEW_DAYS
@@ -3876,6 +3878,9 @@ class Handler(SimpleHTTPRequestHandler):
         if (parsed.path in ("/ramps", "/ramps/", "/ramps.css", "/ramps.json")
                 or parsed.path.startswith("/ramps/")):
             return self._ramp_finder_public_route(parsed)
+        if parsed.path == "/preview/before-you-launch" or parsed.path.startswith("/preview/before-you-launch/"):
+            # Private Before You Launch pages for the 79 pilot ramps (Ed t569u, Phase 3B). 404 without the preview cookie.
+            return self._byl_route(parsed)
         if parsed.path == "/preview/ramps-statewide" or parsed.path.startswith("/preview/ramps-statewide/"):
             # Private statewide Ramp Finder preview (Ed t547u, Phase 1). Same cookie as /preview;
             # 404 without it. Public /ramps (when PUBLIC_RAMPS is on) is the statewide directory.
@@ -4578,6 +4583,20 @@ class Handler(SimpleHTTPRequestHandler):
         data = body.encode("utf-8") if isinstance(body, str) else body
         return self._send_private(None, ctype, data, status, robots="index, follow")
 
+    def _byl_route(self, parsed):
+        """Cookie-gated Before You Launch preview. 404 without the preview cookie. noindex, no-store."""
+        if not self._preview_ok():
+            return self.send_error(404, "not found")
+        try:
+            status, ctype, body = byl_page.resolve_request(parsed.path)
+        except Exception as e:
+            sys.stderr.write("byl error: %s\n" % type(e).__name__)
+            return self.send_error(503, "unavailable")
+        if status != 200:
+            return self.send_error(status, "not found")
+        data = body.encode("utf-8") if isinstance(body, str) else body
+        return self._send_private(None, ctype, data, status, extra=[("Cache-Control", "no-store"), ("Vary", "Cookie")])
+
     def _ramp_statewide_route(self, parsed):
         """Cookie-gated statewide Ramp Finder preview. 404 without the preview cookie. noindex, no-store."""
         if not self._preview_ok():
@@ -4650,7 +4669,7 @@ class Handler(SimpleHTTPRequestHandler):
         if not isinstance(data, (bytes, bytearray)) or not str(ctype).startswith("text/html"):
             return data
         path = urlparse(self.path or "/").path
-        if path.rstrip("/") == "/ramps/map":
+        if path.rstrip("/") == "/ramps/map" or path.startswith("/preview/before-you-launch"):
             return data  # the map is a full-screen app with its own header and Auto / Light / Dark control
         try:
             if nav_v2.page_key(path) is not None and nav_v2.active(self._preview_ok):
