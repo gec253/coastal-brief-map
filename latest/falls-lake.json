@@ -1,22 +1,22 @@
 {
  "astro": {
-  "date": "2026-11-27",
+  "date": "2026-11-28",
   "label": "Falls Lake Dam",
   "lat": 35.9411,
   "lon": -78.5833,
   "moon": {
-   "fraction": 0.8622,
-   "illuminationPct": 86,
+   "fraction": 0.7701,
+   "illuminationPct": 77,
    "name": "Waning Gibbous",
    "waxing": false
   },
   "regionId": "falls-lake",
   "source": "Computed locally from the NOAA Solar Calculator equations and Meeus (Astronomical Algorithms, ch. 48). Not a live USNO fetch.",
   "status": "ok",
-  "sunrise": "2026-11-27T07:02:35.896674-05:00",
-  "sunriseEt": "7:02 AM",
-  "sunset": "2026-11-27T17:01:10.184136-05:00",
-  "sunsetEt": "5:01 PM",
+  "sunrise": "2026-11-28T07:03:32.697498-05:00",
+  "sunriseEt": "7:03 AM",
+  "sunset": "2026-11-28T17:00:54.757716-05:00",
+  "sunsetEt": "5:00 PM",
   "tz": "America/New_York"
  },
  "freshness": [
@@ -24,13 +24,13 @@
    "label": "Lake level",
    "stale": false,
    "station": "02087182",
-   "time": "4:30 AM ET"
+   "time": "4:45 AM ET"
   },
   {
    "label": "Water temp",
    "stale": false,
    "station": "02087182",
-   "time": "4:30 AM ET"
+   "time": "4:45 AM ET"
   }
  ],
  "hazards": {
@@ -39,9 +39,9 @@
   "status": "clear",
   "upcoming": []
  },
- "issueDate": "2026-11-27",
- "issuedAt": "2026-11-27T10:15:02.667700+00:00",
- "issuedEt": "Fri Nov 27, 5:15 AM ET",
+ "issueDate": "2026-11-28",
+ "issuedAt": "2026-11-28T10:15:01.387005+00:00",
+ "issuedEt": "Sat Nov 28, 5:15 AM ET",
  "items": [
   [
    "Alerts",
@@ -49,7 +49,7 @@
   ],
   [
    "Lake level",
-   "245.64 ft (NGVD29), 5.86 ft below the 251.5 ft guide curve; +0.66 ft in 24 h."
+   "245.79 ft (NGVD29), 5.71 ft below the 251.5 ft guide curve; +0.14 ft in 24 h."
   ],
   [
    "Dam release",
@@ -57,7 +57,7 @@
   ],
   [
    "Inflows",
-   "Eno River near Durham 111 cfs, above normal; Flat River at Bahama 308 cfs, above normal."
+   "Eno River near Durham 35.6 cfs, normal; Flat River at Bahama 58.9 cfs, normal."
   ],
   [
    "Water temp",
@@ -65,11 +65,11 @@
   ],
   [
    "Rain",
-   "0.45 in last 24 h at the dam; NWS forecast 0.00 in in next 24 h."
+   "0.00 in last 24 h at the dam; NWS forecast 0.00 in in next 24 h."
   ],
   [
    "Weather",
-   "Mostly Cloudy, high 54°F, wind SW 12 to 16 mph."
+   "Sunny, high 61°F, wind SW 5 to 8 mph."
   ]
  ],
  "missing": [],
@@ -90,11 +90,11 @@
  "regionId": "falls-lake",
  "sources": "USGS, USACE Wilmington District, NWS",
  "take": [
-  "The lake is 5.9 ft below its guide curve, so more shoreline is exposed than usual; check NCWRC ramp notices before launching.",
+  "The lake is 5.7 ft below its guide curve, so more shoreline is exposed than usual; check NCWRC ramp notices before launching.",
   "Flow below the dam is very low for the date."
  ],
  "validation": {
-  "checkedAt": "2026-11-27T10:15:02.667700+00:00",
+  "checkedAt": "2026-11-28T10:15:01.387005+00:00",
   "checks": [
    "region",
    "location",
@@ -106,5 +106,5 @@
   "status": "ok"
  },
  "waterType": "freshwater",
- "words": 114
+ "words": 111
 }

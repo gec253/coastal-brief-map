@@ -1,31 +1,31 @@
 {
  "astro": {
-  "date": "2026-11-27",
+  "date": "2026-11-28",
   "label": "Beaufort Inlet",
   "lat": 34.695,
   "lon": -76.668,
   "moon": {
-   "fraction": 0.8622,
-   "illuminationPct": 86,
+   "fraction": 0.7701,
+   "illuminationPct": 77,
    "name": "Waning Gibbous",
    "waxing": false
   },
   "regionId": "crystal-coast",
   "source": "Computed locally from the NOAA Solar Calculator equations and Meeus (Astronomical Algorithms, ch. 48). Not a live USNO fetch.",
   "status": "ok",
-  "sunrise": "2026-11-27T06:52:00.010538-05:00",
+  "sunrise": "2026-11-28T06:52:55.039191-05:00",
   "sunriseEt": "6:52 AM",
-  "sunset": "2026-11-27T16:56:27.111792-05:00",
+  "sunset": "2026-11-28T16:56:13.427527-05:00",
   "sunsetEt": "4:56 PM",
   "tz": "America/New_York"
  },
- "forecastUpdated": "2026-11-27T06:52:57+00:00",
+ "forecastUpdated": "2026-11-28T09:40:44+00:00",
  "freshness": [
   {
    "label": "Wind",
    "stale": false,
    "station": "CLKN7",
-   "time": "4:30 AM ET"
+   "time": "4:20 AM ET"
   },
   {
    "label": "Seas",
@@ -43,28 +43,28 @@
    "label": "Barometer",
    "stale": false,
    "station": "8656483",
-   "time": "5:00 AM ET"
+   "time": "5:06 AM ET"
   },
   {
    "label": "Water level",
    "stale": false,
    "station": "8656483",
-   "time": "5:00 AM ET"
+   "time": "5:06 AM ET"
   },
   {
    "label": "Water temp",
    "stale": false,
    "station": "8656483",
-   "time": "5:00 AM ET"
+   "time": "5:06 AM ET"
   }
  ],
  "hazards": {
   "current": [
    {
     "areas": "S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM",
-    "ends": "2026-11-27T22:00:00-05:00",
-    "event": "Gale Warning",
-    "kind": "warning",
+    "ends": "2026-11-28T13:00:00-05:00",
+    "event": "Small Craft Advisory",
+    "kind": "advisory",
     "local": [
      "S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM",
      "S of Cape Lookout NC to Surf City NC out to 20 NM"
@@ -73,19 +73,19 @@
      "AMZ156",
      "AMZ158"
     ],
-    "onset": "2026-11-27T04:46:00-05:00",
+    "onset": "2026-11-28T00:05:00-05:00",
     "products": [
      {
       "areas": "S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM",
       "certainty": "Likely",
-      "description": "* WHAT...West winds 25 to 35 kt with gusts up to 45 kt and seas\n7 to 12 ft.\n\n* WHERE...The coastal waters from Ocracoke Inlet to Surf City.\n\n* WHEN...Until 10 PM EST this evening.\n\n* IMPACTS...Strong winds will cause hazardous seas which could\ncapsize or damage vessels and reduce visibility.",
-      "headline": "Gale Warning issued November 27 at 4:46AM EST until November 27 at 10:00PM EST by NWS Newport/Morehead City NC",
-      "id": "urn:oid:2.49.0.1.840.0.6e14ac1b17a1746bf516e4839558cbb3d252bcb8.002.1",
-      "instruction": "Mariners should alter plans to avoid these hazardous conditions.\nRemain in port, seek safe harbor, alter course, and/or secure the\nvessel for hazardous conditions.",
+      "description": "* WHAT...For the Small Craft Advisory, west winds 20 to 30 kt\nand seas 6 to 9 ft. For the Gale Watch, southwest winds 25 to 35\nkt with gusts up to 45 kt and seas 6 to 11 ft possible.\n\n* WHERE...The coastal waters from Ocracoke Inlet to Surf City.\n\n* WHEN...For the Small Craft Advisory, until 1 PM EST this\nafternoon. For the Gale Watch, from late Sunday night through\nMonday afternoon.\n\n* IMPACTS...Strong winds can cause hazardous seas which could\ncapsize or damage vessels and reduce visibility.\n\n* ADDITIONAL DETAILS...Some infrequent gale force gusts (34kt)\nwill be possible over outer portions of these waters for a few\nmore hours.",
+      "headline": "Small Craft Advisory issued November 28 at 12:05AM EST until November 28 at 1:00PM EST by NWS Newport/Morehead City NC",
+      "id": "urn:oid:2.49.0.1.840.0.de1801835f3725024f735bba9b9c5067b155efff.005.1",
+      "instruction": "Mariners should consider altering plans to avoid possible\nhazardous conditions.  Remain in port, seek safe harbor, alter\ncourse, and/or secure the vessel for severe wind and seas.",
       "messageType": "Update",
       "sender": "NWS Newport/Morehead City NC",
-      "sent": "2026-11-27T04:46:00-05:00",
-      "severity": "Moderate",
+      "sent": "2026-11-28T00:05:00-05:00",
+      "severity": "Minor",
       "ugc": [
        "AMZ156",
        "AMZ158"
@@ -93,175 +93,122 @@
       "urgency": "Expected"
      }
     ],
-    "severity": "Moderate",
+    "severity": "Minor",
     "status": "current",
-    "text": "Gale Warning now in effect until Fri 10:00 PM ET — S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM.",
+    "text": "Small Craft Advisory now in effect until Sat 1:00 PM ET — S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM.",
     "ugc": [
      "AMZ156",
      "AMZ158"
     ]
-   },
-   {
-    "areas": "East Carteret; West Carteret; Coastal Onslow",
-    "ends": "2026-11-27T10:00:00-05:00",
-    "event": "Coastal Flood Advisory",
-    "kind": "advisory",
-    "local": [
-     "East Carteret",
-     "West Carteret"
-    ],
-    "localUgc": [
-     "NCZ196",
-     "NCZ195"
-    ],
-    "onset": "2026-11-27T04:21:00-05:00",
-    "products": [
-     {
-      "areas": "East Carteret",
-      "certainty": "Likely",
-      "description": "* WHAT...For the Coastal Flood Advisory, 1 to 2 feet of inundation\nabove ground level in low-lying areas near shorelines and tidal\nwaterways. For the High Surf Advisory, large breaking waves of 6\nto 9 feet in the surf zone.\n\n* WHERE...East Carteret County.\n\n* WHEN...For the High Surf Advisory, until 4 PM EST this\nafternoon. For the Coastal Flood Advisory, until 10 AM EST\nthis morning.\n\n* IMPACTS...1 to 2 feet of inundation above ground level is\npossible in low-lying areas near shorelines and tidal\nwaterways resulting in a low threat of property damage. Some\nroads and low lying property including parking lots, parks,\nlawns, and homes adjacent to the waterfront will experience\nshallow flooding. Dangerous swimming and surfing conditions\nand localized beach erosion.",
-      "headline": "Coastal Flood Advisory issued November 27 at 4:21AM EST until November 27 at 10:00AM EST by NWS Newport/Morehead City NC",
-      "id": "urn:oid:2.49.0.1.840.0.3de368ae7932857f88124dd1136fa8f8bca11c53.003.2",
-      "instruction": "If travel is required, allow extra time as some roads may be\nclosed. Do not drive around barricades or through water of\nunknown depth. Take the necessary actions to protect flood-prone\nproperty.\n\nInexperienced swimmers should remain out of the water due to\ndangerous surf conditions.",
-      "messageType": "Update",
-      "sender": "NWS Newport/Morehead City NC",
-      "sent": "2026-11-27T04:21:00-05:00",
-      "severity": "Minor",
-      "ugc": [
-       "NCZ196"
-      ],
-      "urgency": "Expected"
-     },
-     {
-      "areas": "West Carteret; Coastal Onslow",
-      "certainty": "Likely",
-      "description": "* WHAT...For the Coastal Flood Advisory, 1 to 2 feet of inundation\nabove ground level in low-lying areas near shorelines and tidal\nwaterways.\n\n* WHERE...Areas along Bogue Banks beaches, Bogue Sound, the\nNewport and White Oak Rivers, and adjacent tidal creeks, and\nareas in North Topsail Beach, the lower New River, and\nadjacent tidal creeks.\n\n* WHEN...Until 10 AM EST this morning.\n\n* IMPACTS...1 to 2 feet of inundation above ground level is\npossible in low-lying areas near shorelines and tidal\nwaterways resulting in a low threat of property damage. Some\nroads and low lying property including parking lots, parks,\nlawns, and homes adjacent to the waterfront will experience\nshallow flooding. Dangerous swimming and surfing conditions\nand localized beach erosion.",
-      "headline": "Coastal Flood Advisory issued November 27 at 4:21AM EST until November 27 at 10:00AM EST by NWS Newport/Morehead City NC",
-      "id": "urn:oid:2.49.0.1.840.0.3de368ae7932857f88124dd1136fa8f8bca11c53.004.1",
-      "instruction": "If travel is required, allow extra time as some roads may be\nclosed. Do not drive around barricades or through water of\nunknown depth. Take the necessary actions to protect flood-prone\nproperty.",
-      "messageType": "Update",
-      "sender": "NWS Newport/Morehead City NC",
-      "sent": "2026-11-27T04:21:00-05:00",
-      "severity": "Minor",
-      "ugc": [
-       "NCZ195",
-       "NCZ199"
-      ],
-      "urgency": "Expected"
-     }
-    ],
-    "severity": "Minor",
-    "status": "current",
-    "text": "Coastal Flood Advisory now in effect until Fri 10:00 AM ET — East Carteret; West Carteret; Coastal Onslow.",
-    "ugc": [
-     "NCZ196",
-     "NCZ195",
-     "NCZ199"
-    ]
-   },
-   {
-    "areas": "East Carteret",
-    "ends": "2026-11-27T16:00:00-05:00",
-    "event": "High Surf Advisory",
-    "kind": "advisory",
-    "local": [
-     "East Carteret"
-    ],
-    "localUgc": [
-     "NCZ196"
-    ],
-    "onset": "2026-11-27T04:21:00-05:00",
-    "products": [
-     {
-      "areas": "East Carteret",
-      "certainty": "Likely",
-      "description": "* WHAT...For the Coastal Flood Advisory, 1 to 2 feet of inundation\nabove ground level in low-lying areas near shorelines and tidal\nwaterways. For the High Surf Advisory, large breaking waves of 6\nto 9 feet in the surf zone.\n\n* WHERE...East Carteret County.\n\n* WHEN...For the High Surf Advisory, until 4 PM EST this\nafternoon. For the Coastal Flood Advisory, until 10 AM EST\nthis morning.\n\n* IMPACTS...1 to 2 feet of inundation above ground level is\npossible in low-lying areas near shorelines and tidal\nwaterways resulting in a low threat of property damage. Some\nroads and low lying property including parking lots, parks,\nlawns, and homes adjacent to the waterfront will experience\nshallow flooding. Dangerous swimming and surfing conditions\nand localized beach erosion.",
-      "headline": "High Surf Advisory issued November 27 at 4:21AM EST until November 27 at 4:00PM EST by NWS Newport/Morehead City NC",
-      "id": "urn:oid:2.49.0.1.840.0.3de368ae7932857f88124dd1136fa8f8bca11c53.003.1",
-      "instruction": "If travel is required, allow extra time as some roads may be\nclosed. Do not drive around barricades or through water of\nunknown depth. Take the necessary actions to protect flood-prone\nproperty.\n\nInexperienced swimmers should remain out of the water due to\ndangerous surf conditions.",
-      "messageType": "Update",
-      "sender": "NWS Newport/Morehead City NC",
-      "sent": "2026-11-27T04:21:00-05:00",
-      "severity": "Minor",
-      "ugc": [
-       "NCZ196"
-      ],
-      "urgency": "Expected"
-     }
-    ],
-    "severity": "Minor",
-    "status": "current",
-    "text": "High Surf Advisory now in effect until Fri 4:00 PM ET — East Carteret.",
-    "ugc": [
-     "NCZ196"
-    ]
    }
   ],
-  "line": "CURRENT: Gale Warning now in effect until Fri 10:00 PM ET — S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM. Coastal Flood Advisory now in effect until Fri 10:00 AM ET — East Carteret; West Carteret; Coastal Onslow. High Surf Advisory now in effect until Fri 4:00 PM ET — East Carteret.",
+  "line": "CURRENT: Small Craft Advisory now in effect until Sat 1:00 PM ET — S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM. UPCOMING: Gale Watch begins Mon 1:00 AM ET until Mon 1:00 PM ET — S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM.",
   "status": "active",
-  "upcoming": []
+  "upcoming": [
+   {
+    "areas": "S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM",
+    "ends": "2026-11-30T13:00:00-05:00",
+    "event": "Gale Watch",
+    "kind": "watch",
+    "local": [
+     "S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM",
+     "S of Cape Lookout NC to Surf City NC out to 20 NM"
+    ],
+    "localUgc": [
+     "AMZ156",
+     "AMZ158"
+    ],
+    "onset": "2026-11-30T01:00:00-05:00",
+    "products": [
+     {
+      "areas": "S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM",
+      "certainty": "Possible",
+      "description": "* WHAT...For the Small Craft Advisory, west winds 20 to 30 kt\nand seas 6 to 9 ft. For the Gale Watch, southwest winds 25 to 35\nkt with gusts up to 45 kt and seas 6 to 11 ft possible.\n\n* WHERE...The coastal waters from Ocracoke Inlet to Surf City.\n\n* WHEN...For the Small Craft Advisory, until 1 PM EST this\nafternoon. For the Gale Watch, from late Sunday night through\nMonday afternoon.\n\n* IMPACTS...Strong winds can cause hazardous seas which could\ncapsize or damage vessels and reduce visibility.\n\n* ADDITIONAL DETAILS...Some infrequent gale force gusts (34kt)\nwill be possible over outer portions of these waters for a few\nmore hours.",
+      "headline": "Gale Watch issued November 28 at 12:05AM EST until November 30 at 1:00PM EST by NWS Newport/Morehead City NC",
+      "id": "urn:oid:2.49.0.1.840.0.de1801835f3725024f735bba9b9c5067b155efff.005.2",
+      "instruction": "Mariners should consider altering plans to avoid possible\nhazardous conditions.  Remain in port, seek safe harbor, alter\ncourse, and/or secure the vessel for severe wind and seas.",
+      "messageType": "Alert",
+      "sender": "NWS Newport/Morehead City NC",
+      "sent": "2026-11-28T00:05:00-05:00",
+      "severity": "Moderate",
+      "ugc": [
+       "AMZ156",
+       "AMZ158"
+      ],
+      "urgency": "Future"
+     }
+    ],
+    "severity": "Moderate",
+    "status": "upcoming",
+    "text": "Gale Watch begins Mon 1:00 AM ET until Mon 1:00 PM ET — S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM.",
+    "ugc": [
+     "AMZ156",
+     "AMZ158"
+    ]
+   }
+  ]
  },
- "issueDate": "2026-11-27",
- "issuedAt": "2026-11-27T10:15:00.321471+00:00",
- "issuedEt": "Fri Nov 27, 5:15 AM ET",
+ "issueDate": "2026-11-28",
+ "issuedAt": "2026-11-28T10:15:00.269429+00:00",
+ "issuedEt": "Sat Nov 28, 5:15 AM ET",
  "items": [
   [
    "Advisories",
-   "CURRENT: Gale Warning now in effect until Fri 10:00 PM ET — S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM. Coastal Flood Advisory now in effect until Fri 10:00 AM ET — East Carteret; West Carteret; Coastal Onslow. High Surf Advisory now in effect until Fri 4:00 PM ET — East Carteret."
+   "CURRENT: Small Craft Advisory now in effect until Sat 1:00 PM ET — S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM. UPCOMING: Gale Watch begins Mon 1:00 AM ET until Mon 1:00 PM ET — S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM."
   ],
   [
    "Wind",
-   "19 kt from the WSW, gusting 30, at Cape Lookout; about steady from 17 kt 10 h earlier."
+   "19 kt from the W, gusting 26, at Cape Lookout; about steady from 17 kt 10 h earlier."
   ],
   [
    "Seas",
-   "12.5 ft every 9 s from the SSW at Onslow Bay Outer (CDIP 217); little changed from 12.1 ft 10 h earlier. Offshore buoy observation, not a beach surf height."
+   "8.9 ft every 8 s from the SSW at Onslow Bay Outer (CDIP 217); easing from 9.5 ft 10 h earlier. Offshore buoy observation, not a beach surf height."
   ],
   [
    "Swell",
-   "3.0 ft at 10 s from the S (split from the buoy spectrum). Offshore buoy observation, not a beach surf height."
+   "1.0 ft at 10 s from the S (split from the buoy spectrum). Offshore buoy observation, not a beach surf height."
   ],
   [
    "Pressure",
-   "29.79 inHg, steady."
+   "29.89 inHg, steady."
   ],
   [
    "Marine forecast",
-   "Rest Of Tonight: SW winds 25 to 30 kt with gusts up to 45 kt. (NWS AMZ158)"
+   "Today: W winds 20 to 25 kt with gusts up to 30 kt, diminishing to 10 to 15 kt. (NWS AMZ158)"
   ],
   [
    "Outlook",
-   "Rest Of Tonight: SW winds 25 to 30 kt with gusts up to 45 kt. Seas 9 to 13 ft, except 7 to 10 ft near shore. Fri: W winds 25 to 30 kt with gusts up to 45 kt. Seas 8 to 11 ft, except 6 to 9 ft near shore. (NWS AMZ158, issued Fri 1:51 AM ET)."
+   "Tonight: W winds 15 to 20 kt. Seas 2 to 4 ft. Sun: W winds 5 to 10 kt, becoming SW 10 to 15 kt in the afternoon. Seas 2 to 3 ft. (NWS AMZ158, issued Sat 4:39 AM ET)."
   ],
   [
    "Rain",
-   "0% chance through tonight; partly sunny, high 57°F."
+   "0% chance through tonight; sunny, high 61°F."
   ],
   [
    "Tides",
-   "low 2:59 AM ET (-0.3 ft), high 9:39 AM ET (4.1 ft), low 4:06 PM ET (0.1 ft), high 10:01 PM ET (3.1 ft) at Beaufort, Duke Marine Lab, MLLW."
+   "low 3:55 AM ET (-0.2 ft), high 10:36 AM ET (4.0 ft), low 5:04 PM ET (0.2 ft), high 11:01 PM ET (3.1 ft) at Beaufort, Duke Marine Lab, MLLW."
   ],
   [
    "Water temp",
-   "61°F inshore (Beaufort, Duke Marine Lab), 71°F offshore (buoy 41159)."
+   "56°F inshore (Beaufort, Duke Marine Lab), 68°F offshore (buoy 41159)."
   ]
  ],
- "marineUpdated": "2026-11-27T01:51:00-05:00",
+ "marineUpdated": "2026-11-28T04:39:00-05:00",
  "marineZone": "AMZ158",
  "missing": [],
  "ok": true,
  "outlookPeriods": {
   "periods": [
    {
-    "name": "Rest Of Tonight",
-    "text": "SW winds 25 to 30 kt with gusts up to 45 kt. Seas 9 to 13 ft, except 7 to 10 ft near shore."
+    "name": "Tonight",
+    "text": "W winds 15 to 20 kt. Seas 2 to 4 ft."
    },
    {
-    "name": "Fri",
-    "text": "W winds 25 to 30 kt with gusts up to 45 kt. Seas 8 to 11 ft, except 6 to 9 ft near shore."
+    "name": "Sun",
+    "text": "W winds 5 to 10 kt, becoming SW 10 to 15 kt in the afternoon. Seas 2 to 3 ft."
    }
   ],
-  "source": "NWS AMZ158, issued Fri 1:51 AM ET"
+  "source": "NWS AMZ158, issued Sat 4:39 AM ET"
  },
  "reason": "scheduled",
  "region": {
@@ -284,11 +231,11 @@
  "regionId": "crystal-coast",
  "sources": "NOAA NDBC, NOAA CO-OPS, NWS (api.weather.gov)",
  "take": [
-  "Gale Warning now in effect until Fri 10:00 PM ET — S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM.",
-  "Offshore water is 10°F warmer than inshore."
+  "Gale Watch begins Mon 1:00 AM ET until Mon 1:00 PM ET — S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM.",
+  "Offshore water is 12°F warmer than inshore."
  ],
  "validation": {
-  "checkedAt": "2026-11-27T10:15:00.321471+00:00",
+  "checkedAt": "2026-11-28T10:15:00.269429+00:00",
   "checks": [
    "region",
    "location",
@@ -302,5 +249,5 @@
   "status": "ok"
  },
  "waterType": "saltwater",
- "words": 310
+ "words": 304
 }

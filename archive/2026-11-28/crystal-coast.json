@@ -1,0 +1,253 @@
+{
+ "astro": {
+  "date": "2026-11-28",
+  "label": "Beaufort Inlet",
+  "lat": 34.695,
+  "lon": -76.668,
+  "moon": {
+   "fraction": 0.7701,
+   "illuminationPct": 77,
+   "name": "Waning Gibbous",
+   "waxing": false
+  },
+  "regionId": "crystal-coast",
+  "source": "Computed locally from the NOAA Solar Calculator equations and Meeus (Astronomical Algorithms, ch. 48). Not a live USNO fetch.",
+  "status": "ok",
+  "sunrise": "2026-11-28T06:52:55.039191-05:00",
+  "sunriseEt": "6:52 AM",
+  "sunset": "2026-11-28T16:56:13.427527-05:00",
+  "sunsetEt": "4:56 PM",
+  "tz": "America/New_York"
+ },
+ "forecastUpdated": "2026-11-28T09:40:44+00:00",
+ "freshness": [
+  {
+   "label": "Wind",
+   "stale": false,
+   "station": "CLKN7",
+   "time": "4:20 AM ET"
+  },
+  {
+   "label": "Seas",
+   "stale": false,
+   "station": "41159",
+   "time": "3:56 AM ET"
+  },
+  {
+   "label": "Swell",
+   "stale": false,
+   "station": "41159",
+   "time": "3:56 AM ET"
+  },
+  {
+   "label": "Barometer",
+   "stale": false,
+   "station": "8656483",
+   "time": "5:06 AM ET"
+  },
+  {
+   "label": "Water level",
+   "stale": false,
+   "station": "8656483",
+   "time": "5:06 AM ET"
+  },
+  {
+   "label": "Water temp",
+   "stale": false,
+   "station": "8656483",
+   "time": "5:06 AM ET"
+  }
+ ],
+ "hazards": {
+  "current": [
+   {
+    "areas": "S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM",
+    "ends": "2026-11-28T13:00:00-05:00",
+    "event": "Small Craft Advisory",
+    "kind": "advisory",
+    "local": [
+     "S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM",
+     "S of Cape Lookout NC to Surf City NC out to 20 NM"
+    ],
+    "localUgc": [
+     "AMZ156",
+     "AMZ158"
+    ],
+    "onset": "2026-11-28T00:05:00-05:00",
+    "products": [
+     {
+      "areas": "S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM",
+      "certainty": "Likely",
+      "description": "* WHAT...For the Small Craft Advisory, west winds 20 to 30 kt\nand seas 6 to 9 ft. For the Gale Watch, southwest winds 25 to 35\nkt with gusts up to 45 kt and seas 6 to 11 ft possible.\n\n* WHERE...The coastal waters from Ocracoke Inlet to Surf City.\n\n* WHEN...For the Small Craft Advisory, until 1 PM EST this\nafternoon. For the Gale Watch, from late Sunday night through\nMonday afternoon.\n\n* IMPACTS...Strong winds can cause hazardous seas which could\ncapsize or damage vessels and reduce visibility.\n\n* ADDITIONAL DETAILS...Some infrequent gale force gusts (34kt)\nwill be possible over outer portions of these waters for a few\nmore hours.",
+      "headline": "Small Craft Advisory issued November 28 at 12:05AM EST until November 28 at 1:00PM EST by NWS Newport/Morehead City NC",
+      "id": "urn:oid:2.49.0.1.840.0.de1801835f3725024f735bba9b9c5067b155efff.005.1",
+      "instruction": "Mariners should consider altering plans to avoid possible\nhazardous conditions.  Remain in port, seek safe harbor, alter\ncourse, and/or secure the vessel for severe wind and seas.",
+      "messageType": "Update",
+      "sender": "NWS Newport/Morehead City NC",
+      "sent": "2026-11-28T00:05:00-05:00",
+      "severity": "Minor",
+      "ugc": [
+       "AMZ156",
+       "AMZ158"
+      ],
+      "urgency": "Expected"
+     }
+    ],
+    "severity": "Minor",
+    "status": "current",
+    "text": "Small Craft Advisory now in effect until Sat 1:00 PM ET — S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM.",
+    "ugc": [
+     "AMZ156",
+     "AMZ158"
+    ]
+   }
+  ],
+  "line": "CURRENT: Small Craft Advisory now in effect until Sat 1:00 PM ET — S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM. UPCOMING: Gale Watch begins Mon 1:00 AM ET until Mon 1:00 PM ET — S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM.",
+  "status": "active",
+  "upcoming": [
+   {
+    "areas": "S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM",
+    "ends": "2026-11-30T13:00:00-05:00",
+    "event": "Gale Watch",
+    "kind": "watch",
+    "local": [
+     "S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM",
+     "S of Cape Lookout NC to Surf City NC out to 20 NM"
+    ],
+    "localUgc": [
+     "AMZ156",
+     "AMZ158"
+    ],
+    "onset": "2026-11-30T01:00:00-05:00",
+    "products": [
+     {
+      "areas": "S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM",
+      "certainty": "Possible",
+      "description": "* WHAT...For the Small Craft Advisory, west winds 20 to 30 kt\nand seas 6 to 9 ft. For the Gale Watch, southwest winds 25 to 35\nkt with gusts up to 45 kt and seas 6 to 11 ft possible.\n\n* WHERE...The coastal waters from Ocracoke Inlet to Surf City.\n\n* WHEN...For the Small Craft Advisory, until 1 PM EST this\nafternoon. For the Gale Watch, from late Sunday night through\nMonday afternoon.\n\n* IMPACTS...Strong winds can cause hazardous seas which could\ncapsize or damage vessels and reduce visibility.\n\n* ADDITIONAL DETAILS...Some infrequent gale force gusts (34kt)\nwill be possible over outer portions of these waters for a few\nmore hours.",
+      "headline": "Gale Watch issued November 28 at 12:05AM EST until November 30 at 1:00PM EST by NWS Newport/Morehead City NC",
+      "id": "urn:oid:2.49.0.1.840.0.de1801835f3725024f735bba9b9c5067b155efff.005.2",
+      "instruction": "Mariners should consider altering plans to avoid possible\nhazardous conditions.  Remain in port, seek safe harbor, alter\ncourse, and/or secure the vessel for severe wind and seas.",
+      "messageType": "Alert",
+      "sender": "NWS Newport/Morehead City NC",
+      "sent": "2026-11-28T00:05:00-05:00",
+      "severity": "Moderate",
+      "ugc": [
+       "AMZ156",
+       "AMZ158"
+      ],
+      "urgency": "Future"
+     }
+    ],
+    "severity": "Moderate",
+    "status": "upcoming",
+    "text": "Gale Watch begins Mon 1:00 AM ET until Mon 1:00 PM ET — S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM.",
+    "ugc": [
+     "AMZ156",
+     "AMZ158"
+    ]
+   }
+  ]
+ },
+ "issueDate": "2026-11-28",
+ "issuedAt": "2026-11-28T10:15:00.269429+00:00",
+ "issuedEt": "Sat Nov 28, 5:15 AM ET",
+ "items": [
+  [
+   "Advisories",
+   "CURRENT: Small Craft Advisory now in effect until Sat 1:00 PM ET — S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM. UPCOMING: Gale Watch begins Mon 1:00 AM ET until Mon 1:00 PM ET — S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM."
+  ],
+  [
+   "Wind",
+   "19 kt from the W, gusting 26, at Cape Lookout; about steady from 17 kt 10 h earlier."
+  ],
+  [
+   "Seas",
+   "8.9 ft every 8 s from the SSW at Onslow Bay Outer (CDIP 217); easing from 9.5 ft 10 h earlier. Offshore buoy observation, not a beach surf height."
+  ],
+  [
+   "Swell",
+   "1.0 ft at 10 s from the S (split from the buoy spectrum). Offshore buoy observation, not a beach surf height."
+  ],
+  [
+   "Pressure",
+   "29.89 inHg, steady."
+  ],
+  [
+   "Marine forecast",
+   "Today: W winds 20 to 25 kt with gusts up to 30 kt, diminishing to 10 to 15 kt. (NWS AMZ158)"
+  ],
+  [
+   "Outlook",
+   "Tonight: W winds 15 to 20 kt. Seas 2 to 4 ft. Sun: W winds 5 to 10 kt, becoming SW 10 to 15 kt in the afternoon. Seas 2 to 3 ft. (NWS AMZ158, issued Sat 4:39 AM ET)."
+  ],
+  [
+   "Rain",
+   "0% chance through tonight; sunny, high 61°F."
+  ],
+  [
+   "Tides",
+   "low 3:55 AM ET (-0.2 ft), high 10:36 AM ET (4.0 ft), low 5:04 PM ET (0.2 ft), high 11:01 PM ET (3.1 ft) at Beaufort, Duke Marine Lab, MLLW."
+  ],
+  [
+   "Water temp",
+   "56°F inshore (Beaufort, Duke Marine Lab), 68°F offshore (buoy 41159)."
+  ]
+ ],
+ "marineUpdated": "2026-11-28T04:39:00-05:00",
+ "marineZone": "AMZ158",
+ "missing": [],
+ "ok": true,
+ "outlookPeriods": {
+  "periods": [
+   {
+    "name": "Tonight",
+    "text": "W winds 15 to 20 kt. Seas 2 to 4 ft."
+   },
+   {
+    "name": "Sun",
+    "text": "W winds 5 to 10 kt, becoming SW 10 to 15 kt in the afternoon. Seas 2 to 3 ft."
+   }
+  ],
+  "source": "NWS AMZ158, issued Sat 4:39 AM ET"
+ },
+ "reason": "scheduled",
+ "region": {
+  "anchor": {
+   "label": "Beaufort Inlet",
+   "lat": 34.695,
+   "lon": -76.668
+  },
+  "area": "Crystal Coast, North Carolina",
+  "id": "crystal-coast",
+  "map": {
+   "center": [
+    34.7,
+    -76.7
+   ],
+   "zoom": 8
+  },
+  "name": "Morehead City · Beaufort"
+ },
+ "regionId": "crystal-coast",
+ "sources": "NOAA NDBC, NOAA CO-OPS, NWS (api.weather.gov)",
+ "take": [
+  "Gale Watch begins Mon 1:00 AM ET until Mon 1:00 PM ET — S of Ocracoke Inlet NC to Cape Lookout NC out to 20 NM; S of Cape Lookout NC to Surf City NC out to 20 NM.",
+  "Offshore water is 12°F warmer than inshore."
+ ],
+ "validation": {
+  "checkedAt": "2026-11-28T10:15:00.269429+00:00",
+  "checks": [
+   "region",
+   "location",
+   "issue date",
+   "timestamp",
+   "marine zone",
+   "forecast age",
+   "core readings"
+  ],
+  "missingCore": [],
+  "status": "ok"
+ },
+ "waterType": "saltwater",
+ "words": 304
+}
