@@ -67,11 +67,11 @@
     {
      "source": "USGS",
      "id": "02087183",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Release below Falls Dam. Separate reading; never lake elevation.",
-     "name": "NEUSE RIVER BELOW FALLS DAM NR FALLS, NC"
+     "note": "River flow below the dam (measured) by USGS on the Neuse below Falls Dam. Not a reported dam release; never lake elevation.",
+     "name": "NEUSE RIVER NEAR FALLS, NC (below Falls Dam)"
     }
    ],
    "note": "Falls Lake ramp. Lake-wide gauge and USACE pool on the same lake; Eno River and other inflow gauges rejected.",
@@ -107,11 +107,11 @@
     {
      "source": "USGS",
      "id": "02087183",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Release below Falls Dam. Separate reading; never lake elevation.",
-     "name": "NEUSE RIVER BELOW FALLS DAM NR FALLS, NC"
+     "note": "River flow below the dam (measured) by USGS on the Neuse below Falls Dam. Not a reported dam release; never lake elevation.",
+     "name": "NEUSE RIVER NEAR FALLS, NC (below Falls Dam)"
     }
    ],
    "note": "Falls Lake ramp. Lake-wide gauge and USACE pool on the same lake; Eno River and other inflow gauges rejected.",
@@ -147,11 +147,11 @@
     {
      "source": "USGS",
      "id": "02087183",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Release below Falls Dam. Separate reading; never lake elevation.",
-     "name": "NEUSE RIVER BELOW FALLS DAM NR FALLS, NC"
+     "note": "River flow below the dam (measured) by USGS on the Neuse below Falls Dam. Not a reported dam release; never lake elevation.",
+     "name": "NEUSE RIVER NEAR FALLS, NC (below Falls Dam)"
     }
    ],
    "note": "Falls Lake ramp. Lake-wide gauge and USACE pool on the same lake; Eno River and other inflow gauges rejected.",
@@ -187,11 +187,11 @@
     {
      "source": "USGS",
      "id": "02087183",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Release below Falls Dam. Separate reading; never lake elevation.",
-     "name": "NEUSE RIVER BELOW FALLS DAM NR FALLS, NC"
+     "note": "River flow below the dam (measured) by USGS on the Neuse below Falls Dam. Not a reported dam release; never lake elevation.",
+     "name": "NEUSE RIVER NEAR FALLS, NC (below Falls Dam)"
     }
    ],
    "note": "Falls Lake ramp. Lake-wide gauge and USACE pool on the same lake; Eno River and other inflow gauges rejected.",
@@ -227,11 +227,11 @@
     {
      "source": "USGS",
      "id": "02087183",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Release below Falls Dam. Separate reading; never lake elevation.",
-     "name": "NEUSE RIVER BELOW FALLS DAM NR FALLS, NC"
+     "note": "River flow below the dam (measured) by USGS on the Neuse below Falls Dam. Not a reported dam release; never lake elevation.",
+     "name": "NEUSE RIVER NEAR FALLS, NC (below Falls Dam)"
     }
    ],
    "note": "Falls Lake ramp. Lake-wide gauge and USACE pool on the same lake; Eno River and other inflow gauges rejected.",
@@ -267,11 +267,11 @@
     {
      "source": "USGS",
      "id": "02087183",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Release below Falls Dam. Separate reading; never lake elevation.",
-     "name": "NEUSE RIVER BELOW FALLS DAM NR FALLS, NC"
+     "note": "River flow below the dam (measured) by USGS on the Neuse below Falls Dam. Not a reported dam release; never lake elevation.",
+     "name": "NEUSE RIVER NEAR FALLS, NC (below Falls Dam)"
     }
    ],
    "note": "Falls Lake ramp. Lake-wide gauge and USACE pool on the same lake; Eno River and other inflow gauges rejected.",
@@ -307,11 +307,11 @@
     {
      "source": "USGS",
      "id": "02087183",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Release below Falls Dam. Separate reading; never lake elevation.",
-     "name": "NEUSE RIVER BELOW FALLS DAM NR FALLS, NC"
+     "note": "River flow below the dam (measured) by USGS on the Neuse below Falls Dam. Not a reported dam release; never lake elevation.",
+     "name": "NEUSE RIVER NEAR FALLS, NC (below Falls Dam)"
     }
    ],
    "note": "Falls Lake ramp. Lake-wide gauge and USACE pool on the same lake; Eno River and other inflow gauges rejected.",
@@ -349,11 +349,11 @@
     {
      "source": "USGS",
      "id": "02087183",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Release below Falls Dam. Separate reading; never lake elevation.",
-     "name": "NEUSE RIVER BELOW FALLS DAM NR FALLS, NC"
+     "note": "River flow below the dam (measured) by USGS on the Neuse below Falls Dam. Not a reported dam release; never lake elevation.",
+     "name": "NEUSE RIVER NEAR FALLS, NC (below Falls Dam)"
     }
    ],
    "note": "Falls Lake ramp. Lake-wide gauge and USACE pool on the same lake; Eno River and other inflow gauges rejected.",
@@ -385,7 +385,7 @@
      "type": "lake_elevation",
      "relation": "same_waterbody",
      "status": "reviewed",
-     "note": "Beaverdam Creek at dam: Beaverdam Lake pool elevation (62615, NAVD88).",
+     "note": "Verified 2026-11-28: USGS site 0208706575 'Beaverdam Creek at dam near Creedmoor' (36.02361, -78.68917, NAD83; drainage 52.5 sq mi) reports 62615 'Lake or reservoir water surface elevation above NAVD 1988' and 00062 'Elevation of reservoir water surface above datum', not stage or discharge. At 11:35 AM it read 247.77 ft NAVD88 while Falls Lake (02087182) read 244.92 ft NAVD88 at 11:15 AM: a 2.85 ft difference, consistent with a separate pool held by the Beaverdam dam. The gauge is at the dam on the impoundment side; the ramp is about 0.9 mi north on Beaverdam Lake.",
      "datum": "NAVD88"
     }
    ],
@@ -414,10 +414,10 @@
     {
      "source": "USGS",
      "id": "02098206",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Below Jordan Dam: release plus local runoff, not official gate outflow. Separate reading; never lake elevation.",
+     "note": "River flow below the dam (measured): Jordan Dam release plus local runoff, not official gate outflow. Never lake elevation.",
      "name": "HAW RIVER NEAR MONCURE, NC"
     }
    ],
@@ -446,10 +446,10 @@
     {
      "source": "USGS",
      "id": "02098206",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Below Jordan Dam: release plus local runoff, not official gate outflow. Separate reading; never lake elevation.",
+     "note": "River flow below the dam (measured): Jordan Dam release plus local runoff, not official gate outflow. Never lake elevation.",
      "name": "HAW RIVER NEAR MONCURE, NC"
     }
    ],
@@ -478,10 +478,10 @@
     {
      "source": "USGS",
      "id": "02098206",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Below Jordan Dam: release plus local runoff, not official gate outflow. Separate reading; never lake elevation.",
+     "note": "River flow below the dam (measured): Jordan Dam release plus local runoff, not official gate outflow. Never lake elevation.",
      "name": "HAW RIVER NEAR MONCURE, NC"
     }
    ],
@@ -510,10 +510,10 @@
     {
      "source": "USGS",
      "id": "02098206",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Below Jordan Dam: release plus local runoff, not official gate outflow. Separate reading; never lake elevation.",
+     "note": "River flow below the dam (measured): Jordan Dam release plus local runoff, not official gate outflow. Never lake elevation.",
      "name": "HAW RIVER NEAR MONCURE, NC"
     }
    ],
@@ -544,10 +544,10 @@
     {
      "source": "USGS",
      "id": "02098206",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Below Jordan Dam: release plus local runoff, not official gate outflow. Separate reading; never lake elevation.",
+     "note": "River flow below the dam (measured): Jordan Dam release plus local runoff, not official gate outflow. Never lake elevation.",
      "name": "HAW RIVER NEAR MONCURE, NC"
     }
    ],
@@ -576,10 +576,10 @@
     {
      "source": "USGS",
      "id": "02098206",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Below Jordan Dam: release plus local runoff, not official gate outflow. Separate reading; never lake elevation.",
+     "note": "River flow below the dam (measured): Jordan Dam release plus local runoff, not official gate outflow. Never lake elevation.",
      "name": "HAW RIVER NEAR MONCURE, NC"
     }
    ],
@@ -608,10 +608,10 @@
     {
      "source": "USGS",
      "id": "02098206",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Below Jordan Dam: release plus local runoff, not official gate outflow. Separate reading; never lake elevation.",
+     "note": "River flow below the dam (measured): Jordan Dam release plus local runoff, not official gate outflow. Never lake elevation.",
      "name": "HAW RIVER NEAR MONCURE, NC"
     }
    ],

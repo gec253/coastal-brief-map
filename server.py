@@ -318,7 +318,7 @@ def cache_entry(url: str) -> dict | None:
 # docs, and test fixtures are not.
 _STATIC_EXT = {".html", ".css", ".js", ".svg", ".png", ".jpg", ".jpeg", ".webp", ".avif", ".ico",
                ".woff2", ".json", ".txt", ".xml", ".webmanifest", ".map"}
-_STATIC_DENY_PREFIX = ("/.", "/admin", "/preview/", "/branding/og-masthead.html", "/branding/render-og-masthead.", "/wind-lab.", "/wind.", "/wind-viewer.", "/wind-coast", "/radar.", "/radar-", "/showcase.", "/lake.", "/tiles-lab.", "/docs/", "/tests/", "/scripts/", "/__pycache__/", "/requirements")
+_STATIC_DENY_PREFIX = ("/.", "/admin", "/preview/", "/branding/og-masthead.html", "/branding/render-og-masthead.", "/wind-lab.", "/wind.", "/wind-viewer.", "/wind-coast", "/radar.", "/radar-", "/showcase.", "/lake.", "/tiles-lab.", "/docs/", "/tests/", "/scripts/", "/stations/", "/__pycache__/", "/requirements")
 
 
 def _static_allowed(path: str) -> bool:

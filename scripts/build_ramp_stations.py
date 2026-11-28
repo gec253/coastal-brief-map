@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """Phase 3A: station mapping and water classification for every ramp (no page UI, nothing public).
 
-Builds data/ramp_stations.json from:
+Builds stations/ramp_stations.json from:
   preview/ramp-finder/map-data.json   the 285 ramp records
-  data/ramp_stations_inputs.json      read-only snapshot of NLDI, USGS, NWS, CO-OPS, NCDMF and USACE lookups
-  data/ramp_stations_review.json      the human review: decisions for the 79 pilot ramps
+  stations/ramp_stations_inputs.json      read-only snapshot of NLDI, USGS, NWS, CO-OPS, NCDMF and USACE lookups
+  stations/ramp_stations_review.json      the human review: decisions for the 79 pilot ramps
 
 Rules (Ed, Nov 28, 2026):
 - Stations are matched by waterway relevance, never by distance alone. Candidates come only from the same
   river network (USGS NLDI upstream/downstream mainstem, within 40 km along the river, under 25 miles).
 - Never cross a dam for reservoir elevation or local conditions. A gauge below a dam is typed
-  below_dam_release and is never used as lake elevation or local river conditions.
+  downstream_river_flow ("River flow below the dam (measured)"); only an operator-reported outflow may be
+  dam_release_reported. Neither is ever used as lake elevation or local river conditions.
 - No astronomical tide predictions on wind-driven waters.
 - Only reviewed entries on pilot ramps are publishable. Everything else is a hidden candidate.
 - This file holds station assignments only. It never holds readings.
@@ -25,9 +26,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 RECORDS = ROOT / "preview/ramp-finder/map-data.json"
-INPUTS = ROOT / "data/ramp_stations_inputs.json"
-REVIEW = ROOT / "data/ramp_stations_review.json"
-OUT = ROOT / "data/ramp_stations.json"
+INPUTS = ROOT / "stations/ramp_stations_inputs.json"
+REVIEW = ROOT / "stations/ramp_stations_review.json"
+OUT = ROOT / "stations/ramp_stations.json"
 TIDE_STATIONS = ROOT / "data/tide-stations.json"
 
 PILOT_AREAS = ("Falls Lake", "Jordan Lake", "Neuse River", "Crystal Coast", "Wilmington · Wrightsville Beach",
@@ -37,8 +38,10 @@ CAMA = {"Beaufort", "Bertie", "Brunswick", "Camden", "Carteret", "Chowan", "Crav
         "Hertford", "Hyde", "New Hanover", "Onslow", "Pamlico", "Pasquotank", "Pender", "Perquimans", "Tyrrell", "Washington"}
 WATER_CLASSES = ("reservoir", "natural_lake", "river", "estuary_wind_driven", "tidal_lunar", "unresolved")
 TIDE_POLICIES = ("predictions", "omit_wind_driven", "omit_freshwater", "unavailable_no_same_water_station", "unresolved")
-RELATIONS = ("same_waterbody", "same_river_upstream", "same_river_downstream", "below_dam_release", "related")
-TYPES = ("lake_elevation", "river_stage_flow", "water_temp", "tide_predictions", "below_dam_release", "water_level_observed")
+RELATIONS = ("same_waterbody", "same_river_upstream", "same_river_downstream", "downstream_river_flow", "dam_release_reported", "related")
+TYPES = ("lake_elevation", "river_stage_flow", "water_temp", "tide_predictions", "downstream_river_flow", "dam_release_reported", "water_level_observed")
+# Display labels. A USGS gauge below a dam measures river flow there; it is never called a dam release.
+TYPE_LABELS = {"downstream_river_flow": "River flow below the dam (measured)", "dam_release_reported": "Dam release (reported by the dam operator)"}
 STATUSES = ("reviewed", "unreviewed", "rejected")
 REG_LINKS = {
     "coastal": [{"agency": "NCDMF", "label": "NC Division of Marine Fisheries: recreational size and bag limits",
@@ -124,8 +127,8 @@ def auto_candidates(rec, cls, inp):
             if d is not None and d > MAX_MI:
                 c.update(type="river_stage_flow", relation="related", status="rejected", reject_reason="More than 25 miles away.")
             elif DAM_BELOW.search(name):
-                c.update(type="below_dam_release", relation="below_dam_release", status="unreviewed",
-                         note="Gauge below a dam: release reading only, never lake elevation or local conditions.")
+                c.update(type="downstream_river_flow", relation="downstream_river_flow", status="unreviewed",
+                         note="Gauge below a dam: river flow measured downstream, never lake elevation, local conditions or a reported dam release.")
                 if cls == "reservoir" and nav == "down":
                     c["note"] += " It is downstream of this reservoir's dam."
             elif cls in ("reservoir", "natural_lake"):
@@ -232,7 +235,7 @@ def build(records, inp, review, tide_stations=None):
             c["publishable"] = bool(pilot and e["review"]["status"] == "reviewed" and c["status"] == "reviewed")
         sites.append(e)
     return {"_about": "Station assignments only; no readings. Only entries with publishable=true may ever be shown. Built by scripts/build_ramp_stations.py.",
-            "built_from": {"records": "preview/ramp-finder/map-data.json", "inputs": "data/ramp_stations_inputs.json", "review": "data/ramp_stations_review.json"},
+            "built_from": {"records": "preview/ramp-finder/map-data.json", "inputs": "stations/ramp_stations_inputs.json", "review": "stations/ramp_stations_review.json"},
             "retrieved": inp.get("retrieved"), "pilot_areas": list(PILOT_AREAS), "max_candidate_miles": MAX_MI,
             "operators": review.get("operators", {}), "sites": sites}
 

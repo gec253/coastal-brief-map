@@ -2,8 +2,8 @@
  "_about": "Station assignments only; no readings. Only entries with publishable=true may ever be shown. Built by scripts/build_ramp_stations.py.",
  "built_from": {
   "records": "preview/ramp-finder/map-data.json",
-  "inputs": "data/ramp_stations_inputs.json",
-  "review": "data/ramp_stations_review.json"
+  "inputs": "stations/ramp_stations_inputs.json",
+  "review": "stations/ramp_stations_review.json"
  },
  "retrieved": "2026-11-28",
  "pilot_areas": [
@@ -619,10 +619,10 @@
       "00065"
      ],
      "found": "nldi_upstream",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "unreviewed",
-     "note": "Gauge below a dam: release reading only, never lake elevation or local conditions.",
+     "note": "Gauge below a dam: river flow measured downstream, never lake elevation, local conditions or a reported dam release.",
      "publishable": false
     },
     {
@@ -1015,10 +1015,10 @@
       "00065"
      ],
      "found": "nldi_downstream",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "unreviewed",
-     "note": "Gauge below a dam: release reading only, never lake elevation or local conditions. It is downstream of this reservoir's dam.",
+     "note": "Gauge below a dam: river flow measured downstream, never lake elevation, local conditions or a reported dam release. It is downstream of this reservoir's dam.",
      "publishable": false
     }
    ],
@@ -3720,10 +3720,10 @@
       "00065"
      ],
      "found": "nldi_upstream",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "unreviewed",
-     "note": "Gauge below a dam: release reading only, never lake elevation or local conditions.",
+     "note": "Gauge below a dam: river flow measured downstream, never lake elevation, local conditions or a reported dam release.",
      "publishable": false
     },
     {
@@ -3823,10 +3823,10 @@
       "00065"
      ],
      "found": "nldi_downstream",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "unreviewed",
-     "note": "Gauge below a dam: release reading only, never lake elevation or local conditions. It is downstream of this reservoir's dam.",
+     "note": "Gauge below a dam: river flow measured downstream, never lake elevation, local conditions or a reported dam release. It is downstream of this reservoir's dam.",
      "publishable": false
     },
     {
@@ -4323,13 +4323,13 @@
     {
      "source": "USGS",
      "id": "02087183",
-     "name": "NEUSE RIVER BELOW FALLS DAM NR FALLS, NC",
-     "type": "below_dam_release",
+     "name": "NEUSE RIVER NEAR FALLS, NC (below Falls Dam)",
+     "type": "downstream_river_flow",
      "distance_mi": null,
      "found": "review",
-     "relation": "below_dam_release",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Release below Falls Dam. Separate reading; never lake elevation.",
+     "note": "River flow below the dam (measured) by USGS on the Neuse below Falls Dam. Not a reported dam release; never lake elevation.",
      "publishable": true
     }
    ],
@@ -4563,12 +4563,12 @@
      "source": "USGS",
      "id": "02098206",
      "name": "HAW RIVER NEAR MONCURE, NC",
-     "type": "below_dam_release",
+     "type": "downstream_river_flow",
      "distance_mi": null,
      "found": "review",
-     "relation": "below_dam_release",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Below Jordan Dam: release plus local runoff, not official gate outflow. Separate reading; never lake elevation.",
+     "note": "River flow below the dam (measured): Jordan Dam release plus local runoff, not official gate outflow. Never lake elevation.",
      "publishable": true
     }
    ],
@@ -5394,10 +5394,10 @@
       "00065"
      ],
      "found": "nldi_downstream",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "unreviewed",
-     "note": "Gauge below a dam: release reading only, never lake elevation or local conditions. It is downstream of this reservoir's dam.",
+     "note": "Gauge below a dam: river flow measured downstream, never lake elevation, local conditions or a reported dam release. It is downstream of this reservoir's dam.",
      "publishable": false
     },
     {
@@ -5691,10 +5691,10 @@
       "00065"
      ],
      "found": "nldi_downstream",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "unreviewed",
-     "note": "Gauge below a dam: release reading only, never lake elevation or local conditions. It is downstream of this reservoir's dam.",
+     "note": "Gauge below a dam: river flow measured downstream, never lake elevation, local conditions or a reported dam release. It is downstream of this reservoir's dam.",
      "publishable": false
     },
     {
@@ -5765,10 +5765,10 @@
       "00065"
      ],
      "found": "nldi_upstream",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "unreviewed",
-     "note": "Gauge below a dam: release reading only, never lake elevation or local conditions.",
+     "note": "Gauge below a dam: river flow measured downstream, never lake elevation, local conditions or a reported dam release.",
      "publishable": false
     },
     {
@@ -6583,13 +6583,13 @@
     {
      "source": "USGS",
      "id": "02087183",
-     "name": "NEUSE RIVER BELOW FALLS DAM NR FALLS, NC",
-     "type": "below_dam_release",
+     "name": "NEUSE RIVER NEAR FALLS, NC (below Falls Dam)",
+     "type": "downstream_river_flow",
      "distance_mi": null,
      "found": "review",
-     "relation": "below_dam_release",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Release below Falls Dam. Separate reading; never lake elevation.",
+     "note": "River flow below the dam (measured) by USGS on the Neuse below Falls Dam. Not a reported dam release; never lake elevation.",
      "publishable": true
     }
    ],
@@ -7152,10 +7152,10 @@
       "00065"
      ],
      "found": "nldi_downstream",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "unreviewed",
-     "note": "Gauge below a dam: release reading only, never lake elevation or local conditions. It is downstream of this reservoir's dam.",
+     "note": "Gauge below a dam: river flow measured downstream, never lake elevation, local conditions or a reported dam release. It is downstream of this reservoir's dam.",
      "publishable": false
     }
    ],
@@ -8151,13 +8151,13 @@
     {
      "source": "USGS",
      "id": "02087183",
-     "name": "NEUSE RIVER BELOW FALLS DAM NR FALLS, NC",
-     "type": "below_dam_release",
+     "name": "NEUSE RIVER NEAR FALLS, NC (below Falls Dam)",
+     "type": "downstream_river_flow",
      "distance_mi": null,
      "found": "review",
-     "relation": "below_dam_release",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Release below Falls Dam. Separate reading; never lake elevation.",
+     "note": "River flow below the dam (measured) by USGS on the Neuse below Falls Dam. Not a reported dam release; never lake elevation.",
      "publishable": true
     }
    ],
@@ -8640,10 +8640,10 @@
       "00065"
      ],
      "found": "nldi_downstream",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "unreviewed",
-     "note": "Gauge below a dam: release reading only, never lake elevation or local conditions. It is downstream of this reservoir's dam.",
+     "note": "Gauge below a dam: river flow measured downstream, never lake elevation, local conditions or a reported dam release. It is downstream of this reservoir's dam.",
      "publishable": false
     }
    ],
@@ -8887,10 +8887,10 @@
       "00065"
      ],
      "found": "nldi_upstream",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "unreviewed",
-     "note": "Gauge below a dam: release reading only, never lake elevation or local conditions.",
+     "note": "Gauge below a dam: river flow measured downstream, never lake elevation, local conditions or a reported dam release.",
      "publishable": false
     },
     {
@@ -8977,10 +8977,10 @@
       "00065"
      ],
      "found": "nldi_upstream",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "unreviewed",
-     "note": "Gauge below a dam: release reading only, never lake elevation or local conditions.",
+     "note": "Gauge below a dam: river flow measured downstream, never lake elevation, local conditions or a reported dam release.",
      "publishable": false
     },
     {
@@ -9067,10 +9067,10 @@
       "00065"
      ],
      "found": "nldi_downstream",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "unreviewed",
-     "note": "Gauge below a dam: release reading only, never lake elevation or local conditions. It is downstream of this reservoir's dam.",
+     "note": "Gauge below a dam: river flow measured downstream, never lake elevation, local conditions or a reported dam release. It is downstream of this reservoir's dam.",
      "publishable": false
     },
     {
@@ -9477,10 +9477,10 @@
       "00065"
      ],
      "found": "nldi_upstream",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "unreviewed",
-     "note": "Gauge below a dam: release reading only, never lake elevation or local conditions.",
+     "note": "Gauge below a dam: river flow measured downstream, never lake elevation, local conditions or a reported dam release.",
      "publishable": false
     },
     {
@@ -10137,10 +10137,10 @@
       "00065"
      ],
      "found": "nldi_upstream",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "unreviewed",
-     "note": "Gauge below a dam: release reading only, never lake elevation or local conditions.",
+     "note": "Gauge below a dam: river flow measured downstream, never lake elevation, local conditions or a reported dam release.",
      "publishable": false
     }
    ],
@@ -10741,10 +10741,10 @@
       "00065"
      ],
      "found": "nldi_downstream",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "unreviewed",
-     "note": "Gauge below a dam: release reading only, never lake elevation or local conditions. It is downstream of this reservoir's dam.",
+     "note": "Gauge below a dam: river flow measured downstream, never lake elevation, local conditions or a reported dam release. It is downstream of this reservoir's dam.",
      "publishable": false
     },
     {
@@ -10899,10 +10899,10 @@
       "00065"
      ],
      "found": "nldi_downstream",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "unreviewed",
-     "note": "Gauge below a dam: release reading only, never lake elevation or local conditions. It is downstream of this reservoir's dam.",
+     "note": "Gauge below a dam: river flow measured downstream, never lake elevation, local conditions or a reported dam release. It is downstream of this reservoir's dam.",
      "publishable": false
     },
     {
@@ -11315,10 +11315,10 @@
       "00065"
      ],
      "found": "nldi_upstream",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "unreviewed",
-     "note": "Gauge below a dam: release reading only, never lake elevation or local conditions.",
+     "note": "Gauge below a dam: river flow measured downstream, never lake elevation, local conditions or a reported dam release.",
      "publishable": false
     },
     {
@@ -12002,10 +12002,10 @@
       "00065"
      ],
      "found": "nldi_downstream",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "unreviewed",
-     "note": "Gauge below a dam: release reading only, never lake elevation or local conditions.",
+     "note": "Gauge below a dam: river flow measured downstream, never lake elevation, local conditions or a reported dam release.",
      "publishable": false
     },
     {
@@ -12374,10 +12374,10 @@
       "00065"
      ],
      "found": "nldi_upstream",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "unreviewed",
-     "note": "Gauge below a dam: release reading only, never lake elevation or local conditions.",
+     "note": "Gauge below a dam: river flow measured downstream, never lake elevation, local conditions or a reported dam release.",
      "publishable": false
     },
     {
@@ -12491,10 +12491,10 @@
       "00065"
      ],
      "found": "nldi_upstream",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "unreviewed",
-     "note": "Gauge below a dam: release reading only, never lake elevation or local conditions.",
+     "note": "Gauge below a dam: river flow measured downstream, never lake elevation, local conditions or a reported dam release.",
      "publishable": false
     },
     {
@@ -13100,10 +13100,10 @@
       "00065"
      ],
      "found": "nldi_upstream",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "unreviewed",
-     "note": "Gauge below a dam: release reading only, never lake elevation or local conditions.",
+     "note": "Gauge below a dam: river flow measured downstream, never lake elevation, local conditions or a reported dam release.",
      "publishable": false
     },
     {
@@ -13775,10 +13775,10 @@
       "00065"
      ],
      "found": "nldi_downstream",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "unreviewed",
-     "note": "Gauge below a dam: release reading only, never lake elevation or local conditions. It is downstream of this reservoir's dam.",
+     "note": "Gauge below a dam: river flow measured downstream, never lake elevation, local conditions or a reported dam release. It is downstream of this reservoir's dam.",
      "publishable": false
     },
     {
@@ -14325,10 +14325,10 @@
       "00065"
      ],
      "found": "nldi_upstream",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "unreviewed",
-     "note": "Gauge below a dam: release reading only, never lake elevation or local conditions.",
+     "note": "Gauge below a dam: river flow measured downstream, never lake elevation, local conditions or a reported dam release.",
      "publishable": false
     },
     {
@@ -15229,13 +15229,13 @@
     {
      "source": "USGS",
      "id": "02087183",
-     "name": "NEUSE RIVER BELOW FALLS DAM NR FALLS, NC",
-     "type": "below_dam_release",
+     "name": "NEUSE RIVER NEAR FALLS, NC (below Falls Dam)",
+     "type": "downstream_river_flow",
      "distance_mi": null,
      "found": "review",
-     "relation": "below_dam_release",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Release below Falls Dam. Separate reading; never lake elevation.",
+     "note": "River flow below the dam (measured) by USGS on the Neuse below Falls Dam. Not a reported dam release; never lake elevation.",
      "publishable": true
     }
    ],
@@ -16442,10 +16442,10 @@
       "00065"
      ],
      "found": "nldi_downstream",
-     "type": "below_dam_release",
-     "relation": "below_dam_release",
+     "type": "downstream_river_flow",
+     "relation": "downstream_river_flow",
      "status": "unreviewed",
-     "note": "Gauge below a dam: release reading only, never lake elevation or local conditions. It is downstream of this reservoir's dam.",
+     "note": "Gauge below a dam: river flow measured downstream, never lake elevation, local conditions or a reported dam release. It is downstream of this reservoir's dam.",
      "publishable": false
     },
     {
@@ -17099,7 +17099,7 @@
      "found": "review",
      "relation": "same_waterbody",
      "status": "reviewed",
-     "note": "Beaverdam Creek at dam: Beaverdam Lake pool elevation (62615, NAVD88).",
+     "note": "Verified 2026-11-28: USGS site 0208706575 'Beaverdam Creek at dam near Creedmoor' (36.02361, -78.68917, NAD83; drainage 52.5 sq mi) reports 62615 'Lake or reservoir water surface elevation above NAVD 1988' and 00062 'Elevation of reservoir water surface above datum', not stage or discharge. At 11:35 AM it read 247.77 ft NAVD88 while Falls Lake (02087182) read 244.92 ft NAVD88 at 11:15 AM: a 2.85 ft difference, consistent with a separate pool held by the Beaverdam dam. The gauge is at the dam on the impoundment side; the ramp is about 0.9 mi north on Beaverdam Lake.",
      "datum": "NAVD88",
      "publishable": true
     }
@@ -17193,13 +17193,13 @@
     {
      "source": "USGS",
      "id": "02087183",
-     "name": "NEUSE RIVER BELOW FALLS DAM NR FALLS, NC",
-     "type": "below_dam_release",
+     "name": "NEUSE RIVER NEAR FALLS, NC (below Falls Dam)",
+     "type": "downstream_river_flow",
      "distance_mi": null,
      "found": "review",
-     "relation": "below_dam_release",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Release below Falls Dam. Separate reading; never lake elevation.",
+     "note": "River flow below the dam (measured) by USGS on the Neuse below Falls Dam. Not a reported dam release; never lake elevation.",
      "publishable": true
     }
    ],
@@ -17308,13 +17308,13 @@
     {
      "source": "USGS",
      "id": "02087183",
-     "name": "NEUSE RIVER BELOW FALLS DAM NR FALLS, NC",
-     "type": "below_dam_release",
+     "name": "NEUSE RIVER NEAR FALLS, NC (below Falls Dam)",
+     "type": "downstream_river_flow",
      "distance_mi": null,
      "found": "review",
-     "relation": "below_dam_release",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Release below Falls Dam. Separate reading; never lake elevation.",
+     "note": "River flow below the dam (measured) by USGS on the Neuse below Falls Dam. Not a reported dam release; never lake elevation.",
      "publishable": true
     }
    ],
@@ -17423,13 +17423,13 @@
     {
      "source": "USGS",
      "id": "02087183",
-     "name": "NEUSE RIVER BELOW FALLS DAM NR FALLS, NC",
-     "type": "below_dam_release",
+     "name": "NEUSE RIVER NEAR FALLS, NC (below Falls Dam)",
+     "type": "downstream_river_flow",
      "distance_mi": null,
      "found": "review",
-     "relation": "below_dam_release",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Release below Falls Dam. Separate reading; never lake elevation.",
+     "note": "River flow below the dam (measured) by USGS on the Neuse below Falls Dam. Not a reported dam release; never lake elevation.",
      "publishable": true
     }
    ],
@@ -17553,13 +17553,13 @@
     {
      "source": "USGS",
      "id": "02087183",
-     "name": "NEUSE RIVER BELOW FALLS DAM NR FALLS, NC",
-     "type": "below_dam_release",
+     "name": "NEUSE RIVER NEAR FALLS, NC (below Falls Dam)",
+     "type": "downstream_river_flow",
      "distance_mi": null,
      "found": "review",
-     "relation": "below_dam_release",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Release below Falls Dam. Separate reading; never lake elevation.",
+     "note": "River flow below the dam (measured) by USGS on the Neuse below Falls Dam. Not a reported dam release; never lake elevation.",
      "publishable": true
     }
    ],
@@ -17651,12 +17651,12 @@
      "source": "USGS",
      "id": "02098206",
      "name": "HAW RIVER NEAR MONCURE, NC",
-     "type": "below_dam_release",
+     "type": "downstream_river_flow",
      "distance_mi": null,
      "found": "review",
-     "relation": "below_dam_release",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Below Jordan Dam: release plus local runoff, not official gate outflow. Separate reading; never lake elevation.",
+     "note": "River flow below the dam (measured): Jordan Dam release plus local runoff, not official gate outflow. Never lake elevation.",
      "publishable": true
     }
    ],
@@ -17764,12 +17764,12 @@
      "source": "USGS",
      "id": "02098206",
      "name": "HAW RIVER NEAR MONCURE, NC",
-     "type": "below_dam_release",
+     "type": "downstream_river_flow",
      "distance_mi": null,
      "found": "review",
-     "relation": "below_dam_release",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Below Jordan Dam: release plus local runoff, not official gate outflow. Separate reading; never lake elevation.",
+     "note": "River flow below the dam (measured): Jordan Dam release plus local runoff, not official gate outflow. Never lake elevation.",
      "publishable": true
     }
    ],
@@ -17861,12 +17861,12 @@
      "source": "USGS",
      "id": "02098206",
      "name": "HAW RIVER NEAR MONCURE, NC",
-     "type": "below_dam_release",
+     "type": "downstream_river_flow",
      "distance_mi": null,
      "found": "review",
-     "relation": "below_dam_release",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Below Jordan Dam: release plus local runoff, not official gate outflow. Separate reading; never lake elevation.",
+     "note": "River flow below the dam (measured): Jordan Dam release plus local runoff, not official gate outflow. Never lake elevation.",
      "publishable": true
     }
    ],
@@ -17974,12 +17974,12 @@
      "source": "USGS",
      "id": "02098206",
      "name": "HAW RIVER NEAR MONCURE, NC",
-     "type": "below_dam_release",
+     "type": "downstream_river_flow",
      "distance_mi": null,
      "found": "review",
-     "relation": "below_dam_release",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Below Jordan Dam: release plus local runoff, not official gate outflow. Separate reading; never lake elevation.",
+     "note": "River flow below the dam (measured): Jordan Dam release plus local runoff, not official gate outflow. Never lake elevation.",
      "publishable": true
     }
    ],
@@ -18087,12 +18087,12 @@
      "source": "USGS",
      "id": "02098206",
      "name": "HAW RIVER NEAR MONCURE, NC",
-     "type": "below_dam_release",
+     "type": "downstream_river_flow",
      "distance_mi": null,
      "found": "review",
-     "relation": "below_dam_release",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Below Jordan Dam: release plus local runoff, not official gate outflow. Separate reading; never lake elevation.",
+     "note": "River flow below the dam (measured): Jordan Dam release plus local runoff, not official gate outflow. Never lake elevation.",
      "publishable": true
     }
    ],
@@ -18157,12 +18157,12 @@
      "source": "USGS",
      "id": "02098206",
      "name": "HAW RIVER NEAR MONCURE, NC",
-     "type": "below_dam_release",
+     "type": "downstream_river_flow",
      "distance_mi": null,
      "found": "review",
-     "relation": "below_dam_release",
+     "relation": "downstream_river_flow",
      "status": "reviewed",
-     "note": "Below Jordan Dam: release plus local runoff, not official gate outflow. Separate reading; never lake elevation.",
+     "note": "River flow below the dam (measured): Jordan Dam release plus local runoff, not official gate outflow. Never lake elevation.",
      "publishable": true
     }
    ],
