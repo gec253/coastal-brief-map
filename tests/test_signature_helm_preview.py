@@ -403,7 +403,12 @@ class Frozen(unittest.TestCase):
             subprocess.run(["git", "cat-file", "-e", BASELINE], cwd=ROOT, check=True, capture_output=True)
         except Exception:
             self.skipTest("baseline commit not available")
-        out = subprocess.run(["git", "diff", "--name-only", BASELINE, "HEAD", "--", *FROZEN], cwd=ROOT, capture_output=True, text=True)
+        # Ed t576u (Phase 3C.1): wind-viewer.js (approved wind-direction standard) and sprint_home.py
+        # (legacy tile dial arrow, no public output) are pinned to approved commit 960ebe1; all else stays on BASELINE.
+        approved = ("wind-viewer.js", "sprint_home.py")
+        out = subprocess.run(["git", "diff", "--name-only", BASELINE, "HEAD", "--", *[p for p in FROZEN if p not in approved]], cwd=ROOT, capture_output=True, text=True)
+        self.assertEqual(out.stdout.strip(), "")
+        out = subprocess.run(["git", "diff", "--name-only", "960ebe1", "HEAD", "--", *approved], cwd=ROOT, capture_output=True, text=True)
         self.assertEqual(out.stdout.strip(), "")
 
 
