@@ -61,14 +61,13 @@ document.querySelectorAll(".kg").forEach(function (e) {
 /* ---- map: vendored Leaflet, Census coastline, no tiles ---- */
 var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 function wide() { return matchMedia("(min-width:900px)").matches; }
-var map = L.map("map", { zoomControl: false, zoomSnap: 0.25, zoomDelta: 0.5, minZoom: 5.5, maxZoom: 16, worldCopyJump: false,
+var map = L.map("map", { zoomControl: false, attributionControl: false, zoomSnap: 0.25, zoomDelta: 0.5, minZoom: 5.5, maxZoom: 16, worldCopyJump: false,
   zoomAnimation: !reduce, fadeAnimation: !reduce, markerZoomAnimation: !reduce });
 L.control.zoom({ position: "topright" }).addTo(map);
 var NC = [[33.8, -84.4], [36.65, -75.3]];
 function home() { if (wide()) map.fitBounds(NC, { animate: false, padding: [4, 4] }); else map.setView([35.25, -79.3], 6.5, { animate: false }); }
 home();
-map.attributionControl.setPrefix("Leaflet");
-map.attributionControl.addAttribution("Basemap: U.S. Census Bureau coastline and TIGER/Line® water and places (public domain). Illustration, not for navigation");
+/* Attribution is static HTML (#attrib) so it paints with the page, before Leaflet loads. */
 function css(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
 var coast = CBCoast.layer({ base: "/wind/coast-", land: css("--coast-land"), line: css("--coast-line"), lineWidth: 1 }).addTo(map);
 

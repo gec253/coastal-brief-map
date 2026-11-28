@@ -72,6 +72,7 @@ def render_html(*, public: bool = False) -> str:
   </aside>
   <main class="mapwrap">
     <div id="map" role="application" aria-label="Map of North Carolina public boat ramps"></div>
+    <p class="attrib" id="attrib">Leaflet | Basemap: U.S. Census Bureau coastline and TIGER/Line® water and places (public domain). Illustration, not for navigation</p>
     <div class="key" id="key">
       <button type="button" class="ktog" id="ktog" aria-expanded="false" aria-controls="kbody"><svg class="kg" viewBox="0 0 28 28" data-k="trailer"></svg>Map key<svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4l4 4 4-4"/></svg></button>
       <div class="kbody" id="kbody" hidden>
