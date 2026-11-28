@@ -161,7 +161,7 @@ class WaterLayer(unittest.TestCase):
         doc = (ROOT / "docs" / "RAMP_MAP_GEO_SOURCES.md").read_text()
         for must in ("TIGERweb/Hydro/MapServer/1", "Title 17 U.S.C., Section 105", "registered trademark", "Falls Lake", "Jordan Lake"):
             self.assertIn(must, doc, must)
-        self.assertIn("TIGER/Line® water and places (public domain)", JS)
+        self.assertIn("TIGER/Line® water and places (public domain)", ramp_map.render_html())  # static attribution, paints before Leaflet
 
     def test_size_budget(self):
         self.assertLessEqual(len(gzip.compress((GEO_DIR / "geo-lo.json").read_bytes(), 9)), 60 * 1024)
